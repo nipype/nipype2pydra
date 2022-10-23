@@ -23,8 +23,7 @@ setup(
     tests_require=TESTS_REQUIRE,
     entry_points={
         "console_scripts": [
-            "arcana=arcana.cli:cli",
-            "run-arcana-pipeline=arcana.cli.deploy:run_pipeline",
+            "nipype2pydra=nipype2pydra.cli:cli",
         ]
     },
     extras_require={"test": TESTS_REQUIRE, "dev": DEV_REQUIRE},
