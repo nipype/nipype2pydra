@@ -20,19 +20,21 @@ def cli():
 @click.option(
     "-i",
     "--interface_name",
-    required=True,
-    default=(),
-    help="name of the interface (name used in Nipype, e.g. BET) or all (default)"
-    "if all is used all interfaces from the spec file will be created",
+    multiple=True,
+    default=[],
+    help=(
+        "name of the interfaces (name used in Nipype, e.g. BET) or all (default)"
+        "if all is used all interfaces from the spec file will be created"
+    ),
 )
-def task(spec_file, interface_name, out_file):
+def task(spec_file, out_file, interface_name):
 
     spec = yaml.safe_load(spec_file)
 
-    if interface_name == "all":
+    if not interface_name:
         interface_list = list(spec.values())
     else:
-        interface_list = [spec[interface_name]]
+        interface_list = [spec[n] for n in interface_name]
 
     converter = TaskConverter(spec_file)
     converter.pydra_specs(write=True)
