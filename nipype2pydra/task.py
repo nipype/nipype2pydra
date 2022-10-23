@@ -1,24 +1,22 @@
-from attr import has
+import os
+import sys
+from pathlib import Path
+import typing as ty
+import inspect
+from copy import copy
+import black
+import traits
 from nipype.interfaces import ants
 from nipype.interfaces.base import traits_extension
 from pydra.engine import specs
 from pydra.engine.helpers import ensure_list
-
-import os, sys, yaml, black, imp
-import traits
-from pathlib import Path
-import typing as ty
-import inspect
-import click
-import warnings
-import functools
 
 sys.path.append(str(Path(__file__).resolve().parent.parent / 'specs'))
 import callables
 
 
 # Ported from the FSL converter (still in the process)
-class NiprepsConverter:
+class TaskConverter:
 
     INPUT_KEYS = [
         "allowed_values",
@@ -60,10 +58,8 @@ class NiprepsConverter:
         ("\'MultiOutputFile\'", "specs.MultiOutputFile"),
     ]
 
-    def __init__(self, interface_name, interface_spec_file):
-        self.interface_name = interface_name
-        with interface_spec_file.open() as f:
-            self.interface_spec = yaml.safe_load(f)[self.interface_name]
+    def __init__(self, interface_spec):
+        self.interface_spec = copy(interface_spec)
         if self.interface_spec.get("output_requirements") is None:
             self.interface_spec["output_requirements"] = []
         if self.interface_spec.get("inputs_metadata") is None:
@@ -147,7 +143,7 @@ class NiprepsConverter:
         output_fields_str = types_to_names(spec_fields=output_fields)
         functions_str = self.function_callables()
         spec_str = "from pydra.engine import specs \nfrom pydra import ShellCommandTask \n"
-        spec_str += f"import typing as ty\n"
+        spec_str += "import typing as ty\n"
         spec_str += functions_str
         spec_str += f"input_fields = {input_fields_str}\n"
         spec_str += f"{self.interface_name}_input_spec = specs.SpecInfo(name='Input', fields=input_fields, bases=(specs.ShellSpec,))\n\n"
@@ -192,7 +188,7 @@ class NiprepsConverter:
             else:
                 tests_inp_error.append((tests_inputs[i], out))
 
-        spec_str = f"import os, pytest \nfrom pathlib import Path\n"
+        spec_str = "import os, pytest \nfrom pathlib import Path\n"
         spec_str += f"from ..{self.interface_name.lower()} import {self.interface_name} \n\n"
         if run:
             pass
@@ -202,21 +198,21 @@ class NiprepsConverter:
             # )
         spec_str += f"@pytest.mark.parametrize('inputs, outputs', {tests_inp_outp})\n"
         spec_str += f"def test_{self.interface_name}(test_data, inputs, outputs):\n"
-        spec_str += f"    in_file = Path(test_data) / 'test.nii.gz'\n"
-        spec_str += f"    if inputs is None: inputs = {{}}\n"
-        spec_str += f"    for key, val in inputs.items():\n"
-        spec_str += f"        try: inputs[key] = eval(val)\n"
-        spec_str += f"        except: pass\n"
+        spec_str += "    in_file = Path(test_data) / 'test.nii.gz'\n"
+        spec_str += "    if inputs is None: inputs = {{}}\n"
+        spec_str += "    for key, val in inputs.items():\n"
+        spec_str += "        try: inputs[key] = eval(val)\n"
+        spec_str += "        except: pass\n"
         spec_str += f"    task = {self.interface_name}(in_file=in_file, **inputs)\n"
         spec_str += (
-            f"    assert set(task.generated_output_names) == "
-            f"set(['return_code', 'stdout', 'stderr'] + outputs)\n"
+            "    assert set(task.generated_output_names) == "
+            "set(['return_code', 'stdout', 'stderr'] + outputs)\n"
         )
 
         if run:
-            spec_str += f"    res = task()\n"
-            spec_str += f"    print('RESULT: ', res)\n"
-            spec_str += f"    for out_nm in outputs: assert getattr(res.output, out_nm).exists()\n"
+            spec_str += "    res = task()\n"
+            spec_str += "    print('RESULT: ', res)\n"
+            spec_str += "    for out_nm in outputs: assert getattr(res.output, out_nm).exists()\n"
 
         # if test_inp_error is not empty, than additional test function will be created
         if tests_inp_error:
@@ -234,14 +230,14 @@ class NiprepsConverter:
         spec_str = "\n\n"
         spec_str += f"@pytest.mark.parametrize('inputs, error', {input_error})\n"
         spec_str += f"def test_{self.interface_name}_exception(test_data, inputs, error):\n"
-        spec_str += f"    in_file = Path(test_data) / 'test.nii.gz'\n"
-        spec_str += f"    if inputs is None: inputs = {{}}\n"
-        spec_str += f"    for key, val in inputs.items():\n"
-        spec_str += f"        try: inputs[key] = eval(val)\n"
-        spec_str += f"        except: pass\n"
+        spec_str += "    in_file = Path(test_data) / 'test.nii.gz'\n"
+        spec_str += "    if inputs is None: inputs = {{}}\n"
+        spec_str += "    for key, val in inputs.items():\n"
+        spec_str += "        try: inputs[key] = eval(val)\n"
+        spec_str += "        except: pass\n"
         spec_str += f"    task = {self.interface_name}(in_file=in_file, **inputs)\n"
-        spec_str += f"    with pytest.raises(eval(error)):\n"
-        spec_str += f"        task.generated_output_names\n"
+        spec_str += "    with pytest.raises(eval(error)):\n"
+        spec_str += "        task.generated_output_names\n"
 
         return spec_str
 
@@ -471,75 +467,3 @@ class NiprepsConverter:
         else:
             raise Exception(f"format from {argstr} is not supported TODO")
         return argstr_new
-
-
-ANTS_MODULES = ['registration', 'resampling', 'segmentation', 'visualization', 'utils']
-
-
-@click.command()
-@click.option(
-    "-i",
-    "--interface_name",
-    required=True,
-    default="all",
-    help="name of the interface (name used in Nipype, e.g. BET) or all (default)"
-    "if all is used all interfaces from the spec file will be created",
-)
-@click.option(
-    "-m", "--module_name", required=True, help=f"name of the module from the list {ANTS_MODULES}"
-)
-def create_pydra_spec(interface_name, module_name):
-    if module_name not in ANTS_MODULES:
-        raise Exception(
-            f"module name {module_name} not available;" f"should be from the list {ANTS_MODULES}"
-        )
-
-    spec_file = Path(os.path.dirname(__file__)) / f"../specs/ants_{module_name}_param.yml"
-    if not spec_file.exists():
-        raise Exception(
-            f"the specification file doesn't exist for the module {module_name},"
-            f"create the specification file in {spec_file.parent}"
-        )
-
-    @functools.lru_cache()
-    def all_interfaces(module):
-        nipype_module = getattr(ants, module)
-        all_specs = [el for el in dir(nipype_module) if "InputSpec" in el]
-        all_interf = [el.replace("InputSpec", "") for el in all_specs]
-
-        # interfaces in the spec file
-        with open(spec_file) as f:
-            spec_interf = yaml.safe_load(f).keys()
-
-        if set(all_interf) - set(spec_interf):
-            warnings.warn(
-                f"some interfaces are not in the spec file: "
-                f"{set(all_interf) - set(spec_interf)}, "
-                f"and pydra interfaces will not be created for them"
-            )
-        return spec_interf
-
-    if interface_name == "all":
-        interface_list = all_interfaces(module_name)
-    elif interface_name in all_interfaces(module_name):
-        interface_list = [interface_name]
-    else:
-        raise Exception(
-            f"interface_name has to be 'all' "
-            f"or a name from the list {all_interfaces(module_name)}"
-        )
-
-    dirname_interf = Path(__file__).parent.parent / f"pydra/tasks/ants/{module_name}"
-    dirname_interf.mkdir(exist_ok=True)
-
-    for interface_el in interface_list:
-        converter = NiprepsConverter(
-            interface_name=interface_el,
-            interface_spec_file=Path(__file__).parent.parent
-            / f"specs/ants_{module_name}_param.yml",
-        )
-        converter.pydra_specs(write=True, dirname=dirname_interf)
-
-
-if __name__ == '__main__':
-    create_pydra_spec()
