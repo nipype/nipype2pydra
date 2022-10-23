@@ -13,10 +13,10 @@ def cli():
 
 
 @cli.command(
-    "Print out auto-generated Pydra code defining task interfaces ported from Nipype"
+    help="Print out auto-generated Pydra code defining task interfaces ported from Nipype"
 )
-@click.argument("spec-file", type=click.File(exists=True))
-@click.argument("out-file", type=click.File())
+@click.argument("spec-file", type=click.File())
+@click.argument("out-file", type=click.File(mode='w'))
 @click.option(
     "-i",
     "--interface_name",
@@ -38,9 +38,10 @@ def task(spec_file, interface_name, out_file):
     converter.pydra_specs(write=True)
 
 
-@cli.command("Print out auto-generated Pydra code to createported from Nipype")
-@click.argument("spec-file")
-@click.argument("out-file")
+@cli.command(
+    help="Print out auto-generated Pydra code to createported from Nipype")
+@click.argument("spec-file", type=click.File())
+@click.argument("out-file", type=click.File(mode='w'))
 def workflow(spec_file, out_file):
 
     spec = yaml.safe_load(spec_file)

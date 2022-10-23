@@ -1,5 +1,4 @@
 import os
-import sys
 from pathlib import Path
 import typing as ty
 import inspect
@@ -10,8 +9,8 @@ from nipype.interfaces.base import traits_extension
 from pydra.engine import specs
 from pydra.engine.helpers import ensure_list
 
-sys.path.append(str(Path(__file__).resolve().parent.parent / 'specs'))
-import callables
+# sys.path.append(str(Path(__file__).resolve().parent.parent / 'specs'))
+# import callables
 
 
 # Ported from the FSL converter (still in the process)

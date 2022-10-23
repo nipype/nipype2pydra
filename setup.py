@@ -3,7 +3,14 @@ from setuptools import setup, find_packages
 
 PACKAGE_NAME = 'nipype2pydra'
 
-INSTALL_REQUIRES = []
+INSTALL_REQUIRES = [
+    "click>=8.1.3",
+    "PyYAML>=6.0",
+    "black>=22.6.0",
+    "traits>=6.3.2",
+    "nipype>=1.8.5",
+    "pydra>=0.19",
+]
 TESTS_REQUIRE = []
 DEV_REQUIRE = []
 
