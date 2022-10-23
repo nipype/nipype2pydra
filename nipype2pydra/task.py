@@ -6,7 +6,6 @@ import inspect
 from copy import copy
 import black
 import traits
-from nipype.interfaces import ants
 from nipype.interfaces.base import traits_extension
 from pydra.engine import specs
 from pydra.engine.helpers import ensure_list
@@ -192,10 +191,6 @@ class TaskConverter:
         spec_str += f"from ..{self.interface_name.lower()} import {self.interface_name} \n\n"
         if run:
             pass
-            # spec_str += (
-            #     "@pytest.mark.xfail('ANTSPATH' not in os.environ, reason='no Nipreps found', "
-            #     "raises=FileNotFoundError)\n"
-            # )
         spec_str += f"@pytest.mark.parametrize('inputs, outputs', {tests_inp_outp})\n"
         spec_str += f"def test_{self.interface_name}(test_data, inputs, outputs):\n"
         spec_str += "    in_file = Path(test_data) / 'test.nii.gz'\n"
