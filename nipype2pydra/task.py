@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 import typing as ty
 import inspect
+from importlib import import_module
 from copy import copy
 import black
 import traits
@@ -78,7 +79,8 @@ class TaskConverter:
             self.interface_spec["doctest"] = {}
 
         # getting input/output spec from nipype
-        nipype_interface = getattr(ants, self.interface_name)
+        module = import_module(self.interface_spec["module"])
+        nipype_interface = getattr(module, self.interface_name)
         self.cmd = nipype_interface._cmd
         self.nipype_input_spec = nipype_interface.input_spec()
         self.nipype_output_spec = nipype_interface.output_spec()
