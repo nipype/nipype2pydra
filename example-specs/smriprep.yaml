@@ -12,7 +12,7 @@ args:
     layout:
         type: bids:BIDSLayout
         args:
-            root: /Users/tclose/data/bids-data/ds000113
+            root: test-data/bids-data/ds000113
     longitudinal: false
     low_mem: false
     name: single_subject_wf
