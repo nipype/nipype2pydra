@@ -68,7 +68,7 @@ class WorkflowConverter:
     def _parse_workflow_args(cls, args):
         dct = {}
         for name, val in args.items():
-            if isinstance(val, dict) and sorted(val.keys()) == ['type', 'args']:
+            if isinstance(val, dict) and sorted(val.keys()) == ['args', 'type']:
                 val = load_class_or_func(val['type'])(
                     **cls._parse_workflow_args(val['args'])
                 )

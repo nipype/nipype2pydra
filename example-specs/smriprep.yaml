@@ -12,7 +12,7 @@ args:
     layout:
         type: bids:BIDSLayout
         args:
-            - /Users/tclose/data/bids-data/ds000113
+            root: /Users/tclose/data/bids-data/ds000113
     longitudinal: false
     low_mem: false
     name: single_subject_wf
@@ -23,13 +23,12 @@ args:
     skull_strip_template:
         type: niworkflows.utils.spaces:Reference
         args:
-            - OASIS30ANTs
+            space: OASIS30ANTs
     spaces:
         type: niworkflows.utils.spaces:SpatialReferences
         args:
-            - name: spaces
-              value:
-                - MNI152NLin2009cAsym
-                - fsaverage5
+            spaces:
+              - MNI152NLin2009cAsym
+              - fsaverage5
     subject_id: test
     bids_filters: null
