@@ -57,7 +57,7 @@ class TaskConverter:
         ("\'MultiOutputFile\'", "specs.MultiOutputFile"),
     ]
 
-    def __init__(self, interface_spec):
+    def __init__(self, interface_spec, callables):
         self.interface_spec = copy(interface_spec)
         if self.interface_spec.get("output_requirements") is None:
             self.interface_spec["output_requirements"] = []
@@ -109,21 +109,21 @@ class TaskConverter:
             )
         return input_spec_pydra, output_spec_pydra
 
-    def write_pydra_files(self, dirname, pydra_input_spec, pydra_output_spec):
-        """writing pydra task and tests to the files"""
-        testdir = dirname / "tests"
-        testdir.mkdir(parents=True, exist_ok=True)
-        Path.touch(dirname / "__init__.py")
-        Path.touch(testdir / "__init__.py")
-        filename = dirname / f"{self.interface_name.lower()}.py"
-        filename_test = testdir / f"test_spec_{filename.name}"
-        filename_test_run = testdir / f"test_run_{filename.name}"
+    # def write_pydra_files(self, dirname, pydra_input_spec, pydra_output_spec):
+    #     """writing pydra task and tests to the files"""
+    #     testdir = dirname / "tests"
+    #     testdir.mkdir(parents=True, exist_ok=True)
+    #     Path.touch(dirname / "__init__.py")
+    #     Path.touch(testdir / "__init__.py")
+    #     filename = dirname / f"{self.interface_name.lower()}.py"
+    #     filename_test = testdir / f"test_spec_{filename.name}"
+    #     filename_test_run = testdir / f"test_run_{filename.name}"
 
-        print("\n FILENAME", filename)
-        self.write_task(filename, pydra_input_spec, pydra_output_spec)
+    #     print("\n FILENAME", filename)
+    #     self.write_task(filename, pydra_input_spec, pydra_output_spec)
 
-        self.write_test(filename_test=filename_test)
-        self.write_test(filename_test=filename_test_run, run=True)
+    #     self.write_test(filename_test=filename_test)
+    #     self.write_test(filename_test=filename_test_run, run=True)
 
     def write_task(self, filename, input_fields, output_fields):
         """writing pydra task to the dile based on the input and output spec"""

@@ -1,5 +1,6 @@
 import json
 from collections import defaultdict
+import black
 from nipype.interfaces.base import isdefined
 from .utils import load_class_or_func
 
@@ -8,9 +9,8 @@ class WorkflowConverter:
 
     def __init__(self, spec):
         self.spec = spec
-        wf_spec = self.spec['workflow']
-        self.wf = load_class_or_func(wf_spec['function'])(
-            **self._parse_workflow_args(wf_spec['args'])
+        self.wf = load_class_or_func(self.spec['function'])(
+            **self._parse_workflow_args(self.spec['args'])
         )
 
     def node_connections(self):
@@ -31,7 +31,7 @@ class WorkflowConverter:
                 connections[dest_node][dest_field] = f"{src_node}.lzout.{src_field}"
         return connections
 
-    def write_pydra(self, out_file):
+    def generate(self):
 
         connections = self.node_connections()
         out_text = ""
@@ -61,8 +61,8 @@ class WorkflowConverter:
             name="{node.name}"{node_args}
         )"""
 
-        with open(out_file, "w") as f:
-            f.write(out_text)
+        out_text = black.format_file_contents(out_text, fast=False, mode=black.FileMode())
+        return out_text
 
     @classmethod
     def _parse_workflow_args(cls, args):

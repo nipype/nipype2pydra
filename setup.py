@@ -11,7 +11,9 @@ INSTALL_REQUIRES = [
     "nipype>=1.8.5",
     "pydra>=0.19",
 ]
-TESTS_REQUIRE = []
+TESTS_REQUIRE = [
+    "pytest",
+]
 DEV_REQUIRE = []
 
 PYTHON_VERSIONS = ["3.8", "3.9", "3.10"]

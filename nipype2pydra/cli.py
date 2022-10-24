@@ -13,7 +13,7 @@ def cli():
 
 
 @cli.command(
-    help="Print out auto-generated Pydra code defining task interfaces ported from Nipype"
+    help="Port Nipype task interface code to Pydra"
 )
 @click.argument("spec-file", type=click.File())
 @click.argument("out-file", type=click.File(mode="w"))
@@ -23,24 +23,23 @@ def cli():
     multiple=True,
     default=[],
     help=(
-        "name of the interfaces (name used in Nipype, e.g. BET) or all (default)"
-        "if all is used all interfaces from the spec file will be created"
+        "name of the interfaces (name used in Nipype, e.g. BET) to be converted. If not"
+        "provided all interfaces defined in the spec are converted"
     ),
 )
 def task(spec_file, out_file, interface_name):
 
     spec = yaml.safe_load(spec_file)
 
-    if not interface_name:
-        interface_list = list(spec.values())
-    else:
-        interface_list = [spec[n] for n in interface_name]
+    if interface_name:
+        spec = {n: v for n, v in spec.items() if n in interface_name}
 
-    converter = TaskConverter(spec_file)
-    converter.pydra_specs(write=True)
+    converter = TaskConverter(spec)
+    code = converter.generate()
+    out_file.write(code)
 
 
-@cli.command(help="Print out auto-generated Pydra code to createported from Nipype")
+@cli.command(help="Port Nipype workflow creation functions to Pydra")
 @click.argument("spec-file", type=click.File())
 @click.argument("out-file", type=click.File(mode="w"))
 def workflow(spec_file, out_file):
@@ -48,4 +47,5 @@ def workflow(spec_file, out_file):
     spec = yaml.safe_load(spec_file)
 
     converter = WorkflowConverter(spec)
-    converter.write_pydra(out_file)
+    code = converter.generate()
+    out_file.write(code)

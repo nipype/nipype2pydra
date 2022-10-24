@@ -1,0 +1,35 @@
+function: smriprep.workflows.base:init_single_subject_wf
+splits:
+    - func_name: registration
+      first_node: ds_surfs
+    - func_name: segmentation
+      first_node: lta2itk_fwd
+args:
+    debug: false
+    freesurfer: true
+    fast_track: false
+    hires: true
+    layout:
+        type: bids:BIDSLayout
+        args:
+            - /Users/tclose/data/bids-data/ds000113
+    longitudinal: false
+    low_mem: false
+    name: single_subject_wf
+    omp_nthreads: 1
+    output_dir: .
+    skull_strip_fixed_seed: false
+    skull_strip_mode: force
+    skull_strip_template:
+        type: niworkflows.utils.spaces:Reference
+        args:
+            - OASIS30ANTs
+    spaces:
+        type: niworkflows.utils.spaces:SpatialReferences
+        args:
+            - name: spaces
+              value:
+                - MNI152NLin2009cAsym
+                - fsaverage5
+    subject_id: test
+    bids_filters: null
