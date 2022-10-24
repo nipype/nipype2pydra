@@ -31,7 +31,7 @@ class WorkflowConverter:
                 connections[dest_node][dest_field] = f"{src_node}.lzout.{src_field}"
         return connections
 
-    def generate(self):
+    def generate(self, format_with_black=False):
 
         connections = self.node_connections()
         out_text = ""
@@ -61,7 +61,8 @@ class WorkflowConverter:
             name="{node.name}"{node_args}
         )"""
 
-        out_text = black.format_file_contents(out_text, fast=False, mode=black.FileMode())
+        if format_with_black:
+            out_text = black.format_file_contents(out_text, fast=False, mode=black.FileMode())
         return out_text
 
     @classmethod

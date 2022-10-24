@@ -8,7 +8,7 @@ def test_smriprep(pkg_dir, cli_runner):
         workflow,
         [
             f"{pkg_dir}/example-specs/smriprep.yaml",
-            f"${pkg_dir}/outputs/smriprep_new.py"
+            f"{pkg_dir}/outputs/smriprep_new.py"
         ]
     )
 
