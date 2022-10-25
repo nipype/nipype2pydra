@@ -51,10 +51,10 @@ class WorkflowConverter:
                         pass
                     if isinstance(val, str) and '\n' in val:
                         val = '"""' + val + '""""'
-                    node_args += f",\n        {arg}={val}"
+                    node_args += f",\n            {arg}={val}"
 
             for arg, val in connections[node.name].items():
-                node_args += f",\n        {arg}={val}"
+                node_args += f",\n            {arg}={val}"
 
             out_text += f"""
         wf.add({task_type}(
