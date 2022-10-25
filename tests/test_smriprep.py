@@ -1,8 +1,14 @@
+from pathlib import Path
 from nipype2pydra.cli import workflow
 from nipype2pydra.utils import show_cli_trace
 
 
 def test_smriprep(pkg_dir, cli_runner):
+
+    output_dir = Path(pkg_dir) / "outputs"
+
+    if not output_dir.exists():
+        output_dir.mkdir()
 
     result = cli_runner(
         workflow,

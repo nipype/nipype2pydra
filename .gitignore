@@ -20,4 +20,5 @@ __pycache__
 *.egg-info
 ~*
 /outputs
+/Test.venv
 /test-data
