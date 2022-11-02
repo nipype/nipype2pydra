@@ -4,6 +4,9 @@ splits:
       first_node: ds_surfs
     - func_name: segmentation
       first_node: lta2itk_fwd
+ignore_tasks:
+    - smriprep.interfaces.DerivativesDataSink
+    - nipype.interfaces.utility.base.IdentityInterface
 args:
     debug: false
     freesurfer: true

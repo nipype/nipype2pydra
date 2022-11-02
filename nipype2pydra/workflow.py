@@ -13,10 +13,11 @@ class WorkflowConverter:
             **self._parse_workflow_args(self.spec['args'])
         )
 
-    def node_connections(self):
+    def node_connections(self, workflow):
         connections = defaultdict(dict)
 
-        for edge, props in self.wf._graph.edges.items():
+        # Get connections from workflow graph
+        for edge, props in workflow._graph.edges.items():
             src_node = edge[0].name
             dest_node = edge[1].name
             for node_conn in props['connect']:
@@ -29,11 +30,16 @@ class WorkflowConverter:
                 else:
                     src_field = src_field.split('.')[-1]
                 connections[dest_node][dest_field] = f"{src_node}.lzout.{src_field}"
+
+        # Look for connections in nested workflows via recursion
+        for node in workflow.find_name_of_appropriate_method():  # TODO: find the method that iterates through the nodes of the workflow (but not nested nodes)
+            if isinstance(node, Workflow):  # TODO: find a way to check whether the node is a standard node or a nested workflow
+                connections.update(self.node_connections(node))
         return connections
 
     def generate(self, format_with_black=False):
 
-        connections = self.node_connections()
+        connections = self.node_connections(self.wf)
         out_text = ""
         for node_name in self.wf.list_node_names():
             node = self.wf.get_node(node_name)
@@ -51,15 +57,15 @@ class WorkflowConverter:
                         pass
                     if isinstance(val, str) and '\n' in val:
                         val = '"""' + val + '""""'
-                    node_args += f",\n            {arg}={val}"
+                    node_args += f",\n        {arg}={val}"
 
             for arg, val in connections[node.name].items():
-                node_args += f",\n            {arg}={val}"
+                node_args += f",\n        {arg}=wf.{val}"
 
             out_text += f"""
-        wf.add({task_type}(
-            name="{node.name}"{node_args}
-        )"""
+wf.add({task_type}(
+    name="{node.name}"{node_args}
+)"""
 
         if format_with_black:
             out_text = black.format_file_contents(out_text, fast=False, mode=black.FileMode())
