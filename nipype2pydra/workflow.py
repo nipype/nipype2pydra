@@ -3,20 +3,21 @@ from collections import defaultdict
 import black
 from nipype.interfaces.base import isdefined
 from .utils import load_class_or_func
+from nipype.pipeline.engine.workflows import Workflow
 
 
 class WorkflowConverter:
-
+#creating the wf
     def __init__(self, spec):
         self.spec = spec
         self.wf = load_class_or_func(self.spec['function'])(
             **self._parse_workflow_args(self.spec['args'])
-        )
+        ) #loads the 'function' in smriprep.yaml, and implement the args (creates a dictionary)
 
     def node_connections(self, workflow):
         connections = defaultdict(dict)
 
-        # Get connections from workflow graph
+        # iterates over wf graph, Get connections from workflow graph, store connections in a dictionary
         for edge, props in workflow._graph.edges.items():
             src_node = edge[0].name
             dest_node = edge[1].name
@@ -32,7 +33,7 @@ class WorkflowConverter:
                 connections[dest_node][dest_field] = f"{src_node}.lzout.{src_field}"
 
         # Look for connections in nested workflows via recursion
-        for node in workflow.find_name_of_appropriate_method():  # TODO: find the method that iterates through the nodes of the workflow (but not nested nodes)
+        for node in workflow._get_all_nodes():  #TODO: find the method that iterates through the nodes of the workflow (but not nested nodes)---placeholder: find_name_of_appropriate_method
             if isinstance(node, Workflow):  # TODO: find a way to check whether the node is a standard node or a nested workflow
                 connections.update(self.node_connections(node))
         return connections
@@ -63,8 +64,8 @@ class WorkflowConverter:
                 node_args += f",\n        {arg}=wf.{val}"
 
             out_text += f"""
-wf.add({task_type}(
-    name="{node.name}"{node_args}
+    wf.add({task_type}(
+        name="{node.name}"{node_args}
 )"""
 
         if format_with_black:
