@@ -1,4 +1,7 @@
 import json
+import tempfile
+from pathlib import Path
+import subprocess as sp
 from collections import defaultdict
 import black
 from nipype.interfaces.base import isdefined
@@ -82,3 +85,13 @@ class WorkflowConverter:
                 )
             dct[name] = val
         return dct
+
+    def save_graph(self, out_path: Path, format: str = "svg", work_dir: Path = None):
+        if work_dir is None:
+            work_dir = tempfile.mkdtemp()
+        work_dir = Path(work_dir)
+        graph_dot_path = work_dir / "wf-graph.dot"
+        self.wf.write_hierarchical_dotfile(graph_dot_path)
+        dot_path = sp.check_output("which dot", shell=True).decode('utf-8').strip()
+        sp.check_call(f"{dot_path} -T{format} {str(graph_dot_path)} > {str(out_path)}",
+                      shell=True)
