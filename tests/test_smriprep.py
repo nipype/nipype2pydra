@@ -16,7 +16,7 @@ def test_smriprep_conversion(pkg_dir, cli_runner):
         workflow,
         [
             f"{pkg_dir}/example-specs/smriprep.yaml",
-            f"{pkg_dir}/outputs/smriprep_new.py"
+            f"{pkg_dir}/outputs/smriprep_new1.py"
         ]
     )
 
