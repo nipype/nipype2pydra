@@ -24,6 +24,13 @@ OUT_FILE is where the converted code will be generated
 @click.argument("spec-file", type=click.File())
 @click.argument("out-file", type=click.File(mode="w"))
 @click.option(
+    "-c",
+    "--callables",
+    type=click.File(),
+    default=None,
+    help="a Python file containing callable functions required in the command interface",
+)
+@click.option(
     "-i",
     "--interface_name",
     multiple=True,
@@ -33,14 +40,14 @@ OUT_FILE is where the converted code will be generated
         "provided all interfaces defined in the spec are converted"
     ),
 )
-def task(spec_file, out_file, interface_name):
+def task(spec_file, out_file, interface_name, callables):
 
     spec = yaml.safe_load(spec_file)
 
     if interface_name:
         spec = {n: v for n, v in spec.items() if n in interface_name}
 
-    converter = TaskConverter(spec)
+    converter = TaskConverter(spec, callables)
     code = converter.generate()
     out_file.write(code)
 

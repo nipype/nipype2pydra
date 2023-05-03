@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 import typing as ty
 import inspect
+import sys
 from importlib import import_module
 from copy import copy
 import black
@@ -57,7 +58,7 @@ class TaskConverter:
         ("\'MultiOutputFile\'", "specs.MultiOutputFile"),
     ]
 
-    def __init__(self, interface_spec, callables):
+    def __init__(self, interface_spec, callables_file):
         self.interface_spec = copy(interface_spec)
         if self.interface_spec.get("output_requirements") is None:
             self.interface_spec["output_requirements"] = []
@@ -84,6 +85,10 @@ class TaskConverter:
         self.cmd = nipype_interface._cmd
         self.nipype_input_spec = nipype_interface.input_spec()
         self.nipype_output_spec = nipype_interface.output_spec()
+        sys.path.append(str(Path(callables_file).resolve().parent))
+        self.callables_module = import_module(Path(callables_file).stem)
+        sys.path.pop()
+# import callablescallables
 
     def pydra_specs(self, write=False, dirname=None):
         """creating pydra input/output spec from nipype specs
@@ -398,7 +403,7 @@ class TaskConverter:
         fun_names = list(set(self.interface_spec["output_callables"].values()))
         fun_names.sort()
         for fun_nm in fun_names:
-            fun = getattr(callables, fun_nm)
+            fun = getattr(self.callables_module, fun_nm)
             fun_str += inspect.getsource(fun) + "\n"
         return fun_str
 
