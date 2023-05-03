@@ -13,7 +13,13 @@ def cli():
 
 
 @cli.command(
-    help="Port Nipype task interface code to Pydra"
+    help="""Port Nipype task interface code to Pydra
+
+SPEC_FILE is a YAML file which defines the manually specified aspects of the conversion
+see https://github.com/nipype/nipype2pydra/tree/main/example-specs for examples
+
+OUT_FILE is where the converted code will be generated
+"""
 )
 @click.argument("spec-file", type=click.File())
 @click.argument("out-file", type=click.File(mode="w"))
