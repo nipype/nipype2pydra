@@ -311,8 +311,8 @@ class TaskConverter:
         spec_str += f"    output_spec = {self.task_name}_output_spec\n"
         spec_str += f"    executable='{self.nipype_interface._cmd}'\n"
 
-        for tp_repl in self.TYPE_REPLACE:
-            spec_str = spec_str.replace(*tp_repl)
+        # for tp_repl in self.TYPE_REPLACE:
+        #     spec_str = spec_str.replace(*tp_repl)
 
         spec_str_black = black.format_file_contents(
             spec_str, fast=False, mode=black.FileMode()
