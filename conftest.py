@@ -6,14 +6,20 @@ import pytest
 from click.testing import CliRunner
 
 
-@pytest.fixture(scope="session")
-def pkg_dir():
-    return Path(__file__).parent
+PKG_DIR = Path(__file__).parent
+EXAMPLE_SPECS_DIR = PKG_DIR / "example-specs"
+EXAMPLE_TASKS_DIR = EXAMPLE_SPECS_DIR / "task"
+EXAMPLE_WORKFLOWS_DIR = EXAMPLE_SPECS_DIR / "workflow"
 
 
-@pytest.fixture(scope="session")
-def example_specs_dir(pkg_dir):
-    return pkg_dir / "example-specs"
+@pytest.fixture(params=[str(p.stem) for p in (EXAMPLE_TASKS_DIR).glob("*.yaml")])
+def task_spec_file(request):
+    return (EXAMPLE_TASKS_DIR / request.param).with_suffix(".yaml")
+
+
+@pytest.fixture(params=[str(p.stem) for p in EXAMPLE_WORKFLOWS_DIR.glob("*.yaml")])
+def workflow_spec_file(request):
+    return (EXAMPLE_WORKFLOWS_DIR / request.param).with_suffix(".yaml")
 
 
 @pytest.fixture

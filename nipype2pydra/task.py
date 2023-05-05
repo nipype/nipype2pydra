@@ -24,6 +24,8 @@ class TaskConverter:
     output_templates: dict = attrs.field(factory=dict)
     output_callables: dict = attrs.field(factory=dict)
     doctest: dict = attrs.field(factory=dict)
+    tests_inputs: list = attrs.field(factory=list)
+    tests_outputs: list = attrs.field(factory=list)
     callables_module: ModuleType = attrs.field(
         converter=import_module_from_path, default=None
     )
@@ -39,11 +41,11 @@ class TaskConverter:
 
     @property
     def nipype_input_spec(self) -> nipype.interfaces.base.BaseInterfaceInputSpec:
-        return self.nipype_interface.input_spec
+        return self.nipype_interface.input_spec()
 
     @property
     def nipype_output_spec(self) -> nipype.interfaces.base.BaseTraitedSpec:
-        return self.nipype_interface.input_spec
+        return self.nipype_interface.output_spec()
 
     def generate(self, output_file: Path):
         """creating pydra input/output spec from nipype specs
@@ -52,18 +54,12 @@ class TaskConverter:
         input_fields, inp_templates = self.convert_input_fields()
         output_fields = self.convert_output_spec(fields_from_template=inp_templates)
 
-        input_spec = specs.SpecInfo(
-            name="Input", fields=input_fields, bases=(specs.ShellSpec,)
-        )
-        output_spec = specs.SpecInfo(
-            name="Output", fields=output_fields, bases=(specs.ShellOutSpec,)
-        )
-
         testdir = output_file.parent / "tests"
+        testdir.mkdir()
         filename_test = testdir / f"test_spec_{output_file.name}"
         filename_test_run = testdir / f"test_run_{output_file.name}"
 
-        self.write_task(output_file, input_spec, output_spec)
+        self.write_task(output_file, input_fields, output_fields)
 
         self.write_test(filename_test=filename_test)
         self.write_test(filename_test=filename_test_run, run=True)
@@ -127,9 +123,7 @@ class TaskConverter:
                 tp_pdr = str
         elif getattr(field, "genfile"):
             if nm in self.output_templates:
-                metadata_pdr["output_file_template"] = self.interface_spec[
-                    "output_templates"
-                ][nm]
+                metadata_pdr["output_file_template"] = self.output_templates[nm]
                 if tp_pdr in [
                     specs.File,
                     specs.Directory,
@@ -306,16 +300,16 @@ class TaskConverter:
         spec_str += "import typing as ty\n"
         spec_str += functions_str
         spec_str += f"input_fields = {input_fields_str}\n"
-        spec_str += f"{self.interface_name}_input_spec = specs.SpecInfo(name='Input', fields=input_fields, bases=(specs.ShellSpec,))\n\n"
+        spec_str += f"{self.task_name}_input_spec = specs.SpecInfo(name='Input', fields=input_fields, bases=(specs.ShellSpec,))\n\n"
         spec_str += f"output_fields = {output_fields_str}\n"
-        spec_str += f"{self.interface_name}_output_spec = specs.SpecInfo(name='Output', fields=output_fields, bases=(specs.ShellOutSpec,))\n\n"
+        spec_str += f"{self.task_name}_output_spec = specs.SpecInfo(name='Output', fields=output_fields, bases=(specs.ShellOutSpec,))\n\n"
 
-        spec_str += f"class {self.interface_name}(ShellCommandTask):\n"
+        spec_str += f"class {self.task_name}(ShellCommandTask):\n"
         if self.doctest:
             spec_str += self.create_doctest()
-        spec_str += f"    input_spec = {self.interface_name}_input_spec\n"
-        spec_str += f"    output_spec = {self.interface_name}_output_spec\n"
-        spec_str += f"    executable='{self.cmd}'\n"
+        spec_str += f"    input_spec = {self.task_name}_input_spec\n"
+        spec_str += f"    output_spec = {self.task_name}_output_spec\n"
+        spec_str += f"    executable='{self.nipype_interface._cmd}'\n"
 
         for tp_repl in self.TYPE_REPLACE:
             spec_str = spec_str.replace(*tp_repl)
@@ -352,18 +346,18 @@ class TaskConverter:
 
         spec_str = "import os, pytest \nfrom pathlib import Path\n"
         spec_str += (
-            f"from ..{self.interface_name.lower()} import {self.interface_name} \n\n"
+            f"from ..{self.task_name.lower()} import {self.task_name} \n\n"
         )
         if run:
             pass
         spec_str += f"@pytest.mark.parametrize('inputs, outputs', {tests_inp_outp})\n"
-        spec_str += f"def test_{self.interface_name}(test_data, inputs, outputs):\n"
+        spec_str += f"def test_{self.task_name}(test_data, inputs, outputs):\n"
         spec_str += "    in_file = Path(test_data) / 'test.nii.gz'\n"
         spec_str += "    if inputs is None: inputs = {{}}\n"
         spec_str += "    for key, val in inputs.items():\n"
         spec_str += "        try: inputs[key] = eval(val)\n"
         spec_str += "        except: pass\n"
-        spec_str += f"    task = {self.interface_name}(in_file=in_file, **inputs)\n"
+        spec_str += f"    task = {self.task_name}(in_file=in_file, **inputs)\n"
         spec_str += (
             "    assert set(task.generated_output_names) == "
             "set(['return_code', 'stdout', 'stderr'] + outputs)\n"
@@ -392,14 +386,14 @@ class TaskConverter:
         spec_str = "\n\n"
         spec_str += f"@pytest.mark.parametrize('inputs, error', {input_error})\n"
         spec_str += (
-            f"def test_{self.interface_name}_exception(test_data, inputs, error):\n"
+            f"def test_{self.task_name}_exception(test_data, inputs, error):\n"
         )
         spec_str += "    in_file = Path(test_data) / 'test.nii.gz'\n"
         spec_str += "    if inputs is None: inputs = {{}}\n"
         spec_str += "    for key, val in inputs.items():\n"
         spec_str += "        try: inputs[key] = eval(val)\n"
         spec_str += "        except: pass\n"
-        spec_str += f"    task = {self.interface_name}(in_file=in_file, **inputs)\n"
+        spec_str += f"    task = {self.task_name}(in_file=in_file, **inputs)\n"
         spec_str += "    with pytest.raises(eval(error)):\n"
         spec_str += "        task.generated_output_names\n"
 
@@ -409,7 +403,7 @@ class TaskConverter:
         """adding doctests to the interfaces"""
         cmdline = self.doctest.pop("cmdline")
         doctest = '    """\n    Example\n    -------\n'
-        doctest += f"    >>> task = {self.interface_name}()\n"
+        doctest += f"    >>> task = {self.task_name}()\n"
         for key, val in self.doctest.items():
             if type(val) is str:
                 doctest += f'    >>> task.inputs.{key} = "{val}"\n'
