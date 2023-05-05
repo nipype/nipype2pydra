@@ -19,7 +19,7 @@ def test_task_conversion(task_spec_file, cli_runner, work_dir):
 
     with open(task_spec_file) as f:
         task_spec = yaml.safe_load(f)
-    output_file = work_dir / "pydra_module.py"
+    output_file = (work_dir / task_spec_file.stem).with_suffix(".py")
 
     result = cli_runner(
         task_cli,
