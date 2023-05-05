@@ -1,15 +1,25 @@
 import os
 from pathlib import Path
+import traceback
+import tempfile
 import pytest
 from click.testing import CliRunner
 
 
-PKG_DIR = Path(__file__).parent
+@pytest.fixture(scope="session")
+def pkg_dir():
+    return Path(__file__).parent
 
 
 @pytest.fixture(scope="session")
-def pkg_dir():
-    return PKG_DIR
+def example_specs_dir(pkg_dir):
+    return pkg_dir / "example-specs"
+
+
+@pytest.fixture
+def work_dir():
+    work_dir = tempfile.mkdtemp()
+    return Path(work_dir)
 
 
 @pytest.fixture
@@ -42,3 +52,8 @@ else:
 @pytest.fixture
 def catch_cli_exceptions():
     return CATCH_CLI_EXCEPTIONS
+
+
+def show_cli_trace(result):
+    "Used in testing to show traceback of CLI output"
+    return "".join(traceback.format_exception(*result.exc_info))

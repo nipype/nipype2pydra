@@ -1,0 +1,11 @@
+module: nipype.interfaces..freesurfer.preprocess
+tasks:
+    ApplyVolTransform:
+        output_requirements: []
+        output_templates:
+            transformed_file: "{source_file}_warped"
+        doctest:
+            source_file: test.nii.gz
+            cmdline: mri_vol2vol
+        tests_inputs: []
+        tests_outputs: []

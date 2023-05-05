@@ -1,3 +1,4 @@
+from pathlib import Path
 import click
 import yaml
 from nipype2pydra import __version__
@@ -15,14 +16,15 @@ def cli():
 @cli.command(
     help="""Port Nipype task interface code to Pydra
 
-SPEC_FILE is a YAML file which defines the manually specified aspects of the conversion
-see https://github.com/nipype/nipype2pydra/tree/main/example-specs for examples
+YAML_SPEC is a YAML file which defines interfaces to be imported along with an
+manually specified aspects of the conversion see
+https://github.com/nipype/nipype2pydra/tree/main/example-specs for examples
 
-OUT_FILE is where the converted code will be generated
+OUTPUT_BASE_DIR is the path of generated module file
 """
 )
-@click.argument("spec-file", type=click.File())
-@click.argument("out-file", type=click.File(mode="w"))
+@click.argument("yaml-spec", type=click.File())
+@click.argument("output-file", type=Path)
 @click.option(
     "-c",
     "--callables",
@@ -30,35 +32,20 @@ OUT_FILE is where the converted code will be generated
     default=None,
     help="a Python file containing callable functions required in the command interface",
 )
-@click.option(
-    "-i",
-    "--interface_name",
-    multiple=True,
-    default=[],
-    help=(
-        "name of the interfaces (name used in Nipype, e.g. BET) to be converted. If not"
-        "provided all interfaces defined in the spec are converted"
-    ),
-)
-def task(spec_file, out_file, interface_name, callables):
+def task(yaml_spec, output_file, callables):
 
-    spec = yaml.safe_load(spec_file)
+    spec = yaml.safe_load(yaml_spec)
 
-    if interface_name:
-        spec = {n: v for n, v in spec.items() if n in interface_name}
-
-    converter = TaskConverter(spec, callables)
-    code = converter.generate()
-    out_file.write(code)
+    converter = TaskConverter(callables_module=callables, **spec)
+    converter.generate(output_file)
 
 
 @cli.command(help="Port Nipype workflow creation functions to Pydra")
-@click.argument("spec-file", type=click.File())
-@click.argument("out-file", type=click.File(mode="w"))
-def workflow(spec_file, out_file):
+@click.argument("yaml-spec", type=click.File())
+@click.argument("output-module-file", type=click.File(mode="w"))
+def workflow(yaml_spec, output_module_file):
 
-    spec = yaml.safe_load(spec_file)
+    spec = yaml.safe_load(yaml_spec)
 
     converter = WorkflowConverter(spec)
-    code = converter.generate()
-    out_file.write(code)
+    converter.generate(output_module_file)
