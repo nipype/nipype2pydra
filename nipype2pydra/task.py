@@ -26,6 +26,7 @@ class TaskConverter:
     doctest: dict = attrs.field(factory=dict)
     tests_inputs: list = attrs.field(factory=list)
     tests_outputs: list = attrs.field(factory=list)
+    output_module: str = attrs.field(default=None)
     callables_module: ModuleType = attrs.field(
         converter=import_module_from_path, default=None
     )
@@ -34,6 +35,18 @@ class TaskConverter:
     def output_callables_validator(self, _, output_callables: dict):
         if not output_callables.keys().isdisjoint(self.output_templates.keys()):
             raise Exception("output_callables and output_templates have the same keys")
+
+    def __attrs_post_init__(self):
+        if self.output_module is None:
+            if self.nipype_module.__name__.startswith("nipype.interfaces."):
+                self.output_module = self.nipype_module.__name__[len("nipype.interfaces."):]
+            else:
+                raise RuntimeError(
+                    "Output-module needs to be explicitly provided to task converter "
+                    "when converting Nipype interefaces in non standard locations such "
+                    f"as {self.nipype_module.__name__}.{self.task_name} (i.e. not in "
+                    "nipype.interfaces)"
+                )
 
     @property
     def nipype_interface(self) -> nipype.interfaces.base.BaseInterface:
@@ -47,20 +60,21 @@ class TaskConverter:
     def nipype_output_spec(self) -> nipype.interfaces.base.BaseTraitedSpec:
         return self.nipype_interface.output_spec()
 
-    def generate(self, output_file: Path):
+    def generate(self, package_root: Path):
         """creating pydra input/output spec from nipype specs
         if write is True, a pydra Task class will be written to the file together with tests
         """
         input_fields, inp_templates = self.convert_input_fields()
         output_fields = self.convert_output_spec(fields_from_template=inp_templates)
 
-        testdir = output_file.parent / "tests"
-        testdir.mkdir()
-        filename_test = testdir / f"test_spec_{output_file.name}"
-        filename_test_run = testdir / f"test_run_{output_file.name}"
-
+        module_path = (Path(package_root) / "pydra" / "tasks").joinpath(self.output_module.split("."))
+        output_file = (module_path / self.task_name.lower()).with_suffix(".py")
         self.write_task(output_file, input_fields, output_fields)
 
+        testdir = module_path / "tests"
+        testdir.mkdir()
+        filename_test = testdir / f"test_spec_{self.task_name.lower()}"
+        filename_test_run = testdir / f"test_run_{self.task_name.lower()}"
         self.write_test(filename_test=filename_test)
         self.write_test(filename_test=filename_test_run, run=True)
 
@@ -131,7 +145,7 @@ class TaskConverter:
                     tp_pdr = str
             elif nm not in self.output_callables:
                 raise Exception(
-                    f"the filed {nm} has genfile=True, but no output template or callables provided"
+                    f"the filed {nm} has genfile=True, but no output template or callables_module provided"
                 )
 
         metadata_pdr.update(metadata_extra_spec)
@@ -346,12 +360,12 @@ class TaskConverter:
 
         spec_str = "import os, pytest \nfrom pathlib import Path\n"
         spec_str += (
-            f"from ..{self.task_name.lower()} import {self.task_name} \n\n"
+            f"from pydra.tasks.{self.output_module}.{self.task_name.lower()} import {self.task_name} \n\n"
         )
         if run:
             pass
         spec_str += f"@pytest.mark.parametrize('inputs, outputs', {tests_inp_outp})\n"
-        spec_str += f"def test_{self.task_name}(test_data, inputs, outputs):\n"
+        spec_str += f"def test_{self.task_name.lower()}(test_data, inputs, outputs):\n"
         spec_str += "    in_file = Path(test_data) / 'test.nii.gz'\n"
         spec_str += "    if inputs is None: inputs = {{}}\n"
         spec_str += "    for key, val in inputs.items():\n"

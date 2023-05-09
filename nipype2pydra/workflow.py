@@ -7,7 +7,6 @@ from collections import defaultdict
 import black
 from nipype.interfaces.base import isdefined
 from .utils import load_class_or_func
-from nipype.pipeline.engine.workflows import Workflow
 
 
 class WorkflowConverter:
@@ -41,8 +40,7 @@ class WorkflowConverter:
             connections.update(self.node_connections(nested_wf, functions=functions))
         return connections
 
-
-    def generate(self, format_with_black=False):
+    def generate(self, package_root: str, format_with_black: bool = False):
 
         functions = defaultdict(dict)
         connections = self.node_connections(self.wf, functions=functions)

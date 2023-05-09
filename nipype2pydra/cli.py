@@ -20,11 +20,12 @@ YAML_SPEC is a YAML file which defines interfaces to be imported along with an
 manually specified aspects of the conversion see
 https://github.com/nipype/nipype2pydra/tree/main/example-specs for examples
 
-OUTPUT_BASE_DIR is the path of generated module file
+PACKAGE_ROOT is the path to the root directory of the package in which to generate the
+converted module file
 """
 )
 @click.argument("yaml-spec", type=click.File())
-@click.argument("output-file", type=Path)
+@click.argument("package-root", type=Path)
 @click.option(
     "-c",
     "--callables",
@@ -32,20 +33,32 @@ OUTPUT_BASE_DIR is the path of generated module file
     default=None,
     help="a Python file containing callable functions required in the command interface",
 )
-def task(yaml_spec, output_file, callables):
+@click.option(
+    "--output-module" "-m",
+    type=str,
+    default=None,
+    help=(
+        "the output module to store the converted task into relative to the `pydra.tasks` "
+        "package. If not provided, then the path relative to `nipype.interfaces` in the "
+        "source interface will be used instead"
+    ),
+)
+def task(yaml_spec, package_root, callables, output_module):
 
     spec = yaml.safe_load(yaml_spec)
 
-    converter = TaskConverter(callables_module=callables, **spec)
-    converter.generate(output_file)
+    converter = TaskConverter(
+        output_module=output_module, callables_module=callables, **spec
+    )
+    converter.generate(package_root)
 
 
 @cli.command(help="Port Nipype workflow creation functions to Pydra")
 @click.argument("yaml-spec", type=click.File())
-@click.argument("output-module-file", type=click.File(mode="w"))
-def workflow(yaml_spec, output_module_file):
+@click.argument("package-root", type=click.File(mode="w"))
+def workflow(yaml_spec, package_root):
 
     spec = yaml.safe_load(yaml_spec)
 
     converter = WorkflowConverter(spec)
-    converter.generate(output_module_file)
+    converter.generate(package_root)
