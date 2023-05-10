@@ -38,7 +38,7 @@ be desirable to rename some of the inputs/outputs to more intuitive names. Such
 specifications are stored in YAML_ format, such as the ANTs registration conversion
 specification,
 
-.. code-block::yaml
+.. code-block:: yaml
 
     task_name: Registration
     nipype_module: nipype.interfaces.ants.registration
