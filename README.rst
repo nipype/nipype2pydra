@@ -26,8 +26,15 @@ To convert a Nipype_ interface to a Pydra_ task run the `nipype2pydra task` comm
 pass it the conversion specification YAML file and the root of the package to save the
 generated module, e.g.::
 
-    $ nipype2pydra task ants_registration_registration.yaml /Users/youruser/git/pydra-ants/
+    $ nipype2pydra task ants_registration_registration.yaml /path/to/package/root
 
+This will create a module file under the package root directory based on the `output_module`
+field in the specification, e.g::
+    
+    /path/to/package/root/output/module/value
+
+If that is missing and the nipype interface is in the standard `nipype.interfaces`
+package, then it will be stored at `pydra.tasks.` with the same path end.
 
 Conversion Specifications
 -------------------------
