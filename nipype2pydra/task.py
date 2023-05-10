@@ -39,7 +39,11 @@ class TaskConverter:
     def __attrs_post_init__(self):
         if self.output_module is None:
             if self.nipype_module.__name__.startswith("nipype.interfaces."):
-                self.output_module = self.nipype_module.__name__[len("nipype.interfaces."):]
+                self.output_module = (
+                    "pydra.tasks."
+                    + self.nipype_module.__name__[len("nipype.interfaces.") :]
+                    + "." + self.task_name.lower()
+                )
             else:
                 raise RuntimeError(
                     "Output-module needs to be explicitly provided to task converter "
@@ -67,14 +71,14 @@ class TaskConverter:
         input_fields, inp_templates = self.convert_input_fields()
         output_fields = self.convert_output_spec(fields_from_template=inp_templates)
 
-        module_path = (Path(package_root) / "pydra" / "tasks").joinpath(self.output_module.split("."))
-        output_file = (module_path / self.task_name.lower()).with_suffix(".py")
+        output_file = Path(package_root).joinpath(*self.output_module.split(".")).with_suffix(".py")
+        testdir = output_file.parent / "tests"
+        testdir.mkdir(parents=True)
+
         self.write_task(output_file, input_fields, output_fields)
 
-        testdir = module_path / "tests"
-        testdir.mkdir()
-        filename_test = testdir / f"test_spec_{self.task_name.lower()}"
-        filename_test_run = testdir / f"test_run_{self.task_name.lower()}"
+        filename_test = testdir / f"test_spec_{self.task_name.lower()}.py"
+        filename_test_run = testdir / f"test_run_{self.task_name.lower()}.py"
         self.write_test(filename_test=filename_test)
         self.write_test(filename_test=filename_test_run, run=True)
 
@@ -359,9 +363,7 @@ class TaskConverter:
                 tests_inp_error.append((tests_inputs[i], out))
 
         spec_str = "import os, pytest \nfrom pathlib import Path\n"
-        spec_str += (
-            f"from pydra.tasks.{self.output_module}.{self.task_name.lower()} import {self.task_name} \n\n"
-        )
+        spec_str += f"from {self.output_module} import {self.task_name} \n\n"
         if run:
             pass
         spec_str += f"@pytest.mark.parametrize('inputs, outputs', {tests_inp_outp})\n"
@@ -399,9 +401,7 @@ class TaskConverter:
         """
         spec_str = "\n\n"
         spec_str += f"@pytest.mark.parametrize('inputs, error', {input_error})\n"
-        spec_str += (
-            f"def test_{self.task_name}_exception(test_data, inputs, error):\n"
-        )
+        spec_str += f"def test_{self.task_name}_exception(test_data, inputs, error):\n"
         spec_str += "    in_file = Path(test_data) / 'test.nii.gz'\n"
         spec_str += "    if inputs is None: inputs = {{}}\n"
         spec_str += "    for key, val in inputs.items():\n"

@@ -34,7 +34,8 @@ converted module file
     help="a Python file containing callable functions required in the command interface",
 )
 @click.option(
-    "--output-module" "-m",
+    "--output-module",
+    "-m",
     type=str,
     default=None,
     help=(

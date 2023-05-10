@@ -1,8 +1,13 @@
 from importlib import import_module
 import yaml
 from conftest import show_cli_trace
+import pytest
+import logging
 from nipype2pydra.cli import task as task_cli
-from nipype2pydra.utils import import_module_from_path
+from nipype2pydra.utils import add_to_sys_path
+
+
+logging.basicConfig(level=logging.INFO)
 
 
 INBUILT_NIPYPE_TRAIT_NAMES = [
@@ -18,19 +23,24 @@ def test_task_conversion(task_spec_file, cli_runner, work_dir):
 
     with open(task_spec_file) as f:
         task_spec = yaml.safe_load(f)
-    output_file = (work_dir / task_spec_file.stem).with_suffix(".py")
+    pkg_root = work_dir / "src"
+
+    output_module_path = f"nipype2pydratest.{task_spec_file.stem.lower()}"
 
     result = cli_runner(
         task_cli,
         args=[
             str(task_spec_file),
-            str(output_file),
+            str(pkg_root),
+            "--output-module",
+            output_module_path,
         ],
     )
 
     assert result.exit_code == 0, show_cli_trace(result)
 
-    pydra_module = import_module_from_path(output_file)
+    with add_to_sys_path(pkg_root):
+        pydra_module = import_module(output_module_path)
     pydra_task = getattr(pydra_module, task_spec["task_name"])
     nipype_interface = getattr(
         import_module(task_spec["nipype_module"]), task_spec["task_name"]
@@ -43,8 +53,15 @@ def test_task_conversion(task_spec_file, cli_runner, work_dir):
         for n in nipype_trait_names
         if not (
             n in INBUILT_NIPYPE_TRAIT_NAMES
-            or (n.endswith("_items") and n[:-len("_items")] in nipype_trait_names)
+            or (n.endswith("_items") and n[: -len("_items")] in nipype_trait_names)
         )
     )
 
-    # TODO: More detailed tests needed here
+    tests_fspath = pkg_root.joinpath(*output_module_path.split(".")).parent / "tests"
+
+    logging.info("Running generated tests for %s", output_module_path)
+    # Run generated pytests
+    with add_to_sys_path(pkg_root):
+        result = pytest.main([str(tests_fspath)])
+
+    assert result.value == 0
