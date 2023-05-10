@@ -21,6 +21,7 @@ maintainers = [
     {name = "Thomas G. Close", email = "tom.g.close@gmail.com"},
 ]
 keywords = [
+    "black",
     "nipype",
     "data",
     "pydra",
@@ -46,7 +47,6 @@ dynamic = ["version"]
 
 [project.optional-dependencies]
 dev = [
-    "black",
     "pre-commit",
     "codespell",
     "flake8",
