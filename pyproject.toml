@@ -8,6 +8,7 @@ description = "Tool for converting Nipype tasks and workflows into Pydra syntax"
 readme = "README.rst"
 requires-python = ">=3.7"
 dependencies = [
+    "black",
     "attrs>=22.1.0",
     "nipype",
     "pydra",
