@@ -22,7 +22,6 @@ maintainers = [
     {name = "Thomas G. Close", email = "tom.g.close@gmail.com"},
 ]
 keywords = [
-    "black",
     "nipype",
     "data",
     "pydra",
