@@ -22,3 +22,4 @@ __pycache__
 /outputs
 /Test.venv
 /test-data
+/nipype2pydra/_version.py
