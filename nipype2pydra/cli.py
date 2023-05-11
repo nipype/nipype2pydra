@@ -3,7 +3,6 @@ import click
 import yaml
 from nipype2pydra import __version__
 from .task import TaskConverter
-from .workflow import WorkflowConverter
 
 
 # Define the base CLI entrypoint
@@ -51,15 +50,4 @@ def task(yaml_spec, package_root, callables, output_module):
     converter = TaskConverter(
         output_module=output_module, callables_module=callables, **spec
     )
-    converter.generate(package_root)
-
-
-@cli.command(help="Port Nipype workflow creation functions to Pydra")
-@click.argument("yaml-spec", type=click.File())
-@click.argument("package-root", type=click.File(mode="w"))
-def workflow(yaml_spec, package_root):
-
-    spec = yaml.safe_load(yaml_spec)
-
-    converter = WorkflowConverter(spec)
     converter.generate(package_root)
