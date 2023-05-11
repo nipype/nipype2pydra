@@ -31,7 +31,7 @@ generated module, e.g.::
 This will create a module file under the package root directory based on the `output_module`
 field in the specification, e.g::
     
-    /path/to/package/root/output/module/value
+    /path/to/package/root/output/module/path
 
 If that is missing and the nipype interface is in the standard `nipype.interfaces`
 package, then it will be stored at `pydra.tasks.` with the same path end.
