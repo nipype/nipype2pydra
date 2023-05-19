@@ -72,7 +72,7 @@ Installation
 
 .. code-block:: bash
 
-    $ python3 -m pip nipype2pydra
+    $ python3 -m pip install nipype2pydra
 
 
 License
