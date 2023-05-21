@@ -72,7 +72,7 @@ Installation
 
 .. code-block:: bash
 
-    $ python3 -m pip install nipype2pydra
+    $ python3 -m pip install git+https://github.com/nipype/nipype2pydra.git
 
 
 License
