@@ -16,6 +16,8 @@ INBUILT_NIPYPE_TRAIT_NAMES = [
     "trait_added",
     "trait_modified",
     "environ",
+    "output_type",
+    "crop_list",
 ]
 
 

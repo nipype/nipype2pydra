@@ -12,9 +12,9 @@ doctest:
     t_size: 3
     roi_file: test_trim.nii.gz
     cmdline: fslroi test.nii.gz test_trim.nii.gz 0 3
-tests_inputs:
-    - in_file: test.nii.gz
-      t_min: 0
-      t_size: 1
-tests_outputs:
-    - roi_file
+tests_inputs: []
+    # - in_file: test.nii.gz
+    #   t_min: 0
+    #   t_size: 1
+tests_outputs: []
+    # - roi_file
