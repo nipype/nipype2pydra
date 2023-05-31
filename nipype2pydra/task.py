@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 import typing as ty
 from types import ModuleType
+import re
 import inspect
 import black
 import traits
@@ -329,8 +330,17 @@ class TaskConverter:
         spec_str += f"    output_spec = {self.task_name}_output_spec\n"
         spec_str += f"    executable='{self.nipype_interface._cmd}'\n"
 
-        for tp_repl in self.TYPE_REPLACE:
-            spec_str = spec_str.replace(*tp_repl)
+        # for tp_repl in self.TYPE_REPLACE:
+        #     spec_str = spec_str.replace(*tp_repl)
+
+        # apply each replacement in TYPE_REPLACE
+        for old, new in self.TYPE_REPLACE:
+            # add a comma and newline to the old string, to match only at the end of lines
+            old += ",\n"
+            # add a comma and newline to the new string, to replace with
+            new += ",\n"
+            # use re.sub to replace old with new, in spec_str
+            spec_str = re.sub(old, new, spec_str)
 
         spec_str_black = black.format_file_contents(
             spec_str, fast=False, mode=black.FileMode()
