@@ -23,11 +23,9 @@ packages:
 - niftyreg
 - niftyseg
 - nilearn
-- nipy
 - nitime
 - petpvc
 - quickshear
-- r
 - robex
 - semtools
 - slicer
@@ -669,23 +667,12 @@ interfaces:
   nilearn:
   - NilearnBaseInterface
   - SignalExtraction
-  nipy/model:
-  - FitGLM
-  - EstimateContrast
-  nipy/preprocess:
-  - ComputeMask
-  - SpaceTimeRealigner
-  - Trim
-  nipy/utils:
-  - Similarity
   nitime/analysis:
   - CoherenceAnalyzer
   petpvc:
   - PETPVC
   quickshear:
   - Quickshear
-  r:
-  - RCommand
   robex/preprocess:
   - RobexSegment
   semtools/brains/classify:
