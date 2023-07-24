@@ -21,7 +21,7 @@ class TaskConverter:
     nipype_module: ModuleType = attrs.field(converter=import_module_from_path)
     output_requirements: dict = attrs.field(factory=dict)
     inputs_metadata: dict = attrs.field(factory=dict)
-    inputs_drop: dict = attrs.field(factory=dict)
+    inputs_drop: dict = attrs.field(factory=list)
     output_templates: dict = attrs.field(factory=dict)
     output_callables: dict = attrs.field(factory=dict)
     doctest: dict = attrs.field(factory=dict)

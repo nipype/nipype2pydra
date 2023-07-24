@@ -1,4 +1,5 @@
 import traceback
+import typing as ty
 from types import ModuleType
 import sys
 import os
@@ -18,7 +19,7 @@ def show_cli_trace(result):
     return "".join(traceback.format_exception(*result.exc_info))
 
 
-def import_module_from_path(module_path: Path) -> ModuleType:
+def import_module_from_path(module_path: ty.Union[ModuleType, Path, str]) -> ModuleType:
     if isinstance(module_path, ModuleType) or module_path is None:
         return module_path
     module_path = Path(module_path).resolve()
