@@ -311,7 +311,6 @@ class TaskConverter:
                     el[1] = el[1]._name
                     # add 'TYPE_' to the beginning of the name
                     el[1] = "TYPE_" + el[1]
-                print(tuple(el))
                 spec_fields_str.append(tuple(el))
             return spec_fields_str
 
