@@ -13,7 +13,6 @@ from pydra.engine import specs
 from pydra.engine.helpers import ensure_list
 from .utils import import_module_from_path
 
-
 @attrs.define
 class TaskConverter:
 
@@ -326,7 +325,6 @@ class TaskConverter:
         spec_str += f"{self.task_name}_input_spec = specs.SpecInfo(name='Input', fields=input_fields, bases=(specs.ShellSpec,))\n\n"
         spec_str += f"output_fields = {output_fields_str}\n"
         spec_str += f"{self.task_name}_output_spec = specs.SpecInfo(name='Output', fields=output_fields, bases=(specs.ShellOutSpec,))\n\n"
-
         spec_str += f"class {self.task_name}(ShellCommandTask):\n"
         if self.doctest:
             spec_str += self.create_doctest()
@@ -415,7 +413,6 @@ class TaskConverter:
         spec_str += f"    task = {self.task_name}(in_file=in_file, **inputs)\n"
         spec_str += "    with pytest.raises(eval(error)):\n"
         spec_str += "        task.generated_output_names\n"
-
         return spec_str
 
     def create_doctest(self):
