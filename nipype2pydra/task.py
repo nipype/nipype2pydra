@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 import typing as ty
 from types import ModuleType
+import re
 import inspect
 import black
 import traits
@@ -12,7 +13,6 @@ from pydra.engine import specs
 from pydra.engine.helpers import ensure_list
 from .utils import import_module_from_path
 
-
 @attrs.define
 class TaskConverter:
 
@@ -20,7 +20,7 @@ class TaskConverter:
     nipype_module: ModuleType = attrs.field(converter=import_module_from_path)
     output_requirements: dict = attrs.field(factory=dict)
     inputs_metadata: dict = attrs.field(factory=dict)
-    inputs_drop: dict = attrs.field(factory=list)
+    inputs_drop: dict = attrs.field(factory=dict)
     output_templates: dict = attrs.field(factory=dict)
     output_callables: dict = attrs.field(factory=dict)
     doctest: dict = attrs.field(factory=dict)
@@ -304,8 +304,12 @@ class TaskConverter:
                 el = list(el)
                 try:
                     el[1] = el[1].__name__
+                    # add 'TYPE_' to the beginning of the name
+                    el[1] = "TYPE_" + el[1]
                 except (AttributeError):
                     el[1] = el[1]._name
+                    # add 'TYPE_' to the beginning of the name
+                    el[1] = "TYPE_" + el[1]
                 spec_fields_str.append(tuple(el))
             return spec_fields_str
 
@@ -321,7 +325,6 @@ class TaskConverter:
         spec_str += f"{self.task_name}_input_spec = specs.SpecInfo(name='Input', fields=input_fields, bases=(specs.ShellSpec,))\n\n"
         spec_str += f"output_fields = {output_fields_str}\n"
         spec_str += f"{self.task_name}_output_spec = specs.SpecInfo(name='Output', fields=output_fields, bases=(specs.ShellOutSpec,))\n\n"
-
         spec_str += f"class {self.task_name}(ShellCommandTask):\n"
         if self.doctest:
             spec_str += self.create_doctest()
@@ -329,8 +332,8 @@ class TaskConverter:
         spec_str += f"    output_spec = {self.task_name}_output_spec\n"
         spec_str += f"    executable='{self.nipype_interface._cmd}'\n"
 
-        # for tp_repl in self.TYPE_REPLACE:
-        #     spec_str = spec_str.replace(*tp_repl)
+        for tp_repl in self.TYPE_REPLACE:
+            spec_str = spec_str.replace(*tp_repl)
 
         spec_str_black = black.format_file_contents(
             spec_str, fast=False, mode=black.FileMode()
@@ -410,7 +413,6 @@ class TaskConverter:
         spec_str += f"    task = {self.task_name}(in_file=in_file, **inputs)\n"
         spec_str += "    with pytest.raises(eval(error)):\n"
         spec_str += "        task.generated_output_names\n"
-
         return spec_str
 
     def create_doctest(self):
@@ -454,16 +456,16 @@ class TaskConverter:
     ]
 
     TYPE_REPLACE = [
-        ("'File'", "specs.File"),
-        ("'bool'", "bool"),
-        ("'str'", "str"),
-        ("'Any'", "ty.Any"),
-        ("'int'", "int"),
-        ("'float'", "float"),
-        ("'list'", "list"),
-        ("'dict'", "dict"),
-        ("'MultiInputObj'", "specs.MultiInputObj"),
-        ("'MultiOutputObj'", "specs.MultiOutputObj"),
-        ("'MultiInputFile'", "specs.MultiInputFile"),
-        ("'MultiOutputFile'", "specs.MultiOutputFile"),
+        ("'TYPE_File'", "specs.File"),
+        ("'TYPE_bool'", "bool"),
+        ("'TYPE_str'", "str"),
+        ("'TYPE_Any'", "ty.Any"),
+        ("'TYPE_int'", "int"),
+        ("'TYPE_float'", "float"),
+        ("'TYPE_list'", "list"),
+        ("'TYPE_dict'", "dict"),
+        ("'TYPE_MultiInputObj'", "specs.MultiInputObj"),
+        ("'TYPE_MultiOutputObj'", "specs.MultiOutputObj"),
+        ("'TYPE_MultiInputFile'", "specs.MultiInputFile"),
+        ("'TYPE_MultiOutputFile'", "specs.MultiOutputFile"),
     ]
