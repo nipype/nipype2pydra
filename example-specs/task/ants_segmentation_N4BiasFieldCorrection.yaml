@@ -1,12 +1,21 @@
-nipype_module: nipype.interfaces.ants.segmentation
 task_name: N4BiasFieldCorrection
-output_requirements:
-    output_image: []
-    bias_image: ["save_bias"]
-output_templates:
-    output_image: ""
+nipype_module: nipype.interfaces.ants.segmentation
+nipype_name:
+inputs:
+    omit:
+    rename:
+    types:
+    metadata:
+outputs:
+    omit:
+    rename:
+    types:
+    callables:
+    templates:
+    requirements:
+        bias_image: ["save_bias"]
+test:
 doctest:
-    input_image: test.nii.gz
     cmdline:
-tests_inputs: []
-tests_outputs: [] # - AttributeError
+    inputs:
+        input_image: test.nii.gz

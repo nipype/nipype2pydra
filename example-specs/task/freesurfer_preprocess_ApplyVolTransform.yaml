@@ -1,10 +1,21 @@
-nipype_module: nipype.interfaces.freesurfer.preprocess
 task_name: ApplyVolTransform
-output_requirements: []
-output_templates:
-    transformed_file: "{source_file}_warped"
+nipype_module: nipype.interfaces.freesurfer.preprocess
+nipype_name:
+inputs:
+    omit:
+    rename:
+    types:
+        source_file: medimage/nifti-gz
+    metadata:
+outputs:
+    omit:
+    rename:
+    types:
+    callables:
+    templates:
+        transformed_file: "{source_file}_warped"
+    requirements:   
 doctest:
-    source_file: test.nii.gz
-    cmdline: mri_vol2vol
-tests_inputs: []
-tests_outputs: []
+    cmdline: mri_vol2vol /mock/medimage/nifti-gz.nii.gz
+    inputs:
+        source_file:
