@@ -1,20 +1,30 @@
 task_name: ExtractROI
 nipype_module: nipype.interfaces.fsl.utils
-output_requirements:
-    roi_file: [in_file]
-output_templates:
-    roi_file: "{in_file}_trim"
-inputs_drop:
-    - crop_list
+nipype_name:
+inputs:
+    omit:
+        - crop_list
+    rename:
+    types:
+        in_file: medimage/nifti-gz
+    metadata:
+outputs:
+    omit:
+    rename:
+    types:
+    callables:
+    requirements:
+        roi_file: [in_file]
+    templates:
+        roi_file: "{in_file}_trim"
 doctest:
-    in_file: test.nii.gz
-    t_min: 0
-    t_size: 3
-    roi_file: test_trim.nii.gz
     cmdline: fslroi test.nii.gz test_trim.nii.gz 0 3
-tests_inputs: []
-    # - in_file: test.nii.gz
-    #   t_min: 0
-    #   t_size: 1
-tests_outputs: []
-    # - roi_file
+    inputs:
+        t_min: 0
+        t_size: 3
+        roi_file: test_trim.nii.gz
+test:
+    inputs:
+        t_min: 0
+        t_size: 1
+    outputs:
