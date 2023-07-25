@@ -6,7 +6,7 @@ from importlib import import_module
 from types import ModuleType
 import inspect
 import black
-import traits
+import traits.trait_types
 import attrs
 from attrs.converters import default_if_none
 import nipype.interfaces.base
@@ -14,7 +14,7 @@ from nipype.interfaces.base import traits_extension
 from pydra.engine import specs
 from pydra.engine.helpers import ensure_list
 from .utils import import_module_from_path
-from fileformats.core import DataType
+from fileformats.core import DataType, FileSet
 
 
 def str_to_type(type_str: str) -> type:
@@ -59,12 +59,26 @@ def types_converter(types: ty.Dict[str, ty.Union[str, type]]) -> ty.Dict[str, ty
 @attrs.define
 class SpecConverter:
     omit: ty.List[str] = attrs.field(
-        factory=list, converter=default_if_none(factory=list)  # type: ignore
+        factory=list,
+        converter=default_if_none(factory=list),  # type: ignore
+        metadata={"help": "Fields to omit from the Pydra interface"},
     )
     rename: ty.Dict[str, str] = attrs.field(
-        factory=dict, converter=default_if_none(factory=dict)  # type: ignore
+        factory=dict,
+        converter=default_if_none(factory=dict),  # type: ignore
+        metadata={"help": "fields to rename in the Pydra interface"},
     )
-    types: ty.Dict[str, type] = attrs.field(converter=types_converter, factory=dict)
+    types: ty.Dict[str, type] = attrs.field(
+        converter=types_converter,
+        factory=dict,
+        metadata={
+            "help": """Override inferred type (use mime-type string for file-format types).
+                Most of the time the correct type will be inferred from the nipype interface,
+                but you may want to be more specific, typically for the case of file types
+                where specifying the format will change the type of file that will be
+                passed to the field in the automatically generated unittests."""
+        },
+    )
 
 
 @attrs.define
@@ -78,15 +92,21 @@ class InputsConverter(SpecConverter):
     rename : dict[str, str], optional
         input fields to rename in the Pydra interface
     types : dict[str, type], optional
-        types to set explicitly (i.e. instead of determining from nipype interface),
-        particularly relevant for file-types, where specifying the format will determine
-        the type of file that is passed to the field in the automatically generated unittests
+        Override inferred type (use mime-type string for file-format types).
+        Most of the time the correct type will be inferred from the nipype interface,
+        but you may want to be more specific, typically for the case of file types
+        where specifying the format will change the type of file that will be
+        passed to the field in the automatically generated unittests.
     metadata: dict[str, dict[str, Any]], optional
         additional metadata to set on any of the input fields (e.g. out_file: position: 1)
     """
 
     metadata: ty.Dict[str, ty.Dict[str, ty.Any]] = attrs.field(
-        factory=dict, converter=default_if_none(factory=dict)  # type: ignore
+        factory=dict,
+        converter=default_if_none(factory=dict),  # type: ignore
+        metadata={
+            "help": "additional metadata to set on any of the input fields (e.g. out_file: position: 1)"
+        },
     )
 
 
@@ -105,21 +125,35 @@ class OutputsConverter(SpecConverter):
         particularly relevant for file-types, where specifying the format will determine
         the type of file that is passed to the field in the automatically generated unittests
     callables : dict[str, str or callable], optional
-        callables that need to be set in order to extract the values of the outputs
+        names of methods/callable classes defined in the adjacent `*_callables.py`
+        to set to the `callable` attribute of output fields
     templates : dict[str, str], optional
-        templates that need to be provided to the outputs
+        `output_file_template` values to be provided to output fields
     requirements : dict[str, list[str]]
         input fields that are required to be provided for the output field to be present
     """
 
     callables: ty.Dict[str, str] = attrs.field(
-        factory=dict, converter=default_if_none(factory=dict)  # type: ignore
+        factory=dict,
+        converter=default_if_none(factory=dict),  # type: ignore
+        metadata={
+            "help": """names of methods/callable classes defined in the adjacent `*_callables.py`
+            to set to the `callable` attribute of output fields"""
+        },
     )
     templates: ty.Dict[str, str] = attrs.field(
-        factory=dict, converter=default_if_none(factory=dict)  # type: ignore
+        factory=dict,
+        converter=default_if_none(factory=dict),  # type: ignore
+        metadata={
+            "help": "`output_file_template` values to be provided to output fields"
+        },
     )
     requirements: ty.Dict[str, ty.List[str]] = attrs.field(
-        factory=dict, converter=default_if_none(factory=dict)  # type: ignore
+        factory=dict,
+        converter=default_if_none(factory=dict),  # type: ignore
+        metadata={
+            "help": "input fields that are required to be provided for the output field to be present"
+        },
     )
 
     @callables.validator
@@ -150,12 +184,30 @@ class TestsGenerator:
     """
 
     inputs: ty.Dict[str, str] = attrs.field(
-        factory=dict, converter=default_if_none(factory=dict)  # type: ignore
+        factory=dict,
+        converter=default_if_none(factory=dict),  # type: ignore
+        metadata={
+            "help": """values to provide to specific inputs fields (if not provided,
+                a sensible value within the valid range will be provided"""
+        },
     )
     outputs: ty.Dict[str, str] = attrs.field(
-        factory=dict, converter=default_if_none(factory=dict)  # type: ignore
+        factory=dict, converter=default_if_none(factory=dict),  # type: ignore
+        metadata={
+            "help": """expected values for selected outputs, noting that in tests will typically
+                be terminated before they complete for time-saving reasons and will therefore
+                be ignored"""
+        },
     )
-    timeout: int = 10
+    timeout: int = attrs.field(
+        default=10,
+        metadata={
+            "help": """The value to set for the timeout in the generated test, 
+                "after which the test will be considered to have been initialised 
+                "successulfully. Set to 0 to disable the timeout (warning, this could
+                lead to the unittests taking a very long time to complete)"""
+        }
+    )
 
 
 @attrs.define
@@ -172,23 +224,53 @@ class DocTestGenerator:
         valid for file-format types).
     """
 
-    cmdline: str
-    inputs: ty.Dict[str, str] = attrs.field(factory=dict)
+    cmdline: str = attrs.field(metadata={"help": "the expected cmdline output"})
+    inputs: ty.Dict[str, str] = attrs.field(
+        factory=dict,
+        metadata={
+            "help": """name-value pairs for inputs to be provided to the doctest.
+                If the field is of file-format type and the value is None, then the
+                ".mock()" method of the corresponding class is used instead (only valid
+                for file-format types)."""}
+    )
 
 
 T = ty.TypeVar("T")
 
 
-def convert_from_dict(obj: object, klass: ty.Type[T]) -> T:
+def from_dict_converter(
+    obj: ty.Union[T, dict], klass: ty.Type[T], allow_none=False
+) -> T:
     if obj is None:
-        obj = klass()
+        if allow_none:
+            converted = None
+        else:
+            converted = klass()
     elif isinstance(obj, dict):
-        obj = klass(**obj)
-    elif not isinstance(obj, klass):
+        converted = klass(**obj)
+    elif isinstance(obj, klass):
+        converted = obj
+    else:
         raise TypeError(
             f"Input must be of type {klass} or dict, not {type(obj)}: {obj}"
         )
-    return obj
+    return converted
+
+
+def from_dict_to_inputs(obj: ty.Union[InputsConverter, dict]) -> InputsConverter:
+    return from_dict_converter(obj, InputsConverter)
+
+
+def from_dict_to_outputs(obj: ty.Union[OutputsConverter, dict]) -> OutputsConverter:
+    return from_dict_converter(obj, OutputsConverter)
+
+
+def from_dict_to_test(obj: ty.Union[TestsGenerator, dict]) -> TestsGenerator:
+    return from_dict_converter(obj, TestsGenerator)
+
+
+def from_dict_to_doctest(obj: ty.Union[DocTestGenerator, dict]) -> DocTestGenerator:
+    return from_dict_converter(obj, DocTestGenerator, allow_none=True)
 
 
 @attrs.define
@@ -224,21 +306,22 @@ class TaskConverter:
     nipype_module: ModuleType = attrs.field(converter=import_module_from_path)
     output_module: str = attrs.field(default=None)
     nipype_name: str = attrs.field(default=None)
-    inputs: InputsConverter = attrs.field(  # type: ignore
-        factory=InputsConverter,
-        converter=lambda x: convert_from_dict(x, InputsConverter),
+    inputs: InputsConverter = attrs.field(
+        factory=InputsConverter, converter=from_dict_to_inputs
     )
     outputs: OutputsConverter = attrs.field(  # type: ignore
         factory=OutputsConverter,
-        converter=lambda x: convert_from_dict(x, OutputsConverter),
+        converter=from_dict_to_outputs,
     )
     callables_module: ModuleType = attrs.field(
         converter=import_module_from_path, default=None
     )
     test: TestsGenerator = attrs.field(  # type: ignore
-        factory=TestsGenerator, converter=lambda x: convert_from_dict(x, TestsGenerator)
+        factory=TestsGenerator, converter=from_dict_to_test
     )
-    doctest: ty.Optional[DocTestGenerator] = attrs.field(default=None)
+    doctest: ty.Optional[DocTestGenerator] = attrs.field(
+        default=None, converter=from_dict_to_doctest
+    )
 
     def __attrs_post_init__(self):
         if self.output_module is None:
@@ -292,11 +375,20 @@ class TaskConverter:
         testdir = output_file.parent / "tests"
         testdir.mkdir(parents=True)
 
-        self.write_task(output_file, input_fields, output_fields)
+        self.write_task(
+            output_file,
+            input_fields=input_fields,
+            output_fields=output_fields,
+            nonstd_types=nonstd_types,
+        )
 
         filename_test = testdir / f"test_{self.task_name.lower()}.py"
         # filename_test_run = testdir / f"test_run_{self.task_name.lower()}.py"
-        self.write_test(filename_test=filename_test, nonstd_types=nonstd_types)
+        self.write_test(
+            filename_test,
+            input_fields=input_fields,
+            nonstd_types=nonstd_types,
+        )
         # self.write_test(filename_test=filename_test_run, run=True)
 
     def convert_input_fields(self):
@@ -522,7 +614,7 @@ class TaskConverter:
             raise Exception(f"format from {argstr} is not supported TODO")
         return argstr_new
 
-    def write(self, filename, input_fields, output_fields):
+    def write_task(self, filename, input_fields, nonstd_types, output_fields):
         """writing pydra task to the dile based on the input and output spec"""
 
         def types_to_names(spec_fields):
@@ -533,7 +625,7 @@ class TaskConverter:
                     el[1] = el[1].__name__
                     # add 'TYPE_' to the beginning of the name
                     el[1] = "TYPE_" + el[1]
-                except (AttributeError):
+                except AttributeError:
                     el[1] = el[1]._name
                     # add 'TYPE_' to the beginning of the name
                     el[1] = "TYPE_" + el[1]
@@ -546,15 +638,17 @@ class TaskConverter:
         spec_str = (
             "from pydra.engine import specs \nfrom pydra import ShellCommandTask \n"
         )
-        spec_str += "import typing as ty\n"
+        spec_str += self.import_types(nonstd_types)
         spec_str += functions_str
         spec_str += f"input_fields = {input_fields_str}\n"
         spec_str += f"{self.task_name}_input_spec = specs.SpecInfo(name='Input', fields=input_fields, bases=(specs.ShellSpec,))\n\n"
         spec_str += f"output_fields = {output_fields_str}\n"
         spec_str += f"{self.task_name}_output_spec = specs.SpecInfo(name='Output', fields=output_fields, bases=(specs.ShellOutSpec,))\n\n"
         spec_str += f"class {self.task_name}(ShellCommandTask):\n"
-        if self.doctest:
-            spec_str += self.create_doctest()
+        if self.doctest is not None:
+            spec_str += self.create_doctest(
+                input_fields=input_fields, nonstd_types=nonstd_types
+            )
         spec_str += f"    input_spec = {self.task_name}_input_spec\n"
         spec_str += f"    output_spec = {self.task_name}_output_spec\n"
         spec_str += f"    executable='{self.nipype_interface._cmd}'\n"
@@ -569,41 +663,57 @@ class TaskConverter:
         with open(filename, "w") as f:
             f.write(spec_str_black)
 
-    def write_test(self, filename_test, nonstd_types, run=False):
-        """writing tests for the specific interface based on the test spec (from interface_spec)
-        if run is True the test contains task run,
-        if run is False only the spec is check by the test
-        """
-        # if len(self.test.inputs) != len(self.test.outputs):
-        #     raise Exception("tests and self.test.outputs should have the same length")
-
-        # tests_inp_outp = []
-        # tests_inp_error = []
-        # for i, out in enumerate(self.test.outputs):
-        #     if isinstance(out, list):
-        #         tests_inp_outp.append((self.test.inputs[i], out))
-        #     elif out is None:
-        #         tests_inp_outp.append((self.test.inputs[i], []))
-        #     # allowing for incomplete or incorrect inputs that should raise an exception
-        #     elif out not in ["AttributeError", "Exception"]:
-        #         tests_inp_outp.append((self.test.inputs[i], [out]))
-        #     else:
-        #         tests_inp_error.append((self.test.inputs[i], out))
-
-        spec_str = "import os, pytest \nfrom pathlib import Path\n"
-        spec_str += f"from {self.output_module} import {self.task_name}\n"
+    @staticmethod
+    def import_types(nonstd_types: ty.List[type], prefix="") -> str:
+        imports = "import typing as ty\nfrom pathlib import Path\n"
         for tp in nonstd_types:
-            spec_str += f"from {tp.__module__} import {tp.__name__}\n"
+            imports += f"{prefix}from {tp.__module__} import {tp.__name__}\n"
+        return imports
+
+    def write_test(self, filename_test, input_fields, nonstd_types, run=False):
+        spec_str = "import os, pytest \n"
+        spec_str += self.import_types(nonstd_types=nonstd_types)
+        spec_str += f"from {self.output_module} import {self.task_name}\n"
         spec_str += "\n"
-        spec_str += f"@pytest.mark.timeout_pass(timeout={self.test.timeout})"
+        spec_str += f"@pytest.mark.timeout_pass(timeout={self.test.timeout})\n"
         spec_str += f"def test_{self.task_name.lower()}():\n"
         spec_str += f"    task = {self.task_name}()\n"
-        for field in self.nipype_input_spec:
-            value = field.default
-            spec_str += f"    task.inputs.{field.name} = {value}\n"
-            spec_str += "    res = task()\n"
-            spec_str += "    print('RESULT: ', res)\n"
-            # spec_str += "    for out_nm in outputs: assert getattr(res.output, out_nm).exists()\n"
+        for field in input_fields:
+            nm, tp = field[:2]
+            # Try to get a sensible value for the traits value
+            try:
+                value = self.test.inputs[nm]
+            except KeyError:
+                if len(field) == 4:  # field has default
+                    value = field[2]
+                else:
+                    assert len(field) == 3
+                    if inspect.isclass(tp) and issubclass(tp, FileSet):
+                        value = f"{tp.__name__}.sample()"
+                    else:
+                        trait = self.nipype_interface.input_spec.class_traits()[nm]
+                        if isinstance(trait, traits.trait_types.Enum):
+                            value = trait.values[0]
+                        elif isinstance(trait, traits.trait_types.Range):
+                            value = (trait.high - trait.low) / 2.0
+                        elif isinstance(trait, traits.trait_types.Bool):
+                            value = True
+                        elif isinstance(trait, traits.trait_types.Int):
+                            value = 1
+                        elif isinstance(trait, traits.trait_types.Float):
+                            value = 1.0
+                        elif isinstance(trait, traits.trait_types.List):
+                            value = [1] * trait.minlen
+                        elif isinstance(trait, traits.trait_types.Tuple):
+                            value = tuple([1] * len(trait.types))
+                        else:
+                            value = attrs.NOTHING
+            if value is not attrs.NOTHING:
+                spec_str += f"    task.inputs.{nm} = {value}\n"
+        spec_str += "    res = task()\n"
+        spec_str += "    print('RESULT: ', res)\n"
+        for name, value in self.test.outputs.items():
+            spec_str += f"    assert res.output.{name} == {value}\n"
 
         spec_str_black = black.format_file_contents(
             spec_str, fast=False, mode=black.FileMode()
@@ -612,35 +722,27 @@ class TaskConverter:
         with open(filename_test, "w") as f:
             f.write(spec_str_black)
 
-    def write_test_error(self, input_error):
-        """creating a tests for incorrect or incomplete inputs
-        checking if the exceptions are raised
-        """
-        spec_str = "\n\n"
-        spec_str += f"@pytest.mark.parametrize('inputs, error', {input_error})\n"
-        spec_str += f"def test_{self.task_name}_exception(test_data, inputs, error):\n"
-        spec_str += "    in_file = Path(test_data) / 'test.nii.gz'\n"
-        spec_str += "    if inputs is None: inputs = {{}}\n"
-        spec_str += "    for key, val in inputs.items():\n"
-        spec_str += "        try: inputs[key] = eval(val)\n"
-        spec_str += "        except: pass\n"
-        spec_str += f"    task = {self.task_name}(in_file=in_file, **inputs)\n"
-        spec_str += "    with pytest.raises(eval(error)):\n"
-        spec_str += "        task.generated_output_names\n"
-        return spec_str
-
-    def create_doctest(self):
+    def create_doctest(self, input_fields, nonstd_types):
         """adding doctests to the interfaces"""
-        cmdline = self.doctest.pop("cmdline")
         doctest = '    """\n    Example\n    -------\n'
+        doctest += self.import_types(nonstd_types, prefix="    >>> ")
         doctest += f"    >>> task = {self.task_name}()\n"
-        for key, val in self.doctest.items():
-            if type(val) is str:
-                doctest += f'    >>> task.inputs.{key} = "{val}"\n'
+        for field in input_fields:
+            nm, tp = field[:2]
+            try:
+                val = self.doctest.inputs[nm]
+            except KeyError:
+                if inspect.isclass(tp) and issubclass(tp, FileSet):
+                    val = f"{tp.__name__}.mock()"
+                else:
+                    val = attrs.NOTHING
             else:
-                doctest += f"    >>> task.inputs.{key} = {val}\n"
+                if type(val) is str:
+                    val = f'"{val}"'
+            if val is not attrs.NOTHING:
+                doctest += f"    >>> task.inputs.{nm} = {val}\n"
         doctest += "    >>> task.cmdline\n"
-        doctest += f"    '{cmdline}'"
+        doctest += f"    '{self.doctest.cmdline}'"
         doctest += '\n    """\n'
         return doctest
 
