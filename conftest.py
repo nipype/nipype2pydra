@@ -4,12 +4,25 @@ import traceback
 import tempfile
 import pytest
 from click.testing import CliRunner
+from fileformats.generic import File
 
 
 PKG_DIR = Path(__file__).parent
 EXAMPLE_SPECS_DIR = PKG_DIR / "example-specs"
 EXAMPLE_TASKS_DIR = EXAMPLE_SPECS_DIR / "task"
 EXAMPLE_WORKFLOWS_DIR = EXAMPLE_SPECS_DIR / "workflow"
+
+
+@File.generate_test_data.register
+def file_generate_test_data(file: File, dest_dir: Path):
+    a_file = dest_dir / "a_file.x"
+    a_file.write_text("a sample file")
+    return [a_file]
+
+
+@pytest.fixture
+def gen_test_conftest():
+    return PKG_DIR / "scripts" / "pkg_gen" / "resources" / "conftest.py"
 
 
 @pytest.fixture(params=[str(p.stem) for p in (EXAMPLE_TASKS_DIR).glob("*.yaml")])

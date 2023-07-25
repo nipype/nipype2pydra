@@ -78,15 +78,20 @@ def generate_packages(
 
         shutil.copytree(task_template, pkg_dir, ignore=copy_ignore)
 
+        # Setup script to auto-convert nipype interfaces
         auto_conv_dir = pkg_dir / "nipype-auto-conv"
         specs_dir = auto_conv_dir / "specs"
         specs_dir.mkdir(parents=True)
         shutil.copy(RESOURCES_DIR / "nipype-auto-convert.py", auto_conv_dir / "generate")
         os.chmod(auto_conv_dir / "generate", 0o755)  # make executable
 
+        # Setup GitHub workflows
         gh_workflows_dir = pkg_dir / ".github" / "workflows"
         gh_workflows_dir.mkdir(parents=True)
         shutil.copy(RESOURCES_DIR / "pythonpackage.yaml", gh_workflows_dir / "pythonpackage.yaml")
+
+        # Add in conftest.py
+        shutil.copy(RESOURCES_DIR / "conftest.py", pkg_dir / "conftest.py")
 
         # Add "pydra.tasks.<pkg>.auto to gitignore"
         with open(pkg_dir / ".gitignore", "a") as f:
