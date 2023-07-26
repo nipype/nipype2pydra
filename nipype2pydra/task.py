@@ -72,10 +72,10 @@ class SpecConverter:
         converter=types_converter,
         factory=dict,
         metadata={
-            "help": """Override inferred type (use mime-type string for file-format types).
-                Most of the time the correct type will be inferred from the nipype interface,
-                but you may want to be more specific, typically for the case of file types
-                where specifying the format will change the type of file that will be
+            "help": """Override inferred type (use mime-type (like) string for file-format types,
+                e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+                from the nipype interface, but you may want to be more specific, particularly
+                for file types, where specifying the format also specifies the file that will be
                 passed to the field in the automatically generated unittests."""
         },
     )
@@ -138,7 +138,7 @@ class OutputsConverter(SpecConverter):
         converter=default_if_none(factory=dict),  # type: ignore
         metadata={
             "help": """names of methods/callable classes defined in the adjacent `*_callables.py`
-            to set to the `callable` attribute of output fields"""
+                to set to the `callable` attribute of output fields"""
         },
     )
     templates: ty.Dict[str, str] = attrs.field(
@@ -203,8 +203,8 @@ class TestsGenerator:
         default=10,
         metadata={
             "help": """The value to set for the timeout in the generated test, 
-                "after which the test will be considered to have been initialised 
-                "successulfully. Set to 0 to disable the timeout (warning, this could
+                after which the test will be considered to have been initialised 
+                successulfully. Set to 0 to disable the timeout (warning, this could
                 lead to the unittests taking a very long time to complete)"""
         }
     )
@@ -220,8 +220,7 @@ class DocTestGenerator:
         the expected cmdline output
     inputs : dict[str, str or None]
         name-value pairs for inputs to be provided to the doctest. If the value is None
-        then the ".mock()" method of the corresponding class  is used instead (only
-        valid for file-format types).
+        then the ".mock()" method of the corresponding class is used instead.
     """
 
     cmdline: str = attrs.field(metadata={"help": "the expected cmdline output"})
@@ -230,8 +229,7 @@ class DocTestGenerator:
         metadata={
             "help": """name-value pairs for inputs to be provided to the doctest.
                 If the field is of file-format type and the value is None, then the
-                ".mock()" method of the corresponding class is used instead (only valid
-                for file-format types)."""}
+                '.mock()' method of the corresponding class is used instead."""}
     )
 
 
@@ -454,7 +452,7 @@ class TaskConverter:
                     metadata_pdr["output_file_template"] = self.outputs.templates[nm]
                 except KeyError:
                     raise Exception(
-                        f"{nm} is has genfile and therefore needs an 'output_file_template' value"
+                        f"{nm} is has genfile=True and therefore needs an 'output_file_template' value"
                     )
                 if tp_pdr in [
                     specs.File,

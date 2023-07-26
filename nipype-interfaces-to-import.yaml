@@ -220,17 +220,12 @@ interfaces:
   camino2trackvis/convert:
   - Camino2Trackvis
   - Trackvis2Camino
-  cat12/base:
-  - Cell
-  - NestedCell
   cat12/preprocess:
   - CAT12Segment
   - CAT12SANLMDenoising
-  - Cell2Str
   cat12/surface:
   - ExtractAdditionalSurfaceParameters
   - ExtractROIBasedSurfaceMeasures
-  - Cell2Str
   cmtk/cmtk:
   - CreateMatrix
   - ROIGen

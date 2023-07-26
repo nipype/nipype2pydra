@@ -2,13 +2,18 @@ import os
 import typing as ty
 import tempfile
 import re
+from importlib import import_module
 import subprocess as sp
 import shutil
 import tarfile
 from pathlib import Path
+import attrs
 import requests
 import click
 import yaml
+import nipype.interfaces.base.core
+from nipype2pydra.task import InputsConverter, OutputsConverter, TestsGenerator, DocTestGenerator
+
 
 RESOURCES_DIR = Path(__file__).parent / "resources"
 
@@ -68,10 +73,11 @@ def generate_packages(
         shutil.rmtree(output_dir)
     output_dir.mkdir()
 
+    not_interfaces = []
+
     for pkg in to_import["packages"]:
 
         pkg_dir = output_dir / f"pydra-{pkg}"
-        pkg_dir.mkdir()
 
         def copy_ignore(_, names):
             return [n for n in names if n in (".git", "__pycache__", ".pytest_cache")]
@@ -87,7 +93,7 @@ def generate_packages(
 
         # Setup GitHub workflows
         gh_workflows_dir = pkg_dir / ".github" / "workflows"
-        gh_workflows_dir.mkdir(parents=True)
+        gh_workflows_dir.mkdir(parents=True, exist_ok=True)
         shutil.copy(RESOURCES_DIR / "pythonpackage.yaml", gh_workflows_dir / "pythonpackage.yaml")
 
         # Add in conftest.py
@@ -117,25 +123,71 @@ def generate_packages(
             module_spec_dir.mkdir(parents=True)
             for interface in interfaces:
                 callables_fspath = module_spec_dir / f"{interface}_callables.py"
+                spec_stub = {}
+
+                def fields_stub(type_):
+                    """Used, in conjunction with some find/replaces after dumping, to
+                    insert comments into the YAML file"""
+                    dct = {}
+                    for field in attrs.fields(type_):
+                        tp = field.type
+                        if tp.__module__ == "builtins":
+                            tp_name = tp.__name__
+                        else:
+                            tp_name = str(tp).lower()
+                        dct[field.name] = f"# {tp_name} - " + field.metadata['help'].replace("\n                ", "\n    # ") + "#"
+                    return dct
+                nipype_module_str = "nipype.interfaces." + ".".join(module.split("/"))
+                nipype_module = import_module(nipype_module_str)
+                nipype_interface = getattr(nipype_module, interface)
+                if not issubclass(nipype_interface, nipype.interfaces.base.core.Interface):
+                    not_interfaces.append(f"{module}.{interface}")
+                    continue
                 spec_stub = {
                     "task_name": interface,
-                    "nipype_module": "nipype.interfaces." + ".".join(module.split("/")),
-                    "output_requirements": "# dict[output-field, list[input-field]] : the required input fields for output-field",
-                    "inputs_metadata": "# dict[input-field, dict[str, Any]] : additional metadata to be inserted into input field",
-                    "inputs_drop": "# list[input-field] : input fields to drop from the spec",
-                    "output_templates": "# dict[input-field, str] : \"output_file_template\" to provide to input field",
-                    "output_callables": f"# dict[output-field, str] : name of function defined in {callables_fspath.name} that retrieves value for output",
-                    "doctest": "# dict[str, Any]: key-value pairs to provide as inputs to the doctest + the expected value of \"cmdline\" as special key-value pair",
-                    "tests_inputs": "# List of inputs to pass to tests",
-                    "tests_outputs": "# list of outputs expected from tests",
+                    "nipype_module": nipype_module_str,
+                    "nipype_name": None,
+                    "inputs": fields_stub(InputsConverter),
+                    "outputs": fields_stub(OutputsConverter),
+                    "test": fields_stub(TestsGenerator),
+                    "doctest": fields_stub(DocTestGenerator),
                 }
-                yaml_str = yaml.dump(spec_stub, indent=2, sort_keys=False)
-                # strip inserted line-breaks in long strings (so they can be converted to in-line comments)
-                yaml_str = re.sub(r"\n  ", " ", yaml_str)
-                # extract comments after they have been dumped as strings
-                yaml_str = re.sub(r"'#(.*)'", r" # \1", yaml_str)
+                yaml_str = yaml.dump(spec_stub, indent=4, sort_keys=False, width=4096)
+                yaml_str = re.sub(r"""("|')#""", "\n    #", yaml_str)
+                yaml_str = re.sub(r"""#("|')""", "", yaml_str)
+                yaml_str = yaml_str.replace("typing.", "")
+                yaml_str = yaml_str.replace(r"\n", "\n")
+                yaml_str = yaml_str.replace(" null", "")
+                inputs_desc = ""
+                if nipype_interface.input_spec:
+                    for inpt_name, inpt in nipype_interface.input_spec().traits().items():
+                        if inpt_name in ("trait_added", "trait_modified"):
+                            continue
+                        inpt_desc = inpt.desc.replace('\n', ' ') if inpt.desc else ""
+                        inputs_desc += f"# {inpt_name} ({type(inpt.trait_type).__name__.lower()}): {inpt_desc}\n"
+                outputs_desc = ""
+                if nipype_interface.output_spec:
+                    for outpt_name, outpt in nipype_interface.output_spec().traits().items():
+                        if inpt_name in ("trait_added", "trait_modified"):
+                            continue
+                        outpt_desc = outpt.desc.replace('\n', ' ') if outpt.desc else ""
+                        outputs_desc += f"# {outpt_name} ({type(outpt.trait_type).__name__.lower()}): {outpt_desc}\n"
+                # Create a preamble at the top of the specificaiton explaining what to do
+                preamble = (
+                    f"""# This file is used to manually specify the semi-automatic conversion
+                    # of '{module}.{interface}' from Nipype to Pydra. Please fill in the empty fields
+                    # below where appropriate
+                    #
+                    # Nipype Inputs Ref.
+                    # ------------------
+                    {inputs_desc}#
+                    # Nipype Outputs Ref.
+                    # -------------------
+                    {outputs_desc}\n"""
+                ).replace("                    #", "#")
                 with open(module_spec_dir / (interface + ".yaml"), "w") as f:
-                    f.write(yaml_str)
+                    f.write(preamble + yaml_str)
+                print(preamble + yaml_str)
                 with open(callables_fspath, "w") as f:
                     f.write(
                         f'"""Module to put any functions that are referred to in {interface}.yaml"""\n'
@@ -145,6 +197,8 @@ def generate_packages(
         sp.check_call("git add --all", shell=True, cwd=pkg_dir)
         sp.check_call('git commit -m"initial commit of generated stubs"', shell=True, cwd=pkg_dir)
         sp.check_call("git tag 0.1.0", shell=True, cwd=pkg_dir)
+
+    print("\n".join(not_interfaces))
 
 
 if __name__ == "__main__":
