@@ -9,6 +9,7 @@ import shutil
 import tarfile
 from pathlib import Path
 import attrs
+from warnings import warn
 import requests
 import click
 import yaml
@@ -175,18 +176,23 @@ def generate_packages(
                         outputs_desc += f"# {outpt_name} ({type(outpt.trait_type).__name__.lower()}): {outpt_desc}\n"
                         if type(outpt.trait_type).__name__ == "File":
                             file_outputs.append(outpt_name)
+                doc_string = nipype_interface.__doc__ if nipype_interface.__doc__ else ""
+                doc_string = doc_string.replace("\n", "\n# ")
                 # Create a preamble at the top of the specificaiton explaining what to do
                 preamble = (
                     f"""# This file is used to manually specify the semi-automatic conversion
                     # of '{module.replace('/', '.')}.{interface}' from Nipype to Pydra. Please fill in the empty fields
                     # below where appropriate
                     #
-                    # Nipype Inputs Ref.
-                    # ------------------
+                    # Inputs
+                    # ------
                     {inputs_desc}#
-                    # Nipype Outputs Ref.
-                    # -------------------
-                    {outputs_desc}\n"""
+                    # Outputs
+                    # -------
+                    {outputs_desc}#
+                    # Docs
+                    # ----
+                    # {doc_string}\n"""
                 ).replace("                    #", "#")
 
                 # Create "stubs" for each of the available fields
@@ -213,19 +219,18 @@ def generate_packages(
                         dct[field_name] = val
                     return dct
 
-                if ">>>" in nipype_interface.__doc__:
-                    intf_name = f"{module.replace('/', '.')}.{interface}"
+                if nipype_interface.__doc__ and ">>>" in nipype_interface.__doc__:
                     match = re.search(
-                        r"""^\s+>>> (?:\w+)\.cmdline\n\s*(?:'|")?(.*)(?:'|")?\s*$""",
+                        r"""^\s+>>> (?:\w+)\.cmdline(\s*# doctest: .*)?\n\s*(?:'|")?(.*)(?:'|")?\s*$""",
                         nipype_interface.__doc__,
                         flags=re.MULTILINE,
                     )
-                    if not match:
-                        raise Exception(
-                            f"Could not find cmdline in doctest of {intf_name}:\n{nipype_interface.__doc__}"
-                        )
-                    cmdline = match.group(1)
-                    cmdline = cmdline.replace("'", '"')
+                    if match:
+                        cmdline = match.group(2)
+                        cmdline = cmdline.replace("'", '"')
+                        directive = match.group(1)
+                    else:
+                        cmdline = directive = None
                     doctest_inpts = {
                         n: v.replace("'", '"')
                         for n, v in re.findall(
@@ -234,21 +239,31 @@ def generate_packages(
                         )
                     }
                     if not doctest_inpts:
-                        raise Exception(
-                            f"Could not find inpts in doctest of {intf_name}:\n{nipype_interface.__doc__}"
-                        )
-                    test_inpts = {
-                        n: v
-                        for n, v in doctest_inpts.items()
-                        if n not in file_inputs
-                    }
-                    doctest_inpts = {
-                        n: (None if n in file_inputs else v) for n, v in doctest_inpts.items()
-                    }
+                        doctest_inpts = {
+                            n: v.replace("'", '"')
+                            for n, v in re.findall(
+                                r"""\.\.\.\s+(\w+)=(.*) *\n""",
+                                nipype_interface.__doc__,
+                            )
+                        }
+                    if doctest_inpts:
+                        test_inpts = {
+                            n: v
+                            for n, v in doctest_inpts.items()
+                            if n not in file_inputs
+                        }
+                        doctest_inpts = {
+                            n: (None if n in file_inputs else v) for n, v in doctest_inpts.items()
+                        }
+                    else:
+                        intf_name = f"{module.replace('/', '.')}.{interface}"
+                        warn(f"Could not parse doctest for {intf_name}:\n{nipype_interface.__doc__}")
+                        test_inpts = {}
+                        doctest_inpts = {}
                     doctest_stub = fields_stub(
                         "doctest",
                         DocTestGenerator,
-                        {"cmdline": cmdline, "inputs": doctest_inpts},
+                        {"cmdline": cmdline, "inputs": doctest_inpts, "directive": directive},
                     )
                 else:
                     if hasattr(nipype_interface, "_cmd"):
@@ -310,7 +325,6 @@ def generate_packages(
 
                 with open(module_spec_dir / (interface + ".yaml"), "w") as f:
                     f.write(preamble + yaml_str)
-                print(preamble + yaml_str)
                 with open(callables_fspath, "w") as f:
                     f.write(
                         f'"""Module to put any functions that are referred to in {interface}.yaml"""\n'

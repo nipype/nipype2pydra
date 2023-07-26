@@ -237,6 +237,10 @@ class DocTestGenerator:
                 If the field is of file-format type and the value is None, then the
                 '.mock()' method of the corresponding class is used instead."""}
     )
+    directive: str = attrs.field(
+        default=None, metadata={
+            "help": "any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS"}
+    )
 
 
 T = ty.TypeVar("T")
