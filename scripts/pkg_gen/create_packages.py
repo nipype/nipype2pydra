@@ -238,12 +238,12 @@ def generate_packages(
                             f"Could not find inpts in doctest of {intf_name}:\n{nipype_interface.__doc__}"
                         )
                     test_inpts = {
-                        n: re.sub(r'^(")([^"]+)\1$', r"\2", v)
+                        n: v
                         for n, v in doctest_inpts.items()
                         if n not in file_inputs
                     }
                     doctest_inpts = {
-                        n: (None if v in file_inputs else v) for n, v in doctest_inpts.items()
+                        n: (None if n in file_inputs else v) for n, v in doctest_inpts.items()
                     }
                     doctest_stub = fields_stub(
                         "doctest",
