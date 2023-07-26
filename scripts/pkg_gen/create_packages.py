@@ -13,6 +13,13 @@ from warnings import warn
 import requests
 import click
 import yaml
+import fileformats.core.utils
+import fileformats.core.mixin
+from fileformats.generic import File
+from fileformats.medimage import Nifti1, NiftiGz, Bval, Bvec
+from fileformats.text import Txt
+from fileformats.numeric import MatlabMatrix, DataFile
+from fileformats.serialization import Xml
 import nipype.interfaces.base.core
 from nipype2pydra.task import (
     InputsConverter,
@@ -23,6 +30,8 @@ from nipype2pydra.task import (
 
 
 RESOURCES_DIR = Path(__file__).parent / "resources"
+
+EXPECTED_FORMATS = [Nifti1, NiftiGz, Txt, MatlabMatrix, DataFile, Xml]
 
 
 def download_tasks_template(output_path: Path):
@@ -80,6 +89,8 @@ def generate_packages(
     output_dir.mkdir()
 
     not_interfaces = []
+    unmatched_formats = []
+    ambiguous_formats = []
 
     for pkg in to_import["packages"]:
         pkg_dir = output_dir / f"pydra-{pkg}"
@@ -156,7 +167,7 @@ def generate_packages(
                         if inpt_name in ("trait_added", "trait_modified"):
                             continue
                         inpt_desc = inpt.desc.replace("\n", " ") if inpt.desc else ""
-                        inputs_desc += f"# {inpt_name} ({type(inpt.trait_type).__name__.lower()}): {inpt_desc}\n"
+                        inputs_desc += f"# {inpt_name} : {type(inpt.trait_type).__name__.lower()}\n#    {inpt_desc}\n"
                         if inpt.genfile:
                             genfile_outputs.append(inpt_name)
                         elif type(inpt.trait_type).__name__ in (
@@ -173,16 +184,19 @@ def generate_packages(
                         if outpt_name in ("trait_added", "trait_modified"):
                             continue
                         outpt_desc = outpt.desc.replace("\n", " ") if outpt.desc else ""
-                        outputs_desc += f"# {outpt_name} ({type(outpt.trait_type).__name__.lower()}): {outpt_desc}\n"
+                        outputs_desc += f"# {outpt_name} : {type(outpt.trait_type).__name__.lower()}\n#    {outpt_desc}\n"
                         if type(outpt.trait_type).__name__ == "File":
                             file_outputs.append(outpt_name)
-                doc_string = nipype_interface.__doc__ if nipype_interface.__doc__ else ""
+                doc_string = (
+                    nipype_interface.__doc__ if nipype_interface.__doc__ else ""
+                )
                 doc_string = doc_string.replace("\n", "\n# ")
                 # Create a preamble at the top of the specificaiton explaining what to do
                 preamble = (
-                    f"""# This file is used to manually specify the semi-automatic conversion
-                    # of '{module.replace('/', '.')}.{interface}' from Nipype to Pydra. Please fill in the empty fields
-                    # below where appropriate
+                    f"""# This file is used to manually specify the semi-automatic conversion of
+                    # '{module.replace('/', '.')}.{interface}' from Nipype to Pydra.
+                    #
+                    # Please fill-in/edit the fields below where appropriate
                     #
                     # Inputs
                     # ------
@@ -219,6 +233,11 @@ def generate_packages(
                         dct[field_name] = val
                     return dct
 
+                input_types = {i: "generic/file" for i in file_inputs}
+                output_types = {o: "generic/file" for o in file_outputs}
+
+                # Attempt to parse doctest to pull out sensible defaults for input/output
+                # values
                 if nipype_interface.__doc__ and ">>>" in nipype_interface.__doc__:
                     match = re.search(
                         r"""^\s+>>> (?:\w+)\.cmdline(\s*# doctest: .*)?\n\s*(?:'|")?(.*)(?:'|")?\s*$""",
@@ -246,24 +265,86 @@ def generate_packages(
                                 nipype_interface.__doc__,
                             )
                         }
+                    if not doctest_inpts:
+                        match = re.search(
+                            interface + r"""\(((?<!\w)\w+ *= *[^\=\n]+(?:, )?)+\)\n""",
+                            nipype_interface.__doc__,
+                        )
+                        if match is not None:
+                            arg_str = match.group(0)[len(interface) + 1 : -2] + ", "
+                            doctest_inpts = {
+                                n: v.replace("'", '"')
+                                for n, v in re.findall(r"(\w+) *= *([^=]+), ", arg_str)
+                            }
                     if doctest_inpts:
+
+                        def guess_format_from_doctest(field):
+                            try:
+                                fspath = doctest_inpts[field]
+                            except KeyError:
+                                return File
+                            try:
+                                fspath = re.search(r"""['"]([^'"]*)['"]""", fspath).group(1)
+                            except AttributeError:
+                                return File
+                            possible_formats = []
+                            for frmt in fileformats.core.FileSet.all_formats:
+                                if not frmt.ext or None in frmt.alternate_exts:
+                                    continue
+                                if frmt.matching_exts(fspath):
+                                    possible_formats.append(frmt)
+                            if not possible_formats:
+                                if fspath == "bvals":
+                                    return Bval
+                                if fspath == "bvecs":
+                                    return Bvec
+                                unmatched_formats.append(f"{module}.{interface}: {fspath}")
+                                return File
+                            for expected in EXPECTED_FORMATS:
+                                if expected in possible_formats:
+                                    return expected
+                            if len(possible_formats) > 1:
+                                non_adjacent = [f for f in possible_formats if not issubclass(f, fileformats.core.mixin.WithAdjacentFiles)]
+                                if non_adjacent:
+                                    possible_formats = non_adjacent
+                            if len(possible_formats) > 1:
+                                possible_formats = sorted(possible_formats, key=lambda f: f.__name__)
+                                ambiguous_formats.append(possible_formats)
+                            return possible_formats[0]
+
+                        input_types = {
+                            n: guess_format_from_doctest(n).mime_like
+                            for n in input_types
+                        }
+                        output_types = {
+                            n: guess_format_from_doctest(n).mime_like
+                            for n in output_types
+                        }
+
                         test_inpts = {
                             n: v
                             for n, v in doctest_inpts.items()
                             if n not in file_inputs
                         }
                         doctest_inpts = {
-                            n: (None if n in file_inputs else v) for n, v in doctest_inpts.items()
+                            n: (None if n in file_inputs else v)
+                            for n, v in doctest_inpts.items()
                         }
                     else:
                         intf_name = f"{module.replace('/', '.')}.{interface}"
-                        warn(f"Could not parse doctest for {intf_name}:\n{nipype_interface.__doc__}")
+                        warn(
+                            f"Could not parse doctest for {intf_name}:\n{nipype_interface.__doc__}"
+                        )
                         test_inpts = {}
                         doctest_inpts = {}
                     doctest_stub = fields_stub(
                         "doctest",
                         DocTestGenerator,
-                        {"cmdline": cmdline, "inputs": doctest_inpts, "directive": directive},
+                        {
+                            "cmdline": cmdline,
+                            "inputs": doctest_inpts,
+                            "directive": directive,
+                        },
                     )
                 else:
                     if hasattr(nipype_interface, "_cmd"):
@@ -283,14 +364,14 @@ def generate_packages(
                     "inputs": fields_stub(
                         "inputs",
                         InputsConverter,
-                        {"types": {i: "generic/file" for i in file_inputs}},
+                        {"types": input_types},
                     ),
                     "outputs": fields_stub(
                         "outputs",
                         OutputsConverter,
                         {
-                            "types": {o: "generic/file" for o in file_outputs},
-                            "templates": {o: "<REQUIRED>" for o in genfile_outputs},
+                            "types": output_types,
+                            "templates": {o: None for o in genfile_outputs},
                         },
                     ),
                     "test": fields_stub(
@@ -330,14 +411,17 @@ def generate_packages(
                         f'"""Module to put any functions that are referred to in {interface}.yaml"""\n'
                     )
 
-        sp.check_call("git init", shell=True, cwd=pkg_dir)
-        sp.check_call("git add --all", shell=True, cwd=pkg_dir)
-        sp.check_call(
-            'git commit -m"initial commit of generated stubs"', shell=True, cwd=pkg_dir
-        )
-        sp.check_call("git tag 0.1.0", shell=True, cwd=pkg_dir)
+        # sp.check_call("git init", shell=True, cwd=pkg_dir)
+        # sp.check_call("git add --all", shell=True, cwd=pkg_dir)
+        # sp.check_call(
+        #     'git commit -m"initial commit of generated stubs"', shell=True, cwd=pkg_dir
+        # )
+        # sp.check_call("git tag 0.1.0", shell=True, cwd=pkg_dir)
 
-    print("\n".join(not_interfaces))
+    print("Unmatched formats")
+    print("\n".join(unmatched_formats))
+    print("\nAmbiguous formats")
+    print("\n".join(str(p) for p in ambiguous_formats))
 
 
 if __name__ == "__main__":
