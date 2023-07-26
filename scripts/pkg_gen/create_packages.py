@@ -160,7 +160,7 @@ def generate_packages(
                             genfile_outputs.append(inpt_name)
                         elif type(inpt.trait_type).__name__ in (
                             "File",
-                            "InputMultiPath",
+                            "InputMultiObject",
                         ):
                             file_inputs.append(inpt_name)
                 file_outputs = []
@@ -238,15 +238,17 @@ def generate_packages(
                             f"Could not find inpts in doctest of {intf_name}:\n{nipype_interface.__doc__}"
                         )
                     test_inpts = {
-                        n: re.sub(r'(")([^"]+)\1', r"\2", v)
-                        for n, v in doctest_inpts
+                        n: re.sub(r'^(")([^"]+)\1$', r"\2", v)
+                        for n, v in doctest_inpts.items()
                         if n not in file_inputs
                     }
-
+                    doctest_inpts = {
+                        n: (None if v in file_inputs else v) for n, v in doctest_inpts.items()
+                    }
                     doctest_stub = fields_stub(
                         "doctest",
                         DocTestGenerator,
-                        {"cmdline": cmdline, "inputs": test_inpts},
+                        {"cmdline": cmdline, "inputs": doctest_inpts},
                     )
                 else:
                     if hasattr(nipype_interface, "_cmd"):
@@ -260,9 +262,9 @@ def generate_packages(
                     test_inpts = {}
 
                 spec_stub = {
-                    "task_name": interface,
+                    "name": interface,
                     "nipype_module": nipype_module_str,
-                    "nipype_name": None,
+                    "new_name": None,
                     "inputs": fields_stub(
                         "inputs",
                         InputsConverter,

@@ -309,10 +309,10 @@ class TaskConverter:
         a module, or path to a module, containing any required callables
     """
 
-    task_name: str
+    name: str
     nipype_module: ModuleType = attrs.field(converter=import_module_from_path)
     output_module: str = attrs.field(default=None)
-    nipype_name: str = attrs.field(default=None)
+    new_name: str = attrs.field(default=None)
     inputs: InputsConverter = attrs.field(
         factory=InputsConverter, converter=from_dict_to_inputs
     )
@@ -346,12 +346,10 @@ class TaskConverter:
                     f"as {self.nipype_module.__name__}.{self.task_name} (i.e. not in "
                     "nipype.interfaces)"
                 )
-        if self.nipype_name is None:
-            self.nipype_name = self.task_name
 
     @property
     def nipype_interface(self) -> nipype.interfaces.base.BaseInterface:
-        return getattr(self.nipype_module, self.nipype_name)
+        return getattr(self.nipype_module, self.new_name)
 
     @property
     def nipype_input_spec(self) -> nipype.interfaces.base.BaseInterfaceInputSpec:
@@ -360,6 +358,10 @@ class TaskConverter:
     @property
     def nipype_output_spec(self) -> nipype.interfaces.base.BaseTraitedSpec:
         return self.nipype_interface.output_spec()
+
+    @property
+    def task_name(self):
+        return self.new_name if self.new_name is not None else self.name
 
     def generate(self, package_root: Path):
         """creating pydra input/output spec from nipype specs
