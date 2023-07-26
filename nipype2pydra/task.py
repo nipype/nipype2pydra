@@ -61,7 +61,7 @@ class SpecConverter:
     omit: ty.List[str] = attrs.field(
         factory=list,
         converter=default_if_none(factory=list),  # type: ignore
-        metadata={"help": "Fields to omit from the Pydra interface"},
+        metadata={"help": "fields to omit from the Pydra interface"},
     )
     rename: ty.Dict[str, str] = attrs.field(
         factory=dict,
@@ -72,7 +72,7 @@ class SpecConverter:
         converter=types_converter,
         factory=dict,
         metadata={
-            "help": """Override inferred type (use mime-type (like) string for file-format types,
+            "help": """override inferred types (use \"mime-like\" string for file-format types,
                 e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
                 from the nipype interface, but you may want to be more specific, particularly
                 for file types, where specifying the format also specifies the file that will be
@@ -187,26 +187,32 @@ class TestsGenerator:
         factory=dict,
         converter=default_if_none(factory=dict),  # type: ignore
         metadata={
-            "help": """values to provide to specific inputs fields (if not provided,
-                a sensible value within the valid range will be provided"""
+            "help": """values to provide to inputs fields in the task initialisation
+                (if not specified, will try to choose a sensible value)"""
         },
     )
-    outputs: ty.Dict[str, str] = attrs.field(
+    expected_outputs: ty.Dict[str, str] = attrs.field(
         factory=dict, converter=default_if_none(factory=dict),  # type: ignore
         metadata={
-            "help": """expected values for selected outputs, noting that in tests will typically
-                be terminated before they complete for time-saving reasons and will therefore
-                be ignored"""
+            "help": """expected values for selected outputs, noting that tests will typically
+                be terminated before they complete for time-saving reasons, and therefore
+                these values will be ignored, when running in CI"""
         },
     )
     timeout: int = attrs.field(
         default=10,
         metadata={
-            "help": """The value to set for the timeout in the generated test, 
+            "help": """the value to set for the timeout in the generated test, 
                 after which the test will be considered to have been initialised 
-                successulfully. Set to 0 to disable the timeout (warning, this could
+                successfully. Set to 0 to disable the timeout (warning, this could
                 lead to the unittests taking a very long time to complete)"""
         }
+    )
+    xfail: bool = attrs.field(
+        default=True,
+        metadata={
+            "help": """whether the unittest is expected to fail or not. Set to false
+                when you are satisfied with the edits you have made to this file"""}
     )
 
 
@@ -268,7 +274,10 @@ def from_dict_to_test(obj: ty.Union[TestsGenerator, dict]) -> TestsGenerator:
 
 
 def from_dict_to_doctest(obj: ty.Union[DocTestGenerator, dict]) -> DocTestGenerator:
-    return from_dict_converter(obj, DocTestGenerator, allow_none=True)
+    converted = from_dict_converter(obj, DocTestGenerator, allow_none=True)
+    if converted.inputs is None:
+        converted = None
+    return converted
 
 
 @attrs.define
@@ -673,6 +682,8 @@ class TaskConverter:
         spec_str += self.import_types(nonstd_types=nonstd_types)
         spec_str += f"from {self.output_module} import {self.task_name}\n"
         spec_str += "\n"
+        if self.test.xfail:
+            spec_str += "@pytest.mark.xfail\n"
         spec_str += f"@pytest.mark.timeout_pass(timeout={self.test.timeout})\n"
         spec_str += f"def test_{self.task_name.lower()}():\n"
         spec_str += f"    task = {self.task_name}()\n"
@@ -710,7 +721,7 @@ class TaskConverter:
                 spec_str += f"    task.inputs.{nm} = {value}\n"
         spec_str += "    res = task()\n"
         spec_str += "    print('RESULT: ', res)\n"
-        for name, value in self.test.outputs.items():
+        for name, value in self.test.expected_outputs.items():
             spec_str += f"    assert res.output.{name} == {value}\n"
 
         spec_str_black = black.format_file_contents(
