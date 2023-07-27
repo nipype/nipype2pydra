@@ -357,6 +357,22 @@ def generate_packages(
                         doctest_stub = None
                     test_inpts = {}
 
+                output_templates = {}
+                for outpt in genfile_outputs:
+                    try:
+                        template = test_inpts[outpt]
+                    except KeyError:
+                        try:
+                            frmt = output_types[outpt]
+                        except KeyError:
+                            ext = ""
+                        else:
+                            ext = fileformats.core.utils.from_mime(frmt).ext
+                            if not ext:
+                                ext = ""
+                        template = outpt + ext
+                    output_templates[outpt] = template
+
                 spec_stub = {
                     "name": interface,
                     "nipype_module": nipype_module_str,
@@ -371,7 +387,7 @@ def generate_packages(
                         OutputsConverter,
                         {
                             "types": output_types,
-                            "templates": {o: None for o in genfile_outputs},
+                            "templates": output_templates,
                         },
                     ),
                     "test": fields_stub(
