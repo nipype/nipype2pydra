@@ -18,7 +18,7 @@ import fileformats.core.mixin
 from fileformats.generic import File
 from fileformats.medimage import Nifti1, NiftiGz, Bval, Bvec
 from fileformats.text import Txt
-from fileformats.numeric import MatlabMatrix, DataFile
+from fileformats.datascience import MatFile, DatFile
 from fileformats.serialization import Xml
 import nipype.interfaces.base.core
 from nipype2pydra.task import (
@@ -31,7 +31,7 @@ from nipype2pydra.task import (
 
 RESOURCES_DIR = Path(__file__).parent / "resources"
 
-EXPECTED_FORMATS = [Nifti1, NiftiGz, Txt, MatlabMatrix, DataFile, Xml]
+EXPECTED_FORMATS = [Nifti1, NiftiGz, Txt, MatFile, DatFile, Xml]
 
 
 def download_tasks_template(output_path: Path):
