@@ -7,14 +7,15 @@ from types import ModuleType
 import inspect
 import black
 import traits.trait_types
+import json
 import attrs
 from attrs.converters import default_if_none
 import nipype.interfaces.base
 from nipype.interfaces.base import traits_extension
 from pydra.engine import specs
 from pydra.engine.helpers import ensure_list
-from .utils import import_module_from_path
-from fileformats.core import DataType, FileSet
+from .utils import import_module_from_path, is_fileset
+from fileformats.core import DataType
 
 
 def str_to_type(type_str: str) -> type:
@@ -192,7 +193,8 @@ class TestsGenerator:
         },
     )
     expected_outputs: ty.Dict[str, str] = attrs.field(
-        factory=dict, converter=default_if_none(factory=dict),  # type: ignore
+        factory=dict,
+        converter=default_if_none(factory=dict),  # type: ignore
         metadata={
             "help": """expected values for selected outputs, noting that tests will typically
                 be terminated before they complete for time-saving reasons, and therefore
@@ -206,13 +208,14 @@ class TestsGenerator:
                 after which the test will be considered to have been initialised 
                 successfully. Set to 0 to disable the timeout (warning, this could
                 lead to the unittests taking a very long time to complete)"""
-        }
+        },
     )
     xfail: bool = attrs.field(
         default=True,
         metadata={
             "help": """whether the unittest is expected to fail or not. Set to false
-                when you are satisfied with the edits you have made to this file"""}
+                when you are satisfied with the edits you have made to this file"""
+        },
     )
 
 
@@ -235,11 +238,14 @@ class DocTestGenerator:
         metadata={
             "help": """name-value pairs for inputs to be provided to the doctest.
                 If the field is of file-format type and the value is None, then the
-                '.mock()' method of the corresponding class is used instead."""}
+                '.mock()' method of the corresponding class is used instead."""
+        },
     )
     directive: str = attrs.field(
-        default=None, metadata={
-            "help": "any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS"}
+        default=None,
+        metadata={
+            "help": "any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS"
+        },
     )
 
 
@@ -314,7 +320,9 @@ class TaskConverter:
     """
 
     name: str
-    nipype_module: ModuleType = attrs.field(converter=import_module_from_path)
+    nipype_module: ModuleType = attrs.field(
+        converter=lambda m: import_module(m) if not isinstance(m, ModuleType) else m
+    )
     output_module: str = attrs.field(default=None)
     new_name: str = attrs.field(default=None)
     inputs: InputsConverter = attrs.field(
@@ -353,7 +361,7 @@ class TaskConverter:
 
     @property
     def nipype_interface(self) -> nipype.interfaces.base.BaseInterface:
-        return getattr(self.nipype_module, self.new_name)
+        return getattr(self.nipype_module, self.name)
 
     @property
     def nipype_input_spec(self) -> nipype.interfaces.base.BaseInterfaceInputSpec:
@@ -386,7 +394,7 @@ class TaskConverter:
             .with_suffix(".py")
         )
         testdir = output_file.parent / "tests"
-        testdir.mkdir(parents=True)
+        testdir.mkdir(parents=True, exist_ok=True)
 
         self.write_task(
             output_file,
@@ -700,10 +708,10 @@ class TaskConverter:
                 value = self.test.inputs[nm]
             except KeyError:
                 if len(field) == 4:  # field has default
-                    value = field[2]
+                    value = json.dumps(field[2])
                 else:
                     assert len(field) == 3
-                    if inspect.isclass(tp) and issubclass(tp, FileSet):
+                    if is_fileset(tp):
                         value = f"{tp.__name__}.sample()"
                     else:
                         trait = self.nipype_interface.input_spec.class_traits()[nm]
@@ -747,7 +755,7 @@ class TaskConverter:
             try:
                 val = self.doctest.inputs[nm]
             except KeyError:
-                if inspect.isclass(tp) and issubclass(tp, FileSet):
+                if is_fileset(tp):
                     val = f"{tp.__name__}.mock()"
                 else:
                     val = attrs.NOTHING

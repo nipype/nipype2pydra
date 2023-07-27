@@ -143,8 +143,8 @@ def generate_packages(
         for module, interfaces in to_import["interfaces"].items():
             if module.split("/")[0] != pkg:
                 continue
-            module_spec_dir = specs_dir.joinpath(*module.split("/"))
-            module_spec_dir.mkdir(parents=True)
+            module_spec_dir = specs_dir.joinpath(*module.split("/")[1:])
+            module_spec_dir.mkdir(parents=True, exist_ok=True)
             for interface in interfaces:
                 callables_fspath = module_spec_dir / f"{interface}_callables.py"
                 spec_stub = {}

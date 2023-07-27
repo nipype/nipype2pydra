@@ -3,8 +3,10 @@ import typing as ty
 from types import ModuleType
 import sys
 import os
+import inspect
 from contextlib import contextmanager
 from pathlib import Path
+from fileformats.core import FileSet
 
 from importlib import import_module
 
@@ -63,3 +65,11 @@ def add_to_sys_path(path: Path):
         yield sys.path
     finally:
         sys.path.pop(0)
+
+
+def is_fileset(tp: type):
+    return (
+        inspect.isclass(tp)
+        and type(tp) is not ty.GenericAlias
+        and issubclass(tp, FileSet)
+    )
