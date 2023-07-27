@@ -17,6 +17,7 @@ import fileformats.core.utils
 import fileformats.core.mixin
 from fileformats.generic import File
 from fileformats.medimage import Nifti1, NiftiGz, Bval, Bvec
+from fileformats.misc import Dicom
 from fileformats.text import Txt
 from fileformats.datascience import MatFile, DatFile
 from fileformats.serialization import Xml
@@ -265,13 +266,23 @@ def generate_packages(
                                 nipype_interface.__doc__,
                             )
                         }
+                        if doctest_inpts:
+                            match = re.search(
+                                interface + r"""\((?<!\w)(\w+) *= *([^\=\n]+) *, *""",
+                                nipype_interface.__doc__,
+                            )
+                            if match:
+                                doctest_inpts[match.group(1)] = match.group(2).replace(
+                                    "'", '"'
+                                )
                     if not doctest_inpts:
                         match = re.search(
-                            interface + r"""\(((?<!\w)\w+ *= *[^\=\n]+(?:, )?)+\)\n""",
+                            interface
+                            + r"""\(((?<!\w)\w+ *= *[^\=\n]+(?:, )?)+\)(\n| #)""",
                             nipype_interface.__doc__,
                         )
                         if match is not None:
-                            arg_str = match.group(0)[len(interface) + 1 : -2] + ", "
+                            arg_str = match.group(1) + ", "
                             doctest_inpts = {
                                 n: v.replace("'", '"')
                                 for n, v in re.findall(r"(\w+) *= *([^=]+), ", arg_str)
@@ -284,7 +295,9 @@ def generate_packages(
                             except KeyError:
                                 return File
                             try:
-                                fspath = re.search(r"""['"]([^'"]*)['"]""", fspath).group(1)
+                                fspath = re.search(
+                                    r"""['"]([^'"]*)['"]""", fspath
+                                ).group(1)
                             except AttributeError:
                                 return File
                             possible_formats = []
@@ -294,21 +307,33 @@ def generate_packages(
                                 if frmt.matching_exts(fspath):
                                     possible_formats.append(frmt)
                             if not possible_formats:
+                                if fspath.endswith(".dcm"):
+                                    return Dicom
                                 if fspath == "bvals":
                                     return Bval
                                 if fspath == "bvecs":
                                     return Bvec
-                                unmatched_formats.append(f"{module}.{interface}: {fspath}")
+                                unmatched_formats.append(
+                                    f"{module}.{interface}: {fspath}"
+                                )
                                 return File
                             for expected in EXPECTED_FORMATS:
                                 if expected in possible_formats:
                                     return expected
                             if len(possible_formats) > 1:
-                                non_adjacent = [f for f in possible_formats if not issubclass(f, fileformats.core.mixin.WithAdjacentFiles)]
+                                non_adjacent = [
+                                    f
+                                    for f in possible_formats
+                                    if not issubclass(
+                                        f, fileformats.core.mixin.WithAdjacentFiles
+                                    )
+                                ]
                                 if non_adjacent:
                                     possible_formats = non_adjacent
                             if len(possible_formats) > 1:
-                                possible_formats = sorted(possible_formats, key=lambda f: f.__name__)
+                                possible_formats = sorted(
+                                    possible_formats, key=lambda f: f.__name__
+                                )
                                 ambiguous_formats.append(possible_formats)
                             return possible_formats[0]
 
@@ -427,15 +452,24 @@ def generate_packages(
                         f'"""Module to put any functions that are referred to in {interface}.yaml"""\n'
                     )
 
-        # sp.check_call("git init", shell=True, cwd=pkg_dir)
-        # sp.check_call("git add --all", shell=True, cwd=pkg_dir)
-        # sp.check_call(
-        #     'git commit -m"initial commit of generated stubs"', shell=True, cwd=pkg_dir
-        # )
-        # sp.check_call("git tag 0.1.0", shell=True, cwd=pkg_dir)
+        sp.check_call("git init", shell=True, cwd=pkg_dir)
+        sp.check_call("git add --all", shell=True, cwd=pkg_dir)
+        sp.check_call(
+            'git commit -m"initial commit of generated stubs"', shell=True, cwd=pkg_dir
+        )
+        sp.check_call("git tag 0.1.0", shell=True, cwd=pkg_dir)
 
-    print("Unmatched formats")
+    unmatched_extensions = set(
+        File.decompose_fspath(
+            f.split(":")[1].strip(), mode=File.ExtensionDecomposition.single
+        )[2]
+        for f in unmatched_formats
+    )
+
+    print("Unmatched test input formats")
     print("\n".join(unmatched_formats))
+    print("Unmatched format extensions")
+    print("\n".join(sorted(unmatched_extensions)))
     print("\nAmbiguous formats")
     print("\n".join(str(p) for p in ambiguous_formats))
 
