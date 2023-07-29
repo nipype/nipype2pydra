@@ -21,12 +21,16 @@ from fileformats.core import DataType
 def str_to_type(type_str: str) -> type:
     """Resolve a string representation of a type into a valid type"""
     if "/" in type_str:
-        tp = DataType.from_mime(type_str)
-        try:
-            # If datatype is a field, use its primitive instead
-            tp = tp.primitive  # type: ignore
-        except AttributeError:
-            pass
+        if "," in type_str:
+            union_tps = tuple(str_to_type(p) for p in type_str.split(","))
+            tp: ty.Type[ty.Union] = ty.Union.__getitem__(union_tps)  # type: ignore
+        else:
+            tp = DataType.from_mime(type_str)
+            try:
+                # If datatype is a field, use its primitive instead
+                tp = tp.primitive  # type: ignore
+            except AttributeError:
+                pass
     elif "." in type_str:
         parts = type_str.split(".")
         module = import_module(".".join(parts[:-1]))
@@ -46,13 +50,7 @@ def types_converter(types: ty.Dict[str, ty.Union[str, type]]) -> ty.Dict[str, ty
     converted = {}
     for name, tp_or_str in types.items():
         if isinstance(tp_or_str, str):
-            if tp_or_str.startswith("union:"):
-                union_tps = tuple(
-                    str_to_type(p) for p in tp_or_str[len("union:") :].split(",")
-                )
-                tp: ty.Type[ty.Union] = ty.Union.__getitem__(union_tps)  # type: ignore
-            else:
-                tp = str_to_type(tp_or_str)
+            tp = str_to_type(tp_or_str)
         converted[name] = tp
     return converted
 
@@ -167,7 +165,7 @@ class OutputsConverter(SpecConverter):
 
 
 @attrs.define
-class TestsGenerator:
+class TestGenerator:
     """Specifications for the automatically generated test for the generated Nipype spec
 
     Parameters
@@ -279,15 +277,16 @@ def from_dict_to_outputs(obj: ty.Union[OutputsConverter, dict]) -> OutputsConver
     return from_dict_converter(obj, OutputsConverter)
 
 
-def from_dict_to_test(obj: ty.Union[TestsGenerator, dict]) -> TestsGenerator:
-    return from_dict_converter(obj, TestsGenerator)
+def from_list_to_tests(obj: ty.Union[ty.List[TestGenerator], list]) -> ty.List[TestGenerator]:
+    if obj is None:
+        return []
+    return [from_dict_converter(t, TestGenerator) for t in obj]
 
 
-def from_dict_to_doctest(obj: ty.Union[DocTestGenerator, dict]) -> DocTestGenerator:
-    converted = from_dict_converter(obj, DocTestGenerator, allow_none=True)
-    if converted.inputs is None:
-        converted = None
-    return converted
+def from_list_to_doctests(obj: ty.Union[ty.List[DocTestGenerator], list]) -> ty.List[DocTestGenerator]:
+    if obj is None:
+        return []
+    return [from_dict_converter(t, DocTestGenerator) for t in obj]
 
 
 @attrs.define
@@ -309,10 +308,10 @@ class TaskConverter:
         specficiations for the conversion of inputs
     outputs: OutputsConverter or dict
         specficiations for the conversion of inputs
-    test: TestsGenerator or dict, optional
+    tests: ty.List[TestGenerator] or list, optional
         specficiations for how to construct the test. A default test is generated if no
         specs are provided
-    doctest: DocTestGenerator or dict, optional
+    doctests: ty.List[DocTestGenerator] or list, optional
         specifications for how to construct the docttest. Doctest is omitted if not
         provided
     callables_module: ModuleType or str, optional
@@ -335,11 +334,11 @@ class TaskConverter:
     callables_module: ModuleType = attrs.field(
         converter=import_module_from_path, default=None
     )
-    test: TestsGenerator = attrs.field(  # type: ignore
-        factory=TestsGenerator, converter=from_dict_to_test
+    tests: ty.List[TestGenerator] = attrs.field(  # type: ignore
+        factory=list, converter=from_list_to_tests
     )
-    doctest: ty.Optional[DocTestGenerator] = attrs.field(
-        default=None, converter=from_dict_to_doctest
+    doctests: ty.List[DocTestGenerator] = attrs.field(
+        factory=list, converter=from_list_to_doctests
     )
 
     def __attrs_post_init__(self):
@@ -676,6 +675,7 @@ class TaskConverter:
 
         for tp_repl in self.TYPE_REPLACE:
             spec_str = spec_str.replace(*tp_repl)
+        spec_str = re.sub(r'"TYPE_(\w+)"', r"\1", spec_str)
 
         spec_str_black = black.format_file_contents(
             spec_str, fast=False, mode=black.FileMode()
@@ -686,13 +686,13 @@ class TaskConverter:
 
     @staticmethod
     def import_types(nonstd_types: ty.List[type], prefix="") -> str:
-        imports = "import typing as ty\nfrom pathlib import Path\n"
+        imports = f"{prefix}import typing as ty\n{prefix}from pathlib import Path\n"
         for tp in nonstd_types:
             imports += f"{prefix}from {tp.__module__} import {tp.__name__}\n"
         return imports
 
     def write_test(self, filename_test, input_fields, nonstd_types, run=False):
-        spec_str = "import os, pytest \n"
+        spec_str = "import os\nimport pytest\n"
         spec_str += self.import_types(nonstd_types=nonstd_types)
         spec_str += f"from {self.output_module} import {self.task_name}\n"
         spec_str += "\n"
@@ -708,7 +708,10 @@ class TaskConverter:
                 value = self.test.inputs[nm]
             except KeyError:
                 if len(field) == 4:  # field has default
-                    value = json.dumps(field[2])
+                    if isinstance(field[2], bool):
+                        value = str(field[2])
+                    else:
+                        value = json.dumps(field[2])
                 else:
                     assert len(field) == 3
                     if is_fileset(tp):
@@ -733,6 +736,8 @@ class TaskConverter:
                             value = attrs.NOTHING
             if value is not attrs.NOTHING:
                 spec_str += f"    task.inputs.{nm} = {value}\n"
+        if hasattr(self.nipype_interface, "_cmd"):
+            spec_str += r'    print(f"CMDLINE: {task.cmdline}\n\n")' + "\n"
         spec_str += "    res = task()\n"
         spec_str += "    print('RESULT: ', res)\n"
         for name, value in self.test.expected_outputs.items():
@@ -749,6 +754,7 @@ class TaskConverter:
         """adding doctests to the interfaces"""
         doctest = '    """\n    Example\n    -------\n'
         doctest += self.import_types(nonstd_types, prefix="    >>> ")
+        doctest += f"    >>> from {self.output_module} import {self.task_name}\n"
         doctest += f"    >>> task = {self.task_name}()\n"
         for field in input_fields:
             nm, tp = field[:2]
@@ -795,7 +801,7 @@ class TaskConverter:
     ]
 
     TYPE_REPLACE = [
-        ("'TYPE_File'", "specs.File"),
+        ("'TYPE_File'", "File"),
         ("'TYPE_bool'", "bool"),
         ("'TYPE_str'", "str"),
         ("'TYPE_Any'", "ty.Any"),
