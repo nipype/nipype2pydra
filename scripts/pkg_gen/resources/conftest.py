@@ -4,6 +4,7 @@ import time
 import logging
 from pathlib import Path
 import tempfile
+import threading
 import pytest
 
 
@@ -50,22 +51,42 @@ def work_dir():
     return Path(work_dir)
 
 
-def pytest_configure(config):
-    config.addinivalue_line(
-        "markers", "timeout_pass: mark test as passing if it runs until timeout"
-    )
+def timeout_pass(timeout):
+    """Cancel the test after a certain period, after which it is assumed that the arguments
+    passed to the underying command have passed its internal validation (so we don't have
+    to wait until the tool completes)
 
+    Parameters
+    ----------
+    timeout : int
+        the number of seconds to wait until cancelling the test
+    """
+    def decorator(test_func):
+        def wrapper(*args, **kwargs):
+            result = [None]
+            exception = [False]
+            timeout_event = threading.Event()
 
-def pytest_runtest_protocol(item, nextitem):
-    marker = item.get_closest_marker("timeout_pass")
-    if marker is not None:
-        timeout = marker.kwargs.get("timeout", None)
-        if timeout is not None:
-            start_time = time.time()
-            timeout_duration = timeout
+            def test_runner():
+                try:
+                    result[0] = test_func(*args, **kwargs)
+                except Exception:
+                    exception[0] = True
 
-            while time.time() - start_time < timeout_duration:
-                nextitem()
-            pytest.xpass(f"Test passed by running through the timeout of {timeout_duration} seconds.")
+            thread = threading.Thread(target=test_runner)
+            thread.start()
+            timeout_event.wait(timeout)
 
-    return None
+            if thread.is_alive():
+                timeout_event.set()
+                thread.join()
+                return result[0]
+
+            if exception[0]:
+                raise Exception("Test raised an exception during execution.")
+
+            return result[0]
+
+        return wrapper
+
+    return decorator
