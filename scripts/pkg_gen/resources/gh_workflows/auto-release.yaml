@@ -33,4 +33,4 @@ jobs:
               "draft": false,
               "prerelease": false
             }' \
-            "https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/releases"
+            "https://api.github.com/repos/nipype/pydra-#PACKAGE#/releases"
