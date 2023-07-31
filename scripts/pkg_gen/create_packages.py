@@ -3,7 +3,6 @@ import typing as ty
 import tempfile
 import re
 from importlib import import_module
-import subprocess as sp
 from copy import copy
 import shutil
 import tarfile
@@ -18,7 +17,7 @@ import fileformats.core.mixin
 from fileformats.generic import File
 from fileformats.medimage import Nifti1, NiftiGz, Bval, Bvec
 from fileformats.misc import Dicom
-from fileformats.text import Txt
+from fileformats.text import TextFile
 from fileformats.datascience import MatFile, DatFile
 from fileformats.serialization import Xml
 import nipype.interfaces.base.core
@@ -32,7 +31,7 @@ from nipype2pydra.task import (
 
 RESOURCES_DIR = Path(__file__).parent / "resources"
 
-EXPECTED_FORMATS = [Nifti1, NiftiGz, Txt, MatFile, DatFile, Xml]
+EXPECTED_FORMATS = [Nifti1, NiftiGz, TextFile, MatFile, DatFile, Xml]
 
 
 def download_tasks_template(output_path: Path):
@@ -92,6 +91,7 @@ def generate_packages(
     not_interfaces = []
     unmatched_formats = []
     ambiguous_formats = []
+    has_doctests = set()
 
     for pkg in to_import["packages"]:
         pkg_dir = initialise_task_repo(output_dir, task_template, pkg)
@@ -126,6 +126,7 @@ def generate_packages(
                     file_inputs,
                     file_outputs,
                     genfile_outputs,
+                    multi_inputs,
                 ) = generate_spec_preamble(nipype_interface)
 
                 # Create "stubs" for each of the available fields
@@ -160,13 +161,22 @@ def generate_packages(
                 # values
                 doc_str = nipype_interface.__doc__ if nipype_interface.__doc__ else ""
                 doc_str = re.sub(r"\n\s+\.\.\.\s+", "", doc_str)
+                prev_block = ""
+                doctest_blocks = []
+                for para in doc_str.split("\n\n"):
+                    if "cmdline" in para:
+                        doctest_blocks.append(prev_block + para)
+                        prev_block = ""
+                    else:
+                        prev_block += para
+
                 doctests: ty.List[DocTestGenerator] = []
                 tests: ty.List[TestGenerator] = []
 
-                for doctest_str in doc_str.split("\n\n"):
+                for doctest_str in doctest_blocks:
                     if ">>>" in doctest_str:
                         try:
-                            cmdline, inpts, directive = extract_doctest_inputs(
+                            cmdline, inpts, directive, imports = extract_doctest_inputs(
                                 doctest_str, interface
                             )
                         except ValueError:
@@ -255,7 +265,9 @@ def generate_packages(
 
                         tests.append(
                             fields_stub(
-                                "test", TestGenerator, {"inputs": copy(test_inpts)}
+                                "test",
+                                TestGenerator,
+                                {"inputs": copy(test_inpts), "imports": imports},
                             )
                         )
                         doctests.append(
@@ -265,10 +277,12 @@ def generate_packages(
                                 {
                                     "cmdline": cmdline,
                                     "inputs": doctest_inpts,
+                                    "imports": imports,
                                     "directive": directive,
                                 },
                             )
                         )
+                        has_doctests.add(f"{module.replace('/', '.')}.{interface}")
 
                 # Add default template names for fields not explicitly listed in doctests
                 for outpt in genfile_outputs:
@@ -284,12 +298,11 @@ def generate_packages(
                                 ext = frmt.strext
                         output_templates[outpt] = outpt + ext
 
-                def to_mime_like(type_):
-                    if ty.get_origin(type_) is ty.Union:
-                        mime_like = ",".join(a.mime_like for a in ty.get_args(type_))
-                    else:
-                        mime_like = type_.mime_like
-                    return mime_like
+                # convert to multi-input types to lists
+                input_types = {
+                    n: ty.List[t] if n in multi_inputs else t
+                    for n, t in input_types.items()
+                }
 
                 spec_stub = {
                     "name": interface,
@@ -298,14 +311,20 @@ def generate_packages(
                     "inputs": fields_stub(
                         "inputs",
                         InputsConverter,
-                        {"types": {n: to_mime_like(t) for n, t in input_types.items()}},
+                        {
+                            "types": {
+                                n: fileformats.core.utils.to_mime(t)
+                                for n, t in input_types.items()
+                            }
+                        },
                     ),
                     "outputs": fields_stub(
                         "outputs",
                         OutputsConverter,
                         {
                             "types": {
-                                n: to_mime_like(t) for n, t in output_types.items()
+                                n: fileformats.core.utils.to_mime(t)
+                                for n, t in output_types.items()
                             },
                             "templates": output_templates,
                         },
@@ -365,6 +384,8 @@ def generate_packages(
     print("\n".join(sorted(unmatched_extensions)))
     print("\nAmbiguous formats")
     print("\n".join(str(p) for p in ambiguous_formats))
+    print("\nWith doctests")
+    print("\n".join(sorted(has_doctests)))
 
 
 def initialise_task_repo(output_dir, task_template: Path, pkg: str) -> Path:
@@ -426,11 +447,12 @@ def initialise_task_repo(output_dir, task_template: Path, pkg: str) -> Path:
 
 def generate_spec_preamble(
     nipype_interface,
-) -> ty.Tuple[str, ty.List[str], ty.List[str], ty.List[str]]:
+) -> ty.Tuple[str, ty.List[str], ty.List[str], ty.List[str], ty.List[str]]:
     """Generate preamble comments at start of file with args and doc strings"""
     inputs_desc = ""
     file_inputs = []
     genfile_outputs = []
+    multi_inputs = []
     if nipype_interface.input_spec:
         for inpt_name, inpt in nipype_interface.input_spec().traits().items():
             if inpt_name in ("trait_added", "trait_modified"):
@@ -439,11 +461,11 @@ def generate_spec_preamble(
             inputs_desc += f"# {inpt_name} : {type(inpt.trait_type).__name__.lower()}\n#    {inpt_desc}\n"
             if inpt.genfile:
                 genfile_outputs.append(inpt_name)
-            elif type(inpt.trait_type).__name__ in (
-                "File",
-                "InputMultiObject",
-            ):
+            elif type(inpt.trait_type).__name__ == "File":
                 file_inputs.append(inpt_name)
+            elif type(inpt.trait_type).__name__ == "InputMultiObject":
+                file_inputs.append(inpt_name)
+                multi_inputs.append(inpt_name)
     file_outputs = []
     outputs_desc = ""
     if nipype_interface.output_spec:
@@ -473,12 +495,14 @@ def generate_spec_preamble(
         # ----
         # {doc_string}\n"""
     ).replace("        #", "#")
-    return preamble, file_inputs, file_outputs, genfile_outputs
+    return preamble, file_inputs, file_outputs, genfile_outputs, multi_inputs
 
 
 def extract_doctest_inputs(
     doctest: str, interface: str
-) -> ty.Tuple[ty.Optional[str], dict[str, ty.Any], ty.Optional[str]]:
+) -> ty.Tuple[
+    ty.Optional[str], dict[str, ty.Any], ty.Optional[str], ty.List[ty.Dict[str, str]]
+]:
     """Extract the inputs passed to tasks in the doctests of Nipype interfaces
 
     Parameters
@@ -497,7 +521,7 @@ def extract_doctest_inputs(
     directive : str
         any doctest directives found after the cmdline, e.g. ELLIPSIS"""
     match = re.search(
-        r"""^\s+>>> (?:\w+)\.cmdline(\s*# doctest: .*)?\n\s*('|")(.*)(?:'|")?\s*.*(?!>>>)\2""",
+        r"""^\s+>>> (?:.*)\.cmdline(\s*# doctest: .*)?\n\s*('|")(.*)(?:'|")?\s*.*(?!>>>)\2""",
         doctest,
         flags=re.MULTILINE | re.DOTALL,
     )
@@ -506,6 +530,8 @@ def extract_doctest_inputs(
         cmdline = re.sub(r"\s+", " ", cmdline)
         cmdline = cmdline.replace("'", '"')
         directive = match.group(2)
+        if directive == '"':
+            directive = None
     else:
         cmdline = directive = None
     doctest_inpts = {
@@ -515,26 +541,8 @@ def extract_doctest_inputs(
             doctest,
         )
     }
-    # if not doctest_inpts:
-    #     doctest_inpts = {
-    #         n: v.replace("'", '"')
-    #         for n, v in re.findall(
-    #             r"""\.\.\.\s+(\w+)=(.*) *\n""",
-    #             doctest,
-    #         )
-    #     }
-    #     if doctest_inpts:
-    #         match = re.search(
-    #             interface + r"""\((?<!\w)(\w+) *= *([^\=\n]+) *, *""",
-    #             doctest,
-    #         )
-    #         if match:
-    #             doctest_inpts[match.group(1)] = match.group(2).replace(
-    #                 "'", '"'
-    #             )
-    # if not doctest_inpts:
     match = re.search(
-        interface + r"""\(([^\)]+)\)(\n|  ?#)""",
+        interface + r"""\(([^\)]+)\)(\n|  ?#|\.cmdline)""",
         doctest,
     )
     if match is not None:
@@ -545,10 +553,39 @@ def extract_doctest_inputs(
                 for n, v in re.findall(r"(\w+) *= *([^=]+), *", arg_str)
             }
         )
+    imports = []
+    for ln in doctest.splitlines():
+        if re.match(r".*>>>.*(?<!\w)import(?!\w)", ln):
+            match = re.match(r".*>>> import (.*)$", ln)
+            if match:
+                for mod in match.group(1).split(","):
+                    imports.append({"module": mod.strip()})
+            else:
+                match = re.match(r".*>>> from ([\w\.]+) import (.*)", ln)
+                if not match:
+                    raise ValueError(f"Could not parse import statement: {ln}")
+                module = match.group(1)
+                if "nipype.interfaces" in module:
+                    continue
+                for atr in match.group(2).split(","):
+                    match = re.match(r"(\w+) as ((\w+))", atr)
+                    if match:
+                        name = match.group(1)
+                        alias = match.group(2)
+                    else:
+                        name = atr
+                        alias = None
+                    imports.append(
+                        {
+                            "module": module,
+                            "name": name,
+                            "alias": alias,
+                        }
+                    )
     if not doctest_inpts:
         raise ValueError(f"Could not parse doctest:\n{doctest}")
 
-    return cmdline, doctest_inpts, directive
+    return cmdline, doctest_inpts, directive, imports
 
 
 if __name__ == "__main__":

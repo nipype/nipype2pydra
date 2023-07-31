@@ -15,22 +15,40 @@ from nipype.interfaces.base import traits_extension
 from pydra.engine import specs
 from pydra.engine.helpers import ensure_list
 from .utils import import_module_from_path, is_fileset
-from fileformats.core import DataType
+from fileformats.core import from_mime
+
+
+T = ty.TypeVar("T")
+
+
+def from_dict_converter(
+    obj: ty.Union[T, dict], klass: ty.Type[T], allow_none=False
+) -> T:
+    if obj is None:
+        if allow_none:
+            converted = None
+        else:
+            converted = klass()
+    elif isinstance(obj, dict):
+        converted = klass(**obj)
+    elif isinstance(obj, klass):
+        converted = obj
+    else:
+        raise TypeError(
+            f"Input must be of type {klass} or dict, not {type(obj)}: {obj}"
+        )
+    return converted
 
 
 def str_to_type(type_str: str) -> type:
     """Resolve a string representation of a type into a valid type"""
     if "/" in type_str:
-        if "," in type_str:
-            union_tps = tuple(str_to_type(p) for p in type_str.split(","))
-            tp: ty.Type[ty.Union] = ty.Union.__getitem__(union_tps)  # type: ignore
-        else:
-            tp = DataType.from_mime(type_str)
-            try:
-                # If datatype is a field, use its primitive instead
-                tp = tp.primitive  # type: ignore
-            except AttributeError:
-                pass
+        tp = from_mime(type_str)
+        try:
+            # If datatype is a field, use its primitive instead
+            tp = tp.primitive  # type: ignore
+        except AttributeError:
+            pass
     elif "." in type_str:
         parts = type_str.split(".")
         module = import_module(".".join(parts[:-1]))
@@ -53,6 +71,20 @@ def types_converter(types: ty.Dict[str, ty.Union[str, type]]) -> ty.Dict[str, ty
             tp = str_to_type(tp_or_str)
         converted[name] = tp
     return converted
+
+
+@attrs.define
+class ImportStatement:
+
+    module: str
+    name: ty.Optional[str] = None
+    alias: ty.Optional[str] = None
+
+
+def from_list_to_imports(obj: ty.Union[ty.List[ImportStatement], list]) -> ty.List[ImportStatement]:
+    if obj is None:
+        return []
+    return [from_dict_converter(t, ImportStatement) for t in obj]
 
 
 @attrs.define
@@ -173,7 +205,10 @@ class TestGenerator:
     inputs : dict[str, str], optional
         values to provide to specific inputs fields (if not provided, a sensible value
         within the valid range will be provided)
-    outputs: dict[str, str], optional
+    imports : list[ImportStatement or dict]
+        list import statements required by the test, with each list item
+        consisting of 'module', 'name', and optionally 'alias' keys
+    expected_outputs: dict[str, str], optional
         expected values for selected outputs, noting that in tests will typically
         be terminated before they complete for time-saving reasons and will therefore
         be ignored
@@ -189,6 +224,14 @@ class TestGenerator:
             "help": """values to provide to inputs fields in the task initialisation
                 (if not specified, will try to choose a sensible value)"""
         },
+    )
+    imports: ty.List[ImportStatement] = attrs.field(
+        factory=list,
+        converter=from_list_to_imports,
+        metadata={
+            "help": """list import statements required by the test, with each list item
+                consisting of 'module', 'name', and optionally 'alias' keys"""
+        }
     )
     expected_outputs: ty.Dict[str, str] = attrs.field(
         factory=dict,
@@ -228,6 +271,11 @@ class DocTestGenerator:
     inputs : dict[str, str or None]
         name-value pairs for inputs to be provided to the doctest. If the value is None
         then the ".mock()" method of the corresponding class is used instead.
+    imports : list[ImportStatement or dict]
+        list import statements required by the test, with each list item
+        consisting of 'module', 'name', and optionally 'alias' keys
+    directive : str
+        any doctest directive to be applied to the cmdline line
     """
 
     cmdline: str = attrs.field(metadata={"help": "the expected cmdline output"})
@@ -239,34 +287,20 @@ class DocTestGenerator:
                 '.mock()' method of the corresponding class is used instead."""
         },
     )
+    imports: ty.List[ImportStatement] = attrs.field(
+        factory=list,
+        converter=from_list_to_imports,
+        metadata={
+            "help": """list import statements required by the test, with each list item
+                consisting of 'module', 'name', and optionally 'alias' keys"""
+        }
+    )
     directive: str = attrs.field(
         default=None,
         metadata={
             "help": "any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS"
         },
     )
-
-
-T = ty.TypeVar("T")
-
-
-def from_dict_converter(
-    obj: ty.Union[T, dict], klass: ty.Type[T], allow_none=False
-) -> T:
-    if obj is None:
-        if allow_none:
-            converted = None
-        else:
-            converted = klass()
-    elif isinstance(obj, dict):
-        converted = klass(**obj)
-    elif isinstance(obj, klass):
-        converted = obj
-    else:
-        raise TypeError(
-            f"Input must be of type {klass} or dict, not {type(obj)}: {obj}"
-        )
-    return converted
 
 
 def from_dict_to_inputs(obj: ty.Union[InputsConverter, dict]) -> InputsConverter:
@@ -404,12 +438,12 @@ class TaskConverter:
 
         filename_test = testdir / f"test_{self.task_name.lower()}.py"
         # filename_test_run = testdir / f"test_run_{self.task_name.lower()}.py"
-        self.write_test(
+        self.write_tests(
             filename_test,
             input_fields=input_fields,
             nonstd_types=nonstd_types,
         )
-        # self.write_test(filename_test=filename_test_run, run=True)
+        # self.write_tests(filename_test=filename_test_run, run=True)
 
     def convert_input_fields(self):
         """creating fields list for pydra input spec"""
@@ -658,17 +692,17 @@ class TaskConverter:
         spec_str = (
             "from pydra.engine import specs \nfrom pydra import ShellCommandTask \n"
         )
-        spec_str += self.import_types(nonstd_types)
         spec_str += functions_str
         spec_str += f"input_fields = {input_fields_str}\n"
         spec_str += f"{self.task_name}_input_spec = specs.SpecInfo(name='Input', fields=input_fields, bases=(specs.ShellSpec,))\n\n"
         spec_str += f"output_fields = {output_fields_str}\n"
         spec_str += f"{self.task_name}_output_spec = specs.SpecInfo(name='Output', fields=output_fields, bases=(specs.ShellOutSpec,))\n\n"
         spec_str += f"class {self.task_name}(ShellCommandTask):\n"
-        if self.doctest is not None:
-            spec_str += self.create_doctest(
-                input_fields=input_fields, nonstd_types=nonstd_types
-            )
+        spec_str += '    """\n'
+        spec_str += self.create_doctests(
+            input_fields=input_fields, nonstd_types=nonstd_types
+        )
+        spec_str += '    """\n'
         spec_str += f"    input_spec = {self.task_name}_input_spec\n"
         spec_str += f"    output_spec = {self.task_name}_output_spec\n"
         spec_str += f"    executable='{self.nipype_interface._cmd}'\n"
@@ -677,6 +711,9 @@ class TaskConverter:
             spec_str = spec_str.replace(*tp_repl)
         spec_str = re.sub(r'"TYPE_(\w+)"', r"\1", spec_str)
 
+        imports = self.construct_imports(nonstd_types, spec_str, include_task=False)
+        spec_str = "\n".join(imports) + "\n\n" + spec_str
+
         spec_str_black = black.format_file_contents(
             spec_str, fast=False, mode=black.FileMode()
         )
@@ -684,64 +721,104 @@ class TaskConverter:
         with open(filename, "w") as f:
             f.write(spec_str_black)
 
-    @staticmethod
-    def import_types(nonstd_types: ty.List[type], prefix="") -> str:
-        imports = f"{prefix}import typing as ty\n{prefix}from pathlib import Path\n"
-        for tp in nonstd_types:
-            imports += f"{prefix}from {tp.__module__} import {tp.__name__}\n"
-        return imports
+    def construct_imports(self, nonstd_types: ty.List[type], spec_str="", base=(), include_task=True) -> ty.List[str]:
+        """Constructs a list of imports to include at start of file"""
+        stmts: ty.Dict[str, str] = {}
 
-    def write_test(self, filename_test, input_fields, nonstd_types, run=False):
-        spec_str = "import os\nimport pytest\n"
-        spec_str += self.import_types(nonstd_types=nonstd_types)
-        spec_str += f"from {self.output_module} import {self.task_name}\n"
-        spec_str += "\n"
-        if self.test.xfail:
-            spec_str += "@pytest.mark.xfail\n"
-        spec_str += f"@pytest.mark.timeout_pass(timeout={self.test.timeout})\n"
-        spec_str += f"def test_{self.task_name.lower()}():\n"
-        spec_str += f"    task = {self.task_name}()\n"
-        for field in input_fields:
-            nm, tp = field[:2]
-            # Try to get a sensible value for the traits value
+        def add_import(stmt):
+            match = re.match(r".* as (\w+)\s*", stmt)
+            if not match:
+                match = re.match(r".*import (\w+)\s*$", stmt)
+            if not match:
+                raise ValueError(f"Unrecognised import statment {stmt}")
+            token = match.group(1)
             try:
-                value = self.test.inputs[nm]
+                prev_stmt = stmts[token]
             except KeyError:
-                if len(field) == 4:  # field has default
-                    if isinstance(field[2], bool):
-                        value = str(field[2])
-                    else:
-                        value = json.dumps(field[2])
+                pass
+            else:
+                if prev_stmt != stmt:
+                    raise ValueError(
+                        f"Cannot add import statement {stmt} as it clashes with "
+                        f"previous import {prev_stmt}"
+                    )
+            stmts[token] = stmt
+
+        for b in base:
+            add_import(b)
+
+        if re.match(r".*(?<!\w)ty\.", spec_str, flags=re.MULTILINE | re.DOTALL):
+            add_import("import typing as ty")
+        if re.match(r".*(?<!\w)Path(?!\w)", spec_str, flags=re.MULTILINE | re.DOTALL):
+            add_import("from pathlib import Path")
+        for test in self.tests:
+            for stmt in test.imports:
+                if stmt.name is None:
+                    add_import(f"import {stmt.module}")
                 else:
-                    assert len(field) == 3
-                    if is_fileset(tp):
-                        value = f"{tp.__name__}.sample()"
-                    else:
-                        trait = self.nipype_interface.input_spec.class_traits()[nm]
-                        if isinstance(trait, traits.trait_types.Enum):
-                            value = trait.values[0]
-                        elif isinstance(trait, traits.trait_types.Range):
-                            value = (trait.high - trait.low) / 2.0
-                        elif isinstance(trait, traits.trait_types.Bool):
-                            value = True
-                        elif isinstance(trait, traits.trait_types.Int):
-                            value = 1
-                        elif isinstance(trait, traits.trait_types.Float):
-                            value = 1.0
-                        elif isinstance(trait, traits.trait_types.List):
-                            value = [1] * trait.minlen
-                        elif isinstance(trait, traits.trait_types.Tuple):
-                            value = tuple([1] * len(trait.types))
+                    nm = stmt.name if stmt.alias is None else f"{stmt.name} as {stmt.alias}"
+                    add_import(f"from {stmt.module} import {nm}")
+        for tp in nonstd_types:
+            add_import(f"from {tp.__module__} import {tp.__name__}")
+        if include_task:
+            add_import(f"from {self.output_module} import {self.task_name}")
+
+        return list(stmts.values())
+
+    def write_tests(self, filename_test, input_fields, nonstd_types, run=False):
+
+        spec_str = ""
+        for i, test in enumerate(self.tests, start=1):
+            if test.xfail:
+                spec_str += "@pytest.mark.xfail\n"
+            spec_str += f"@pytest.mark.timeout_pass(timeout={test.timeout})\n"
+            spec_str += f"def test_{self.task_name.lower()}_{i}():\n"
+            spec_str += f"    task = {self.task_name}()\n"
+            for field in input_fields:
+                nm, tp = field[:2]
+                # Try to get a sensible value for the traits value
+                try:
+                    value = test.inputs[nm]
+                except KeyError:
+                    if len(field) == 4:  # field has default
+                        if isinstance(field[2], bool):
+                            value = str(field[2])
                         else:
-                            value = attrs.NOTHING
-            if value is not attrs.NOTHING:
-                spec_str += f"    task.inputs.{nm} = {value}\n"
-        if hasattr(self.nipype_interface, "_cmd"):
-            spec_str += r'    print(f"CMDLINE: {task.cmdline}\n\n")' + "\n"
-        spec_str += "    res = task()\n"
-        spec_str += "    print('RESULT: ', res)\n"
-        for name, value in self.test.expected_outputs.items():
-            spec_str += f"    assert res.output.{name} == {value}\n"
+                            value = json.dumps(field[2])
+                    else:
+                        assert len(field) == 3
+                        if is_fileset(tp):
+                            value = f"{tp.__name__}.sample()"
+                        else:
+                            trait = self.nipype_interface.input_spec.class_traits()[nm]
+                            if isinstance(trait, traits.trait_types.Enum):
+                                value = trait.values[0]
+                            elif isinstance(trait, traits.trait_types.Range):
+                                value = (trait.high - trait.low) / 2.0
+                            elif isinstance(trait, traits.trait_types.Bool):
+                                value = True
+                            elif isinstance(trait, traits.trait_types.Int):
+                                value = 1
+                            elif isinstance(trait, traits.trait_types.Float):
+                                value = 1.0
+                            elif isinstance(trait, traits.trait_types.List):
+                                value = [1] * trait.minlen
+                            elif isinstance(trait, traits.trait_types.Tuple):
+                                value = tuple([1] * len(trait.types))
+                            else:
+                                value = attrs.NOTHING
+                if value is not attrs.NOTHING:
+                    spec_str += f"    task.inputs.{nm} = {value}\n"
+            if hasattr(self.nipype_interface, "_cmd"):
+                spec_str += r'    print(f"CMDLINE: {task.cmdline}\n\n")' + "\n"
+            spec_str += "    res = task()\n"
+            spec_str += "    print('RESULT: ', res)\n"
+            for name, value in test.expected_outputs.items():
+                spec_str += f"    assert res.output.{name} == {value}\n"
+            spec_str += "\n\n\n"
+
+        imports = self.construct_imports(nonstd_types, spec_str, base={"import os", "import pytest"})
+        spec_str = "\n".join(imports) + "\n\n" + spec_str
 
         spec_str_black = black.format_file_contents(
             spec_str, fast=False, mode=black.FileMode()
@@ -750,30 +827,34 @@ class TaskConverter:
         with open(filename_test, "w") as f:
             f.write(spec_str_black)
 
-    def create_doctest(self, input_fields, nonstd_types):
+    def create_doctests(self, input_fields, nonstd_types):
         """adding doctests to the interfaces"""
-        doctest = '    """\n    Example\n    -------\n'
-        doctest += self.import_types(nonstd_types, prefix="    >>> ")
-        doctest += f"    >>> from {self.output_module} import {self.task_name}\n"
-        doctest += f"    >>> task = {self.task_name}()\n"
-        for field in input_fields:
-            nm, tp = field[:2]
-            try:
-                val = self.doctest.inputs[nm]
-            except KeyError:
-                if is_fileset(tp):
-                    val = f"{tp.__name__}.mock()"
+        doctest_str = ""
+        for doctest in self.doctests:
+            doctest_str += f"    >>> task = {self.task_name}()\n"
+            for field in input_fields:
+                nm, tp = field[:2]
+                try:
+                    val = doctest.inputs[nm]
+                except KeyError:
+                    if is_fileset(tp):
+                        val = f"{tp.__name__}.mock()"
+                    else:
+                        val = attrs.NOTHING
                 else:
-                    val = attrs.NOTHING
-            else:
-                if type(val) is str:
-                    val = f'"{val}"'
-            if val is not attrs.NOTHING:
-                doctest += f"    >>> task.inputs.{nm} = {val}\n"
-        doctest += "    >>> task.cmdline\n"
-        doctest += f"    '{self.doctest.cmdline}'"
-        doctest += '\n    """\n'
-        return doctest
+                    if type(val) is str:
+                        val = f'"{val}"'
+                if val is not attrs.NOTHING:
+                    doctest_str += f"    >>> task.inputs.{nm} = {val}\n"
+            doctest_str += "    >>> task.cmdline\n"
+            doctest_str += f"    '{doctest.cmdline}'"
+            doctest_str += '\n'
+
+        imports = self.construct_imports(nonstd_types, doctest_str)
+        if imports:
+            doctest_str = "    >>> " + "\n    >>> ".join(imports) + doctest_str
+
+        return '    Examples\n    -------\n' + doctest_str
 
     INPUT_KEYS = [
         "allowed_values",
