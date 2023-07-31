@@ -1,11 +1,13 @@
 import os
-import typing as ty
 import time
 import logging
 from pathlib import Path
+from traceback import format_exc
 import tempfile
 import threading
+from dataclasses import dataclass
 import pytest
+from _pytest.runner import TestReport
 
 
 try:
@@ -51,41 +53,67 @@ def work_dir():
     return Path(work_dir)
 
 
-def timeout_pass(timeout):
+def pass_after_timout(seconds, poll_interval=0.1):
     """Cancel the test after a certain period, after which it is assumed that the arguments
     passed to the underying command have passed its internal validation (so we don't have
     to wait until the tool completes)
 
     Parameters
     ----------
-    timeout : int
-        the number of seconds to wait until cancelling the test
+    seconds : int
+        the number of seconds to wait until cancelling the test (and marking it as passed)
     """
+
     def decorator(test_func):
         def wrapper(*args, **kwargs):
-            result = [None]
-            exception = [False]
-            timeout_event = threading.Event()
+            @dataclass
+            class TestState:
+                """A way of passing a reference to the result that can be updated by
+                the test thread"""
+
+                result = None
+                exception = None
+
+            state = TestState()
 
             def test_runner():
                 try:
-                    result[0] = test_func(*args, **kwargs)
-                except Exception:
-                    exception[0] = True
+                    state.result = test_func(*args, **kwargs)
+                except Exception as e:
+                    state.exception = e
+                    # raise
+                    # state.trace_back = format_exc()
+                    # raise
 
             thread = threading.Thread(target=test_runner)
             thread.start()
-            timeout_event.wait(timeout)
+
+            # Calculate the end time for the timeout
+            end_time = time.time() + seconds
+
+            while thread.is_alive() and time.time() < end_time:
+                time.sleep(poll_interval)
 
             if thread.is_alive():
-                timeout_event.set()
                 thread.join()
-                return result[0]
+                return state.result
 
-            if exception[0]:
-                raise Exception("Test raised an exception during execution.")
+            if state.trace_back:
+                raise state.exception
 
-            return result[0]
+            outcome = "passed after timeout"
+            rep = TestReport.from_item_and_call(
+                item=args[0],
+                when="call",
+                excinfo=None,
+                outcome=outcome,
+                sections=None,
+                duration=0,
+                keywords=None,
+            )
+            args[0].ihook.pytest_runtest_logreport(report=rep)
+
+            return state.result
 
         return wrapper
 

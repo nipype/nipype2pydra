@@ -75,13 +75,14 @@ def types_converter(types: ty.Dict[str, ty.Union[str, type]]) -> ty.Dict[str, ty
 
 @attrs.define
 class ImportStatement:
-
     module: str
     name: ty.Optional[str] = None
     alias: ty.Optional[str] = None
 
 
-def from_list_to_imports(obj: ty.Union[ty.List[ImportStatement], list]) -> ty.List[ImportStatement]:
+def from_list_to_imports(
+    obj: ty.Union[ty.List[ImportStatement], list]
+) -> ty.List[ImportStatement]:
     if obj is None:
         return []
     return [from_dict_converter(t, ImportStatement) for t in obj]
@@ -231,7 +232,7 @@ class TestGenerator:
         metadata={
             "help": """list import statements required by the test, with each list item
                 consisting of 'module', 'name', and optionally 'alias' keys"""
-        }
+        },
     )
     expected_outputs: ty.Dict[str, str] = attrs.field(
         factory=dict,
@@ -293,7 +294,7 @@ class DocTestGenerator:
         metadata={
             "help": """list import statements required by the test, with each list item
                 consisting of 'module', 'name', and optionally 'alias' keys"""
-        }
+        },
     )
     directive: str = attrs.field(
         default=None,
@@ -311,13 +312,17 @@ def from_dict_to_outputs(obj: ty.Union[OutputsConverter, dict]) -> OutputsConver
     return from_dict_converter(obj, OutputsConverter)
 
 
-def from_list_to_tests(obj: ty.Union[ty.List[TestGenerator], list]) -> ty.List[TestGenerator]:
+def from_list_to_tests(
+    obj: ty.Union[ty.List[TestGenerator], list]
+) -> ty.List[TestGenerator]:
     if obj is None:
         return []
     return [from_dict_converter(t, TestGenerator) for t in obj]
 
 
-def from_list_to_doctests(obj: ty.Union[ty.List[DocTestGenerator], list]) -> ty.List[DocTestGenerator]:
+def from_list_to_doctests(
+    obj: ty.Union[ty.List[DocTestGenerator], list]
+) -> ty.List[DocTestGenerator]:
     if obj is None:
         return []
     return [from_dict_converter(t, DocTestGenerator) for t in obj]
@@ -689,10 +694,7 @@ class TaskConverter:
         input_fields_str = types_to_names(spec_fields=input_fields)
         output_fields_str = types_to_names(spec_fields=output_fields)
         functions_str = self.function_callables()
-        spec_str = (
-            "from pydra.engine import specs \nfrom pydra import ShellCommandTask \n"
-        )
-        spec_str += functions_str
+        spec_str = functions_str
         spec_str += f"input_fields = {input_fields_str}\n"
         spec_str += f"{self.task_name}_input_spec = specs.SpecInfo(name='Input', fields=input_fields, bases=(specs.ShellSpec,))\n\n"
         spec_str += f"output_fields = {output_fields_str}\n"
@@ -711,7 +713,15 @@ class TaskConverter:
             spec_str = spec_str.replace(*tp_repl)
         spec_str = re.sub(r'"TYPE_(\w+)"', r"\1", spec_str)
 
-        imports = self.construct_imports(nonstd_types, spec_str, include_task=False)
+        imports = self.construct_imports(
+            nonstd_types,
+            spec_str,
+            include_task=False,
+            base=(
+                "from pydra.engine import specs",
+                "from pydra.engine import ShellCommandTask",
+            ),
+        )
         spec_str = "\n".join(imports) + "\n\n" + spec_str
 
         spec_str_black = black.format_file_contents(
@@ -721,7 +731,9 @@ class TaskConverter:
         with open(filename, "w") as f:
             f.write(spec_str_black)
 
-    def construct_imports(self, nonstd_types: ty.List[type], spec_str="", base=(), include_task=True) -> ty.List[str]:
+    def construct_imports(
+        self, nonstd_types: ty.List[type], spec_str="", base=(), include_task=True
+    ) -> ty.List[str]:
         """Constructs a list of imports to include at start of file"""
         stmts: ty.Dict[str, str] = {}
 
@@ -756,7 +768,11 @@ class TaskConverter:
                 if stmt.name is None:
                     add_import(f"import {stmt.module}")
                 else:
-                    nm = stmt.name if stmt.alias is None else f"{stmt.name} as {stmt.alias}"
+                    nm = (
+                        stmt.name
+                        if stmt.alias is None
+                        else f"{stmt.name} as {stmt.alias}"
+                    )
                     add_import(f"from {stmt.module} import {nm}")
         for tp in nonstd_types:
             add_import(f"from {tp.__module__} import {tp.__name__}")
@@ -766,12 +782,11 @@ class TaskConverter:
         return list(stmts.values())
 
     def write_tests(self, filename_test, input_fields, nonstd_types, run=False):
-
         spec_str = ""
         for i, test in enumerate(self.tests, start=1):
             if test.xfail:
                 spec_str += "@pytest.mark.xfail\n"
-            spec_str += f"@pytest.mark.timeout_pass(timeout={test.timeout})\n"
+            spec_str += f"@pass_after_timeout(seconds={test.timeout})\n"
             spec_str += f"def test_{self.task_name.lower()}_{i}():\n"
             spec_str += f"    task = {self.task_name}()\n"
             for field in input_fields:
@@ -817,7 +832,11 @@ class TaskConverter:
                 spec_str += f"    assert res.output.{name} == {value}\n"
             spec_str += "\n\n\n"
 
-        imports = self.construct_imports(nonstd_types, spec_str, base={"import os", "import pytest"})
+        imports = self.construct_imports(
+            nonstd_types,
+            spec_str,
+            base={"import pytest", "from conftest import pass_after_timeout"},
+        )
         spec_str = "\n".join(imports) + "\n\n" + spec_str
 
         spec_str_black = black.format_file_contents(
@@ -848,13 +867,13 @@ class TaskConverter:
                     doctest_str += f"    >>> task.inputs.{nm} = {val}\n"
             doctest_str += "    >>> task.cmdline\n"
             doctest_str += f"    '{doctest.cmdline}'"
-            doctest_str += '\n'
+            doctest_str += "\n"
 
         imports = self.construct_imports(nonstd_types, doctest_str)
         if imports:
             doctest_str = "    >>> " + "\n    >>> ".join(imports) + doctest_str
 
-        return '    Examples\n    -------\n' + doctest_str
+        return "    Examples\n    -------\n" + doctest_str
 
     INPUT_KEYS = [
         "allowed_values",

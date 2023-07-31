@@ -432,6 +432,9 @@ def initialise_task_repo(output_dir, task_template: Path, pkg: str) -> Path:
     # rename tasks directory
     (pkg_dir / "pydra" / "tasks" / "CHANGEME").rename(pkg_dir / "pydra" / "tasks" / pkg)
 
+    # Add in modified __init__.py
+    shutil.copy(RESOURCES_DIR / "pkg_init.py", pkg_dir / "pydra" / "tasks" / pkg / "__init__.py")
+
     # Replace "CHANGEME" string with pkg name
     for fspath in pkg_dir.glob("**/*"):
         if fspath.is_dir():
