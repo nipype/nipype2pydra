@@ -244,14 +244,14 @@ def generate_packages(
                                 )
                             return type_
 
-                        test_inpts = {}
-                        doctest_inpts = {}
+                        test_inpts: ty.Dict[str, ty.Optional[ty.Type]] = {}
                         for name, val in inpts.items():
                             if name in file_inputs:
                                 guessed_type = guess_type(val)
                                 input_types[name] = combine_types(
                                     guessed_type, input_types[name]
                                 )
+                                test_inpts[name] = None
                             else:
                                 test_inpts[name] = val
                             if name in file_outputs:
@@ -261,13 +261,12 @@ def generate_packages(
                                 )
                             if name in genfile_outputs:
                                 output_templates[name] = val
-                            doctest_inpts[name] = None if name in file_inputs else val
 
                         tests.append(
                             fields_stub(
                                 "test",
                                 TestGenerator,
-                                {"inputs": copy(test_inpts), "imports": imports},
+                                {"inputs": test_inpts, "imports": imports},
                             )
                         )
                         doctests.append(
@@ -276,7 +275,7 @@ def generate_packages(
                                 DocTestGenerator,
                                 {
                                     "cmdline": cmdline,
-                                    "inputs": doctest_inpts,
+                                    "inputs": copy(test_inpts),
                                     "imports": imports,
                                     "directive": directive,
                                 },

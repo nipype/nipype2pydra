@@ -610,7 +610,7 @@ class TaskConverter:
             raise Exception(
                 f"spec_type has to be input or output, but {spec_type} provided"
             )
-        types_dict = self.inputs.types if spec_type == "inputs" else self.outputs.types
+        types_dict = self.inputs.types if spec_type == "input" else self.outputs.types
         try:
             return types_dict[name]
         except KeyError:
@@ -711,7 +711,7 @@ class TaskConverter:
 
         for tp_repl in self.TYPE_REPLACE:
             spec_str = spec_str.replace(*tp_repl)
-        spec_str = re.sub(r'"TYPE_(\w+)"', r"\1", spec_str)
+        spec_str = re.sub(r"'TYPE_(\w+)'", r"\1", spec_str)
 
         imports = self.construct_imports(
             nonstd_types,
@@ -724,12 +724,12 @@ class TaskConverter:
         )
         spec_str = "\n".join(imports) + "\n\n" + spec_str
 
-        spec_str_black = black.format_file_contents(
+        spec_str = black.format_file_contents(
             spec_str, fast=False, mode=black.FileMode()
         )
 
         with open(filename, "w") as f:
-            f.write(spec_str_black)
+            f.write(spec_str)
 
     def construct_imports(
         self, nonstd_types: ty.List[type], spec_str="", base=(), include_task=True
@@ -802,26 +802,31 @@ class TaskConverter:
                             value = json.dumps(field[2])
                     else:
                         assert len(field) == 3
+                        # Attempt to pick a sensible value for field
+                        trait = self.nipype_interface.input_spec.class_traits()[nm]
+                        if isinstance(trait, traits.trait_types.Enum):
+                            value = trait.values[0]
+                        elif isinstance(trait, traits.trait_types.Range):
+                            value = (trait.high - trait.low) / 2.0
+                        elif isinstance(trait, traits.trait_types.Bool):
+                            value = True
+                        elif isinstance(trait, traits.trait_types.Int):
+                            value = 1
+                        elif isinstance(trait, traits.trait_types.Float):
+                            value = 1.0
+                        elif isinstance(trait, traits.trait_types.List):
+                            value = [1] * trait.minlen
+                        elif isinstance(trait, traits.trait_types.Tuple):
+                            value = tuple([1] * len(trait.types))
+                        else:
+                            value = attrs.NOTHING
+                else:
+                    if value is None:
                         if is_fileset(tp):
                             value = f"{tp.__name__}.sample()"
-                        else:
-                            trait = self.nipype_interface.input_spec.class_traits()[nm]
-                            if isinstance(trait, traits.trait_types.Enum):
-                                value = trait.values[0]
-                            elif isinstance(trait, traits.trait_types.Range):
-                                value = (trait.high - trait.low) / 2.0
-                            elif isinstance(trait, traits.trait_types.Bool):
-                                value = True
-                            elif isinstance(trait, traits.trait_types.Int):
-                                value = 1
-                            elif isinstance(trait, traits.trait_types.Float):
-                                value = 1.0
-                            elif isinstance(trait, traits.trait_types.List):
-                                value = [1] * trait.minlen
-                            elif isinstance(trait, traits.trait_types.Tuple):
-                                value = tuple([1] * len(trait.types))
-                            else:
-                                value = attrs.NOTHING
+                        elif ty.get_origin(tp) in (list, ty.Union) and is_fileset(ty.get_args(tp)[0]):
+                            arg_tp = ty.get_args(tp)[0]
+                            value = f"{arg_tp.__name__}.sample()"
                 if value is not attrs.NOTHING:
                     spec_str += f"    task.inputs.{nm} = {value}\n"
             if hasattr(self.nipype_interface, "_cmd"):
