@@ -419,7 +419,8 @@ def initialise_task_repo(output_dir, task_template: Path, pkg: str) -> Path:
     )
 
     # Add modified README
-    shutil.copy(RESOURCES_DIR / "README.md", pkg_dir / "README.md")
+    os.unlink(pkg_dir / "README.md")
+    shutil.copy(RESOURCES_DIR / "README.rst", pkg_dir / "README.rst")
 
     # Add "pydra.tasks.<pkg>.auto to gitignore"
     with open(pkg_dir / ".gitignore", "a") as f:
