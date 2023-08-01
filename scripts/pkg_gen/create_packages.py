@@ -28,6 +28,7 @@ from nipype2pydra.task import (
     TestGenerator,
     DocTestGenerator,
 )
+from nipype2pydra.utils import to_snake_case
 
 
 RESOURCES_DIR = Path(__file__).parent / "resources"
@@ -107,7 +108,7 @@ def generate_packages(
 
             # Loop through all interfaces in module
             for interface in interfaces:
-                spec_name = interface.lower()
+                spec_name = to_snake_case(interface)
                 callables_fspath = spec_dir / f"{spec_name}_callables.py"
                 spec_stub = {}
 
@@ -422,7 +423,7 @@ def initialise_task_repo(output_dir, task_template: Path, pkg: str) -> Path:
 
     # Add "pydra.tasks.<pkg>.auto to gitignore"
     with open(pkg_dir / ".gitignore", "a") as f:
-        f.write(f"\n/pydra/tasks/{pkg}/auto" f"\n/pydra/tasks/_version.py\n")
+        f.write(f"\n/pydra/tasks/{pkg}/auto" f"\n/pydra/tasks/{pkg}/_version.py\n")
 
     # rename tasks directory
     (pkg_dir / "pydra" / "tasks" / "CHANGEME").rename(pkg_dir / "pydra" / "tasks" / pkg)
@@ -592,34 +593,6 @@ def extract_doctest_inputs(
         raise ValueError(f"Could not parse doctest:\n{doctest}")
 
     return cmdline, doctest_inpts, directive, imports
-
-
-def to_snake_case(name: str) -> str:
-    """
-    Converts a PascalCase string to a snake_case one
-    """
-    snake_str = ""
-
-    # Loop through each character in the input string
-    for i, char in enumerate(name):
-        # If the current character is uppercase and it's not the first character or
-        # followed by another uppercase character, add an underscore before it and
-        # convert it to lowercase
-        if (
-            i > 0
-            and (char.isupper() or char.isdigit())
-            and (
-                not (name[i - 1].isupper() or name[i - 1].isdigit())
-                or ((i + 1) < len(name) and (name[i + 1].islower() or name[i + 1].islower()))
-            )
-        ):
-            snake_str += "_"
-            snake_str += char.lower()
-        else:
-            # Otherwise, just add the character as it is
-            snake_str += char.lower()
-
-    return snake_str
 
 
 if __name__ == "__main__":

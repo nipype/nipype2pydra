@@ -73,3 +73,31 @@ def is_fileset(tp: type):
         and type(tp) is not ty.GenericAlias
         and issubclass(tp, FileSet)
     )
+
+
+def to_snake_case(name: str) -> str:
+    """
+    Converts a PascalCase string to a snake_case one
+    """
+    snake_str = ""
+
+    # Loop through each character in the input string
+    for i, char in enumerate(name):
+        # If the current character is uppercase and it's not the first character or
+        # followed by another uppercase character, add an underscore before it and
+        # convert it to lowercase
+        if (
+            i > 0
+            and (char.isupper() or char.isdigit())
+            and (
+                not (name[i - 1].isupper() or name[i - 1].isdigit())
+                or ((i + 1) < len(name) and (name[i + 1].islower() or name[i + 1].islower()))
+            )
+        ):
+            snake_str += "_"
+            snake_str += char.lower()
+        else:
+            # Otherwise, just add the character as it is
+            snake_str += char.lower()
+
+    return snake_str

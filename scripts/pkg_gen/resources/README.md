@@ -98,4 +98,8 @@ $ pytest --doctest-modules pydra/tasks/CHANGEME/auto/tests/test_<the-name-of-the
 
 If the test passes you should then edit the `pydra/tasks/CHANGEME/v<tool-version>/__init__.py` file
 to import the now valid task interface to signify that it has been validated and is ready
-for use.
+for use, e.g.
+
+```python
+from pydra.tasks.CHANGEME.auto import edited_task
+```

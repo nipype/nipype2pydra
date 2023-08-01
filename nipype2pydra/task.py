@@ -384,12 +384,8 @@ class TaskConverter:
     def __attrs_post_init__(self):
         if self.output_module is None:
             if self.nipype_module.__name__.startswith("nipype.interfaces."):
-                self.output_module = (
-                    "pydra.tasks."
-                    + self.nipype_module.__name__[len("nipype.interfaces.") :]
-                    + "."
-                    + self.task_name.lower()
-                )
+                pkg_name = self.nipype_module.__name__.split(".")[2]
+                self.output_module = f"pydra.tasks.{pkg_name}.auto.{self.task_name}"
             else:
                 raise RuntimeError(
                     "Output-module needs to be explicitly provided to task converter "
@@ -404,11 +400,11 @@ class TaskConverter:
 
     @property
     def nipype_input_spec(self) -> nipype.interfaces.base.BaseInterfaceInputSpec:
-        return self.nipype_interface.input_spec()
+        return self.nipype_interface.input_spec() if self.nipype_interface.input_spec else None
 
     @property
     def nipype_output_spec(self) -> nipype.interfaces.base.BaseTraitedSpec:
-        return self.nipype_interface.output_spec()
+        return self.nipype_interface.output_spec() if self.nipype_interface.output_spec else None
 
     def generate(self, package_root: Path):
         """creating pydra input/output spec from nipype specs
@@ -542,6 +538,8 @@ class TaskConverter:
     def convert_output_spec(self, fields_from_template):
         """creating fields list for pydra input spec"""
         fields_pdr_l = []
+        if not self.nipype_output_spec:
+            return fields_pdr_l
         for name, fld in self.nipype_output_spec.traits().items():
             if name in self.outputs.requirements and name not in fields_from_template:
                 fld_pdr = self.pydra_fld_output(fld, name)
@@ -689,6 +687,16 @@ class TaskConverter:
                 spec_fields_str.append(tuple(el))
             return spec_fields_str
 
+
+        base_imports = ["from pydra.engine import specs",]
+        if hasattr(self.nipype_interface, "_cmd"):
+            task_base = "ShellCommandTask"
+            base_imports.append("from pydra.engine import ShellCommandTask")
+        else:
+            task_base = "FunctionTask"
+            base_imports.append("from pydra.engine.task import FunctionTask")
+            
+
         input_fields_str = types_to_names(spec_fields=input_fields)
         output_fields_str = types_to_names(spec_fields=output_fields)
         functions_str = self.function_callables()
@@ -697,7 +705,7 @@ class TaskConverter:
         spec_str += f"{self.task_name}_input_spec = specs.SpecInfo(name='Input', fields=input_fields, bases=(specs.ShellSpec,))\n\n"
         spec_str += f"output_fields = {output_fields_str}\n"
         spec_str += f"{self.task_name}_output_spec = specs.SpecInfo(name='Output', fields=output_fields, bases=(specs.ShellOutSpec,))\n\n"
-        spec_str += f"class {self.task_name}(ShellCommandTask):\n"
+        spec_str += f"class {self.task_name}({task_base}):\n"
         spec_str += '    """\n'
         spec_str += self.create_doctests(
             input_fields=input_fields, nonstd_types=nonstd_types
@@ -705,7 +713,8 @@ class TaskConverter:
         spec_str += '    """\n'
         spec_str += f"    input_spec = {self.task_name}_input_spec\n"
         spec_str += f"    output_spec = {self.task_name}_output_spec\n"
-        spec_str += f"    executable='{self.nipype_interface._cmd}'\n"
+        if task_base == "ShellCommandTask":
+            spec_str += f"    executable='{self.nipype_interface._cmd}'\n"
 
         spec_str = re.sub(r"'#([^'#]+)#'", r"\1", spec_str)
 
@@ -713,10 +722,7 @@ class TaskConverter:
             nonstd_types,
             spec_str,
             include_task=False,
-            base=(
-                "from pydra.engine import specs",
-                "from pydra.engine import ShellCommandTask",
-            ),
+            base=base_imports,
         )
         spec_str = "\n".join(imports) + "\n\n" + spec_str
 
