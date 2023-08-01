@@ -307,7 +307,6 @@ def generate_packages(
                     "task_name": to_snake_case(interface),
                     "nipype_name": interface,
                     "nipype_module": nipype_module_str,
-                    "new_name": None,
                     "inputs": fields_stub(
                         "inputs",
                         InputsConverter,
