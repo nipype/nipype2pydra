@@ -304,7 +304,8 @@ def generate_packages(
                 }
 
                 spec_stub = {
-                    "name": interface,
+                    "task_name": to_snake_case(interface),
+                    "nipype_name": interface,
                     "nipype_module": nipype_module_str,
                     "new_name": None,
                     "inputs": fields_stub(
@@ -347,9 +348,9 @@ def generate_packages(
                             tp_name = tp.__name__
                         else:
                             tp_name = str(tp).lower().replace("typing.", "")
-                        comment = f"    # {tp_name} - " + field.metadata[
+                        comment = f"  # {tp_name} - " + field.metadata[
                             "help"
-                        ].replace("\n                ", "\n    # ")
+                        ].replace("\n                ", "\n  # ")
                         yaml_str = re.sub(
                             f" {category_name}.{field.name}:" + r"(.*)",
                             f" {field.name}:" + r"\1" + f"\n{comment}",
@@ -594,6 +595,26 @@ def extract_doctest_inputs(
         raise ValueError(f"Could not parse doctest:\n{doctest}")
 
     return cmdline, doctest_inpts, directive, imports
+
+
+def to_snake_case(name: str) -> str:
+    """
+    Converts a PascalCase string to a snake_case one
+    """
+    snake_str = ''
+
+    # Loop through each character in the input string
+    for i, char in enumerate(name):
+        # If the current character is uppercase and it's not the first character,
+        # add an underscore before it and convert it to lowercase
+        if char.isupper() and i > 0:
+            snake_str += '_'
+            snake_str += char.lower()
+        else:
+            # Otherwise, just add the character as it is
+            snake_str += char.lower()
+
+    return snake_str
 
 
 if __name__ == "__main__":
