@@ -16,6 +16,7 @@ from pydra.engine import specs
 from pydra.engine.helpers import ensure_list
 from .utils import import_module_from_path, is_fileset
 from fileformats.core import from_mime
+from fileformats.generic import File
 
 
 T = ty.TypeVar("T")
@@ -413,18 +414,24 @@ class TaskConverter:
     def task_name(self):
         return self.new_name if self.new_name is not None else self.name
 
-    def generate(self, package_root: Path):
+    def generate(self, package_root: Path, with_conftest: bool = True):
         """creating pydra input/output spec from nipype specs
         if write is True, a pydra Task class will be written to the file together with tests
         """
         input_fields, inp_templates = self.convert_input_fields()
         output_fields = self.convert_output_spec(fields_from_template=inp_templates)
 
-        nonstd_types = set(
-            f[1]
-            for f in input_fields
-            if f[1].__module__ not in ["builtins", "pathlib", "typing"]
-        )
+        nonstd_types = set()
+
+        def add_nonstd_types(tp):
+            if ty.get_origin(tp) in (list, ty.Union):
+                for tp_arg in ty.get_args(tp):
+                    add_nonstd_types(tp_arg)
+            elif tp.__module__ not in ["builtins", "pathlib", "typing"]:
+                nonstd_types.add(tp)
+
+        for f in input_fields:
+            add_nonstd_types(f[1])
 
         output_file = (
             Path(package_root)
@@ -448,7 +455,8 @@ class TaskConverter:
             input_fields=input_fields,
             nonstd_types=nonstd_types,
         )
-        # self.write_tests(filename_test=filename_test_run, run=True)
+        # with open(testdir / "conftest.py", "w") as f:
+        #     f.write(self.CONFTEST)
 
     def convert_input_fields(self):
         """creating fields list for pydra input spec"""
@@ -628,7 +636,7 @@ class TaskConverter:
             tp_pdr = dict
         elif isinstance(tp, traits_extension.InputMultiObject):
             if isinstance(field.inner_traits[0].trait_type, traits_extension.File):
-                tp_pdr = specs.MultiInputFile
+                tp_pdr = ty.List[File]
             else:
                 tp_pdr = specs.MultiInputObj
         elif isinstance(tp, traits_extension.OutputMultiObject):
@@ -639,7 +647,7 @@ class TaskConverter:
         elif isinstance(tp, traits.trait_types.List):
             if isinstance(field.inner_traits[0].trait_type, traits_extension.File):
                 if spec_type == "input":
-                    tp_pdr = specs.MultiInputFile
+                    tp_pdr = ty.List[File]
                 else:
                     tp_pdr = specs.MultiOutputFile
             else:
@@ -680,14 +688,14 @@ class TaskConverter:
             spec_fields_str = []
             for el in spec_fields:
                 el = list(el)
-                try:
-                    el[1] = el[1].__name__
-                    # add 'TYPE_' to the beginning of the name
-                    el[1] = "TYPE_" + el[1]
-                except AttributeError:
-                    el[1] = el[1]._name
-                    # add 'TYPE_' to the beginning of the name
-                    el[1] = "TYPE_" + el[1]
+                tp_str = str(el[1])
+                if tp_str.startswith("<class "):
+                    tp_str = el[1].__name__
+                else:
+                    # Alter modules in type string to match those that will be imported
+                    tp_str = tp_str.replace("typing", "ty")
+                    tp_str = re.sub(r"(\w+\.)+(?<!ty\.)(\w+)", r"\2", tp_str)
+                el[1] = "#" + tp_str + "#"
                 spec_fields_str.append(tuple(el))
             return spec_fields_str
 
@@ -709,9 +717,7 @@ class TaskConverter:
         spec_str += f"    output_spec = {self.task_name}_output_spec\n"
         spec_str += f"    executable='{self.nipype_interface._cmd}'\n"
 
-        for tp_repl in self.TYPE_REPLACE:
-            spec_str = spec_str.replace(*tp_repl)
-        spec_str = re.sub(r"'TYPE_(\w+)'", r"\1", spec_str)
+        spec_str = re.sub(r"'#([^'#]+)#'", r"\1", spec_str)
 
         imports = self.construct_imports(
             nonstd_types,
@@ -872,13 +878,13 @@ class TaskConverter:
                     doctest_str += f"    >>> task.inputs.{nm} = {val}\n"
             doctest_str += "    >>> task.cmdline\n"
             doctest_str += f"    '{doctest.cmdline}'"
-            doctest_str += "\n"
+            doctest_str += "\n\n\n"
 
         imports = self.construct_imports(nonstd_types, doctest_str)
         if imports:
-            doctest_str = "    >>> " + "\n    >>> ".join(imports) + doctest_str
+            doctest_str = "    >>> " + "\n    >>> ".join(imports) + "\n\n" + doctest_str
 
-        return "    Examples\n    -------\n" + doctest_str
+        return "    Examples\n    -------\n\n" + doctest_str
 
     INPUT_KEYS = [
         "allowed_values",
@@ -905,17 +911,74 @@ class TaskConverter:
         "trait_modified",
     ]
 
-    TYPE_REPLACE = [
-        ("'TYPE_File'", "File"),
-        ("'TYPE_bool'", "bool"),
-        ("'TYPE_str'", "str"),
-        ("'TYPE_Any'", "ty.Any"),
-        ("'TYPE_int'", "int"),
-        ("'TYPE_float'", "float"),
-        ("'TYPE_list'", "list"),
-        ("'TYPE_dict'", "dict"),
-        ("'TYPE_MultiInputObj'", "specs.MultiInputObj"),
-        ("'TYPE_MultiOutputObj'", "specs.MultiOutputObj"),
-        ("'TYPE_MultiInputFile'", "specs.MultiInputFile"),
-        ("'TYPE_MultiOutputFile'", "specs.MultiOutputFile"),
-    ]
+    CONFTEST = """import time
+from traceback import format_exc
+import threading
+from dataclasses import dataclass
+from _pytest.runner import TestReport
+
+
+def pass_after_timout(seconds, poll_interval=0.1):
+    \"\"\"Cancel the test after a certain period, after which it is assumed that the arguments
+    passed to the underying command have passed its internal validation (so we don't have
+    to wait until the tool completes)
+
+    Parameters
+    ----------
+    seconds : int
+        the number of seconds to wait until cancelling the test (and marking it as passed)
+    \"\"\"
+
+    def decorator(test_func):
+        def wrapper(*args, **kwargs):
+            @dataclass
+            class TestState:
+                \"\"\"A way of passing a reference to the result that can be updated by
+                the test thread\"\"\"
+
+                result = None
+                trace_back = None
+
+            state = TestState()
+
+            def test_runner():
+                try:
+                    state.result = test_func(*args, **kwargs)
+                except Exception as e:
+                    state.trace_back = format_exc()
+                    raise
+
+            thread = threading.Thread(target=test_runner)
+            thread.start()
+
+            # Calculate the end time for the timeout
+            end_time = time.time() + seconds
+
+            while thread.is_alive() and time.time() < end_time:
+                time.sleep(poll_interval)
+
+            if thread.is_alive():
+                thread.join()
+                return state.result
+
+            if state.trace_back:
+                raise state.trace_back
+
+            outcome = "passed after timeout"
+            rep = TestReport.from_item_and_call(
+                item=args[0],
+                when="call",
+                excinfo=None,
+                outcome=outcome,
+                sections=None,
+                duration=0,
+                keywords=None,
+            )
+            args[0].ihook.pytest_runtest_logreport(report=rep)
+
+            return state.result
+
+        return wrapper
+
+    return decorator
+"""

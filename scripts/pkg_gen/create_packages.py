@@ -4,6 +4,7 @@ import tempfile
 import re
 from importlib import import_module
 from copy import copy
+import subprocess as sp
 import shutil
 import tarfile
 from pathlib import Path
@@ -96,19 +97,18 @@ def generate_packages(
     for pkg in to_import["packages"]:
         pkg_dir = initialise_task_repo(output_dir, task_template, pkg)
 
+        spec_dir = pkg_dir / "nipype-auto-conv" / "specs"
+        spec_dir.mkdir(parents=True, exist_ok=True)
+
         # Loop through all nipype modules and create specs for their auto-conversion
         for module, interfaces in to_import["interfaces"].items():
             if module.split("/")[0] != pkg:
                 continue
 
-            module_spec_dir = (pkg_dir / "nipype-auto-conv" / "specs").joinpath(
-                *module.split("/")[1:]
-            )
-            module_spec_dir.mkdir(parents=True, exist_ok=True)
-
             # Loop through all interfaces in module
             for interface in interfaces:
-                callables_fspath = module_spec_dir / f"{interface}_callables.py"
+                spec_name = interface.lower()
+                callables_fspath = spec_dir / f"{spec_name}_callables.py"
                 spec_stub = {}
 
                 # Import interface from module
@@ -356,19 +356,19 @@ def generate_packages(
                             yaml_str,
                         )
 
-                with open(module_spec_dir / (interface + ".yaml"), "w") as f:
+                with open(spec_dir / (spec_name + ".yaml"), "w") as f:
                     f.write(preamble + yaml_str)
                 with open(callables_fspath, "w") as f:
                     f.write(
                         f'"""Module to put any functions that are referred to in {interface}.yaml"""\n'
                     )
 
-        # sp.check_call("git init", shell=True, cwd=pkg_dir)
-        # sp.check_call("git add --all", shell=True, cwd=pkg_dir)
-        # sp.check_call(
-        #     'git commit -m"initial commit of generated stubs"', shell=True, cwd=pkg_dir
-        # )
-        # sp.check_call("git tag 0.1.0", shell=True, cwd=pkg_dir)
+        sp.check_call("git init", shell=True, cwd=pkg_dir)
+        sp.check_call("git add --all", shell=True, cwd=pkg_dir)
+        sp.check_call(
+            'git commit -m"initial commit of generated stubs"', shell=True, cwd=pkg_dir
+        )
+        sp.check_call("git tag 0.1.0", shell=True, cwd=pkg_dir)
 
     unmatched_extensions = set(
         File.decompose_fspath(
@@ -421,6 +421,9 @@ def initialise_task_repo(output_dir, task_template: Path, pkg: str) -> Path:
         gh_workflows_dir / "auto-release.yaml",
     )
 
+    # Add modified README
+    shutil.copy(RESOURCES_DIR / "README.md", pkg_dir / "README.md")
+
     # Add in conftest.py
     shutil.copy(RESOURCES_DIR / "conftest.py", pkg_dir / "conftest.py")
 
@@ -466,6 +469,9 @@ def generate_spec_preamble(
             elif type(inpt.trait_type).__name__ == "File":
                 file_inputs.append(inpt_name)
             elif type(inpt.trait_type).__name__ == "InputMultiObject":
+                file_inputs.append(inpt_name)
+                multi_inputs.append(inpt_name)
+            elif type(inpt.trait_type).__name__ == "List" and type(inpt.trait_type.inner_traits()[0].handler).__name__ == "File":
                 file_inputs.append(inpt_name)
                 multi_inputs.append(inpt_name)
     file_outputs = []

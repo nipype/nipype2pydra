@@ -34,11 +34,12 @@ for fspath in SPECS_DIR.glob("**/*.yaml"):
     with open(fspath) as f:
         spec = yaml.load(f, Loader=yaml.SafeLoader)
 
-    rel_pkg_path = (
-        str(fspath.parent.relative_to(SPECS_DIR)).replace(os.path.sep, ".")
-        + "."
-        + fspath.stem
-    )
+    rel_pkg_path = str(fspath.parent.relative_to(SPECS_DIR)).replace(os.path.sep, ".")
+    if rel_pkg_path == ".":
+        rel_pkg_path = fspath.stem
+    else:
+        rel_pkg_path += "." + fspath.stem
+
     callables = import_module(rel_pkg_path + "_callables")
     module_name = fspath.stem.lower()
 
