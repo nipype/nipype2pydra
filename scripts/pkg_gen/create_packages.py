@@ -19,7 +19,7 @@ from fileformats.generic import File
 from fileformats.medimage import Nifti1, NiftiGz, Bval, Bvec
 from fileformats.misc import Dicom
 from fileformats.text import TextFile
-from fileformats.datascience import MatFile, DatFile
+from fileformats.datascience import TextMatrix, DatFile
 from fileformats.serialization import Xml
 import nipype.interfaces.base.core
 from nipype2pydra.task import (
@@ -32,7 +32,7 @@ from nipype2pydra.task import (
 
 RESOURCES_DIR = Path(__file__).parent / "resources"
 
-EXPECTED_FORMATS = [Nifti1, NiftiGz, TextFile, MatFile, DatFile, Xml]
+EXPECTED_FORMATS = [Nifti1, NiftiGz, TextFile, TextMatrix, DatFile, Xml]
 
 
 def download_tasks_template(output_path: Path):
@@ -347,9 +347,9 @@ def generate_packages(
                             tp_name = tp.__name__
                         else:
                             tp_name = str(tp).lower().replace("typing.", "")
-                        comment = f"  # {tp_name} - " + field.metadata[
-                            "help"
-                        ].replace("\n                ", "\n  # ")
+                        comment = f"  # {tp_name} - " + field.metadata["help"].replace(
+                            "\n                ", "\n  # "
+                        )
                         yaml_str = re.sub(
                             f" {category_name}.{field.name}:" + r"(.*)",
                             f" {field.name}:" + r"\1" + f"\n{comment}",
@@ -416,26 +416,21 @@ def initialise_task_repo(output_dir, task_template: Path, pkg: str) -> Path:
         RESOURCES_DIR / "gh_workflows" / "pythonpackage.yaml",
         gh_workflows_dir / "pythonpackage.yaml",
     )
-    shutil.copy(
-        RESOURCES_DIR / "gh_workflows" / "auto-release.yaml",
-        gh_workflows_dir / "auto-release.yaml",
-    )
 
     # Add modified README
     shutil.copy(RESOURCES_DIR / "README.md", pkg_dir / "README.md")
 
-    # Add in conftest.py
-    shutil.copy(RESOURCES_DIR / "conftest.py", pkg_dir / "conftest.py")
-
     # Add "pydra.tasks.<pkg>.auto to gitignore"
     with open(pkg_dir / ".gitignore", "a") as f:
-        f.write(f"\npydra/tasks/{pkg}/auto")
+        f.write(f"\n/pydra/tasks/{pkg}/auto" f"\n/pydra/tasks/_version.py\n")
 
     # rename tasks directory
     (pkg_dir / "pydra" / "tasks" / "CHANGEME").rename(pkg_dir / "pydra" / "tasks" / pkg)
 
     # Add in modified __init__.py
-    shutil.copy(RESOURCES_DIR / "pkg_init.py", pkg_dir / "pydra" / "tasks" / pkg / "__init__.py")
+    shutil.copy(
+        RESOURCES_DIR / "pkg_init.py", pkg_dir / "pydra" / "tasks" / pkg / "__init__.py"
+    )
 
     # Replace "CHANGEME" string with pkg name
     for fspath in pkg_dir.glob("**/*"):
@@ -471,7 +466,10 @@ def generate_spec_preamble(
             elif type(inpt.trait_type).__name__ == "InputMultiObject":
                 file_inputs.append(inpt_name)
                 multi_inputs.append(inpt_name)
-            elif type(inpt.trait_type).__name__ == "List" and type(inpt.trait_type.inner_traits()[0].handler).__name__ == "File":
+            elif (
+                type(inpt.trait_type).__name__ == "List"
+                and type(inpt.trait_type.inner_traits()[0].handler).__name__ == "File"
+            ):
                 file_inputs.append(inpt_name)
                 multi_inputs.append(inpt_name)
     file_outputs = []
@@ -536,14 +534,14 @@ def extract_doctest_inputs(
     if match:
         cmdline = match.group(3)
         cmdline = re.sub(r"\s+", " ", cmdline)
-        cmdline = cmdline.replace("'", '"')
+        cmdline = cmdline.replace("'", '"') if '"' not in cmdline else cmdline
         directive = match.group(2)
         if directive == '"':
             directive = None
     else:
         cmdline = directive = None
     doctest_inpts = {
-        n: v.replace("'", '"')
+        n: v.replace("'", '"') if '"' not in v else v
         for n, v in re.findall(
             r"""\s+>>> (?:\w+)\.inputs\.(\w+) ?= ?(.*)\n""",
             doctest,
@@ -557,7 +555,7 @@ def extract_doctest_inputs(
         arg_str = match.group(1) + ", "
         doctest_inpts.update(
             {
-                n: v.replace("'", '"')
+                n: v.replace("'", '"') if '"' not in v else v
                 for n, v in re.findall(r"(\w+) *= *([^=]+), *", arg_str)
             }
         )
@@ -600,14 +598,22 @@ def to_snake_case(name: str) -> str:
     """
     Converts a PascalCase string to a snake_case one
     """
-    snake_str = ''
+    snake_str = ""
 
     # Loop through each character in the input string
     for i, char in enumerate(name):
-        # If the current character is uppercase and it's not the first character,
-        # add an underscore before it and convert it to lowercase
-        if char.isupper() and i > 0:
-            snake_str += '_'
+        # If the current character is uppercase and it's not the first character or
+        # followed by another uppercase character, add an underscore before it and
+        # convert it to lowercase
+        if (
+            i > 0
+            and (char.isupper() or char.isdigit())
+            and (
+                not (name[i - 1].isupper() or name[i - 1].isdigit())
+                or ((i + 1) < len(name) and (name[i + 1].islower() or name[i + 1].islower()))
+            )
+        ):
+            snake_str += "_"
             snake_str += char.lower()
         else:
             # Otherwise, just add the character as it is

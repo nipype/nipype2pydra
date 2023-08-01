@@ -1,59 +1,7 @@
-import os
-import time
-import logging
-from pathlib import Path
-from traceback import format_exc
-import tempfile
-import threading
-from dataclasses import dataclass
-import pytest
-from _pytest.runner import TestReport
+from fileformats.generic import File, Directory, FsObject
 
 
-try:
-    from pydra import set_input_validator
-
-    set_input_validator(True)
-except ImportError:
-    pass
-from fileformats.core.utils import include_testing_package
-
-include_testing_package(True)
-
-# Set DEBUG logging for unittests
-
-log_level = logging.WARNING
-
-logger = logging.getLogger("fileformats")
-logger.setLevel(log_level)
-
-sch = logging.StreamHandler()
-sch.setLevel(log_level)
-formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-sch.setFormatter(formatter)
-logger.addHandler(sch)
-
-
-# For debugging in IDE's don't catch raised exceptions and let the IDE
-# break at it
-if os.getenv("_PYTEST_RAISE", "0") != "0":
-
-    @pytest.hookimpl(tryfirst=True)
-    def pytest_exception_interact(call):
-        raise call.excinfo.value
-
-    @pytest.hookimpl(tryfirst=True)
-    def pytest_internalerror(excinfo):
-        raise excinfo.value
-
-
-@pytest.fixture
-def work_dir():
-    work_dir = tempfile.mkdtemp()
-    return Path(work_dir)
-
-
-def pass_after_timout(seconds, poll_interval=0.1):
+def pass_after_timeout(seconds, poll_interval=0.1):
     """Cancel the test after a certain period, after which it is assumed that the arguments
     passed to the underying command have passed its internal validation (so we don't have
     to wait until the tool completes)

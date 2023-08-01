@@ -410,7 +410,7 @@ class TaskConverter:
     def nipype_output_spec(self) -> nipype.interfaces.base.BaseTraitedSpec:
         return self.nipype_interface.output_spec()
 
-    def generate(self, package_root: Path, with_conftest: bool = True):
+    def generate(self, package_root: Path):
         """creating pydra input/output spec from nipype specs
         if write is True, a pydra Task class will be written to the file together with tests
         """
@@ -451,8 +451,6 @@ class TaskConverter:
             input_fields=input_fields,
             nonstd_types=nonstd_types,
         )
-        # with open(testdir / "conftest.py", "w") as f:
-        #     f.write(self.CONFTEST)
 
     def convert_input_fields(self):
         """creating fields list for pydra input spec"""
@@ -505,10 +503,13 @@ class TaskConverter:
         if getattr(field, "name_template"):
             template = getattr(field, "name_template")
             name_source = ensure_list(getattr(field, "name_source"))
-
-            metadata_pdr["output_file_template"] = self.string_formats(
-                argstr=template, name=name_source[0]
-            )
+            if name_source:
+                tmpl = self.string_formats(
+                    argstr=template, name=name_source[0]
+                )
+            else:
+                tmpl = template
+            metadata_pdr["output_file_template"] = tmpl
             if tp_pdr in [specs.File, specs.Directory]:
                 tp_pdr = str
         elif getattr(field, "genfile"):
@@ -660,22 +661,15 @@ class TaskConverter:
         return tp_pdr
 
     def string_formats(self, argstr, name):
-        import re
-
-        if "%s" in argstr:
-            argstr_new = argstr.replace("%s", f"{{{name}}}")
-        elif "%d" in argstr:
-            argstr_new = argstr.replace("%d", f"{{{name}}}")
-        elif "%f" in argstr:
-            argstr_new = argstr.replace("%f", f"{{{name}}}")
-        elif "%g" in argstr:
-            argstr_new = argstr.replace("%g", f"{{{name}}}")
-        elif len(re.findall("%[0-9.]+f", argstr)) == 1:
-            old_format = re.findall("%[0-9.]+f", argstr)[0]
-            argstr_new = argstr.replace(old_format, f"{{{name}:{old_format[1:]}}}")
-        else:
-            raise Exception(f"format from {argstr} is not supported TODO")
-        return argstr_new
+        keys = re.findall(r"(%[0-9\.]*(?:s|d|i|g|f))", argstr)
+        new_argstr = argstr
+        for i, key in enumerate(keys):
+            repl = f"{name}" if len(keys) == 1 else f"{name}[{i}]"
+            match = re.match(r"%([0-9\.]+)f", key)
+            if match:
+                repl += ":" + match.group(1)
+            new_argstr = new_argstr.replace(key, r"{" + repl + r"}", 1)
+        return new_argstr
 
     def write_task(self, filename, input_fields, nonstd_types, output_fields):
         """writing pydra task to the dile based on the input and output spec"""
@@ -740,9 +734,9 @@ class TaskConverter:
         stmts: ty.Dict[str, str] = {}
 
         def add_import(stmt):
-            match = re.match(r".* as (\w+)\s*", stmt)
+            match = re.match(r".*\s+as\s+(\w+)\s*", stmt)
             if not match:
-                match = re.match(r".*import (\w+)\s*$", stmt)
+                match = re.match(r".*import\s+(\w+)\s*$", stmt)
             if not match:
                 raise ValueError(f"Unrecognised import statment {stmt}")
             token = match.group(1)
@@ -767,6 +761,8 @@ class TaskConverter:
             add_import("from pathlib import Path")
         for test in self.tests:
             for stmt in test.imports:
+                if stmt.module.startswith("nipype.testing"):
+                    continue
                 if stmt.name is None:
                     add_import(f"import {stmt.module}")
                 else:
@@ -853,6 +849,11 @@ class TaskConverter:
         with open(filename_test, "w") as f:
             f.write(spec_str_black)
 
+        conftest_fspath = filename_test.parent / "conftest.py"
+        if not conftest_fspath.exists():
+            with open(conftest_fspath, "w") as f:
+                f.write(self.TIMEOUT_PASS)
+
     def create_doctests(self, input_fields, nonstd_types):
         """adding doctests to the interfaces"""
         doctest_str = ""
@@ -907,14 +908,14 @@ class TaskConverter:
         "trait_modified",
     ]
 
-    CONFTEST = """import time
+    TIMEOUT_PASS = """import time
 from traceback import format_exc
 import threading
 from dataclasses import dataclass
 from _pytest.runner import TestReport
 
 
-def pass_after_timout(seconds, poll_interval=0.1):
+def pass_after_timeout(seconds, poll_interval=0.1):
     \"\"\"Cancel the test after a certain period, after which it is assumed that the arguments
     passed to the underying command have passed its internal validation (so we don't have
     to wait until the tool completes)
@@ -940,7 +941,7 @@ def pass_after_timout(seconds, poll_interval=0.1):
             def test_runner():
                 try:
                     state.result = test_func(*args, **kwargs)
-                except Exception as e:
+                except Exception:
                     state.trace_back = format_exc()
                     raise
 
