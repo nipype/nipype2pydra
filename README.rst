@@ -47,21 +47,46 @@ specification,
 
 .. code-block:: yaml
 
-    task_name: Registration
-    nipype_module: nipype.interfaces.ants.registration
-    output_requirements:
-        output_warped_image: ["fixed_image", "moving_image", "output_transform_prefix"]
-    output_templates:
-        output_warped_image: "{output_transform_prefix}warped"
-    doctest:
-        fixed_image: test.nii.gz
-        moving_image: test.nii.gz
-        cmdline: >- 
-            antsRegistration --output [ output_, output_warped_image.nii.gz ]
-            --metric Mattes[ test.nii, test.nii, 1, 32, Random, 0.05 ]
-        tests_inputs: []
-        tests_outputs:
-        - AttributeError
+    task_name: n4_bias_field_correction
+    nipype_name: N4BiasFieldCorrection
+    nipype_module: nipype.interfaces.ants.segmentation
+    inputs:
+        omit:
+        # list[str] - fields to omit from the Pydra interface
+        rename:
+        # dict[str, str] - fields to rename in the Pydra interface
+        types:
+        # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+        # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+        # from the nipype interface, but you may want to be more specific, particularly
+        # for file types, where specifying the format also specifies the file that will be
+        # passed to the field in the automatically generated unittests.
+            input_image: medimage/nifti1
+            mask_image: medimage/nifti1
+            weight_image: medimage/nifti1
+            bias_image: medimage/nifti1
+        metadata:
+        # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
+    outputs:
+        omit:
+        # list[str] - fields to omit from the Pydra interface
+        rename:
+        # dict[str, str] - fields to rename in the Pydra interface
+        types:
+        # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+        # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+        # from the nipype interface, but you may want to be more specific, particularly
+        # for file types, where specifying the format also specifies the file that will be
+        # passed to the field in the automatically generated unittests.
+            output_image: medimage/nifti1
+            bias_image: medimage/nifti1
+        callables:
+        # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+        # to set to the `callable` attribute of output fields
+        templates:
+        # dict[str, str] - `output_file_template` values to be provided to output fields
+        requirements:
+        # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 
 *Detailed description of the different options to go here*
 

@@ -1,3 +1,4 @@
+===============================
 Pydra task package for CHANGEME
 ===============================
 
@@ -125,3 +126,23 @@ for use, e.g.
 ```python
 from pydra.tasks.CHANGEME.auto import <the-task-you-have-validated>
 ```
+
+Typing and sample test data
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The automatically generated tests will attempt to provided the task instance to be tested
+with sensible default values based on the type of the field and any constraints it has
+on it. However, these will often need to be manually overridden after consulting the
+underlying tool's documentation.
+
+For file-based data, automatically generated file-system objects will be created for
+selected format types, e.g. Nifti, Dicom. Therefore, it is important to specify the
+format of the file using the "mime-like" string corresponding to a
+`fileformats <https://github.com/ArcanaFramework/fileformats>`__ class
+in the ``inputs > types`` and ``outputs > types`` dicts of the YAML spec.
+
+If the required file-type is not found implemented within fileformats, please see the `fileformats
+docs <https://arcanaframework.github.io/fileformats/developer.html>`__ for instructions on how to define
+new fileformat types, and see 
+`fileformats-medimage-extras <https://github.com/ArcanaFramework/fileformats-medimage-extras/blob/6c2dabe91e95687eebc2639bb6f034cf9595ecfc/fileformats/extras/medimage/nifti.py#L30-L48>`__
+for an example on how to implement methods to generate sample data for them.
