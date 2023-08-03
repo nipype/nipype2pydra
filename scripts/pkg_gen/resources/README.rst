@@ -85,6 +85,11 @@ Pydra task interfaces from their Nipype counterparts
 
 ```
 $ pip install -r nipype-auto-conv/requirements.txt
+```
+
+The run the conversion script to convert Nipype interfaces to Pydra
+
+```
 $ nipype-auto-conv/generate
 ```
 

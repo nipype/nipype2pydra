@@ -124,11 +124,13 @@ def generate_packages(
 
                 (
                     preamble,
+                    input_helps,
+                    output_helps,
                     file_inputs,
                     file_outputs,
                     genfile_outputs,
                     multi_inputs,
-                ) = generate_spec_preamble(nipype_interface)
+                ) = parse_nipype_interface(nipype_interface)
 
                 # Create "stubs" for each of the available fields
                 def fields_stub(name, category_class, values=None):
@@ -172,7 +174,13 @@ def generate_packages(
                         prev_block += para
 
                 doctests: ty.List[DocTestGenerator] = []
-                tests: ty.List[TestGenerator] = []
+                tests: ty.List[TestGenerator] = [
+                    fields_stub(
+                        "test",
+                        TestGenerator,
+                        {"inputs": {i: None for i in input_helps}, "imports": None},
+                    )
+                ]
 
                 for doctest_str in doctest_blocks:
                     if ">>>" in doctest_str:
@@ -356,6 +364,13 @@ def generate_packages(
                             f" {field.name}:" + r"\1" + f"\n{comment}",
                             yaml_str,
                         )
+                # Add comments to input and output fields, with their type and description
+                for inpt, desc in input_helps.items():
+                    yaml_str = re.sub(f"    ({inpt}):(.*)", r"    \1:\2\n    # ##PLACEHOLDER##", yaml_str)
+                    yaml_str = yaml_str.replace("##PLACEHOLDER##", desc)
+                for outpt, desc in output_helps.items():
+                    yaml_str = re.sub(f"    ({outpt}):(.*)", r"    \1:\2\n    # ##PLACEHOLDER##", yaml_str)
+                    yaml_str = yaml_str.replace("##PLACEHOLDER##", desc)
 
                 with open(spec_dir / (spec_name + ".yaml"), "w") as f:
                     f.write(preamble + yaml_str)
@@ -421,6 +436,11 @@ def initialise_task_repo(output_dir, task_template: Path, pkg: str) -> Path:
     # Add modified README
     os.unlink(pkg_dir / "README.md")
     shutil.copy(RESOURCES_DIR / "README.rst", pkg_dir / "README.rst")
+    with open(pkg_dir / "pyproject.toml") as f:
+        pyproject_toml = f.read()
+    pyproject_toml = pyproject_toml.replace("README.md", "README.rst")
+    with open(pkg_dir / "pyproject.toml", "w") as f:
+        f.write(pyproject_toml)
 
     # Add "pydra.tasks.<pkg>.auto to gitignore"
     with open(pkg_dir / ".gitignore", "a") as f:
@@ -447,11 +467,19 @@ def initialise_task_repo(output_dir, task_template: Path, pkg: str) -> Path:
     return pkg_dir
 
 
-def generate_spec_preamble(
+def parse_nipype_interface(
     nipype_interface,
-) -> ty.Tuple[str, ty.List[str], ty.List[str], ty.List[str], ty.List[str]]:
+) -> ty.Tuple[
+    str,
+    ty.Dict[str, str],
+    ty.Dict[str, str],
+    ty.List[str],
+    ty.List[str],
+    ty.List[str],
+    ty.List[str],
+]:
     """Generate preamble comments at start of file with args and doc strings"""
-    inputs_desc = ""
+    input_helps = {}
     file_inputs = []
     genfile_outputs = []
     multi_inputs = []
@@ -460,7 +488,10 @@ def generate_spec_preamble(
             if inpt_name in ("trait_added", "trait_modified"):
                 continue
             inpt_desc = inpt.desc.replace("\n", " ") if inpt.desc else ""
-            inputs_desc += f"# {inpt_name} : {type(inpt.trait_type).__name__.lower()}\n#    {inpt_desc}\n"
+            inpt_mdata = f"type={type(inpt.trait_type).__name__.lower()}|default={inpt.default!r}"
+            if isinstance(inpt.trait_type, nipype.interfaces.base.core.traits.Enum):
+                inpt_mdata += f"|allowed[{','.join(sorted(repr(v) for v in inpt.trait_type.values))}]"
+            input_helps[inpt_name] = f"{inpt_mdata}: {inpt_desc}"
             if inpt.genfile:
                 genfile_outputs.append(inpt_name)
             elif type(inpt.trait_type).__name__ == "File":
@@ -475,13 +506,15 @@ def generate_spec_preamble(
                 file_inputs.append(inpt_name)
                 multi_inputs.append(inpt_name)
     file_outputs = []
-    outputs_desc = ""
+    output_helps = {}
     if nipype_interface.output_spec:
         for outpt_name, outpt in nipype_interface.output_spec().traits().items():
             if outpt_name in ("trait_added", "trait_modified"):
                 continue
             outpt_desc = outpt.desc.replace("\n", " ") if outpt.desc else ""
-            outputs_desc += f"# {outpt_name} : {type(outpt.trait_type).__name__.lower()}\n#    {outpt_desc}\n"
+            output_helps[
+                outpt_name
+            ] = f"type={type(outpt.trait_type).__name__.lower()}: {outpt_desc}"
             if type(outpt.trait_type).__name__ == "File":
                 file_outputs.append(outpt_name)
     doc_string = nipype_interface.__doc__ if nipype_interface.__doc__ else ""
@@ -493,17 +526,19 @@ def generate_spec_preamble(
         #
         # Please fill-in/edit the fields below where appropriate
         #
-        # Inputs
-        # ------
-        {inputs_desc}#
-        # Outputs
-        # -------
-        {outputs_desc}#
         # Docs
         # ----
         # {doc_string}\n"""
     ).replace("        #", "#")
-    return preamble, file_inputs, file_outputs, genfile_outputs, multi_inputs
+    return (
+        preamble,
+        input_helps,
+        output_helps,
+        file_inputs,
+        file_outputs,
+        genfile_outputs,
+        multi_inputs,
+    )
 
 
 def extract_doctest_inputs(
@@ -538,7 +573,7 @@ def extract_doctest_inputs(
         cmdline = re.sub(r"\s+", " ", cmdline)
         cmdline = cmdline.replace("'", '"') if '"' not in cmdline else cmdline
         directive = match.group(2)
-        if directive == '"':
+        if directive == '"' or directive == "'":
             directive = None
     else:
         cmdline = directive = None
@@ -592,6 +627,9 @@ def extract_doctest_inputs(
                     )
     if not doctest_inpts:
         raise ValueError(f"Could not parse doctest:\n{doctest}")
+
+    if not directive or directive == "''" or directive == '""':
+        directive = None
 
     return cmdline, doctest_inpts, directive, imports
 

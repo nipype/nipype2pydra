@@ -6,10 +6,6 @@
 
 name: Python package
 
-# Set once
-env:
-  SUBPACKAGE: CHANGEME
-
 on:
   push:
     branches: [ main, develop ]
@@ -21,7 +17,7 @@ on:
 
 jobs:
 
-  auto-gen:
+  nipype-conv:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
@@ -39,7 +35,7 @@ jobs:
       run: ./nipype-auto-conv/generate
     - uses: actions/upload-artifact@v3
       with:
-        name: auto-generated
+        name: converted-nipype
         path: pydra/tasks/CHANGEME/auto
 
   devcheck:
@@ -57,10 +53,10 @@ jobs:
     - name: Revert version to most recent tag on upstream update
       if: github.event_name == 'repository_dispatch'
       run: git checkout $(git tag -l | tail -n 1 | awk -F post '{print $1}')    
-    - name: Download auto-generated
+    - name: Download tasks converted from Nipype 
       uses: actions/download-artifact@v3
       with:
-        name: auto-generated
+        name: converted-nipype
         path: pydra/tasks/CHANGEME/auto
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v4
@@ -76,7 +72,7 @@ jobs:
     - name: Install task package
       run: |
         pip install ${{ matrix.pip-flags }} ".[dev]"
-        python -c "import pydra.tasks.$SUBPACKAGE as m; print(f'{m.__name__} {m.__version__} @ {m.__file__}')"
+        python -c "import pydra.tasks.CHANGEME as m; print(f'{m.__name__} {m.__version__} @ {m.__file__}')"
         python -c "import pydra as m; print(f'{m.__name__} {m.__version__} @ {m.__file__}')"
 
   test:
@@ -90,9 +86,10 @@ jobs:
     - name: Revert version to most recent tag on upstream update
       if: github.event_name == 'repository_dispatch'
       run: git checkout $(git tag -l | tail -n 1 | awk -F post '{print $1}')
-    - uses: actions/download-artifact@v3
+    - name: Download tasks converted from Nipype 
+      uses: actions/download-artifact@v3
       with:
-        name: auto-generated
+        name: converted-nipype
         path: pydra/tasks/CHANGEME/auto
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v4
@@ -104,12 +101,12 @@ jobs:
     - name: Install task package
       run: |
         pip install ".[test]"
-        python -c "import pydra.tasks.$SUBPACKAGE as m; print(f'{m.__name__} {m.__version__} @ {m.__file__}')"
+        python -c "import pydra.tasks.CHANGEME as m; print(f'{m.__name__} {m.__version__} @ {m.__file__}')"
         python -c "import pydra as m; print(f'{m.__name__} {m.__version__} @ {m.__file__}')"
     - name: Test with pytest
       run: |
-        pytest -sv --doctest-modules pydra/tasks/$SUBPACKAGE \
-            --cov pydra.tasks.$SUBPACKAGE --cov-report xml
+        pytest -sv --doctest-modules pydra/tasks/CHANGEME \
+            --cov pydra.tasks.CHANGEME --cov-report xml
     - uses: codecov/codecov-action@v3
       if: ${{ always() }}
 
@@ -124,9 +121,10 @@ jobs:
       with:
         submodules: recursive
         fetch-depth: 0
-    - uses: actions/download-artifact@v3
+    - name: Download tasks converted from Nipype 
+      uses: actions/download-artifact@v3
       with:
-        name: auto-generated
+        name: converted-nipype
         path: pydra/tasks/CHANGEME/auto
     - name: Tag release with a post-release based on Nipype and Nipype2Pydra versions
       if: github.event_name == 'repository_dispatch'
