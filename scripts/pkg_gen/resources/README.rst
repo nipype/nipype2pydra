@@ -2,8 +2,8 @@
 Pydra task package for CHANGEME
 ===============================
 
-.. image:: https://github.com/nipype/pydra-CHANGEME/actions/workflows/tests.yml/badge.svg
-   :target: https://github.com/nipype/pydra-CHANGEME/actions/workflows/tests.yml
+.. image:: https://github.com/nipype/pydra-CHANGEME/actions/workflows/pythonpackage.yml/badge.svg
+   :target: https://github.com/nipype/pydra-CHANGEME/actions/workflows/pythonpackage.yml
 .. .. image:: https://codecov.io/gh/nipype/pydra-CHANGEME/branch/main/graph/badge.svg?token=UIS0OGPST7
 ..    :target: https://codecov.io/gh/nipype/pydra-CHANGEME
 .. image:: https://img.shields.io/pypi/pyversions/pydra-CHANGEME.svg
