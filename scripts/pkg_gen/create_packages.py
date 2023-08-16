@@ -66,8 +66,10 @@ def download_tasks_template(output_path: Path):
 @click.argument("output_dir", type=click.Path(path_type=Path))
 @click.option("--work-dir", type=click.Path(path_type=Path), default=None)
 @click.option("--task-template", type=click.Path(path_type=Path), default=None)
+@click.option("--packages-to-import", type=click.Path(path_type=Path), default=None)
 def generate_packages(
-    output_dir: Path, work_dir: ty.Optional[Path], task_template: ty.Optional[Path]
+    output_dir: Path, work_dir: ty.Optional[Path], task_template: ty.Optional[Path],
+    packages_to_import: ty.Optional[Path]
 ):
     if work_dir is None:
         work_dir = Path(tempfile.mkdtemp())
@@ -80,9 +82,10 @@ def generate_packages(
             tar.extractall(path=extract_dir)
         task_template = extract_dir / next(extract_dir.iterdir())
 
-    with open(
-        Path(__file__).parent.parent.parent / "nipype-interfaces-to-import.yaml"
-    ) as f:
+    if packages_to_import is None:
+        packages_to_import = Path(__file__).parent.parent.parent / "nipype-interfaces-to-import.yaml"
+
+    with open(packages_to_import) as f:
         to_import = yaml.load(f, Loader=yaml.SafeLoader)
 
     # Wipe output dir
