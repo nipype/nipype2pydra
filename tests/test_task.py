@@ -28,7 +28,7 @@ def test_task_conversion(task_spec_file, cli_runner, work_dir, gen_test_conftest
         task_spec = yaml.safe_load(f)
     pkg_root = work_dir / "src"
     pkg_root.mkdir()
-    shutil.copyfile(gen_test_conftest, pkg_root / "conftest.py")
+    # shutil.copyfile(gen_test_conftest, pkg_root / "conftest.py")
 
     output_module_path = f"nipype2pydratest.{task_spec_file.stem.lower()}"
 
