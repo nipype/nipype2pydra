@@ -15,6 +15,7 @@ dependencies = [
     "PyYAML>=6.0",
     "fileformats >=0.8",
     "fileformats-medimage >=0.4",
+    "fileformats-datascience",
     "traits",
 ]
 license = {file = "LICENSE"}
