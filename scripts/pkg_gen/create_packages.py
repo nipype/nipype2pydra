@@ -17,10 +17,9 @@ import fileformats.core.utils
 import fileformats.core.mixin
 from fileformats.generic import File
 from fileformats.medimage import Nifti1, NiftiGz, Bval, Bvec
-from fileformats.misc import Dicom
+from fileformats.application import Dicom, Xml
 from fileformats.text import TextFile
 from fileformats.datascience import TextMatrix, DatFile
-from fileformats.serialization import Xml
 import nipype.interfaces.base.core
 from nipype2pydra.task import (
     InputsConverter,
