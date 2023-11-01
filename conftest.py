@@ -13,13 +13,6 @@ EXAMPLE_TASKS_DIR = EXAMPLE_SPECS_DIR / "task"
 EXAMPLE_WORKFLOWS_DIR = EXAMPLE_SPECS_DIR / "workflow"
 
 
-@File.generate_sample_data.register
-def file_generate_sample_data(file: File, dest_dir: Path):
-    a_file = dest_dir / "a_file.x"
-    a_file.write_text("a sample file")
-    return [a_file]
-
-
 @pytest.fixture
 def gen_test_conftest():
     return PKG_DIR / "scripts" / "pkg_gen" / "resources" / "conftest.py"

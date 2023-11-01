@@ -323,7 +323,7 @@ def generate_packages(
                         InputsConverter,
                         {
                             "types": {
-                                n: fileformats.core.utils.to_mime(t)
+                                n: fileformats.core.utils.to_mime(t, official=False)
                                 for n, t in input_types.items()
                             }
                         },
@@ -333,7 +333,7 @@ def generate_packages(
                         OutputsConverter,
                         {
                             "types": {
-                                n: fileformats.core.utils.to_mime(t)
+                                n: fileformats.core.utils.to_mime(t, official=False)
                                 for n, t in output_types.items()
                             },
                             "templates": output_templates,
