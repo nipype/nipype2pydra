@@ -3,8 +3,10 @@ import typing as ty
 from types import ModuleType
 import sys
 import os
+import inspect
 from contextlib import contextmanager
 from pathlib import Path
+from fileformats.core import FileSet
 
 from importlib import import_module
 
@@ -63,3 +65,39 @@ def add_to_sys_path(path: Path):
         yield sys.path
     finally:
         sys.path.pop(0)
+
+
+def is_fileset(tp: type):
+    return (
+        inspect.isclass(tp)
+        and type(tp) is not ty.GenericAlias
+        and issubclass(tp, FileSet)
+    )
+
+
+def to_snake_case(name: str) -> str:
+    """
+    Converts a PascalCase string to a snake_case one
+    """
+    snake_str = ""
+
+    # Loop through each character in the input string
+    for i, char in enumerate(name):
+        # If the current character is uppercase and it's not the first character or
+        # followed by another uppercase character, add an underscore before it and
+        # convert it to lowercase
+        if (
+            i > 0
+            and (char.isupper() or char.isdigit())
+            and (
+                not (name[i - 1].isupper() or name[i - 1].isdigit())
+                or ((i + 1) < len(name) and (name[i + 1].islower() or name[i + 1].islower()))
+            )
+        ):
+            snake_str += "_"
+            snake_str += char.lower()
+        else:
+            # Otherwise, just add the character as it is
+            snake_str += char.lower()
+
+    return snake_str

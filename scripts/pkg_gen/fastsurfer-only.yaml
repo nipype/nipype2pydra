@@ -1,0 +1,5 @@
+packages:
+- fastsurfer
+interfaces:
+  fastsurfer:
+  - FastSurfer

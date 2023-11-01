@@ -3,20 +3,35 @@ This is a basic doctest demonstrating that the package and pydra can both be suc
 imported.
 
 >>> import pydra.engine
->>> import pydra.tasks.freesurfer
+>>> import pydra.tasks.CHANGEME
 """
+from warnings import warn
+from pathlib import Path
+
+pkg_path = Path(__file__).parent.parent
+
 try:
-    from ._version import __version__ as main_version
+    from ._version import __version__
 except ImportError:
-    pass
+    raise RuntimeError(
+        "pydra-CHANGEME has not been properly installed, please run "
+        f"`pip install -e {str(pkg_path)}` to install a development version"
+    )
+if "nipype" not in __version__:
+    try:
+        from .auto._version import nipype_version, nipype2pydra_version
+    except ImportError:
+        warn(
+            "Nipype interfaces haven't been automatically converted from their specs in "
+            f"`nipype-auto-conv`. Please run `{str(pkg_path / 'nipype-auto-conv' / 'generate')}` "
+            "to generated the converted Nipype interfaces in pydra.tasks.CHANGEME.auto"
+        )
+    else:
+        n_ver = nipype_version.replace(".", "_")
+        n2p_ver = nipype2pydra_version.replace(".", "_")
+        __version__ += (
+            "_" if "+" in __version__ else "+"
+        ) + f"nipype{n_ver}_nipype2pydra{n2p_ver}"
 
-from .auto._version import auto_version  # Get version of 
 
-if ".dev" in main_version:
-    main_version, dev_version = main_version.split(".dev")
-else:
-    dev_version = None
-
-__version__ = main_version + "." + auto_version
-if dev_version:
-    __version__ += ".dev" + dev_version
+__all__ = ["__version__"]

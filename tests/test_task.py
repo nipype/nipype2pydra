@@ -2,6 +2,7 @@ from importlib import import_module
 import yaml
 from conftest import show_cli_trace
 import pytest
+import shutil
 import logging
 from nipype2pydra.cli import task as task_cli
 from nipype2pydra.utils import add_to_sys_path
@@ -21,11 +22,13 @@ INBUILT_NIPYPE_TRAIT_NAMES = [
 ]
 
 
-def test_task_conversion(task_spec_file, cli_runner, work_dir):
+def test_task_conversion(task_spec_file, cli_runner, work_dir, gen_test_conftest):
 
     with open(task_spec_file) as f:
         task_spec = yaml.safe_load(f)
     pkg_root = work_dir / "src"
+    pkg_root.mkdir()
+    # shutil.copyfile(gen_test_conftest, pkg_root / "conftest.py")
 
     output_module_path = f"nipype2pydratest.{task_spec_file.stem.lower()}"
 

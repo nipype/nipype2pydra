@@ -220,17 +220,12 @@ interfaces:
   camino2trackvis/convert:
   - Camino2Trackvis
   - Trackvis2Camino
-  cat12/base:
-  - Cell
-  - NestedCell
   cat12/preprocess:
   - CAT12Segment
   - CAT12SANLMDenoising
-  - Cell2Str
   cat12/surface:
   - ExtractAdditionalSurfaceParameters
   - ExtractROIBasedSurfaceMeasures
-  - Cell2Str
   cmtk/cmtk:
   - CreateMatrix
   - ROIGen
@@ -354,7 +349,6 @@ interfaces:
   - DICOMConvert
   - Resample
   - ReconAll
-  - BBRegisterInputSpec6
   - BBRegister
   - ApplyVolTransform
   - Smooth
@@ -453,54 +447,30 @@ interfaces:
   - Classifier
   - Cleaner
   fsl/maths:
-  - MathsInput
-  - MathsOutput
   - MathsCommand
-  - ChangeDataTypeInput
   - ChangeDataType
   - Threshold
-  - StdImageInput
   - StdImage
-  - MeanImageInput
   - MeanImage
-  - MaxImageInput
   - MaxImage
-  - PercentileImageInput
   - PercentileImage
-  - MaxnImageInput
   - MaxnImage
-  - MinImageInput
   - MinImage
-  - MedianImageInput
   - MedianImage
-  - AR1ImageInput
   - AR1Image
-  - IsotropicSmoothInput
   - IsotropicSmooth
-  - ApplyMaskInput
   - ApplyMask
-  - KernelInput
-  - DilateInput
   - DilateImage
-  - ErodeInput
   - ErodeImage
-  - SpatialFilterInput
   - SpatialFilter
-  - UnaryMathsInput
   - UnaryMaths
-  - BinaryMathsInput
   - BinaryMaths
-  - MultiImageMathsInput
   - MultiImageMaths
-  - TemporalFilterInput
   - TemporalFilter
   fsl/model:
   - Level1Design
   - FEAT
   - FEATModel
-  - FILMGLSInputSpec505
-  - FILMGLSInputSpec507
-  - FILMGLSOutputSpec507
   - FILMGLS
   - FEATRegister
   - FLAMEO
@@ -634,35 +604,22 @@ interfaces:
   niftyseg/em:
   - EM
   niftyseg/label_fusion:
-  - LabelFusionInput
-  - LabelFusionOutput
   - LabelFusion
   - CalcTopNCC
   niftyseg/lesions:
   - FillLesions
   niftyseg/maths:
-  - MathsInput
-  - MathsOutput
   - MathsCommand
-  - UnaryMathsInput
   - UnaryMaths
-  - BinaryMathsInput
   - BinaryMaths
-  - BinaryMathsInputInteger
   - BinaryMathsInteger
-  - TupleMathsInput
   - TupleMaths
-  - MergeInput
   - Merge
   niftyseg/patchmatch:
   - PatchMatch
   niftyseg/stats:
-  - StatsInput
-  - StatsOutput
   - StatsCommand
-  - UnaryStatsInput
   - UnaryStats
-  - BinaryStatsInput
   - BinaryStats
   nilearn:
   - NilearnBaseInterface
@@ -922,11 +879,7 @@ interfaces:
   - CalcCoregAffine
   - ApplyTransform
   - Reslice
-  - ApplyInverseDeformationInput
-  - ApplyInverseDeformationOutput
   - ApplyInverseDeformation
-  - ResliceToReferenceInput
-  - ResliceToReferenceOutput
   - ResliceToReference
   - DicomImport
   vista/vista:

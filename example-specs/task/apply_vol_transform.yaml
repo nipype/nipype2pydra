@@ -1,0 +1,159 @@
+# This file is used to manually specify the semi-automatic conversion of
+# 'nipype.interfaces.freesurfer.preprocess.ApplyVolTransform' from Nipype to Pydra.
+#
+# Please fill-in/edit the fields below where appropriate
+#
+# Inputs
+# ------
+# source_file : file
+#    Input volume you wish to transform
+# transformed_file : file
+#    Output volume
+# target_file : file
+#    Output template volume
+# tal : bool
+#    map to a sub FOV of MNI305 (with --reg only)
+# tal_resolution : float
+#    Resolution to sample when using tal
+# fs_target : bool
+#    use orig.mgz from subject in regfile as target
+# reg_file : file
+#    tkRAS-to-tkRAS matrix   (tkregister2 format)
+# lta_file : file
+#    Linear Transform Array file
+# lta_inv_file : file
+#    LTA, invert
+# fsl_reg_file : file
+#    fslRAS-to-fslRAS matrix (FSL format)
+# xfm_reg_file : file
+#    ScannerRAS-to-ScannerRAS matrix (MNI format)
+# reg_header : bool
+#    ScannerRAS-to-ScannerRAS matrix = identity
+# mni_152_reg : bool
+#    target MNI152 space
+# subject : str
+#    set matrix = identity and use subject for any templates
+# inverse : bool
+#    sample from target to source
+# interp : enum
+#    Interpolation method (<trilin> or nearest)
+# no_resample : bool
+#    Do not resample; just change vox2ras matrix
+# m3z_file : file
+#    This is the morph to be applied to the volume. Unless the morph is in mri/transforms (eg.: for talairach.m3z computed by reconall), you will need to specify the full path to this morph and use the --noDefM3zPath flag.
+# no_ded_m3z_path : bool
+#    To be used with the m3z flag. Instructs the code not to look for them3z morph in the default location (SUBJECTS_DIR/subj/mri/transforms), but instead just use the path indicated in --m3z.
+# invert_morph : bool
+#    Compute and use the inverse of the non-linear morph to resample the input volume. To be used by --m3z.
+# subjects_dir : directory
+#    subjects directory
+# args : str
+#    Additional parameters to the command
+# environ : dict
+#    Environment variables
+#
+# Outputs
+# -------
+# transformed_file : file
+#    Path to output file if used normally
+#
+# Docs
+# ----
+# Use FreeSurfer mri_vol2vol to apply a transform.
+# 
+#     Examples
+#     --------
+# 
+#     >>> from nipype.interfaces.freesurfer import ApplyVolTransform
+#     >>> applyreg = ApplyVolTransform()
+#     >>> applyreg.inputs.source_file = 'structural.nii'
+#     >>> applyreg.inputs.reg_file = 'register.dat'
+#     >>> applyreg.inputs.transformed_file = 'struct_warped.nii'
+#     >>> applyreg.inputs.fs_target = True
+#     >>> applyreg.cmdline
+#     'mri_vol2vol --fstarg --reg register.dat --mov structural.nii --o struct_warped.nii'
+# 
+#     
+task_name: apply_vol_transform
+nipype_name: ApplyVolTransform
+nipype_module: nipype.interfaces.freesurfer.preprocess
+inputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    source_file: medimage/nifti1
+    target_file: medimage/nifti1
+    reg_file: datascience/dat-file
+    lta_file: generic/file
+    lta_inv_file: generic/file
+    fsl_reg_file: generic/file
+    xfm_reg_file: generic/file
+    m3z_file: generic/file
+  metadata:
+  # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
+outputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    transformed_file: medimage/nifti1
+  callables:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set to the `callable` attribute of output fields
+  templates:
+  # dict[str, str] - `output_file_template` values to be provided to output fields
+    transformed_file: '"struct_warped.nii"'
+  requirements:
+  # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
+tests:
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    source_file:
+    reg_file:
+    transformed_file: '"struct_warped.nii"'
+    fs_target: 'True'
+  imports:
+  # list[nipype2pydra.task.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+doctests:
+- cmdline: mri_vol2vol --fstarg --reg register.dat --mov structural.nii --o struct_warped.nii
+  # str - the expected cmdline output
+  inputs:
+  # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
+  # If the field is of file-format type and the value is None, then the
+  # '.mock()' method of the corresponding class is used instead.
+    source_file:
+    reg_file:
+    transformed_file: '"struct_warped.nii"'
+    fs_target: 'True'
+  imports:
+  # list[nipype2pydra.task.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  directive: ''''
+  # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS
