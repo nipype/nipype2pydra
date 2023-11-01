@@ -2,7 +2,6 @@ from importlib import import_module
 import yaml
 from conftest import show_cli_trace
 import pytest
-import shutil
 import logging
 from nipype2pydra.cli import task as task_cli
 from nipype2pydra.utils import add_to_sys_path
@@ -18,7 +17,6 @@ INBUILT_NIPYPE_TRAIT_NAMES = [
     "trait_modified",
     "environ",
     "output_type",
-    "crop_list",
 ]
 
 
@@ -48,7 +46,7 @@ def test_task_conversion(task_spec_file, cli_runner, work_dir, gen_test_conftest
         pydra_module = import_module(output_module_path)
     pydra_task = getattr(pydra_module, task_spec["task_name"])
     nipype_interface = getattr(
-        import_module(task_spec["nipype_module"]), task_spec["task_name"]
+        import_module(task_spec["nipype_module"]), task_spec["nipype_name"]
     )
 
     nipype_trait_names = nipype_interface.input_spec().all_trait_names()
