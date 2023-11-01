@@ -164,6 +164,8 @@ tests:
     dimension: '3'
     input_image:
     bspline_fitting_distance: '300'
+    save_bias: 'False'
+    copy_header: 'False'
     shrink_factor: '3'
     n_iterations: '[50,50,30,20]'
   imports: &id001
@@ -186,6 +188,10 @@ tests:
   # dict[str, str] - values to provide to inputs fields in the task initialisation
   # (if not specified, will try to choose a sensible value)
     convergence_threshold: 1e-6
+    n_iterations: '[50,50,30,20]'
+    input_image:
+    save_bias: 'False'
+    copy_header: 'False'
   imports:
   # list[nipype2pydra.task.importstatement] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
@@ -205,6 +211,10 @@ tests:
   # dict[str, str] - values to provide to inputs fields in the task initialisation
   # (if not specified, will try to choose a sensible value)
     bspline_order: '5'
+    bspline_fitting_distance: 10
+    save_bias: 'False'
+    copy_header: 'False'
+    input_image:
   imports:
   # list[nipype2pydra.task.importstatement] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
@@ -225,6 +235,7 @@ tests:
   # (if not specified, will try to choose a sensible value)
     input_image:
     save_bias: 'True'
+    copy_header: 'False'
     dimension: '3'
   imports:
   # list[nipype2pydra.task.importstatement] - list import statements required by the test, with each list item
@@ -247,6 +258,8 @@ tests:
     input_image:
     dimension: '3'
     histogram_sharpening: (0.12, 0.02, 200)
+    save_bias: 'False'
+    copy_header: 'False'
   imports:
   # list[nipype2pydra.task.importstatement] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
@@ -274,6 +287,8 @@ doctests:
     bspline_fitting_distance: '300'
     shrink_factor: '3'
     n_iterations: '[50,50,30,20]'
+    save_bias: 'False'
+    copy_header: 'False'
   imports: *id001
   # list[nipype2pydra.task.importstatement] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
@@ -286,6 +301,9 @@ doctests:
   # If the field is of file-format type and the value is None, then the
   # '.mock()' method of the corresponding class is used instead.
     convergence_threshold: 1e-6
+    n_iterations: '[50,50,30,20]'
+    save_bias: 'False'
+    copy_header: 'False'
   imports:
   # list[nipype2pydra.task.importstatement] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
@@ -298,6 +316,8 @@ doctests:
   # If the field is of file-format type and the value is None, then the
   # '.mock()' method of the corresponding class is used instead.
     bspline_order: '5'
+    save_bias: 'False'
+    copy_header: 'False'
   imports:
   # list[nipype2pydra.task.importstatement] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
@@ -311,6 +331,7 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     input_image:
     save_bias: 'True'
+    copy_header: 'False'
     dimension: '3'
   imports:
   # list[nipype2pydra.task.importstatement] - list import statements required by the test, with each list item
@@ -324,6 +345,8 @@ doctests:
   # If the field is of file-format type and the value is None, then the
   # '.mock()' method of the corresponding class is used instead.
     input_image:
+    save_bias: 'False'
+    copy_header: 'False'
     dimension: '3'
     histogram_sharpening: (0.12, 0.02, 200)
   imports:
