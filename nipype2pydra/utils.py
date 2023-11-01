@@ -8,6 +8,11 @@ from contextlib import contextmanager
 from pathlib import Path
 from fileformats.core import FileSet
 
+try:
+    from typing import GenericAlias
+except ImportError:
+    from typing import _GenericAlias as GenericAlias
+
 from importlib import import_module
 
 
@@ -70,7 +75,7 @@ def add_to_sys_path(path: Path):
 def is_fileset(tp: type):
     return (
         inspect.isclass(tp)
-        and type(tp) is not ty.GenericAlias
+        and type(tp) is not GenericAlias
         and issubclass(tp, FileSet)
     )
 
