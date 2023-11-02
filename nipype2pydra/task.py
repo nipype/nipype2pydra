@@ -767,7 +767,7 @@ class TaskConverter:
             add_import("from pathlib import Path")
         for test in self.tests:
             for stmt in test.imports:
-                if stmt.module.startswith("nipype.testing"):
+                if "nipype" in stmt.module:
                     continue
                 if stmt.name is None:
                     add_import(f"import {stmt.module}")
