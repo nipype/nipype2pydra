@@ -67,8 +67,10 @@ def download_tasks_template(output_path: Path):
 @click.option("--task-template", type=click.Path(path_type=Path), default=None)
 @click.option("--packages-to-import", type=click.Path(path_type=Path), default=None)
 def generate_packages(
-    output_dir: Path, work_dir: ty.Optional[Path], task_template: ty.Optional[Path],
-    packages_to_import: ty.Optional[Path]
+    output_dir: Path,
+    work_dir: ty.Optional[Path],
+    task_template: ty.Optional[Path],
+    packages_to_import: ty.Optional[Path],
 ):
     if work_dir is None:
         work_dir = Path(tempfile.mkdtemp())
@@ -82,7 +84,9 @@ def generate_packages(
         task_template = extract_dir / next(extract_dir.iterdir())
 
     if packages_to_import is None:
-        packages_to_import = Path(__file__).parent.parent.parent / "nipype-interfaces-to-import.yaml"
+        packages_to_import = (
+            Path(__file__).parent.parent.parent / "nipype-interfaces-to-import.yaml"
+        )
 
     with open(packages_to_import) as f:
         to_import = yaml.load(f, Loader=yaml.SafeLoader)
@@ -315,7 +319,7 @@ def generate_packages(
                 }
 
                 spec_stub = {
-                    "task_name": to_snake_case(interface),
+                    "task_name": interface,
                     "nipype_name": interface,
                     "nipype_module": nipype_module_str,
                     "inputs": fields_stub(
@@ -368,10 +372,18 @@ def generate_packages(
                         )
                 # Add comments to input and output fields, with their type and description
                 for inpt, desc in input_helps.items():
-                    yaml_str = re.sub(f"    ({inpt}):(.*)", r"    \1:\2\n    # ##PLACEHOLDER##", yaml_str)
+                    yaml_str = re.sub(
+                        f"    ({inpt}):(.*)",
+                        r"    \1:\2\n    # ##PLACEHOLDER##",
+                        yaml_str,
+                    )
                     yaml_str = yaml_str.replace("##PLACEHOLDER##", desc)
                 for outpt, desc in output_helps.items():
-                    yaml_str = re.sub(f"    ({outpt}):(.*)", r"    \1:\2\n    # ##PLACEHOLDER##", yaml_str)
+                    yaml_str = re.sub(
+                        f"    ({outpt}):(.*)",
+                        r"    \1:\2\n    # ##PLACEHOLDER##",
+                        yaml_str,
+                    )
                     yaml_str = yaml_str.replace("##PLACEHOLDER##", desc)
 
                 with open(spec_dir / (spec_name + ".yaml"), "w") as f:
@@ -546,7 +558,7 @@ def parse_nipype_interface(
 def extract_doctest_inputs(
     doctest: str, interface: str
 ) -> ty.Tuple[
-    ty.Optional[str], dict[str, ty.Any], ty.Optional[str], ty.List[ty.Dict[str, str]]
+    ty.Optional[str], ty.Dict[str, ty.Any], ty.Optional[str], ty.List[ty.Dict[str, str]]
 ]:
     """Extract the inputs passed to tasks in the doctests of Nipype interfaces
 
