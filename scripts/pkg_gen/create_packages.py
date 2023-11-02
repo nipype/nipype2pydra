@@ -315,7 +315,7 @@ def generate_packages(
                 }
 
                 spec_stub = {
-                    "task_name": to_snake_case(interface),
+                    "task_name": interface,
                     "nipype_name": interface,
                     "nipype_module": nipype_module_str,
                     "inputs": fields_stub(
