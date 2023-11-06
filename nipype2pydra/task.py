@@ -14,7 +14,7 @@ import nipype.interfaces.base
 from nipype.interfaces.base import traits_extension
 from pydra.engine import specs
 from pydra.engine.helpers import ensure_list
-from .utils import import_module_from_path, is_fileset
+from .utils import import_module_from_path, is_fileset, to_snake_case
 from fileformats.core import from_mime
 from fileformats.generic import File
 
@@ -385,7 +385,9 @@ class TaskConverter:
         if self.output_module is None:
             if self.nipype_module.__name__.startswith("nipype.interfaces."):
                 pkg_name = self.nipype_module.__name__.split(".")[2]
-                self.output_module = f"pydra.tasks.{pkg_name}.auto.{self.task_name}"
+                self.output_module = (
+                    f"pydra.tasks.{pkg_name}.auto.{to_snake_case(self.task_name)}"
+                )
             else:
                 raise RuntimeError(
                     "Output-module needs to be explicitly provided to task converter "
@@ -400,11 +402,19 @@ class TaskConverter:
 
     @property
     def nipype_input_spec(self) -> nipype.interfaces.base.BaseInterfaceInputSpec:
-        return self.nipype_interface.input_spec() if self.nipype_interface.input_spec else None
+        return (
+            self.nipype_interface.input_spec()
+            if self.nipype_interface.input_spec
+            else None
+        )
 
     @property
     def nipype_output_spec(self) -> nipype.interfaces.base.BaseTraitedSpec:
-        return self.nipype_interface.output_spec() if self.nipype_interface.output_spec else None
+        return (
+            self.nipype_interface.output_spec()
+            if self.nipype_interface.output_spec
+            else None
+        )
 
     def generate(self, package_root: Path):
         """creating pydra input/output spec from nipype specs
@@ -500,9 +510,7 @@ class TaskConverter:
             template = getattr(field, "name_template")
             name_source = ensure_list(getattr(field, "name_source"))
             if name_source:
-                tmpl = self.string_formats(
-                    argstr=template, name=name_source[0]
-                )
+                tmpl = self.string_formats(argstr=template, name=name_source[0])
             else:
                 tmpl = template
             metadata_pdr["output_file_template"] = tmpl
@@ -687,15 +695,15 @@ class TaskConverter:
                 spec_fields_str.append(tuple(el))
             return spec_fields_str
 
-
-        base_imports = ["from pydra.engine import specs",]
+        base_imports = [
+            "from pydra.engine import specs",
+        ]
         if hasattr(self.nipype_interface, "_cmd"):
             task_base = "ShellCommandTask"
             base_imports.append("from pydra.engine import ShellCommandTask")
         else:
             task_base = "FunctionTask"
             base_imports.append("from pydra.engine.task import FunctionTask")
-            
 
         input_fields_str = types_to_names(spec_fields=input_fields)
         output_fields_str = types_to_names(spec_fields=output_fields)
@@ -742,7 +750,7 @@ class TaskConverter:
         def add_import(stmt):
             match = re.match(r".*\s+as\s+(\w+)\s*", stmt)
             if not match:
-                match = re.match(r".*import\s+(\w+)\s*$", stmt)
+                match = re.match(r".*import\s+([\w\.]+)\s*$", stmt)
             if not match:
                 raise ValueError(f"Unrecognised import statment {stmt}")
             token = match.group(1)
@@ -780,6 +788,8 @@ class TaskConverter:
                     add_import(f"from {stmt.module} import {nm}")
         for tp in nonstd_types:
             add_import(f"from {tp.__module__} import {tp.__name__}")
+        # For debugging
+        add_import(f"import {'.'.join(self.output_module.split('.')[:-2])}")
         if include_task:
             add_import(f"from {self.output_module} import {self.task_name}")
 
@@ -828,7 +838,9 @@ class TaskConverter:
                     if value is None:
                         if is_fileset(tp):
                             value = f"{tp.__name__}.sample()"
-                        elif ty.get_origin(tp) in (list, ty.Union) and is_fileset(ty.get_args(tp)[0]):
+                        elif ty.get_origin(tp) in (list, ty.Union) and is_fileset(
+                            ty.get_args(tp)[0]
+                        ):
                             arg_tp = ty.get_args(tp)[0]
                             value = f"{arg_tp.__name__}.sample()"
                 if value is not attrs.NOTHING:

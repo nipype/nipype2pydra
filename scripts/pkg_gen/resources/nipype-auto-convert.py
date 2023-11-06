@@ -7,7 +7,7 @@ import shutil
 from importlib import import_module
 import yaml
 import nipype
-import nipype2pydra
+import nipype2pydra.utils
 from nipype2pydra.task import TaskConverter
 
 
@@ -47,13 +47,15 @@ for fspath in sorted(SPECS_DIR.glob("**/*.yaml")):
 
     callables = import_module(rel_pkg_path + "_callables")
 
+    module_name = nipype2pydra.utils.to_snake_case(spec["task_name"])
+
     converter = TaskConverter(
-        output_module=f"pydra.tasks.{PKG_NAME}.auto.{spec['task_name']}",
+        output_module=f"pydra.tasks.{PKG_NAME}.auto.{module_name}",
         callables_module=callables,  # type: ignore
         **spec,
     )
     converter.generate(PKG_ROOT)
-    auto_init += f"from .{spec['task_name']} import {converter.task_name}\n"
+    auto_init += f"from .{module_name} import {converter.task_name}\n"
 
 
 with open(PKG_ROOT / "pydra" / "tasks" / PKG_NAME / "auto" / "_version.py", "w") as f:

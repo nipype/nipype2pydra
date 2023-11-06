@@ -36,7 +36,7 @@ EXPECTED_FORMATS = [Nifti1, NiftiGz, TextFile, TextMatrix, DatFile, Xml]
 
 
 def download_tasks_template(output_path: Path):
-    """Downloads the latest pydra-tasks-template to the output path"""
+    """Downloads the latest pydra-template to the output path"""
 
     release_url = (
         "https://api.github.com/repos/nipype/pydra-tasks-template/releases/latest"
