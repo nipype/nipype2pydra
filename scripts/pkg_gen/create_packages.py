@@ -226,11 +226,11 @@ def generate_packages(
                                     fspath.strip(),
                                     mode=File.ExtensionDecomposition.single,
                                 )[2][1:].capitalize()
-                                pkg_formats.add(format_class_name)
                                 unmatched_formats.append(
                                     f"{module}.{interface}: {fspath}"
                                 )
                                 if format_class_name:
+                                    pkg_formats.add(format_class_name)   
                                     return f"fileformats.medimage_{pkg}.{format_class_name}"
                                 return File
 
@@ -411,7 +411,7 @@ def generate_packages(
             pkg_dir / "fileformats" / "extras" / "fileformats" / "extras" / f"medimage_{pkg}" / "__init__.py",
             "w",
         ) as f:
-            f.write(gen_fileformats_extras_module(pkg_formats))
+            f.write(gen_fileformats_extras_module(pkg, pkg_formats))
 
         sp.check_call("git init", shell=True, cwd=pkg_dir)
         sp.check_call("git add --all", shell=True, cwd=pkg_dir)
@@ -682,8 +682,16 @@ class {frmt}(File):
     return code_str
 
 
-def gen_fileformats_extras_module(pkg_formats: ty.Set[str]):
-    code_str = "from fileformats.core import FileSet"
+def gen_fileformats_extras_module(pkg: str, pkg_formats: ty.Set[str]):
+    code_str = """from pathlib import Path
+import typing as ty
+from random import Random
+from fileformats.core import FileSet
+"""
+    code_str += f"from fileformats.medimage_{pkg} import (\n"
+    for frmt in pkg_formats:
+        code_str += f"    {frmt},\n"
+    code_str += ")\n\n"
     for frmt in pkg_formats:
         code_str += f"""
 
