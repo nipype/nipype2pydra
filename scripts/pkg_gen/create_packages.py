@@ -103,6 +103,7 @@ def generate_packages(
 
     for pkg in to_import["packages"]:
         pkg_dir = initialise_task_repo(output_dir, task_template, pkg)
+        pkg_formats = set()
 
         spec_dir = pkg_dir / "nipype-auto-conv" / "specs"
         spec_dir.mkdir(parents=True, exist_ok=True)
@@ -221,9 +222,16 @@ def generate_packages(
                                     return Bval
                                 if fspath == "bvecs":
                                     return Bvec
+                                format_class_name = File.decompose_fspath(
+                                    fspath.strip(),
+                                    mode=File.ExtensionDecomposition.single,
+                                )[2][1:].capitalize()
+                                pkg_formats.add(format_class_name)
                                 unmatched_formats.append(
                                     f"{module}.{interface}: {fspath}"
                                 )
+                                if format_class_name:
+                                    return f"fileformats.medimage_{pkg}.{format_class_name}"
                                 return File
 
                             for expected in EXPECTED_FORMATS:
@@ -261,7 +269,7 @@ def generate_packages(
 
                         test_inpts: ty.Dict[str, ty.Optional[ty.Type]] = {}
                         for name, val in inpts.items():
-                            if name in file_inputs:
+                            if name in file_inputs and name != "flags":
                                 guessed_type = guess_type(val)
                                 input_types[name] = combine_types(
                                     guessed_type, input_types[name]
@@ -393,6 +401,18 @@ def generate_packages(
                         f'"""Module to put any functions that are referred to in {interface}.yaml"""\n'
                     )
 
+        with open(
+            pkg_dir / "fileformats" / "src" / "fileformats" / f"medimage_{pkg}" / "__init__.py",
+            "w",
+        ) as f:
+            f.write(gen_fileformats_module(pkg_formats))
+
+        with open(
+            pkg_dir / "fileformats" / "extras" / "fileformats" / "extras" / f"medimage_{pkg}" / "__init__.py",
+            "w",
+        ) as f:
+            f.write(gen_fileformats_extras_module(pkg_formats))
+
         sp.check_call("git init", shell=True, cwd=pkg_dir)
         sp.check_call("git add --all", shell=True, cwd=pkg_dir)
         sp.check_call(
@@ -443,8 +463,8 @@ def initialise_task_repo(output_dir, task_template: Path, pkg: str) -> Path:
     gh_workflows_dir = pkg_dir / ".github" / "workflows"
     gh_workflows_dir.mkdir(parents=True, exist_ok=True)
     shutil.copy(
-        RESOURCES_DIR / "gh_workflows" / "pythonpackage.yaml",
-        gh_workflows_dir / "pythonpackage.yaml",
+        RESOURCES_DIR / "gh_workflows" / "ci-cd.yaml",
+        gh_workflows_dir / "ci-cd.yaml",
     )
 
     # Add modified README
@@ -462,6 +482,8 @@ def initialise_task_repo(output_dir, task_template: Path, pkg: str) -> Path:
 
     # rename tasks directory
     (pkg_dir / "pydra" / "tasks" / "CHANGEME").rename(pkg_dir / "pydra" / "tasks" / pkg)
+    (pkg_dir / "fileformats" / "src" / "fileformats" / "medimage_CHANGEME").rename(pkg_dir / "fileformats" / "src" / "fileformats" / f"medimage_{pkg}")
+    (pkg_dir / "fileformats" / "extras" / "fileformats" / "extras" / "medimage_CHANGEME").rename(pkg_dir / "fileformats" / "extras" / "fileformats" / "extras" / f"medimage_{pkg}")
 
     # Add in modified __init__.py
     shutil.copy(
@@ -646,6 +668,30 @@ def extract_doctest_inputs(
         directive = None
 
     return cmdline, doctest_inpts, directive, imports
+
+
+def gen_fileformats_module(pkg_formats: ty.Set[str]):
+    code_str = "from fileformats.generic import File"
+    for frmt in pkg_formats:
+        code_str += f"""
+
+class {frmt}(File):
+    ext = ".{frmt.lower()}"
+    binary = True
+"""
+    return code_str
+
+
+def gen_fileformats_extras_module(pkg_formats: ty.Set[str]):
+    code_str = "from fileformats.core import FileSet"
+    for frmt in pkg_formats:
+        code_str += f"""
+
+@FileSet.generate_sample_data.register
+def gen_sample_{frmt.lower()}_data({frmt.lower()}: {frmt}, dest_dir: Path, seed: ty.Union[int, Random], stem: ty.Optional[str]):
+    raise NotImplementedError
+"""
+    return code_str
 
 
 if __name__ == "__main__":
