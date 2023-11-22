@@ -30,7 +30,7 @@ jobs:
     - name: Install build dependencies
       run: python -m pip install --upgrade pip
     - name: Install requirements
-      run: python -m pip install ./fileformats/src -r ./nipype-auto-conv/requirements.txt
+      run: python -m pip install ./related-packages/fileformats -r ./nipype-auto-conv/requirements.txt
     - name: Run automatic Nipype > Pydra conversion
       run: ./nipype-auto-conv/generate
     - uses: actions/upload-artifact@v3
@@ -77,7 +77,7 @@ jobs:
         python -c "import pydra as m; print(f'{m.__name__} {m.__version__} @ {m.__file__}')"
     - name: Install task package
       run: |
-        pip install "./fileformats/src[dev]" "fileformats/extras[dev]"
+        pip install "./related-packages/fileformats[dev]" "related-packages/fileformats-extras[dev]"
         pip install ${{ matrix.pip-flags }} ".[dev]"
         python -c "import pydra.tasks.CHANGEME as m; print(f'{m.__name__} {m.__version__} @ {m.__file__}')"
         python -c "import pydra as m; print(f'{m.__name__} {m.__version__} @ {m.__file__}')"
@@ -103,7 +103,7 @@ jobs:
         python -m pip install --upgrade pip
     - name: Install task package
       run: |
-        pip install "./fileformats/src[test]" "./fileformats/extras[test]"
+        pip install "./related-packages/fileformats[test]" "./related-packages/fileformats-extras[test]"
         python -c "import fileformats.medimage_CHANGEME as m; print(f'{m.__name__} {m.__version__} @ {m.__file__}')"
     - name: Test fileformats with pytest
       run: |
@@ -170,7 +170,7 @@ jobs:
         python -m pip install --upgrade pip
     - name: Install task package
       run: |
-        pip install "./fileformats/src" "./fileformats/extras" ".[test]"
+        pip install "./related-packages/fileformats" "./related-packages/fileformats-extras" ".[test]"
         python -c "import pydra.tasks.CHANGEME as m; print(f'{m.__name__} {m.__version__} @ {m.__file__}')"
         python -c "import pydra as m; print(f'{m.__name__} {m.__version__} @ {m.__file__}')"
     - name: Test with pytest
@@ -198,9 +198,9 @@ jobs:
     - name: Install build tools
       run: python -m pip install build twine
     - name: Build source and wheel distributions
-      run: python -m build ./fileformats/src
+      run: python -m build ./related-packages/fileformats
     - name: Check distributions
-      run: twine check ./fileformats/src/dist/*
+      run: twine check ./related-packages/fileformats/dist/*
     - name: Check for PyPI token on tag
       id: deployable
       if: (github.event_name == 'push' && startsWith(github.ref, 'refs/tags')) || github.event_name == 'repository_dispatch'
@@ -213,7 +213,7 @@ jobs:
       with:
         user: __token__
         password: ${{ secrets.PYPI_FILEFORMATS_API_TOKEN }}
-        packages-dir: ./fileformats/src/dist 
+        packages-dir: ./related-packages/fileformats/dist 
 
   deploy-fileformats-extras:
     needs: [deploy-fileformats]
@@ -230,9 +230,9 @@ jobs:
     - name: Install build tools
       run: python -m pip install build twine
     - name: Build source and wheel distributions
-      run: python -m build ./fileformats/extras
+      run: python -m build ./related-packages/fileformats-extras
     - name: Check distributions
-      run: twine check ./fileformats/extras/dist/*
+      run: twine check ./related-packages/fileformats-extras/dist/*
     - name: Check for PyPI token on tag
       id: deployable
       if: (github.event_name == 'push' && startsWith(github.ref, 'refs/tags')) || github.event_name == 'repository_dispatch'
@@ -245,7 +245,7 @@ jobs:
       with:
         user: __token__
         password: ${{ secrets.PYPI_FILEFORMATS_EXTRAS_API_TOKEN }}
-        packages-dir: ./fileformats/extras/dist 
+        packages-dir: ./related-packages/fileformats-extras/dist 
 
   deploy:
     needs: [deploy-fileformats-extras]

@@ -35,6 +35,30 @@ RESOURCES_DIR = Path(__file__).parent / "resources"
 EXPECTED_FORMATS = [Nifti1, NiftiGz, TextFile, TextMatrix, DatFile, Xml]
 
 
+def ext2format_name(ext: str) -> str:
+    return escape_leading_digits(ext[1:]).capitalize()
+
+
+def escape_leading_digits(name: str) -> str:
+    for k, v in ESCAPE_DIGITS.items():
+        if name.startswith(k):
+            name = v + name[1:]
+            return name
+    return name
+
+
+ESCAPE_DIGITS = {
+    "1": "one",
+    "2": "two",
+    "3": "three",
+    "4": "four",
+    "5": "five",
+    "6": "six",
+    "7": "seven",
+    "8": "eight",
+    "9": "nine",
+}
+
 def download_tasks_template(output_path: Path):
     """Downloads the latest pydra-template to the output path"""
 
@@ -222,16 +246,16 @@ def generate_packages(
                                     return Bval
                                 if fspath == "bvecs":
                                     return Bvec
-                                format_class_name = File.decompose_fspath(
+                                format_ext = File.decompose_fspath(
                                     fspath.strip(),
                                     mode=File.ExtensionDecomposition.single,
-                                )[2][1:].capitalize()
+                                )[2]
                                 unmatched_formats.append(
                                     f"{module}.{interface}: {fspath}"
                                 )
-                                if format_class_name:
-                                    pkg_formats.add(format_class_name)   
-                                    return f"fileformats.medimage_{pkg}.{format_class_name}"
+                                if format_ext:
+                                    pkg_formats.add(format_ext)
+                                    return f"fileformats.medimage_{pkg}.{ext2format_name(format_ext)}"
                                 return File
 
                             for expected in EXPECTED_FORMATS:
@@ -402,13 +426,24 @@ def generate_packages(
                     )
 
         with open(
-            pkg_dir / "fileformats" / "src" / "fileformats" / f"medimage_{pkg}" / "__init__.py",
+            pkg_dir
+            / "related-packages"
+            / "fileformats"
+            / "fileformats"
+            / f"medimage_{pkg}"
+            / "__init__.py",
             "w",
         ) as f:
             f.write(gen_fileformats_module(pkg_formats))
 
         with open(
-            pkg_dir / "fileformats" / "extras" / "fileformats" / "extras" / f"medimage_{pkg}" / "__init__.py",
+            pkg_dir
+            / "related-packages"
+            / "fileformats-extras"
+            / "fileformats"
+            / "extras"
+            / f"medimage_{pkg}"
+            / "__init__.py",
             "w",
         ) as f:
             f.write(gen_fileformats_extras_module(pkg, pkg_formats))
@@ -482,8 +517,30 @@ def initialise_task_repo(output_dir, task_template: Path, pkg: str) -> Path:
 
     # rename tasks directory
     (pkg_dir / "pydra" / "tasks" / "CHANGEME").rename(pkg_dir / "pydra" / "tasks" / pkg)
-    (pkg_dir / "fileformats" / "src" / "fileformats" / "medimage_CHANGEME").rename(pkg_dir / "fileformats" / "src" / "fileformats" / f"medimage_{pkg}")
-    (pkg_dir / "fileformats" / "extras" / "fileformats" / "extras" / "medimage_CHANGEME").rename(pkg_dir / "fileformats" / "extras" / "fileformats" / "extras" / f"medimage_{pkg}")
+    (
+        pkg_dir
+        / "related-packages"
+        / "fileformats"
+        / "fileformats"
+        / "medimage_CHANGEME"
+    ).rename(
+        pkg_dir / "related-packages" / "fileformats" / "fileformats" / f"medimage_{pkg}"
+    )
+    (
+        pkg_dir
+        / "related-packages"
+        / "fileformats-extras"
+        / "fileformats"
+        / "extras"
+        / "medimage_CHANGEME"
+    ).rename(
+        pkg_dir
+        / "related-packages"
+        / "fileformats-extras"
+        / "fileformats"
+        / "extras"
+        / f"medimage_{pkg}"
+    )
 
     # Add in modified __init__.py
     shutil.copy(
@@ -672,11 +729,12 @@ def extract_doctest_inputs(
 
 def gen_fileformats_module(pkg_formats: ty.Set[str]):
     code_str = "from fileformats.generic import File"
-    for frmt in pkg_formats:
+    for ext in pkg_formats:
+        frmt = ext2format_name(ext)
         code_str += f"""
 
 class {frmt}(File):
-    ext = ".{frmt.lower()}"
+    ext = "{ext}"
     binary = True
 """
     return code_str
@@ -689,10 +747,12 @@ from random import Random
 from fileformats.core import FileSet
 """
     code_str += f"from fileformats.medimage_{pkg} import (\n"
-    for frmt in pkg_formats:
+    for ext in pkg_formats:
+        frmt = ext2format_name(ext)
         code_str += f"    {frmt},\n"
     code_str += ")\n\n"
-    for frmt in pkg_formats:
+    for ext in pkg_formats:
+        frmt = ext2format_name(ext)
         code_str += f"""
 
 @FileSet.generate_sample_data.register
