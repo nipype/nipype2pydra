@@ -96,6 +96,7 @@ exclude = [
 ]
 
 [tool.black]
+line-length = 88
 target-version = ['py37']
 exclude = "nipype2pydra/_version.py"
 

@@ -1,4 +1,5 @@
 from __future__ import annotations
+import typing as ty
 import json
 import tempfile
 from pathlib import Path
@@ -16,12 +17,21 @@ class WorkflowConverter:
 
         self.wf = load_class_or_func(self.spec["function"])(
             **self._parse_workflow_args(self.spec["args"])
-        )  # loads the 'function' in smriprep.yaml, and implement the args (creates a dictionary)
+        ) 
+        # loads the 'function' in smriprep.yaml, and implement the args (creates a
+        # dictionary)
 
-    def node_connections(self, workflow, functions: dict[str, dict], wf_inputs: dict[str, str], wf_outputs: dict[str, str]):
-        connections = defaultdict(dict)
+    def node_connections(
+        self,
+        workflow,
+        functions: dict[str, dict],
+        wf_inputs: dict[str, str],
+        wf_outputs: dict[str, str],
+    ):
+        connections: defaultdict = defaultdict(dict)
 
-        # iterates over wf graph, Get connections from workflow graph, store connections in a dictionary
+        # iterates over wf graph, Get connections from workflow graph, store connections
+        # in a dictionary
         for edge, props in workflow._graph.edges.items():
             src_node = edge[0].name
             dest_node = edge[1].name
@@ -88,9 +98,11 @@ class WorkflowConverter:
             dct[name] = val
         return dct
 
-    def save_graph(self, out_path: Path, format: str = "svg", work_dir: Path = None):
+    def save_graph(
+        self, out_path: Path, format: str = "svg", work_dir: ty.Optional[Path] = None
+    ):
         if work_dir is None:
-            work_dir = tempfile.mkdtemp()
+            work_dir = Path(tempfile.mkdtemp())
         work_dir = Path(work_dir)
         graph_dot_path = work_dir / "wf-graph.dot"
         self.wf.write_hierarchical_dotfile(graph_dot_path)
