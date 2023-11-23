@@ -705,6 +705,12 @@ class TaskConverter:
             task_base = "FunctionTask"
             base_imports.append("from pydra.engine.task import FunctionTask")
 
+        executable = self.nipype_interface._cmd
+        if not executable:
+            executable = self.nipype_interface.cmd
+            if not isinstance(executable, str):
+                raise RuntimeError(f"Could not find executable for {self.nipype_interface}")
+
         input_fields_str = types_to_names(spec_fields=input_fields)
         output_fields_str = types_to_names(spec_fields=output_fields)
         functions_str = self.function_callables()
@@ -722,7 +728,7 @@ class TaskConverter:
         spec_str += f"    input_spec = {self.task_name}_input_spec\n"
         spec_str += f"    output_spec = {self.task_name}_output_spec\n"
         if task_base == "ShellCommandTask":
-            spec_str += f"    executable='{self.nipype_interface.cmd}'\n"
+            spec_str += f"    executable='{executable}'\n"
 
         spec_str = re.sub(r"'#([^'#]+)#'", r"\1", spec_str)
 
