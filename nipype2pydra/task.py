@@ -705,7 +705,10 @@ class TaskConverter:
             task_base = "FunctionTask"
             base_imports.append("from pydra.engine.task import FunctionTask")
 
-        executable = self.nipype_interface._cmd
+        try:
+            executable = self.nipype_interface._cmd
+        except AttributeError:
+            executable = None
         if not executable:
             executable = self.nipype_interface.cmd
             if not isinstance(executable, str):
