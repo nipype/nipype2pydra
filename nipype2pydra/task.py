@@ -843,6 +843,8 @@ class TaskConverter:
                         ):
                             arg_tp = ty.get_args(tp)[0]
                             value = f"{arg_tp.__name__}.sample()"
+                            if ty.get_origin(tp) is list:
+                                value = "[" + value + "]"
                 if value is not attrs.NOTHING:
                     spec_str += f"    task.inputs.{nm} = {value}\n"
             if hasattr(self.nipype_interface, "_cmd"):
