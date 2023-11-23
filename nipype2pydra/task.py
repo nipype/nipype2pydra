@@ -809,7 +809,7 @@ class TaskConverter:
             spec_str += f"@pass_after_timeout(seconds={test.timeout})\n"
             spec_str += f"def test_{self.task_name.lower()}_{i}():\n"
             spec_str += f"    task = {self.task_name}()\n"
-            for field in input_fields:
+            for i, field in enumerate(input_fields):
                 nm, tp = field[:2]
                 # Try to get a sensible value for the traits value
                 try:
@@ -843,12 +843,12 @@ class TaskConverter:
                 else:
                     if value is None:
                         if is_fileset(tp):
-                            value = f"{tp.__name__}.sample()"
+                            value = f"{tp.__name__}.sample(seed={i})"
                         elif ty.get_origin(tp) in (list, ty.Union) and is_fileset(
                             ty.get_args(tp)[0]
                         ):
                             arg_tp = ty.get_args(tp)[0]
-                            value = f"{arg_tp.__name__}.sample()"
+                            value = f"{arg_tp.__name__}.sample(seed={i})"
                             if ty.get_origin(tp) is list:
                                 value = "[" + value + "]"
                 if value is not attrs.NOTHING:
