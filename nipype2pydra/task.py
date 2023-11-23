@@ -722,7 +722,7 @@ class TaskConverter:
         spec_str += f"    input_spec = {self.task_name}_input_spec\n"
         spec_str += f"    output_spec = {self.task_name}_output_spec\n"
         if task_base == "ShellCommandTask":
-            spec_str += f"    executable='{self.nipype_interface._cmd}'\n"
+            spec_str += f"    executable='{self.nipype_interface.cmd}'\n"
 
         spec_str = re.sub(r"'#([^'#]+)#'", r"\1", spec_str)
 
