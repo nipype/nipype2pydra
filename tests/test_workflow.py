@@ -21,7 +21,7 @@ def test_workflow_conversion(workflow_spec_file, cli_runner, work_dir):
     assert result.exit_code == 0, show_cli_trace(result)
 
 
-@pytest.mark.xfail(reason="Workflow conversion hasn't been fully implemented yet")
+# @pytest.mark.xfail(reason="Workflow conversion hasn't been fully implemented yet")
 def test_workflow_graph(workflow_spec_file, work_dir):
 
     with open(workflow_spec_file) as f:
