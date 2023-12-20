@@ -778,7 +778,7 @@ from fileformats.core import FileSet
         code_str += f"""
 
 @FileSet.generate_sample_data.register
-def gen_sample_{frmt.lower()}_data({frmt.lower()}: {frmt}, dest_dir: Path, seed: ty.Union[int, Random], stem: ty.Optional[str]):
+def gen_sample_{frmt.lower()}_data({frmt.lower()}: {frmt}, dest_dir: Path, seed: ty.Union[int, Random] = 0, stem: ty.Optional[str] = None) -> ty.Iterable[Path]:
     raise NotImplementedError
 """
     return code_str
