@@ -15,7 +15,7 @@ import click
 import yaml
 import fileformats.core.utils
 import fileformats.core.mixin
-from fileformats.generic import File
+from fileformats.generic import File, Directory
 from fileformats.medimage import Nifti1, NiftiGz, Bval, Bvec
 from fileformats.application import Dicom, Xml
 from fileformats.text import TextFile
@@ -58,6 +58,7 @@ ESCAPE_DIGITS = {
     "8": "eight",
     "9": "nine",
 }
+
 
 def download_tasks_template(output_path: Path):
     """Downloads the latest pydra-template to the output path"""
@@ -161,6 +162,8 @@ def generate_packages(
                     file_outputs,
                     genfile_outputs,
                     multi_inputs,
+                    dir_inputs,
+                    dir_outputs,
                 ) = parse_nipype_interface(nipype_interface)
 
                 # Create "stubs" for each of the available fields
@@ -188,7 +191,9 @@ def generate_packages(
                     return dct
 
                 input_types = {i: File for i in file_inputs}
+                input_types.update({i: Directory for i in dir_inputs})
                 output_types = {o: File for o in file_outputs}
+                output_types.update({o: Directory for o in dir_outputs})
                 output_templates = {}
 
                 # Attempt to parse doctest to pull out sensible defaults for input/output
@@ -574,6 +579,7 @@ def parse_nipype_interface(
     """Generate preamble comments at start of file with args and doc strings"""
     input_helps = {}
     file_inputs = []
+    dir_inputs = []
     genfile_outputs = []
     multi_inputs = []
     if nipype_interface.input_spec:
@@ -589,16 +595,25 @@ def parse_nipype_interface(
                 genfile_outputs.append(inpt_name)
             elif type(inpt.trait_type).__name__ == "File":
                 file_inputs.append(inpt_name)
+            elif type(inpt.trait_type).__name__ == "Directory":
+                dir_inputs.append(inpt_name)
             elif type(inpt.trait_type).__name__ == "InputMultiObject":
-                file_inputs.append(inpt_name)
+                if inpt.trait_type.item_trait and inpt.trait_type.item_trait.trait_type._is_dir:
+                    dir_inputs.append(inpt_name)
+                else:
+                    file_inputs.append(inpt_name)
                 multi_inputs.append(inpt_name)
             elif (
                 type(inpt.trait_type).__name__ == "List"
-                and type(inpt.trait_type.inner_traits()[0].handler).__name__ == "File"
+                and type(inpt.trait_type.inner_traits()[0].handler).__name__ in ("File", "Directory")
             ):
-                file_inputs.append(inpt_name)
+                if type(inpt.trait_type.inner_traits()[0].handler).__name__ == "File":
+                    file_inputs.append(inpt_name)
+                else:
+                    dir_inputs.append(inpt_name)
                 multi_inputs.append(inpt_name)
     file_outputs = []
+    dir_outputs = []
     output_helps = {}
     if nipype_interface.output_spec:
         for outpt_name, outpt in nipype_interface.output_spec().traits().items():
@@ -610,6 +625,8 @@ def parse_nipype_interface(
             ] = f"type={type(outpt.trait_type).__name__.lower()}: {outpt_desc}"
             if type(outpt.trait_type).__name__ == "File":
                 file_outputs.append(outpt_name)
+            elif type(outpt.trait_type).__name__ == "Directory":
+                dir_outputs.append(outpt_name)
     doc_string = nipype_interface.__doc__ if nipype_interface.__doc__ else ""
     doc_string = doc_string.replace("\n", "\n# ")
     # Create a preamble at the top of the specificaiton explaining what to do
@@ -631,6 +648,8 @@ def parse_nipype_interface(
         file_outputs,
         genfile_outputs,
         multi_inputs,
+        dir_inputs,
+        dir_outputs,
     )
 
 
