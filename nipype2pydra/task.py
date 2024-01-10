@@ -871,9 +871,14 @@ class TaskConverter:
         )
         spec_str = "\n".join(imports) + "\n\n" + spec_str
 
-        spec_str_black = black.format_file_contents(
-            spec_str, fast=False, mode=black.FileMode()
-        )
+        try:
+            spec_str_black = black.format_file_contents(
+                spec_str, fast=False, mode=black.FileMode()
+            )
+        except black.parsing.InvalidInput as e:
+            raise RuntimeError(
+                f"Black could not parse generated code: {e}\n\n{spec_str}"
+            )
 
         with open(filename_test, "w") as f:
             f.write(spec_str_black)

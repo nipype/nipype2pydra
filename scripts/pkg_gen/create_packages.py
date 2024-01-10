@@ -204,10 +204,10 @@ def generate_packages(
                 doctest_blocks = []
                 for para in doc_str.split("\n\n"):
                     if "cmdline" in para:
-                        doctest_blocks.append(prev_block + para)
+                        doctest_blocks.append(prev_block + "\n" + para)
                         prev_block = ""
-                    else:
-                        prev_block += para
+                    elif ">>>" in para:
+                        prev_block += "\n" + para
 
                 doctests: ty.List[DocTestGenerator] = []
                 tests: ty.List[TestGenerator] = [
@@ -591,23 +591,26 @@ def parse_nipype_interface(
             if isinstance(inpt.trait_type, nipype.interfaces.base.core.traits.Enum):
                 inpt_mdata += f"|allowed[{','.join(sorted(repr(v) for v in inpt.trait_type.values))}]"
             input_helps[inpt_name] = f"{inpt_mdata}: {inpt_desc}"
+            trait_type_name = type(inpt.trait_type).__name__
             if inpt.genfile:
                 genfile_outputs.append(inpt_name)
-            elif type(inpt.trait_type).__name__ == "File":
+            elif trait_type_name == "File":
                 file_inputs.append(inpt_name)
-            elif type(inpt.trait_type).__name__ == "Directory":
+            elif trait_type_name == "Directory":
                 dir_inputs.append(inpt_name)
-            elif type(inpt.trait_type).__name__ == "InputMultiObject":
-                if inpt.trait_type.item_trait and inpt.trait_type.item_trait.trait_type._is_dir:
+            elif trait_type_name == "InputMultiObject":
+                inner_trait_type_name = type(inpt.trait_type.item_trait.trait_type).__name__
+                if inner_trait_type_name == "Directory":
                     dir_inputs.append(inpt_name)
-                else:
+                elif inner_trait_type_name == "File":
                     file_inputs.append(inpt_name)
                 multi_inputs.append(inpt_name)
             elif (
                 type(inpt.trait_type).__name__ == "List"
                 and type(inpt.trait_type.inner_traits()[0].handler).__name__ in ("File", "Directory")
             ):
-                if type(inpt.trait_type.inner_traits()[0].handler).__name__ == "File":
+                item_type_name = type(inpt.trait_type.inner_traits()[0].handler).__name__
+                if item_type_name == "File":
                     file_inputs.append(inpt_name)
                 else:
                     dir_inputs.append(inpt_name)
