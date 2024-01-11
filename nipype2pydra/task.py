@@ -809,7 +809,7 @@ class TaskConverter:
         for i, test in enumerate(self.tests, start=1):
             if test.xfail:
                 spec_str += "@pytest.mark.xfail\n"
-            spec_str += f"@pass_after_timeout(seconds={test.timeout})\n"
+            # spec_str += f"@pass_after_timeout(seconds={test.timeout})\n"
             spec_str += f"def test_{self.task_name.lower()}_{i}():\n"
             spec_str += f"    task = {self.task_name}()\n"
             for i, field in enumerate(input_fields):
@@ -818,31 +818,7 @@ class TaskConverter:
                 try:
                     value = test.inputs[nm]
                 except KeyError:
-                    if len(field) == 4:  # field has default
-                        if isinstance(field[2], bool):
-                            value = str(field[2])
-                        else:
-                            value = json.dumps(field[2])
-                    else:
-                        assert len(field) == 3
-                        # Attempt to pick a sensible value for field
-                        trait = self.nipype_interface.input_spec.class_traits()[nm]
-                        if isinstance(trait, traits.trait_types.Enum):
-                            value = trait.values[0]
-                        elif isinstance(trait, traits.trait_types.Range):
-                            value = (trait.high - trait.low) / 2.0
-                        elif isinstance(trait, traits.trait_types.Bool):
-                            value = True
-                        elif isinstance(trait, traits.trait_types.Int):
-                            value = 1
-                        elif isinstance(trait, traits.trait_types.Float):
-                            value = 1.0
-                        elif isinstance(trait, traits.trait_types.List):
-                            value = [1] * trait.minlen
-                        elif isinstance(trait, traits.trait_types.Tuple):
-                            value = tuple([1] * len(trait.types))
-                        else:
-                            value = attrs.NOTHING
+                    pass
                 else:
                     if value is None:
                         if is_fileset(tp):
@@ -854,11 +830,37 @@ class TaskConverter:
                             value = f"{arg_tp.__name__}.sample(seed={i})"
                             if ty.get_origin(tp) is list:
                                 value = "[" + value + "]"
-                if value is not attrs.NOTHING:
-                    spec_str += f"    task.inputs.{nm} = {value}\n"
+                        else:
+                            if len(field) == 4:  # field has default
+                                if isinstance(field[2], bool):
+                                    value = str(field[2])
+                                else:
+                                    value = json.dumps(field[2])
+                            else:
+                                assert len(field) == 3
+                                # Attempt to pick a sensible value for field
+                                trait = self.nipype_interface.input_spec.class_traits()[nm]
+                                if isinstance(trait, traits.trait_types.Enum):
+                                    value = trait.values[0]
+                                elif isinstance(trait, traits.trait_types.Range):
+                                    value = (trait.high - trait.low) / 2.0
+                                elif isinstance(trait, traits.trait_types.Bool):
+                                    value = True
+                                elif isinstance(trait, traits.trait_types.Int):
+                                    value = 1
+                                elif isinstance(trait, traits.trait_types.Float):
+                                    value = 1.0
+                                elif isinstance(trait, traits.trait_types.List):
+                                    value = [1] * trait.minlen
+                                elif isinstance(trait, traits.trait_types.Tuple):
+                                    value = tuple([1] * len(trait.types))
+                                else:
+                                    value = attrs.NOTHING
+                    if value is not attrs.NOTHING:
+                        spec_str += f"    task.inputs.{nm} = {value}\n"
             if hasattr(self.nipype_interface, "_cmd"):
                 spec_str += r'    print(f"CMDLINE: {task.cmdline}\n\n")' + "\n"
-            spec_str += "    res = task()\n"
+            spec_str += "    res = task(plugin=\"with-timeout\")\n"
             spec_str += "    print('RESULT: ', res)\n"
             for name, value in test.expected_outputs.items():
                 spec_str += f"    assert res.output.{name} == {value}\n"
@@ -867,7 +869,7 @@ class TaskConverter:
         imports = self.construct_imports(
             nonstd_types,
             spec_str,
-            base={"import pytest", "from conftest import pass_after_timeout"},
+            base={"import pytest"}  # , "from conftest import pass_after_timeout"},
         )
         spec_str = "\n".join(imports) + "\n\n" + spec_str
 
