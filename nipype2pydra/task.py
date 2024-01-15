@@ -4,6 +4,7 @@ import typing as ty
 import re
 from importlib import import_module
 from types import ModuleType
+import itertools
 import inspect
 import black
 import traits.trait_types
@@ -16,6 +17,7 @@ from pydra.engine import specs
 from pydra.engine.helpers import ensure_list
 from .utils import import_module_from_path, is_fileset, to_snake_case
 from fileformats.core import from_mime
+from fileformats.core.mixin import WithClassifiers
 from fileformats.generic import File
 
 
@@ -460,7 +462,7 @@ class TaskConverter:
 
     def convert_input_fields(self):
         """creating fields list for pydra input spec"""
-        fields_pdr_dict = {}
+        pydra_fields_dict = {}
         position_dict = {}
         has_template = []
         for name, fld in self.nipype_input_spec.traits().items():
@@ -468,43 +470,43 @@ class TaskConverter:
                 continue
             if name in self.inputs.omit:
                 continue
-            fld_pdr, pos = self.pydra_fld_input(fld, name)
-            meta_pdr = fld_pdr[-1]
-            if "output_file_template" in meta_pdr:
+            pydra_fld, pos = self.pydra_fld_input(fld, name)
+            pydra_meta = pydra_fld[-1]
+            if "output_file_template" in pydra_meta:
                 has_template.append(name)
-            fields_pdr_dict[name] = (name,) + fld_pdr
+            pydra_fields_dict[name] = (name,) + pydra_fld
             if pos is not None:
                 position_dict[name] = pos
 
-        fields_pdr_l = list(fields_pdr_dict.values())
-        return fields_pdr_l, has_template
+        pydra_fields_l = list(pydra_fields_dict.values())
+        return pydra_fields_l, has_template
 
     def pydra_fld_input(self, field, nm):
         """converting a single nipype field to one element of fields for pydra input_spec"""
-        tp_pdr = self.pydra_type_converter(field, spec_type="input", name=nm)
+        pydra_type = self.pydra_type_converter(field, spec_type="input", name=nm)
         if nm in self.inputs.metadata:
             metadata_extra_spec = self.inputs.metadata[nm]
         else:
             metadata_extra_spec = {}
 
         if "default" in metadata_extra_spec:
-            default_pdr = metadata_extra_spec.pop("default")
+            pydra_default = metadata_extra_spec.pop("default")
         elif (
             getattr(field, "usedefault")
             and field.default is not traits.ctrait.Undefined
         ):
-            default_pdr = field.default
+            pydra_default = field.default
         else:
-            default_pdr = None
+            pydra_default = None
 
-        metadata_pdr = {"help_string": ""}
+        pydra_metadata = {"help_string": ""}
         for key in self.INPUT_KEYS:
-            key_nm_pdr = self.NAME_MAPPING.get(key, key)
+            pydra_key_nm = self.NAME_MAPPING.get(key, key)
             val = getattr(field, key)
             if val is not None:
                 if key == "argstr" and "%" in val:
                     val = self.string_formats(argstr=val, name=nm)
-                metadata_pdr[key_nm_pdr] = val
+                pydra_metadata[pydra_key_nm] = val
 
         if getattr(field, "name_template"):
             template = getattr(field, "name_template")
@@ -513,57 +515,57 @@ class TaskConverter:
                 tmpl = self.string_formats(argstr=template, name=name_source[0])
             else:
                 tmpl = template
-            metadata_pdr["output_file_template"] = tmpl
-            if tp_pdr in [specs.File, specs.Directory]:
-                tp_pdr = str
+            pydra_metadata["output_file_template"] = tmpl
+            if pydra_type in [specs.File, specs.Directory]:
+                pydra_type = str
         elif getattr(field, "genfile"):
             if nm in self.outputs.templates:
                 try:
-                    metadata_pdr["output_file_template"] = self.outputs.templates[nm]
+                    pydra_metadata["output_file_template"] = self.outputs.templates[nm]
                 except KeyError:
                     raise Exception(
                         f"{nm} is has genfile=True and therefore needs an 'output_file_template' value"
                     )
-                if tp_pdr in [
+                if pydra_type in [
                     specs.File,
                     specs.Directory,
                 ]:  # since this is a template, the file doesn't exist
-                    tp_pdr = Path
+                    pydra_type = Path
             elif nm not in self.outputs.callables:
                 raise Exception(
                     f"the filed {nm} has genfile=True, but no output template or callables_module provided"
                 )
 
-        metadata_pdr.update(metadata_extra_spec)
+        pydra_metadata.update(metadata_extra_spec)
 
-        pos = metadata_pdr.get("position", None)
+        pos = pydra_metadata.get("position", None)
 
-        if default_pdr is not None and not metadata_pdr.get("mandatory", None):
-            return (tp_pdr, default_pdr, metadata_pdr), pos
+        if pydra_default is not None and not pydra_metadata.get("mandatory", None):
+            return (pydra_type, pydra_default, pydra_metadata), pos
         else:
-            return (tp_pdr, metadata_pdr), pos
+            return (pydra_type, pydra_metadata), pos
 
     def convert_output_spec(self, fields_from_template):
         """creating fields list for pydra input spec"""
-        fields_pdr_l = []
+        pydra_fields_l = []
         if not self.nipype_output_spec:
-            return fields_pdr_l
+            return pydra_fields_l
         for name, fld in self.nipype_output_spec.traits().items():
             if name in self.outputs.requirements and name not in fields_from_template:
-                fld_pdr = self.pydra_fld_output(fld, name)
-                fields_pdr_l.append((name,) + fld_pdr)
-        return fields_pdr_l
+                pydra_fld = self.pydra_fld_output(fld, name)
+                pydra_fields_l.append((name,) + pydra_fld)
+        return pydra_fields_l
 
     def pydra_fld_output(self, field, name):
         """converting a single nipype field to one element of fields for pydra output_spec"""
-        tp_pdr = self.pydra_type_converter(field, spec_type="output", name=name)
+        pydra_type = self.pydra_type_converter(field, spec_type="output", name=name)
 
-        metadata_pdr = {}
+        pydra_metadata = {}
         for key in self.OUTPUT_KEYS:
-            key_nm_pdr = self.NAME_MAPPING.get(key, key)
+            pydra_key_nm = self.NAME_MAPPING.get(key, key)
             val = getattr(field, key)
             if val:
-                metadata_pdr[key_nm_pdr] = val
+                pydra_metadata[pydra_key_nm] = val
 
         if self.outputs.requirements[name]:
             if all([isinstance(el, list) for el in self.outputs.requirements[name]]):
@@ -577,7 +579,7 @@ class TaskConverter:
             else:
                 Exception("has to be either list of list or list of str/dict")
 
-            metadata_pdr["requires"] = []
+            pydra_metadata["requires"] = []
             for requires in requires_l:
                 requires_mod = []
                 for el in requires:
@@ -585,17 +587,17 @@ class TaskConverter:
                         requires_mod.append(el)
                     elif isinstance(el, dict):
                         requires_mod += list(el.items())
-                metadata_pdr["requires"].append(requires_mod)
+                pydra_metadata["requires"].append(requires_mod)
             if nested_flag is False:
-                metadata_pdr["requires"] = metadata_pdr["requires"][0]
+                pydra_metadata["requires"] = pydra_metadata["requires"][0]
 
         if name in self.outputs.templates:
-            metadata_pdr["output_file_template"] = self.interface_spec[
+            pydra_metadata["output_file_template"] = self.interface_spec[
                 "output_templates"
             ][name]
         elif name in self.outputs.callables:
-            metadata_pdr["callable"] = self.outputs.callables[name]
-        return (tp_pdr, metadata_pdr)
+            pydra_metadata["callable"] = self.outputs.callables[name]
+        return (pydra_type, pydra_metadata)
 
     def function_callables(self):
         if not self.outputs.callables:
@@ -626,45 +628,45 @@ class TaskConverter:
             return types_dict[name]
         except KeyError:
             pass
-        tp = field.trait_type
-        if isinstance(tp, traits.trait_types.Int):
-            tp_pdr = int
-        elif isinstance(tp, traits.trait_types.Float):
-            tp_pdr = float
-        elif isinstance(tp, traits.trait_types.Str):
-            tp_pdr = str
-        elif isinstance(tp, traits.trait_types.Bool):
-            tp_pdr = bool
-        elif isinstance(tp, traits.trait_types.Dict):
-            tp_pdr = dict
-        elif isinstance(tp, traits_extension.InputMultiObject):
+        trait_tp = field.trait_type
+        if isinstance(trait_tp, traits.trait_types.Int):
+            pydra_type = int
+        elif isinstance(trait_tp, traits.trait_types.Float):
+            pydra_type = float
+        elif isinstance(trait_tp, traits.trait_types.Str):
+            pydra_type = str
+        elif isinstance(trait_tp, traits.trait_types.Bool):
+            pydra_type = bool
+        elif isinstance(trait_tp, traits.trait_types.Dict):
+            pydra_type = dict
+        elif isinstance(trait_tp, traits_extension.InputMultiObject):
             if isinstance(field.inner_traits[0].trait_type, traits_extension.File):
-                tp_pdr = ty.List[File]
+                pydra_type = ty.List[File]
             else:
-                tp_pdr = specs.MultiInputObj
-        elif isinstance(tp, traits_extension.OutputMultiObject):
+                pydra_type = specs.MultiInputObj
+        elif isinstance(trait_tp, traits_extension.OutputMultiObject):
             if isinstance(field.inner_traits[0].trait_type, traits_extension.File):
-                tp_pdr = specs.MultiOutputFile
+                pydra_type = specs.MultiOutputFile
             else:
-                tp_pdr = specs.MultiOutputObj
-        elif isinstance(tp, traits.trait_types.List):
+                pydra_type = specs.MultiOutputObj
+        elif isinstance(trait_tp, traits.trait_types.List):
             if isinstance(field.inner_traits[0].trait_type, traits_extension.File):
                 if spec_type == "input":
-                    tp_pdr = ty.List[File]
+                    pydra_type = ty.List[File]
                 else:
-                    tp_pdr = specs.MultiOutputFile
+                    pydra_type = specs.MultiOutputFile
             else:
-                tp_pdr = list
-        elif isinstance(tp, traits_extension.File):
+                pydra_type = list
+        elif isinstance(trait_tp, traits_extension.File):
             if (
-                spec_type == "output" or tp.exists is True
+                spec_type == "output" or trait_tp.exists is True
             ):  # TODO check the hash_file metadata in nipype
-                tp_pdr = specs.File
+                pydra_type = specs.File
             else:
-                tp_pdr = Path
+                pydra_type = Path
         else:
-            tp_pdr = ty.Any
-        return tp_pdr
+            pydra_type = ty.Any
+        return pydra_type
 
     def string_formats(self, argstr, name):
         keys = re.findall(r"(%[0-9\.]*(?:s|d|i|g|f))", argstr)
@@ -680,18 +682,28 @@ class TaskConverter:
     def write_task(self, filename, input_fields, nonstd_types, output_fields):
         """writing pydra task to the dile based on the input and output spec"""
 
+        def unwrap_field_type(t):
+            if issubclass(t, WithClassifiers) and t.is_classified:
+                unwraped_classifiers = ", ".join(unwrap_field_type(c) for c in t.classifiers)
+                return f"{t.unclassified.__name__}[{unwraped_classifiers}]"
+            return t.__name__
+
         def types_to_names(spec_fields):
             spec_fields_str = []
             for el in spec_fields:
                 el = list(el)
-                tp_str = str(el[1])
-                if tp_str.startswith("<class "):
-                    tp_str = el[1].__name__
+                field_type = el[1]
+                if inspect.isclass(field_type) and issubclass(field_type, WithClassifiers):
+                    field_type_str = unwrap_field_type(field_type)
                 else:
-                    # Alter modules in type string to match those that will be imported
-                    tp_str = tp_str.replace("typing", "ty")
-                    tp_str = re.sub(r"(\w+\.)+(?<!ty\.)(\w+)", r"\2", tp_str)
-                el[1] = "#" + tp_str + "#"
+                    field_type_str = str(field_type)
+                    if field_type_str.startswith("<class "):
+                        field_type_str = el[1].__name__
+                    else:
+                        # Alter modules in type string to match those that will be imported
+                        field_type_str = field_type_str.replace("typing", "ty")
+                        field_type_str = re.sub(r"(\w+\.)+(?<!ty\.)(\w+)", r"\2", field_type_str)
+                el[1] = "#" + field_type_str + "#"
                 spec_fields_str.append(tuple(el))
             return spec_fields_str
 
@@ -795,7 +807,16 @@ class TaskConverter:
                         else f"{stmt.name} as {stmt.alias}"
                     )
                     add_import(f"from {stmt.module} import {nm}")
-        for tp in nonstd_types:
+
+        def unwrap_nested_type(t: type) -> ty.List[type]:
+            if issubclass(t, WithClassifiers) and t.is_classified:
+                unwrapped = [t.unclassified]
+                for c in t.classifiers:
+                    unwrapped.extend(unwrap_nested_type(c))
+                return unwrapped
+            return [t]
+
+        for tp in itertools.chain(*(unwrap_nested_type(t) for t in nonstd_types)):
             add_import(f"from {tp.__module__} import {tp.__name__}")
         # For debugging
         add_import(f"import {'.'.join(self.output_module.split('.')[:-2])}")
