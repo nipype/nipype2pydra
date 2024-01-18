@@ -4,7 +4,6 @@ import traceback
 import tempfile
 import pytest
 from click.testing import CliRunner
-from fileformats.generic import File
 
 
 PKG_DIR = Path(__file__).parent
@@ -32,6 +31,13 @@ def workflow_spec_file(request):
 def work_dir():
     work_dir = tempfile.mkdtemp()
     return Path(work_dir)
+
+
+@pytest.fixture
+def outputs_dir():
+    outputs_dir = PKG_DIR / "outputs" / 'workflows'
+    outputs_dir.mkdir(parents=True, exist_ok=True)
+    return outputs_dir
 
 
 @pytest.fixture

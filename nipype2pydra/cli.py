@@ -56,10 +56,11 @@ def task(yaml_spec, package_root, callables, output_module):
 
 @cli.command(help="Port Nipype workflow creation functions to Pydra")
 @click.argument("yaml-spec", type=click.File())
-@click.argument("package-root", type=click.File(mode="w"))
-def workflow(yaml_spec, package_root):
+@click.argument("output_file", type=click.Path(path_type=Path))
+def workflow(yaml_spec, output_file):
 
     spec = yaml.safe_load(yaml_spec)
 
     converter = WorkflowConverter(spec)
-    converter.generate(package_root)
+    out_str = converter.generate()
+    output_file.write_text(out_str)

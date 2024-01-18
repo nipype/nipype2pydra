@@ -1,3 +1,4 @@
+from pathlib import Path
 import yaml
 import pytest
 from nipype2pydra.cli import workflow
@@ -5,10 +6,10 @@ from nipype2pydra.utils import show_cli_trace
 from nipype2pydra.workflow import WorkflowConverter
 
 
-@pytest.mark.xfail(reason="Workflow conversion hasn't been fully implemented yet")
-def test_workflow_conversion(workflow_spec_file, cli_runner, work_dir):
+# @pytest.mark.xfail(reason="Workflow conversion hasn't been fully implemented yet")
+def test_workflow_conversion(workflow_spec_file: Path, cli_runner, outputs_dir: Path):
 
-    output_file = work_dir / "pydra_module.py"
+    output_file = outputs_dir / f"{workflow_spec_file.stem}.py"
 
     result = cli_runner(
         workflow,
@@ -22,11 +23,11 @@ def test_workflow_conversion(workflow_spec_file, cli_runner, work_dir):
 
 
 # @pytest.mark.xfail(reason="Workflow conversion hasn't been fully implemented yet")
-def test_workflow_graph(workflow_spec_file, work_dir):
+def test_workflow_graph(workflow_spec_file, outputs_dir):
 
     with open(workflow_spec_file) as f:
         spec = yaml.safe_load(f)
 
     converter = WorkflowConverter(spec)
 
-    converter.save_graph(work_dir / "smriprep-graph.svg")
+    converter.save_graph(outputs_dir / f"{workflow_spec_file.stem}.svg")

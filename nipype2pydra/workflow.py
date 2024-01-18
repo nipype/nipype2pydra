@@ -25,8 +25,8 @@ class WorkflowConverter:
         self,
         workflow,
         functions: dict[str, dict],
-        wf_inputs: dict[str, str],
-        wf_outputs: dict[str, str],
+        # wf_inputs: dict[str, str],
+        # wf_outputs: dict[str, str],
     ):
         connections: defaultdict = defaultdict(dict)
 
@@ -39,8 +39,8 @@ class WorkflowConverter:
             for node_conn in props["connect"]:
                 src_field = node_conn[0]
                 dest_field = node_conn[1]
-                if src_field.startswith("def"):
-                    functions[dest_node_fullname][dest_field] = src_field
+                if src_field[1].startswith("def"):
+                    functions[dest_node_fullname][dest_field] = src_field[1]
                 else:
                     connections[dest_node_fullname][
                         dest_field
@@ -50,7 +50,7 @@ class WorkflowConverter:
             connections.update(self.node_connections(nested_wf, functions=functions))
         return connections
 
-    def generate(self, package_root: str, format_with_black: bool = False):
+    def generate(self, format_with_black: bool = False):
 
         functions = defaultdict(dict)
         connections = self.node_connections(self.wf, functions=functions)
@@ -77,9 +77,11 @@ class WorkflowConverter:
                 node_args += f",\n        {arg}=wf.{val}"
 
             out_text += f"""
-    wf.add({task_type}(
-        name="{node.name}"{node_args}
-)"""
+    wf.add(
+        {task_type}(
+            name="{node.name}"{node_args}
+        )
+    )"""
 
         if format_with_black:
             out_text = black.format_file_contents(
