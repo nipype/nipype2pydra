@@ -91,11 +91,18 @@ def download_tasks_template(output_path: Path):
 @click.option("--work-dir", type=click.Path(path_type=Path), default=None)
 @click.option("--task-template", type=click.Path(path_type=Path), default=None)
 @click.option("--packages-to-import", type=click.Path(path_type=Path), default=None)
+@click.option(
+    "--base-package",
+    type=str,
+    default="nipype.interfaces",
+    help=("the base package which the sub-packages are relative to"),
+)
 def generate_packages(
     output_dir: Path,
     work_dir: ty.Optional[Path],
     task_template: ty.Optional[Path],
     packages_to_import: ty.Optional[Path],
+    base_package: str,
 ):
     if work_dir is None:
         work_dir = Path(tempfile.mkdtemp())
@@ -145,7 +152,7 @@ def generate_packages(
                 spec_stub = {}
 
                 # Import interface from module
-                nipype_module_str = "nipype.interfaces." + ".".join(module.split("/"))
+                nipype_module_str = base_package + "." + ".".join(module.split("/"))
                 nipype_module = import_module(nipype_module_str)
                 nipype_interface = getattr(nipype_module, interface)
                 if not issubclass(
