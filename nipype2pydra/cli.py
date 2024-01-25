@@ -48,7 +48,7 @@ def task(yaml_spec, package_root, callables, output_module):
 
     spec = yaml.safe_load(yaml_spec)
 
-    converter = TaskConverter(
+    converter = TaskConverter.load(
         output_module=output_module, callables_module=callables, **spec
     )
     converter.generate(package_root)

@@ -6,6 +6,7 @@ from importlib import import_module
 from types import ModuleType
 import itertools
 import inspect
+from functools import cached_property
 import black
 import traits.trait_types
 import json
@@ -418,6 +419,18 @@ class TaskConverter:
             else None
         )
 
+    @classmethod
+    def load(cls, nipype_module: str, nipype_name: str, **kwargs):
+        nipype_interface = getattr(import_module(nipype_module), nipype_name)
+
+        if hasattr(nipype_interface, "_cmd"):
+            converter_cls = ShellCommandTaskConverter
+        else:
+            converter_cls = FunctionTaskConverter
+        return converter_cls(
+            nipype_module=nipype_module, nipype_name=nipype_name, **kwargs
+        )
+
     def generate(self, package_root: Path):
         """creating pydra input/output spec from nipype specs
         if write is True, a pydra Task class will be written to the file together with tests
@@ -551,7 +564,7 @@ class TaskConverter:
         if not self.nipype_output_spec:
             return pydra_fields_l
         for name, fld in self.nipype_output_spec.traits().items():
-            if name in self.outputs.requirements and name not in fields_from_template:
+            if name not in self.TRAITS_IRREL and name not in fields_from_template:
                 pydra_fld = self.pydra_fld_output(fld, name)
                 pydra_fields_l.append((name,) + pydra_fld)
         return pydra_fields_l
@@ -567,7 +580,7 @@ class TaskConverter:
             if val:
                 pydra_metadata[pydra_key_nm] = val
 
-        if self.outputs.requirements[name]:
+        if name in self.outputs.requirements and self.outputs.requirements[name]:
             if all([isinstance(el, list) for el in self.outputs.requirements[name]]):
                 requires_l = self.outputs.requirements[name]
                 nested_flag = True
@@ -724,7 +737,9 @@ class TaskConverter:
         if not executable:
             executable = self.nipype_interface.cmd
             if not isinstance(executable, str):
-                raise RuntimeError(f"Could not find executable for {self.nipype_interface}")
+                raise RuntimeError(
+                    f"Could not find executable for {self.nipype_interface}"
+                )
 
         input_fields_str = types_to_names(spec_fields=input_fields)
         output_fields_str = types_to_names(spec_fields=output_fields)
@@ -1034,3 +1049,281 @@ def pass_after_timeout(seconds, poll_interval=0.1):
 
     return decorator
 """
+
+
+@attrs.define
+class FunctionTaskConverter(TaskConverter):
+    def write_task(self, filename, input_fields, nonstd_types, output_fields):
+        """writing pydra task to the dile based on the input and output spec"""
+
+        base_imports = [
+            "from pydra.engine import specs",
+            "from pydra.engine.task import FunctionTask",
+        ]
+
+        def types_to_names(spec_fields):
+            spec_fields_str = []
+            for el in spec_fields:
+                el = list(el)
+                tp_str = str(el[1])
+                if tp_str.startswith("<class "):
+                    tp_str = el[1].__name__
+                else:
+                    # Alter modules in type string to match those that will be imported
+                    tp_str = tp_str.replace("typing", "ty")
+                    tp_str = re.sub(r"(\w+\.)+(?<!ty\.)(\w+)", r"\2", tp_str)
+                el[1] = tp_str
+                spec_fields_str.append(tuple(el))
+            return spec_fields_str
+
+        input_fields_str = types_to_names(spec_fields=input_fields)
+        output_fields_str = types_to_names(spec_fields=output_fields)
+        input_names = [i[0] for i in input_fields]
+        output_names = [o[0] for o in output_fields]
+        output_type_names = [o[1] for o in output_fields_str]
+        function_body = self.get_function_body(input_names, output_names)
+        functions_str = self.function_callables()
+
+        # Create the spec string
+        spec_str = functions_str
+        spec_str += "@pydra.mark.task\n"
+        spec_str += "@pydra.mark.annotate({'return': {"
+        spec_str += ", ".join(f"'{n}': {t}" for n, t, _ in output_fields_str)
+        spec_str += "}})\n"
+        spec_str += f"def {self.task_name}("
+        spec_str += ", ".join(f"{n}: {t}" for n, t, _ in input_fields_str)
+        spec_str += ") -> "
+        if len(output_type_names) > 1:
+            spec_str += "ty.Tuple[" + ", ".join(output_type_names) + "]"
+        else:
+            spec_str += output_type_names[0]
+        spec_str += ':\n    """\n'
+        spec_str += self.create_doctests(
+            input_fields=input_fields, nonstd_types=nonstd_types
+        )
+        spec_str += '    """\n'
+        spec_str += "    " + function_body + "\n"
+        spec_str += "\n    return {}".format(", ".join(output_names))
+        spec_str += "\n\n" + "\n\n".join(self.referenced_local_functions)
+
+        # Replace hash escapes
+        spec_str = re.sub(r"'#([^'#]+)#'", r"\1", spec_str)
+
+        other_imports = self.get_imports([function_body] + self.referenced_local_functions)
+
+        imports = self.construct_imports(
+            nonstd_types,
+            spec_str,
+            include_task=False,
+            base=base_imports + other_imports,
+        )
+        spec_str = "\n".join(imports) + "\n\n" + spec_str
+
+        spec_str = black.format_file_contents(
+            spec_str, fast=False, mode=black.FileMode()
+        )
+
+        with open(filename, "w") as f:
+            f.write(spec_str)
+
+    def get_function_body(self, input_names: ty.List[str], output_names: ty.List[str]):
+        ri_src = inspect.getsource(self.nipype_interface._run_interface).strip()
+        ri_src = "\n".join(ri_src.split("\n")[1:-1])
+        lo_src = inspect.getsource(self.nipype_interface._list_outputs).strip()
+        lo_lines = lo_src.split("\n")
+        return_line = lo_lines[-1]
+        match = re.match(r"\s*return (.*)", return_line)
+        return_value = match.group(1)
+        lo_src = "\n".join(lo_lines[1:-1])
+        src = ri_src + lo_src
+        input_re = re.compile(r"self\.inputs\.(\w+)")
+        unrecognised_inputs = set(
+            m for m in input_re.findall(src) if m not in input_names
+        )
+        assert (
+            not unrecognised_inputs
+        ), f"Found the following unrecognised inputs {unrecognised_inputs}"
+        src = input_re.sub(r"\1", src)
+        output_re = re.compile(return_value + r"\[(?:'|\")(\w+)(?:'|\")\]")
+        unrecognised_outputs = set(
+            m for m in output_re.findall(src) if m not in output_names
+        )
+        assert (
+            not unrecognised_outputs
+        ), f"Found the following unrecognised outputs {unrecognised_outputs}"
+        src = output_re.sub(r"\1", src)
+        # Detect the indentation of the source code in src and reduce it to 4 spaces
+        indents = re.findall(r"^\s+", src, flags=re.MULTILINE)
+        min_indent = min(len(i) for i in indents if i)
+        indent_reduction = min_indent - 4
+        src = re.sub(r"^" + " " * indent_reduction, "", src, flags=re.MULTILINE)
+        return src.strip()
+
+    def get_imports(
+        self, function_bodies: ty.List[str]
+    ) -> ty.Tuple[ty.List[str], ty.List[str]]:
+        """Get the imports required for the function body
+
+        Parameters
+        ----------
+        src: str
+            the source of the file to extract the import statements from
+        """
+        imports = []
+        block = ""
+        for line in self.source_code.split("\n"):
+            if line.startswith("from") or line.startswith("import"):
+                if "(" in line:
+                    block = line
+                else:
+                    imports.append(line)
+            if ")" in line and block:
+                imports.append(block + line)
+                block = ""
+        # extract imported symbols from import statements
+        used_symbols = set()
+        for function_body in function_bodies:
+            # Strip comments from function body
+            function_body = re.sub(r"\s*#.*", "", function_body)
+            used_symbols.update(re.findall(r"(\w+)", function_body))
+        used_imports = []
+        for stmt in imports:
+            stmt = stmt.replace("\n", "")
+            stmt = stmt.replace("(", "")
+            stmt = stmt.replace(")", "")
+            base_stmt, symbol_str = stmt.split("import ")
+            symbol_parts = symbol_str.split(",")
+            split_parts = [p.split(" as ") for p in symbol_parts]
+            split_parts = [p for p in split_parts if p[-1] in used_symbols]
+            if split_parts:
+                used_imports.append(
+                    base_stmt
+                    + "import "
+                    + ",".join(" as ".join(p) for p in split_parts)
+                )
+        return used_imports
+
+    @cached_property
+    def referenced_local_functions(self):
+        referenced = set()
+        self._get_referenced_local_functions(self.nipype_interface._run_interface, referenced)
+        self._get_referenced_local_functions(self.nipype_interface._list_outputs, referenced)
+        return [inspect.getsource(f) for f in referenced]
+
+    def _get_referenced_local_functions(
+        self, function: ty.Callable, referenced: ty.Set[ty.Callable]
+    ):
+        """Get the local functions referenced in the source code
+
+        Parameters
+        ----------
+        src: str
+            the source of the file to extract the import statements from
+        referenced: set[function]
+            the set of functions that have been referenced so far
+        """
+        function_body = inspect.getsource(function)
+        function_body = re.sub(r"\s*#.*", "", function_body)
+        referenced_symbols = re.findall(r"(\w+)\(", function_body)
+        referenced_locals = set(
+            f
+            for f in self.local_functions
+            if f.__name__ in referenced_symbols and f not in referenced
+        )
+        referenced.update(referenced_locals)
+        for func in referenced_locals:
+            self._get_referenced_local_functions(func, referenced)
+
+    @cached_property
+    def source_code(self):
+        with open(inspect.getsourcefile(self.nipype_interface)) as f:
+            return f.read()
+
+    @cached_property
+    def local_functions(self):
+        """Get the functions defined in the same file as the interface"""
+        functions = []
+        for attr_name in dir(self.nipype_module):
+            attr = getattr(self.nipype_module, attr_name)
+            if inspect.isfunction(attr):
+                functions.append(attr)
+        return functions
+
+    @cached_property
+    def local_function_names(self):
+        return [f.__name__ for f in self.local_functions]
+
+
+@attrs.define
+class ShellCommandTaskConverter(TaskConverter):
+    def write_task(self, filename, input_fields, nonstd_types, output_fields):
+        """writing pydra task to the dile based on the input and output spec"""
+
+        base_imports = [
+            "from pydra.engine import specs",
+        ]
+
+        task_base = "ShellCommandTask"
+        base_imports.append("from pydra.engine import ShellCommandTask")
+
+        try:
+            executable = self.nipype_interface._cmd
+        except AttributeError:
+            executable = None
+        if not executable:
+            executable = self.nipype_interface.cmd
+            if not isinstance(executable, str):
+                raise RuntimeError(
+                    f"Could not find executable for {self.nipype_interface}"
+                )
+
+        def types_to_names(spec_fields):
+            spec_fields_str = []
+            for el in spec_fields:
+                el = list(el)
+                tp_str = str(el[1])
+                if tp_str.startswith("<class "):
+                    tp_str = el[1].__name__
+                else:
+                    # Alter modules in type string to match those that will be imported
+                    tp_str = tp_str.replace("typing", "ty")
+                    tp_str = re.sub(r"(\w+\.)+(?<!ty\.)(\w+)", r"\2", tp_str)
+                el[1] = "#" + tp_str + "#"
+                spec_fields_str.append(tuple(el))
+            return spec_fields_str
+
+        input_fields_str = types_to_names(spec_fields=input_fields)
+        output_fields_str = types_to_names(spec_fields=output_fields)
+        functions_str = self.function_callables()
+        spec_str = functions_str
+        spec_str += f"input_fields = {input_fields_str}\n"
+        spec_str += f"{self.task_name}_input_spec = specs.SpecInfo(name='Input', fields=input_fields, bases=(specs.ShellSpec,))\n\n"
+        spec_str += f"output_fields = {output_fields_str}\n"
+        spec_str += f"{self.task_name}_output_spec = specs.SpecInfo(name='Output', fields=output_fields, bases=(specs.ShellOutSpec,))\n\n"
+        spec_str += f"class {self.task_name}({task_base}):\n"
+        spec_str += '    """\n'
+        spec_str += self.create_doctests(
+            input_fields=input_fields, nonstd_types=nonstd_types
+        )
+        spec_str += '    """\n'
+        spec_str += f"    input_spec = {self.task_name}_input_spec\n"
+        spec_str += f"    output_spec = {self.task_name}_output_spec\n"
+        if task_base == "ShellCommandTask":
+            spec_str += f"    executable='{executable}'\n"
+
+        spec_str = re.sub(r"'#([^'#]+)#'", r"\1", spec_str)
+
+        imports = self.construct_imports(
+            nonstd_types,
+            spec_str,
+            include_task=False,
+            base=base_imports,
+        )
+        spec_str = "\n".join(imports) + "\n\n" + spec_str
+
+        spec_str = black.format_file_contents(
+            spec_str, fast=False, mode=black.FileMode()
+        )
+
+        with open(filename, "w") as f:
+            f.write(spec_str)
