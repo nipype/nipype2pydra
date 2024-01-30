@@ -332,7 +332,7 @@ def from_list_to_doctests(
 
 
 @attrs.define
-class TaskConverter:
+class BaseTaskConverter:
     """Specifies how the semi-automatic conversion from Nipype to Pydra should
     be performed
 
@@ -416,19 +416,6 @@ class TaskConverter:
             self.nipype_interface.output_spec()
             if self.nipype_interface.output_spec
             else None
-        )
-
-    @classmethod
-    def load(cls, nipype_module: str, nipype_name: str, **kwargs):
-        nipype_interface = getattr(import_module(nipype_module), nipype_name)
-
-        if hasattr(nipype_interface, "_cmd"):
-            from .shell_command import ShellCommandTaskConverter as Converter
-        else:
-            from .function import FunctionTaskConverter as Converter
-
-        return Converter(
-            nipype_module=nipype_module, nipype_name=nipype_name, **kwargs
         )
 
     def generate(self, package_root: Path):

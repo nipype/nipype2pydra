@@ -2,7 +2,7 @@ from pathlib import Path
 import click
 import yaml
 from nipype2pydra import __version__
-from .task import TaskConverter
+import nipype2pydra.task
 from .workflow import WorkflowConverter
 
 
@@ -48,7 +48,7 @@ def task(yaml_spec, package_root, callables, output_module):
 
     spec = yaml.safe_load(yaml_spec)
 
-    converter = TaskConverter.load(
+    converter = nipype2pydra.task.get_converter(
         output_module=output_module, callables_module=callables, **spec
     )
     converter.generate(package_root)

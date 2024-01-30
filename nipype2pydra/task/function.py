@@ -5,16 +5,18 @@ from functools import cached_property
 import itertools
 import black
 import attrs
-from .base import TaskConverter
+from .base import BaseTaskConverter
 
 
 @attrs.define
-class FunctionTaskConverter(TaskConverter):
+class FunctionTaskConverter(BaseTaskConverter):
     def write_task(self, filename, input_fields, nonstd_types, output_fields):
         """writing pydra task to the dile based on the input and output spec"""
 
         base_imports = [
             "import pydra.mark",
+            "from logging import getLogger",
+            "import attrs",
         ]
 
         def types_to_names(spec_fields):
@@ -62,6 +64,7 @@ class FunctionTaskConverter(TaskConverter):
 
         # Create the spec string
         spec_str = self.function_callables()
+        spec_str += "logger = getLogger(__name__)\n\n"
         spec_str += "@pydra.mark.task\n"
         spec_str += "@pydra.mark.annotate({'return': {"
         spec_str += ", ".join(f"'{n}': {t}" for n, t, _ in output_fields_str)
@@ -111,6 +114,7 @@ class FunctionTaskConverter(TaskConverter):
         )
         spec_str = "\n".join(imports) + "\n\n" + spec_str
 
+        print(spec_str)
         spec_str = black.format_file_contents(
             spec_str, fast=False, mode=black.FileMode()
         )
@@ -125,14 +129,18 @@ class FunctionTaskConverter(TaskConverter):
         output_names: ty.List[str],
     ):
         src = inspect.getsource(func)
-        pre, arglist, post = self.split_parens_contents(src)
+        pre, argstr, post = self.split_parens_contents(src)
+        args = re.split(r" *, *", argstr)
+        args.remove("self")
+        if "runtime" in args:
+            args.remove("runtime")
         if func.__name__ in self.method_args:
-            arglist = (arglist + ", " if arglist else "") + ", ".join(f"{a}=None" for a in self.method_args[func.__name__])
+            args += [f"{a}=None" for a in self.method_args[func.__name__]]
         # Insert method args in signature if present
         return_types, function_body = post.split(":", maxsplit=1)
         function_body = function_body.split("\n", maxsplit=1)[1]
         function_body = self.process_function_body(function_body, input_names)
-        return f"{pre.strip()}{arglist}{return_types}:\n{function_body}"
+        return f"{pre.strip()}{', '.join(args)}{return_types}:\n{function_body}"
 
     def process_function_body(self, function_body: str, input_names: ty.List[str]) -> str:
         """Replace self.inputs.<name> with <name> in the function body and add args to the
@@ -178,6 +186,9 @@ class FunctionTaskConverter(TaskConverter):
         min_indent = min(len(i) for i in indents if i)
         indent_reduction = min_indent - 4
         function_body = re.sub(r"^" + " " * indent_reduction, "", function_body, flags=re.MULTILINE)
+        # Other misc replacements
+        function_body = function_body.replace("LOGGER.", "logger.")
+        function_body = re.sub(r"isdefined\((\w+)\)", r"\1 is not attrs.NOTHING", function_body)
         return function_body
 
     def get_imports(
@@ -348,11 +359,17 @@ class FunctionTaskConverter(TaskConverter):
     )
 
     @classmethod
-    def insert_args_in_signature(cls, snippet: str, args: ty.Iterable[str]) -> str:
+    def insert_args_in_signature(cls, snippet: str, new_args: ty.Iterable[str]) -> str:
         """Insert the arguments into the function signature"""
-        # Insert method args in signature if present
-        pre, contents, post = cls.split_parens_contents(snippet)
-        return pre + (contents + ", " if contents else "") + ", ".join(args) + post
+        # Split out the argstring from the rest of the code snippet
+        pre, argstr, post = cls.split_parens_contents(snippet)
+        if argstr:
+            args = re.split(r" *, *", argstr)
+            if "runtime" in args:
+                args.remove("runtime")
+        else:
+            args = []
+        return pre + ", ".join(args + new_args) + post
 
     @classmethod
     def split_parens_contents(cls, snippet):
