@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 import typing as ty
 import re
+from abc import ABCMeta, abstractmethod
 from importlib import import_module
 from types import ModuleType
 import itertools
@@ -52,16 +53,31 @@ def str_to_type(type_str: str) -> type:
             tp = tp.primitive  # type: ignore
         except AttributeError:
             pass
-    elif "." in type_str:
-        parts = type_str.split(".")
-        module = import_module(".".join(parts[:-1]))
-        tp = getattr(module, parts[-1])
-        if not inspect.isclass(tp):
-            raise TypeError(f"Designated type at {type_str} is not a class {tp}")
-    elif re.match(r"^\w+$", type_str):
-        tp = eval(type_str)
     else:
-        raise ValueError(f"Cannot parse {type_str} to a type safely")
+        def resolve_type(type_str: str) -> type:
+            if "." in type_str:
+                parts = type_str.split(".")
+                module = import_module(".".join(parts[:-1]))
+                class_str = parts[-1]
+            else:
+                class_str = type_str
+                module = None
+            match = re.match(r"(\w+)(\[.*\])?", class_str)
+            class_str = match.group(1)
+            if module:
+                t = getattr(module, match.group(1))
+            else:
+                if not re.match(r"^\w+$", class_str):
+                    raise ValueError(f"Cannot parse {class_str} to a type safely")
+                t = eval(class_str)
+            if match.group(2):
+                args = tuple(resolve_type(arg) for arg in match.group(2)[1:-1].split(','))
+                t = t.__getitem__(args)
+            return t
+
+        tp = resolve_type(type_str)
+        if not inspect.isclass(tp) and type(tp).__module__ != "typing":
+            raise TypeError(f"Designated type at {type_str} is not a class {tp}")
     return tp
 
 
@@ -332,7 +348,7 @@ def from_list_to_doctests(
 
 
 @attrs.define
-class BaseTaskConverter:
+class BaseTaskConverter(metaclass=ABCMeta):
     """Specifies how the semi-automatic conversion from Nipype to Pydra should
     be performed
 
@@ -761,8 +777,14 @@ class BaseTaskConverter:
             spec_str, fast=False, mode=black.FileMode()
         )
 
+        spec_str = re.sub(r"(?<!specs\.)Multi(Input|Output)", r"specs.Multi\1", spec_str)
+
         with open(filename, "w") as f:
             f.write(spec_str)
+
+    @abstractmethod
+    def generate_task_str(self, filename, input_fields, nonstd_types, output_fields):
+        raise NotImplementedError
 
     def construct_imports(
         self, nonstd_types: ty.List[type], spec_str="", base=(), include_task=True

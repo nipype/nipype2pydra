@@ -1,12 +1,11 @@
 import re
-import black
 import attrs
 from .base import BaseTaskConverter
 
 
 @attrs.define
 class ShellCommandTaskConverter(BaseTaskConverter):
-    def write_task(self, filename, input_fields, nonstd_types, output_fields):
+    def generate_task_str(self, filename, input_fields, nonstd_types, output_fields):
         """writing pydra task to the dile based on the input and output spec"""
 
         base_imports = [
@@ -71,9 +70,4 @@ class ShellCommandTaskConverter(BaseTaskConverter):
         )
         spec_str = "\n".join(imports) + "\n\n" + spec_str
 
-        spec_str = black.format_file_contents(
-            spec_str, fast=False, mode=black.FileMode()
-        )
-
-        with open(filename, "w") as f:
-            f.write(spec_str)
+        return spec_str
