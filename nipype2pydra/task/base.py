@@ -795,7 +795,7 @@ class BaseTaskConverter(metaclass=ABCMeta):
         def add_import(stmt):
             match = re.match(r".*\s+as\s+(\w+)\s*", stmt)
             if not match:
-                match = re.match(r".*import\s+([\w\.]+)\s*$", stmt)
+                match = re.match(r".*import\s+([\w\., ]+)\s*$", stmt)
             if not match:
                 raise ValueError(f"Unrecognised import statment {stmt}")
             token = match.group(1)
@@ -845,7 +845,7 @@ class BaseTaskConverter(metaclass=ABCMeta):
         if include_task:
             add_import(f"from {self.output_module} import {self.task_name}")
 
-        return list(stmts.values())
+        return sorted(stmts.values())
 
     def write_tests(self, filename_test, input_fields, nonstd_types, run=False):
         spec_str = ""

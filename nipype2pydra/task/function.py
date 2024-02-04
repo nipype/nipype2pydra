@@ -1,8 +1,10 @@
 import typing as ty
 import re
 import inspect
+from operator import attrgetter, itemgetter
 from functools import cached_property
 import itertools
+from importlib import import_module
 import attrs
 from .base import BaseTaskConverter
 
@@ -83,15 +85,22 @@ class FunctionTaskConverter(BaseTaskConverter):
         spec_str += function_body + "\n"
         spec_str += "\n    return {}".format(", ".join(output_names))
 
-        for f in self.local_functions:
-            spec_str += "\n\n" + inspect.getsource(f)
-        spec_str += "\n\n".join(
-            inspect.getsource(f) for f in self.local_functions
+        (other_imports, funcs_to_include, used_local_functions) = (
+            self.get_imports_and_functions_to_include(
+                [function_body]
+                + [
+                    inspect.getsource(f)
+                    for f in itertools.chain(
+                        self.referenced_local_functions, self.referenced_methods
+                    )
+                ]
+            )
         )
 
-        spec_str += "\n\n" + "\n\n".join(
-            self.process_method(m, input_names, output_names) for m in self.referenced_methods
-        )
+        spec_str += "\n\n# Nipype methods converted into functions\n\n"
+
+        for m in sorted(self.referenced_methods, key=attrgetter("__name__")):
+            spec_str += "\n\n" + self.process_method(m, input_names, output_names)
 
         # Replace runtime attributes
         additional_imports = set()
@@ -101,15 +110,30 @@ class FunctionTaskConverter(BaseTaskConverter):
                 additional_imports.add(imprt)
                 spec_str = repl_spec_str
 
-        other_imports = self.get_imports(
-            [function_body] + [inspect.getsource(f) for f in itertools.chain(self.referenced_local_functions, self.referenced_methods)]
-        )
+        spec_str += "\n\n# Functions defined locally in the original module\n\n"
+
+        for func in sorted(used_local_functions, key=attrgetter("__name__")):
+            spec_str += "\n\n" + self.process_function_body(
+                inspect.getsource(func), input_names
+            )
+
+        spec_str += "\n\n# Functions defined in neighbouring modules that have been included inline instead of imported\n\n"
+
+        for func_name, func in sorted(funcs_to_include, key=itemgetter(0)):
+            func_src = inspect.getsource(func)
+            func_src = re.sub(
+                r"^(def|class) (\w+)(?=\()",
+                r"\1 " + func_name,
+                func_src,
+                flags=re.MULTILINE,
+            )
+            spec_str += "\n\n" + self.process_function_body(func_src, input_names)
 
         imports = self.construct_imports(
             nonstd_types,
             spec_str,
             include_task=False,
-            base=base_imports + other_imports + list(additional_imports),
+            base=base_imports + list(other_imports) + list(additional_imports),
         )
         spec_str = "\n".join(imports) + "\n\n" + spec_str
 
@@ -133,9 +157,12 @@ class FunctionTaskConverter(BaseTaskConverter):
         return_types, function_body = post.split(":", maxsplit=1)
         function_body = function_body.split("\n", maxsplit=1)[1]
         function_body = self.process_function_body(function_body, input_names)
+
         return f"{pre.strip()}{', '.join(args)}{return_types}:\n{function_body}"
 
-    def process_function_body(self, function_body: str, input_names: ty.List[str]) -> str:
+    def process_function_body(
+        self, function_body: str, input_names: ty.List[str]
+    ) -> str:
         """Replace self.inputs.<name> with <name> in the function body and add args to the
         function signature
 
@@ -172,31 +199,61 @@ class FunctionTaskConverter(BaseTaskConverter):
         splits = method_re.split(function_body)
         new_body = splits[0]
         for name, args in zip(splits[1::2], splits[2::2]):
-            new_body += name + self.insert_args_in_signature(args, [f"{a}={a}" for a in self.method_args[name]])
+            new_body += name + self.insert_args_in_signature(
+                args, [f"{a}={a}" for a in self.method_args[name]]
+            )
         function_body = new_body
         # Detect the indentation of the source code in src and reduce it to 4 spaces
         indents = re.findall(r"^\s+", function_body, flags=re.MULTILINE)
         min_indent = min(len(i) for i in indents if i)
         indent_reduction = min_indent - 4
-        function_body = re.sub(r"^" + " " * indent_reduction, "", function_body, flags=re.MULTILINE)
+        function_body = re.sub(
+            r"^" + " " * indent_reduction, "", function_body, flags=re.MULTILINE
+        )
         # Other misc replacements
         function_body = function_body.replace("LOGGER.", "logger.")
-        function_body = re.sub(r"isdefined\((\w+)\)", r"\1 is not attrs.NOTHING", function_body)
+        function_body = re.sub(
+            r"not isdefined\((\w+)\)", r"\1 is attrs.NOTHING", function_body
+        )
+        function_body = re.sub(
+            r"isdefined\((\w+)\)", r"\1 is not attrs.NOTHING", function_body
+        )
         return function_body
 
-    def get_imports(
-        self, function_bodies: ty.List[str]
-    ) -> ty.Tuple[ty.List[str], ty.List[str]]:
+    def get_imports_and_functions_to_include(
+        self,
+        function_bodies: ty.List[str],
+        source_code: str = None,
+        local_functions: ty.List[ty.Callable] = None,
+    ) -> ty.Tuple[ty.List[str], ty.List[ty.Tuple[str, ty.Any]]]:
         """Get the imports required for the function body
 
         Parameters
         ----------
-        src: str
-            the source of the file to extract the import statements from
+        function_bodies: list[str]
+            the source of all functions that need to be checked for used imports
+        source_code: str, optional
+            the source code containing the relevant import statements, by default the source
+            file containing the interface to be converted
+
+        Returns
+        -------
+        used_imports : list[str]
+            the import statements that need to be included in the converted file
+        external_functions: list[tuple[str, Any]]
+            list of objects (e.g. classes, functions and variables) that are defined
+            in neighbouring modules that need to be included in the converted file
+            (as opposed of just imported from independent packages) along with the name
+            that they were imported as and therefore should be named as in the converted
+            module
         """
+        if source_code is None:
+            source_code = self.source_code
+        if local_functions is None:
+            local_functions = self.local_functions
         imports = []
         block = ""
-        for line in self.source_code.split("\n"):
+        for line in source_code.split("\n"):
             if line.startswith("from") or line.startswith("import"):
                 if "(" in line:
                     block = line
@@ -211,22 +268,74 @@ class FunctionTaskConverter(BaseTaskConverter):
             # Strip comments from function body
             function_body = re.sub(r"\s*#.*", "", function_body)
             used_symbols.update(re.findall(r"(\w+)", function_body))
-        used_imports = []
+        used_imports = set()
+        used_local_functions = set()
+        # Keep looping through local function source until all local functions are added
+        new_symbols = True
+        while new_symbols:
+            new_symbols = False
+            for local_func in local_functions:
+                if (
+                    local_func.__name__ in used_symbols
+                    and local_func not in used_local_functions
+                ):
+                    used_local_functions.add(local_func)
+                    func_body = inspect.getsource(local_func)
+                    func_body = re.sub(r"\s*#.*", "", func_body)
+                    local_func_symbols = re.findall(r"(\w+)", func_body)
+                    used_symbols.update(local_func_symbols)
+                    new_symbols = True
+        # functions to copy from a relative or nipype module into the output module
+        external_functions = set()
         for stmt in imports:
             stmt = stmt.replace("\n", "")
             stmt = stmt.replace("(", "")
             stmt = stmt.replace(")", "")
             base_stmt, symbol_str = stmt.split("import ")
-            symbol_parts = symbol_str.split(",")
-            split_parts = [p.split(" as ") for p in symbol_parts]
-            split_parts = [p for p in split_parts if p[-1] in used_symbols]
-            if split_parts:
-                used_imports.append(
+            symbol_parts = re.split(r" *, *", symbol_str)
+            split_parts = [re.split(r" +as +", p) for p in symbol_parts]
+            used_parts = [p for p in split_parts if p[-1] in used_symbols]
+            if used_parts:
+                required_stmt = (
                     base_stmt
                     + "import "
-                    + ",".join(" as ".join(p) for p in split_parts)
+                    + ", ".join(" as ".join(p) for p in used_parts)
                 )
-        return used_imports
+                match = re.match(r"from ([\w\.]+)", base_stmt)
+                import_mod = match.group(1) if match else ""
+                if import_mod.startswith(".") or import_mod.startswith("nipype."):
+                    if import_mod.startswith("."):
+                        match = re.match(r"(\.*)(.*)", import_mod)
+                        mod_parts = self.nipype_module.__name__.split(".")
+                        nparents = len(match.group(1))
+                        if nparents:
+                            mod_parts = mod_parts[:-nparents]
+                        mod_name = ".".join(mod_parts) + "." + match.group(2)
+                    elif import_mod.startswith("nipype."):
+                        mod_name = import_mod
+                    else:
+                        assert False
+                    mod = import_module(mod_name)
+                    mod_func_bodies = []
+                    for used_part in used_parts:
+                        func = getattr(mod, used_part[0])
+                        external_functions.add((used_part[-1], func))
+                        mod_func_bodies.append(inspect.getsource(func))
+                    # Recursively include neighbouring objects imported in the module
+                    (mod_used_imports, mod_external_funcs, mod_local_funcs) = (
+                        self.get_imports_and_functions_to_include(
+                            function_bodies=mod_func_bodies,
+                            source_code=inspect.getsource(mod),
+                            local_functions=get_local_functions(mod)
+                        )
+                    )
+                    used_imports.update(mod_used_imports)
+                    external_functions.update(mod_external_funcs)
+                    external_functions.update((f.__name__, f) for f in mod_local_funcs)
+                else:
+                    used_imports.add(required_stmt)
+
+        return used_imports, external_functions, used_local_functions
 
     @property
     def referenced_local_functions(self):
@@ -318,15 +427,7 @@ class FunctionTaskConverter(BaseTaskConverter):
     @cached_property
     def local_functions(self):
         """Get the functions defined in the same file as the interface"""
-        functions = []
-        for attr_name in dir(self.nipype_module):
-            attr = getattr(self.nipype_module, attr_name)
-            if (
-                inspect.isfunction(attr)
-                and attr.__module__ == self.nipype_module.__name__
-            ):
-                functions.append(attr)
-        return functions
+        return get_local_functions(self.nipype_module)
 
     @cached_property
     def methods(self):
@@ -397,3 +498,13 @@ class FunctionTaskConverter(BaseTaskConverter):
                         return pre, contents, "".join(splits[i:])
                 contents += s
         raise ValueError(f"No matching parenthesis found in '{snippet}'")
+
+
+def get_local_functions(mod):
+    """Get the functions defined in the same file as the interface"""
+    functions = []
+    for attr_name in dir(mod):
+        attr = getattr(mod, attr_name)
+        if inspect.isfunction(attr) and attr.__module__ == mod.__name__:
+            functions.append(attr)
+    return functions
