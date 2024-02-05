@@ -54,6 +54,7 @@ def str_to_type(type_str: str) -> type:
         except AttributeError:
             pass
     else:
+
         def resolve_type(type_str: str) -> type:
             if "." in type_str:
                 parts = type_str.split(".")
@@ -71,7 +72,9 @@ def str_to_type(type_str: str) -> type:
                     raise ValueError(f"Cannot parse {class_str} to a type safely")
                 t = eval(class_str)
             if match.group(2):
-                args = tuple(resolve_type(arg) for arg in match.group(2)[1:-1].split(','))
+                args = tuple(
+                    resolve_type(arg) for arg in match.group(2)[1:-1].split(",")
+                )
                 t = t.__getitem__(args)
             return t
 
@@ -567,7 +570,11 @@ class BaseTaskConverter(metaclass=ABCMeta):
         if not self.nipype_output_spec:
             return pydra_fields_l
         for name, fld in self.nipype_output_spec.traits().items():
-            if name not in self.TRAITS_IRREL and name not in fields_from_template:
+            if (
+                name not in self.TRAITS_IRREL
+                and name not in fields_from_template
+                and name not in self.outputs.omit
+            ):
                 pydra_fld = self.pydra_fld_output(fld, name)
                 pydra_fields_l.append((name,) + pydra_fld)
         return pydra_fields_l
@@ -777,7 +784,9 @@ class BaseTaskConverter(metaclass=ABCMeta):
             spec_str, fast=False, mode=black.FileMode()
         )
 
-        spec_str = re.sub(r"(?<!specs\.)Multi(Input|Output)", r"specs.Multi\1", spec_str)
+        spec_str = re.sub(
+            r"(?<!specs\.)Multi(Input|Output)", r"specs.Multi\1", spec_str
+        )
 
         with open(filename, "w") as f:
             f.write(spec_str)
@@ -793,6 +802,8 @@ class BaseTaskConverter(metaclass=ABCMeta):
         stmts: ty.Dict[str, str] = {}
 
         def add_import(stmt):
+            if stmt == "from nipype import logging":
+                return
             match = re.match(r".*\s+as\s+(\w+)\s*", stmt)
             if not match:
                 match = re.match(r".*import\s+([\w\., ]+)\s*$", stmt)

@@ -42,29 +42,30 @@ class FunctionTaskConverter(BaseTaskConverter):
         output_type_names = [o[1] for o in output_fields_str]
 
         # Combined src of run_interface and list_outputs
-        function_body = inspect.getsource(self.nipype_interface._run_interface).strip()
-        function_body = "\n".join(function_body.split("\n")[1:-1])
+        method_body = inspect.getsource(self.nipype_interface._run_interface).strip()
+        method_body = "\n".join(method_body.split("\n")[1:-1])
         lo_src = inspect.getsource(self.nipype_interface._list_outputs).strip()
         lo_lines = lo_src.split("\n")
         lo_src = "\n".join(lo_lines[1:-1])
-        function_body += lo_src
+        method_body += lo_src
+        method_body = self.process_method_body(method_body, input_names, output_names)
 
-        # Replace return outputs dictionary with individual outputs
-        return_line = lo_lines[-1]
-        match = re.match(r"\s*return(.*)", return_line)
-        return_value = match.group(1).strip()
-        output_re = re.compile(return_value + r"\[(?:'|\")(\w+)(?:'|\")\]")
-        unrecognised_outputs = set(
-            m for m in output_re.findall(function_body) if m not in output_names
+        (other_imports, funcs_to_include, used_local_functions, used_constants) = (
+            self.get_imports_and_functions_to_include(
+                [method_body]
+                + [
+                    inspect.getsource(f)
+                    for f in itertools.chain(
+                        self.referenced_local_functions, self.referenced_methods
+                    )
+                ]
+            )
         )
-        assert (
-            not unrecognised_outputs
-        ), f"Found the following unrecognised outputs {unrecognised_outputs}"
-        function_body = output_re.sub(r"\1", function_body)
-        function_body = self.process_function_body(function_body, input_names)
+
+        spec_str = "\n".join(f"{n} = {d}" for n, d in used_constants)
 
         # Create the spec string
-        spec_str = self.function_callables()
+        spec_str += "\n\n" + self.function_callables()
         spec_str += "logger = getLogger(__name__)\n\n"
         spec_str += "@pydra.mark.task\n"
         spec_str += "@pydra.mark.annotate({'return': {"
@@ -82,20 +83,8 @@ class FunctionTaskConverter(BaseTaskConverter):
             input_fields=input_fields, nonstd_types=nonstd_types
         )
         spec_str += '    """\n'
-        spec_str += function_body + "\n"
+        spec_str += method_body + "\n"
         spec_str += "\n    return {}".format(", ".join(output_names))
-
-        (other_imports, funcs_to_include, used_local_functions) = (
-            self.get_imports_and_functions_to_include(
-                [function_body]
-                + [
-                    inspect.getsource(f)
-                    for f in itertools.chain(
-                        self.referenced_local_functions, self.referenced_methods
-                    )
-                ]
-            )
-        )
 
         spec_str += "\n\n# Nipype methods converted into functions\n\n"
 
@@ -146,7 +135,7 @@ class FunctionTaskConverter(BaseTaskConverter):
         output_names: ty.List[str],
     ):
         src = inspect.getsource(func)
-        pre, argstr, post = self.split_parens_contents(src)
+        pre, argstr, post = split_parens_contents(src)
         args = re.split(r" *, *", argstr)
         args.remove("self")
         if "runtime" in args:
@@ -154,11 +143,49 @@ class FunctionTaskConverter(BaseTaskConverter):
         if func.__name__ in self.method_args:
             args += [f"{a}=None" for a in self.method_args[func.__name__]]
         # Insert method args in signature if present
-        return_types, function_body = post.split(":", maxsplit=1)
-        function_body = function_body.split("\n", maxsplit=1)[1]
-        function_body = self.process_function_body(function_body, input_names)
+        return_types, method_body = post.split(":", maxsplit=1)
+        method_body = method_body.split("\n", maxsplit=1)[1]
+        method_body = self.process_method_body(method_body, input_names, output_names)
+        return f"{pre.strip()}{', '.join(args)}{return_types}:\n{method_body}"
 
-        return f"{pre.strip()}{', '.join(args)}{return_types}:\n{function_body}"
+    def process_method_body(
+        self, method_body: str, input_names: ty.List[str], output_names: ty.List[str]
+    ) -> str:
+        # Replace self.inputs.<name> with <name> in the function body
+        input_re = re.compile(r"self\.inputs\.(\w+)")
+        unrecognised_inputs = set(
+            m for m in input_re.findall(method_body) if m not in input_names
+        )
+        assert (
+            not unrecognised_inputs
+        ), f"Found the following unrecognised inputs {unrecognised_inputs}"
+        method_body = input_re.sub(r"\1", method_body)
+
+        output_re = re.compile(self.return_value + r"\[(?:'|\")(\w+)(?:'|\")\]")
+        unrecognised_outputs = set(
+            m for m in output_re.findall(method_body) if m not in output_names
+        )
+        assert (
+            not unrecognised_outputs
+        ), f"Found the following unrecognised outputs {unrecognised_outputs}"
+        method_body = output_re.sub(r"\1", method_body)
+        # Add args to the function signature of method calls
+        method_re = re.compile(r"self\.(\w+)(?=\()", flags=re.MULTILINE | re.DOTALL)
+        method_names = [m.__name__ for m in self.referenced_methods]
+        unrecognised_methods = set(
+            m for m in method_re.findall(method_body) if m not in method_names
+        )
+        assert (
+            not unrecognised_methods
+        ), f"Found the following unrecognised methods {unrecognised_methods}"
+        splits = method_re.split(method_body)
+        new_body = splits[0]
+        for name, args in zip(splits[1::2], splits[2::2]):
+            new_body += name + self.insert_args_in_signature(
+                args, [f"{a}={a}" for a in self.method_args[name]]
+            )
+        method_body = new_body
+        return self.process_function_body(method_body, input_names=input_names)
 
     def process_function_body(
         self, function_body: str, input_names: ty.List[str]
@@ -178,31 +205,6 @@ class FunctionTaskConverter(BaseTaskConverter):
         function_body: str
             The processed source code
         """
-        # Replace self.inputs.<name> with <name> in the function body
-        input_re = re.compile(r"self\.inputs\.(\w+)")
-        unrecognised_inputs = set(
-            m for m in input_re.findall(function_body) if m not in input_names
-        )
-        assert (
-            not unrecognised_inputs
-        ), f"Found the following unrecognised inputs {unrecognised_inputs}"
-        function_body = input_re.sub(r"\1", function_body)
-        # Add args to the function signature of method calls
-        method_re = re.compile(r"self\.(\w+)(?=\()", flags=re.MULTILINE | re.DOTALL)
-        method_names = [m.__name__ for m in self.referenced_methods]
-        unrecognised_methods = set(
-            m for m in method_re.findall(function_body) if m not in method_names
-        )
-        assert (
-            not unrecognised_methods
-        ), f"Found the following unrecognised methods {unrecognised_methods}"
-        splits = method_re.split(function_body)
-        new_body = splits[0]
-        for name, args in zip(splits[1::2], splits[2::2]):
-            new_body += name + self.insert_args_in_signature(
-                args, [f"{a}={a}" for a in self.method_args[name]]
-            )
-        function_body = new_body
         # Detect the indentation of the source code in src and reduce it to 4 spaces
         indents = re.findall(r"^\s+", function_body, flags=re.MULTILINE)
         min_indent = min(len(i) for i in indents if i)
@@ -225,6 +227,7 @@ class FunctionTaskConverter(BaseTaskConverter):
         function_bodies: ty.List[str],
         source_code: str = None,
         local_functions: ty.List[ty.Callable] = None,
+        local_constants: ty.List[ty.Tuple[str, str]] = None,
     ) -> ty.Tuple[ty.List[str], ty.List[ty.Tuple[str, ty.Any]]]:
         """Get the imports required for the function body
 
@@ -233,8 +236,14 @@ class FunctionTaskConverter(BaseTaskConverter):
         function_bodies: list[str]
             the source of all functions that need to be checked for used imports
         source_code: str, optional
-            the source code containing the relevant import statements, by default the source
-            file containing the interface to be converted
+            the source code containing the relevant import statements, by default the
+            source file containing the interface to be converted
+        local_functions: list[callable], optional
+            local functions defined in the source code, by default the functions in the
+            same file as the interface
+        local_constants: list[tuple[str, str]], optional
+            local constants defined in the source code with their definitions,
+            by default the functions in the same file as the interface
 
         Returns
         -------
@@ -251,6 +260,8 @@ class FunctionTaskConverter(BaseTaskConverter):
             source_code = self.source_code
         if local_functions is None:
             local_functions = self.local_functions
+        if local_constants is None:
+            local_constants = self.local_constants
         imports = []
         block = ""
         for line in source_code.split("\n"):
@@ -270,7 +281,9 @@ class FunctionTaskConverter(BaseTaskConverter):
             used_symbols.update(re.findall(r"(\w+)", function_body))
         used_imports = set()
         used_local_functions = set()
-        # Keep looping through local function source until all local functions are added
+        used_constants = set()
+        # Keep looping through local function source until all local functions and constants
+        # are added to the used symbols
         new_symbols = True
         while new_symbols:
             new_symbols = False
@@ -284,6 +297,12 @@ class FunctionTaskConverter(BaseTaskConverter):
                     func_body = re.sub(r"\s*#.*", "", func_body)
                     local_func_symbols = re.findall(r"(\w+)", func_body)
                     used_symbols.update(local_func_symbols)
+                    new_symbols = True
+            for const_name, const_def in local_constants:
+                if const_name in used_symbols and (const_name, const_def) not in used_constants:
+                    used_constants.add((const_name, const_def))
+                    const_def_symbols = re.findall(r"(\w+)", const_def)
+                    used_symbols.update(const_def_symbols)
                     new_symbols = True
         # functions to copy from a relative or nipype module into the output module
         external_functions = set()
@@ -322,20 +341,22 @@ class FunctionTaskConverter(BaseTaskConverter):
                         external_functions.add((used_part[-1], func))
                         mod_func_bodies.append(inspect.getsource(func))
                     # Recursively include neighbouring objects imported in the module
-                    (mod_used_imports, mod_external_funcs, mod_local_funcs) = (
+                    (mod_used_imports, mod_external_funcs, mod_local_funcs, mod_constants) = (
                         self.get_imports_and_functions_to_include(
                             function_bodies=mod_func_bodies,
                             source_code=inspect.getsource(mod),
-                            local_functions=get_local_functions(mod)
+                            local_functions=get_local_functions(mod),
+                            local_constants=get_local_constants(mod),
                         )
                     )
                     used_imports.update(mod_used_imports)
                     external_functions.update(mod_external_funcs)
                     external_functions.update((f.__name__, f) for f in mod_local_funcs)
+                    used_constants.update(mod_constants)
                 else:
                     used_imports.add(required_stmt)
 
-        return used_imports, external_functions, used_local_functions
+        return used_imports, external_functions, used_local_functions, used_constants
 
     @property
     def referenced_local_functions(self):
@@ -430,6 +451,20 @@ class FunctionTaskConverter(BaseTaskConverter):
         return get_local_functions(self.nipype_module)
 
     @cached_property
+    def local_constants(self):
+        return get_local_constants(self.nipype_module)
+
+    @cached_property
+    def return_value(self):
+        return_line = (
+            inspect.getsource(self.nipype_interface._list_outputs)
+            .strip()
+            .split("\n")[-1]
+        )
+        match = re.match(r"\s*return(.*)", return_line)
+        return match.group(1).strip()
+
+    @cached_property
     def methods(self):
         """Get the functions defined in the interface"""
         methods = []
@@ -456,7 +491,7 @@ class FunctionTaskConverter(BaseTaskConverter):
     def insert_args_in_signature(cls, snippet: str, new_args: ty.Iterable[str]) -> str:
         """Insert the arguments into the function signature"""
         # Split out the argstring from the rest of the code snippet
-        pre, argstr, post = cls.split_parens_contents(snippet)
+        pre, argstr, post = split_parens_contents(snippet)
         if argstr:
             args = re.split(r" *, *", argstr)
             if "runtime" in args:
@@ -465,39 +500,39 @@ class FunctionTaskConverter(BaseTaskConverter):
             args = []
         return pre + ", ".join(args + new_args) + post
 
-    @classmethod
-    def split_parens_contents(cls, snippet):
-        """Splits the code snippet at the first opening parenthesis into a 3-tuple
-        consisting of the pre-paren text, the contents of the parens and the post-paren
 
-        Parameters
-        ----------
-        snippet: str
-            the code snippet to split
+def split_parens_contents(snippet):
+    """Splits the code snippet at the first opening parenthesis into a 3-tuple
+    consisting of the pre-paren text, the contents of the parens and the post-paren
 
-        Returns
-        -------
-        pre: str
-            the text before the opening parenthesis
-        contents: str
-            the contents of the parens
-        post: str
-            the text after the closing parenthesis
-        """
-        splits = re.split(r"(\(|\))", snippet, flags=re.MULTILINE | re.DOTALL)
-        depth = 1
-        pre = "".join(splits[:2])
-        contents = ""
-        for i, s in enumerate(splits[2:], start=2):
-            if s == "(":
-                depth += 1
-            else:
-                if s == ")":
-                    depth -= 1
-                    if depth == 0:
-                        return pre, contents, "".join(splits[i:])
-                contents += s
-        raise ValueError(f"No matching parenthesis found in '{snippet}'")
+    Parameters
+    ----------
+    snippet: str
+        the code snippet to split
+
+    Returns
+    -------
+    pre: str
+        the text before the opening parenthesis
+    contents: str
+        the contents of the parens
+    post: str
+        the text after the closing parenthesis
+    """
+    splits = re.split(r"(\(|\))", snippet, flags=re.MULTILINE | re.DOTALL)
+    depth = 1
+    pre = "".join(splits[:2])
+    contents = ""
+    for i, s in enumerate(splits[2:], start=2):
+        if s == "(":
+            depth += 1
+        else:
+            if s == ")":
+                depth -= 1
+                if depth == 0:
+                    return pre, contents, "".join(splits[i:])
+            contents += s
+    raise ValueError(f"No matching parenthesis found in '{snippet}'")
 
 
 def get_local_functions(mod):
@@ -508,3 +543,16 @@ def get_local_functions(mod):
         if inspect.isfunction(attr) and attr.__module__ == mod.__name__:
             functions.append(attr)
     return functions
+
+
+def get_local_constants(mod):
+    source_code = inspect.getsource(mod)
+    parts = re.split(r"^(\w+) *= *", source_code, flags=re.MULTILINE)
+    local_vars = []
+    for attr_name, following in zip(parts[1::2], parts[2::2]):
+        if "(" in following.splitlines()[0]:
+            pre, args, _ = split_parens_contents(following)
+            local_vars.append((attr_name, pre + re.sub(r"\n *", "", args) + ")"))
+        else:
+            local_vars.append((attr_name, following.splitlines()[0]))
+    return local_vars
