@@ -130,22 +130,34 @@ class FunctionTaskConverter(BaseTaskConverter):
 
     def process_method(
         self,
-        func: str,
+        method: str,
         input_names: ty.List[str],
         output_names: ty.List[str],
+        method_args: ty.Dict[str, ty.List[str]] = None,
+        method_returns: ty.Dict[str, ty.List[str]] = None,
     ):
-        src = inspect.getsource(func)
+        src = inspect.getsource(method)
         pre, argstr, post = split_parens_contents(src)
         args = re.split(r" *, *", argstr)
         args.remove("self")
         if "runtime" in args:
             args.remove("runtime")
-        if func.__name__ in self.method_args:
-            args += [f"{a}=None" for a in self.method_args[func.__name__]]
+        if method.__name__ in self.method_args:
+            args += [f"{a}=None" for a in self.method_args[method.__name__]]
         # Insert method args in signature if present
         return_types, method_body = post.split(":", maxsplit=1)
         method_body = method_body.split("\n", maxsplit=1)[1]
         method_body = self.process_method_body(method_body, input_names, output_names)
+        if self.method_returns.get(method.__name__):
+            return_args = self.method_returns[method.__name__]
+            method_body = ("    " + " = ".join(return_args) + " = attrs.NOTHING\n" + method_body)
+            method_lines = method_body.splitlines()
+            method_body = "\n".join(method_lines[:-1])
+            last_line = method_lines[-1]
+            if "return" in last_line:
+                method_body += "," + ",".join(return_args)
+            else:
+                method_body += "\n" + last_line + "\n    return " + ",".join(return_args)
         return f"{pre.strip()}{', '.join(args)}{return_types}:\n{method_body}"
 
     def process_method_body(
@@ -181,10 +193,37 @@ class FunctionTaskConverter(BaseTaskConverter):
         splits = method_re.split(method_body)
         new_body = splits[0]
         for name, args in zip(splits[1::2], splits[2::2]):
+            if self.method_returns[name]:
+                match = re.match(r".*\n *([a-zA-Z0-9\,\. ]+ *=)? *$", new_body, flags=re.MULTILINE | re.DOTALL)
+                if match:
+                    if match.group(1):
+                        new_body_lines = new_body.splitlines()
+                        new_body = '\n'.join(new_body_lines[:-1])
+                        last_line = new_body_lines[-1]
+                        new_body += "\n" + re.sub(
+                            r"^ *([a-zA-Z0-9\,\. ]+) *= *$",
+                            r"\1, =" + ",".join(self.method_returns[name]),
+                            last_line,
+                            flags=re.MULTILINE,
+                        )
+                    else:
+                        new_body += ",".join(self.method_returns[name]) + " = "
+                else:
+                    raise NotImplementedError(
+                        "Could not augment the return value of the method converted from "
+                        "a function with the previously assigned attributes as it is used "
+                        "directly. Need to replace the method call with a variable and "
+                        "assign the return value to it on a previous line"
+                    )
             new_body += name + self.insert_args_in_signature(
                 args, [f"{a}={a}" for a in self.method_args[name]]
             )
         method_body = new_body
+        # Convert assignment to self attributes into method-scoped variables (hopefully
+        # there aren't any name clashes)
+        method_body = re.sub(
+            r"self\.(\w+ *)(?==)", r"\1", method_body, flags=re.MULTILINE | re.DOTALL
+        )
         return self.process_function_body(method_body, input_names=input_names)
 
     def process_function_body(
@@ -299,7 +338,10 @@ class FunctionTaskConverter(BaseTaskConverter):
                     used_symbols.update(local_func_symbols)
                     new_symbols = True
             for const_name, const_def in local_constants:
-                if const_name in used_symbols and (const_name, const_def) not in used_constants:
+                if (
+                    const_name in used_symbols
+                    and (const_name, const_def) not in used_constants
+                ):
                     used_constants.add((const_name, const_def))
                     const_def_symbols = re.findall(r"(\w+)", const_def)
                     used_symbols.update(const_def_symbols)
@@ -341,13 +383,16 @@ class FunctionTaskConverter(BaseTaskConverter):
                         external_functions.add((used_part[-1], func))
                         mod_func_bodies.append(inspect.getsource(func))
                     # Recursively include neighbouring objects imported in the module
-                    (mod_used_imports, mod_external_funcs, mod_local_funcs, mod_constants) = (
-                        self.get_imports_and_functions_to_include(
-                            function_bodies=mod_func_bodies,
-                            source_code=inspect.getsource(mod),
-                            local_functions=get_local_functions(mod),
-                            local_constants=get_local_constants(mod),
-                        )
+                    (
+                        mod_used_imports,
+                        mod_external_funcs,
+                        mod_local_funcs,
+                        mod_constants,
+                    ) = self.get_imports_and_functions_to_include(
+                        function_bodies=mod_func_bodies,
+                        source_code=inspect.getsource(mod),
+                        local_functions=get_local_functions(mod),
+                        local_constants=get_local_constants(mod),
                     )
                     used_imports.update(mod_used_imports)
                     external_functions.update(mod_external_funcs)
@@ -370,24 +415,31 @@ class FunctionTaskConverter(BaseTaskConverter):
     def method_args(self):
         return self._referenced_funcs_and_methods[2]
 
+    @property
+    def method_returns(self):
+        return self._referenced_funcs_and_methods[3]
+
     @cached_property
     def _referenced_funcs_and_methods(self):
         referenced_funcs = set()
         referenced_methods = set()
         method_args = {}
+        method_returns = {}
         self._get_referenced(
             self.nipype_interface._run_interface,
             referenced_funcs,
             referenced_methods,
             method_args,
+            method_returns,
         )
         self._get_referenced(
             self.nipype_interface._list_outputs,
             referenced_funcs,
             referenced_methods,
             method_args,
+            method_returns,
         )
-        return referenced_funcs, referenced_methods, method_args
+        return referenced_funcs, referenced_methods, method_args, method_returns
 
     def replace_attributes(self, function_body: ty.Callable) -> str:
         """Replace self.inputs.<name> with <name> in the function body and add args to the
@@ -396,10 +448,11 @@ class FunctionTaskConverter(BaseTaskConverter):
 
     def _get_referenced(
         self,
-        function: ty.Callable,
+        method: ty.Callable,
         referenced_funcs: ty.Set[ty.Callable],
-        referenced_methods: ty.Set[ty.Callable],
-        method_args: ty.Dict[str, ty.List[str]],
+        referenced_methods: ty.Set[ty.Callable] = None,
+        method_args: ty.Dict[str, ty.List[str]] = None,
+        method_returns: ty.Dict[str, ty.List[str]] = None,
     ):
         """Get the local functions referenced in the source code
 
@@ -411,34 +464,53 @@ class FunctionTaskConverter(BaseTaskConverter):
             the set of local functions that have been referenced so far
         referenced_methods: set[function]
             the set of methods that have been referenced so far
+        method_args: dict[str, list[str]]
+            a dictionary to hold additional arguments that need to be added to each method,
+            where the dictionary key is the names of the methods
+        method_returns: dict[str, list[str]]
+            a dictionary to hold the return values of each method,
+            where the dictionary key is the names of the methods
         """
-        function_body = inspect.getsource(function)
-        function_body = re.sub(r"\s*#.*", "", function_body)
-        ref_local_func_names = re.findall(r"(?<!self\.)(\w+)\(", function_body)
+        method_body = inspect.getsource(method)
+        method_body = re.sub(r"\s*#.*", "", method_body)
+        ref_local_func_names = re.findall(r"(?<!self\.)(\w+)\(", method_body)
         ref_local_funcs = set(
             f
             for f in self.local_functions
             if f.__name__ in ref_local_func_names and f not in referenced_funcs
         )
 
-        ref_method_names = re.findall(r"(?<=self\.)(\w+)\(", function_body)
+        ref_method_names = re.findall(r"(?<=self\.)(\w+)\(", method_body)
         ref_methods = set(m for m in self.methods if m.__name__ in ref_method_names)
 
         referenced_funcs.update(ref_local_funcs)
         referenced_methods.update(ref_methods)
 
-        referenced_inputs = set(re.findall(r"(?<=self\.inputs\.)(\w+)", function_body))
+        referenced_inputs = set(re.findall(r"(?<=self\.inputs\.)(\w+)", method_body))
+        referenced_outputs = set(re.findall(r"self\.(\w+) *=", method_body))
+        if self.return_value.startswith("self."):
+            referenced_outputs.update(
+                re.findall(
+                    self.return_value + r"\[(?:'|\")(\w+)(?:'|\")\] *=", method_body
+                )
+            )
         for func in ref_local_funcs:
             referenced_inputs.update(
                 self._get_referenced(func, referenced_funcs, referenced_methods)
             )
         for meth in ref_methods:
-            ref_inputs = self._get_referenced(
-                meth, referenced_funcs, referenced_methods, method_args=method_args
+            ref_inputs, ref_outputs = self._get_referenced(
+                meth,
+                referenced_funcs,
+                referenced_methods,
+                method_args=method_args,
+                method_returns=method_returns,
             )
             method_args[meth.__name__] = ref_inputs
+            method_returns[meth.__name__] = ref_outputs
             referenced_inputs.update(ref_inputs)
-        return referenced_inputs
+            referenced_outputs.update(ref_outputs)
+        return referenced_inputs, sorted(referenced_outputs)
 
     @cached_property
     def source_code(self):
