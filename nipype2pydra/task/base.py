@@ -482,6 +482,7 @@ class BaseTaskConverter(metaclass=ABCMeta):
     def convert_input_fields(self):
         """creating fields list for pydra input spec"""
         pydra_fields_dict = {}
+        pydra_fields_dict = {}
         position_dict = {}
         has_template = []
         for name, fld in self.nipype_input_spec.traits().items():
@@ -492,11 +493,17 @@ class BaseTaskConverter(metaclass=ABCMeta):
             pydra_fld, pos = self.pydra_fld_input(fld, name)
             pydra_meta = pydra_fld[-1]
             if "output_file_template" in pydra_meta:
+            pydra_fld, pos = self.pydra_fld_input(fld, name)
+            pydra_meta = pydra_fld[-1]
+            if "output_file_template" in pydra_meta:
                 has_template.append(name)
+            pydra_fields_dict[name] = (name,) + pydra_fld
             pydra_fields_dict[name] = (name,) + pydra_fld
             if pos is not None:
                 position_dict[name] = pos
 
+        pydra_fields_l = list(pydra_fields_dict.values())
+        return pydra_fields_l, has_template
         pydra_fields_l = list(pydra_fields_dict.values())
         return pydra_fields_l, has_template
 
@@ -510,21 +517,27 @@ class BaseTaskConverter(metaclass=ABCMeta):
 
         if "default" in metadata_extra_spec:
             pydra_default = metadata_extra_spec.pop("default")
+            pydra_default = metadata_extra_spec.pop("default")
         elif (
             getattr(field, "usedefault")
             and field.default is not traits.ctrait.Undefined
         ):
             pydra_default = field.default
+            pydra_default = field.default
         else:
+            pydra_default = None
             pydra_default = None
 
         pydra_metadata = {"help_string": ""}
+        pydra_metadata = {"help_string": ""}
         for key in self.INPUT_KEYS:
+            pydra_key_nm = self.NAME_MAPPING.get(key, key)
             pydra_key_nm = self.NAME_MAPPING.get(key, key)
             val = getattr(field, key)
             if val is not None:
                 if key == "argstr" and "%" in val:
                     val = self.string_formats(argstr=val, name=nm)
+                pydra_metadata[pydra_key_nm] = val
                 pydra_metadata[pydra_key_nm] = val
 
         if getattr(field, "name_template"):
@@ -541,6 +554,7 @@ class BaseTaskConverter(metaclass=ABCMeta):
             if nm in self.outputs.templates:
                 try:
                     pydra_metadata["output_file_template"] = self.outputs.templates[nm]
+                    pydra_metadata["output_file_template"] = self.outputs.templates[nm]
                 except KeyError:
                     raise Exception(
                         f"{nm} is has genfile=True and therefore needs an 'output_file_template' value"
@@ -556,18 +570,25 @@ class BaseTaskConverter(metaclass=ABCMeta):
                 )
 
         pydra_metadata.update(metadata_extra_spec)
+        pydra_metadata.update(metadata_extra_spec)
 
+        pos = pydra_metadata.get("position", None)
         pos = pydra_metadata.get("position", None)
 
         if pydra_default is not None and not pydra_metadata.get("mandatory", None):
             return (pydra_type, pydra_default, pydra_metadata), pos
+        if pydra_default is not None and not pydra_metadata.get("mandatory", None):
+            return (pydra_tp, pydra_default, pydra_metadata), pos
         else:
             return (pydra_type, pydra_metadata), pos
+            return (pydra_tp, pydra_metadata), pos
 
     def convert_output_spec(self, fields_from_template):
         """creating fields list for pydra input spec"""
         pydra_fields_l = []
+        pydra_fields_l = []
         if not self.nipype_output_spec:
+            return pydra_fields_l
             return pydra_fields_l
         for name, fld in self.nipype_output_spec.traits().items():
             if (
@@ -578,16 +599,22 @@ class BaseTaskConverter(metaclass=ABCMeta):
                 pydra_fld = self.pydra_fld_output(fld, name)
                 pydra_fields_l.append((name,) + pydra_fld)
         return pydra_fields_l
+                pydra_fld = self.pydra_fld_output(fld, name)
+                pydra_fields_l.append((name,) + pydra_fld)
+        return pydra_fields_l
 
     def pydra_fld_output(self, field, name):
         """converting a single nipype field to one element of fields for pydra output_spec"""
         pydra_type = self.pydra_type_converter(field, spec_type="output", name=name)
 
         pydra_metadata = {}
+        pydra_metadata = {}
         for key in self.OUTPUT_KEYS:
+            pydra_key_nm = self.NAME_MAPPING.get(key, key)
             pydra_key_nm = self.NAME_MAPPING.get(key, key)
             val = getattr(field, key)
             if val:
+                pydra_metadata[pydra_key_nm] = val
                 pydra_metadata[pydra_key_nm] = val
 
         if name in self.outputs.requirements and self.outputs.requirements[name]:
@@ -603,6 +630,7 @@ class BaseTaskConverter(metaclass=ABCMeta):
                 Exception("has to be either list of list or list of str/dict")
 
             pydra_metadata["requires"] = []
+            pydra_metadata["requires"] = []
             for requires in requires_l:
                 requires_mod = []
                 for el in requires:
@@ -611,7 +639,9 @@ class BaseTaskConverter(metaclass=ABCMeta):
                     elif isinstance(el, dict):
                         requires_mod += list(el.items())
                 pydra_metadata["requires"].append(requires_mod)
+                pydra_metadata["requires"].append(requires_mod)
             if nested_flag is False:
+                pydra_metadata["requires"] = pydra_metadata["requires"][0]
                 pydra_metadata["requires"] = pydra_metadata["requires"][0]
 
         if name in self.outputs.templates:
