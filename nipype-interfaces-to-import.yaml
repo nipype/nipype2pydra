@@ -418,6 +418,7 @@ interfaces:
   - ICA_AROMA
   fsl/dti:
   - DTIFit
+  - FSLXCommand
   - BEDPOSTX5
   - XFibres5
   - ProbTrackX
@@ -439,6 +440,7 @@ interfaces:
   - EddyCorrect
   - EddyQuad
   fsl/fix:
+  - TrainingSetCreator
   - FeatureExtractor
   - Training
   - AccuracyTester
@@ -466,11 +468,14 @@ interfaces:
   - MultiImageMaths
   - TemporalFilter
   fsl/model:
+  - Level1Design
   - FEAT
   - FEATModel
   - FILMGLS
   - FLAMEO
   - ContrastMgr
+  - L2Model
+  - MultipleRegressDesign
   - SMM
   - MELODIC
   - SmoothEstimate
