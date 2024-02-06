@@ -1,6 +1,8 @@
 import re
 import attrs
+import inspect
 from .base import BaseTaskConverter
+from fileformats.core.mixin import WithClassifiers
 
 
 @attrs.define
@@ -23,21 +25,32 @@ class ShellCommandTaskConverter(BaseTaskConverter):
             executable = self.nipype_interface.cmd
             if not isinstance(executable, str):
                 raise RuntimeError(
-                    f"Could not find executable for {self.nipype_interface}"
+                    f"Could not find executable for {self.nipype_interface}, "
+                    "try the FunctionTaskConverter class instead"
                 )
+
+        def unwrap_field_type(t):
+            if issubclass(t, WithClassifiers) and t.is_classified:
+                unwraped_classifiers = ", ".join(unwrap_field_type(c) for c in t.classifiers)
+                return f"{t.unclassified.__name__}[{unwraped_classifiers}]"
+            return t.__name__
 
         def types_to_names(spec_fields):
             spec_fields_str = []
             for el in spec_fields:
                 el = list(el)
-                tp_str = str(el[1])
-                if tp_str.startswith("<class "):
-                    tp_str = el[1].__name__
+                field_type = el[1]
+                if inspect.isclass(field_type) and issubclass(field_type, WithClassifiers):
+                    field_type_str = unwrap_field_type(field_type)
                 else:
-                    # Alter modules in type string to match those that will be imported
-                    tp_str = tp_str.replace("typing", "ty")
-                    tp_str = re.sub(r"(\w+\.)+(?<!ty\.)(\w+)", r"\2", tp_str)
-                el[1] = "#" + tp_str + "#"
+                    field_type_str = str(field_type)
+                    if field_type_str.startswith("<class "):
+                        field_type_str = el[1].__name__
+                    else:
+                        # Alter modules in type string to match those that will be imported
+                        field_type_str = field_type_str.replace("typing", "ty")
+                        field_type_str = re.sub(r"(\w+\.)+(?<!ty\.)(\w+)", r"\2", field_type_str)
+                el[1] = "#" + field_type_str + "#"
                 spec_fields_str.append(tuple(el))
             return spec_fields_str
 
