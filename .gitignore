@@ -23,3 +23,7 @@ __pycache__
 /Test.venv
 /test-data
 /nipype2pydra/_version.py
+<<<<<<< HEAD
+=======
+*.venv-py38
+>>>>>>> 9611b94 (added py38 to gitignore)

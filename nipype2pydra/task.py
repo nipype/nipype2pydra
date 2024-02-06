@@ -818,8 +818,6 @@ class TaskConverter:
 
         for tp in itertools.chain(*(unwrap_nested_type(t) for t in nonstd_types)):
             add_import(f"from {tp.__module__} import {tp.__name__}")
-        # For debugging
-        add_import(f"import {'.'.join(self.output_module.split('.')[:-2])}")
         if include_task:
             add_import(f"from {self.output_module} import {self.task_name}")
 
