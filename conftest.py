@@ -17,9 +17,14 @@ def gen_test_conftest():
     return PKG_DIR / "scripts" / "pkg_gen" / "resources" / "conftest.py"
 
 
-@pytest.fixture(params=[str(p.stem) for p in (EXAMPLE_TASKS_DIR).glob("*.yaml")])
+@pytest.fixture(
+    params=[
+        str(p.relative_to(EXAMPLE_TASKS_DIR)).replace("/", "-")[:-5]
+        for p in (EXAMPLE_TASKS_DIR).glob("**/*.yaml")
+    ]
+)
 def task_spec_file(request):
-    return (EXAMPLE_TASKS_DIR / request.param).with_suffix(".yaml")
+    return EXAMPLE_TASKS_DIR.joinpath(*request.param.split("-")).with_suffix(".yaml")
 
 
 @pytest.fixture(params=[str(p.stem) for p in EXAMPLE_WORKFLOWS_DIR.glob("*.yaml")])
@@ -35,7 +40,7 @@ def work_dir():
 
 @pytest.fixture
 def outputs_dir():
-    outputs_dir = PKG_DIR / "outputs" / 'workflows'
+    outputs_dir = PKG_DIR / "outputs" / "workflows"
     outputs_dir.mkdir(parents=True, exist_ok=True)
     return outputs_dir
 

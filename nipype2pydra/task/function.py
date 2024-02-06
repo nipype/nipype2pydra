@@ -9,7 +9,7 @@ import attrs
 from .base import BaseTaskConverter
 
 
-@attrs.define
+@attrs.define(slots=False)
 class FunctionTaskConverter(BaseTaskConverter):
     def generate_task_str(self, filename, input_fields, nonstd_types, output_fields):
         """writing pydra task to the dile based on the input and output spec"""
@@ -342,6 +342,8 @@ class FunctionTaskConverter(BaseTaskConverter):
                     const_name in used_symbols
                     and (const_name, const_def) not in used_constants
                 ):
+                    if const_name == "LOGGER":
+                        continue
                     used_constants.add((const_name, const_def))
                     const_def_symbols = re.findall(r"(\w+)", const_def)
                     used_symbols.update(const_def_symbols)
