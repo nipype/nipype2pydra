@@ -1,0 +1,59 @@
+function: qsiprep.workflows.base:init_single_subject_wf
+args:
+  subject_id: test
+  name: single_subject_qsipreptest_wf
+  reportlets_dir: .
+  output_dir: .
+  bids_dir: .
+  bids_filters: null
+  anatomical_contrast: T1w
+  ignore: []
+  debug: false
+  low_mem: false
+  output_resolution: 1.25
+  denoise_before_combining: true
+  dwi_denoise_window: 7
+  denoise_method: patch2self
+  unringing_method: mrdegibbs
+  b1_biascorrect_stage: false
+  no_b0_harmonization: false
+  dwi_only: false
+  anat_only: false
+  longitudinal: false
+  b0_threshold: 100
+  freesurfer: false
+  hires: false
+  raw_image_sdc: false
+  force_spatial_normalization: true
+  combine_all_dwis: true
+  distortion_group_merge: none
+  pepolar_method: TOPUP
+  omp_nthreads: 1
+  skull_strip_template: OASIS
+  skull_strip_fixed_seed: false
+  template: MNI152NLin2009cAsym
+  prefer_dedicated_fmaps: false
+  motion_corr_to: iterative
+  b0_to_t1w_transform: Rigid
+  intramodal_template_iters: 0
+  intramodal_template_transform: Rigid
+  hmc_model: 3dSHORE
+  hmc_transform: Affine
+  eddy_config: null
+  shoreline_iters: 2
+  infant_mode: false
+  impute_slice_threshold: 0.0
+  write_local_bvecs: false
+  fmap_bspline: false
+  fmap_demean: true
+  use_syn: false
+  force_syn: false
+splits:
+# - func_name: registration
+#   first_node: ds_surfs
+# - func_name: segmentation
+#   first_node: lta2itk_fwd
+ignore_tasks:
+# - smriprep.interfaces.DerivativesDataSink
+- nipype.interfaces.utility.base.IdentityInterface
+
