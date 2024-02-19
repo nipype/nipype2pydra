@@ -1,0 +1,135 @@
+# This file is used to manually specify the semi-automatic conversion of
+# 'nipype.interfaces.afni.preprocess.AutoTLRC' from Nipype to Pydra.
+#
+# Please fill-in/edit the fields below where appropriate
+#
+# Docs
+# ----
+# A minimal wrapper for the AutoTLRC script
+#     The only option currently supported is no_ss.
+#     For complete details, see the `3dQwarp Documentation.
+#     <https://afni.nimh.nih.gov/pub/dist/doc/program_help/@auto_tlrc.html>`_
+# 
+#     Examples
+#     --------
+#     >>> from nipype.interfaces import afni
+#     >>> autoTLRC = afni.AutoTLRC()
+#     >>> autoTLRC.inputs.in_file = 'structural.nii'
+#     >>> autoTLRC.inputs.no_ss = True
+#     >>> autoTLRC.inputs.base = "TT_N27+tlrc"
+#     >>> autoTLRC.cmdline
+#     '@auto_tlrc -base TT_N27+tlrc -input structural.nii -no_ss'
+#     >>> res = autoTLRC.run()  # doctest: +SKIP
+# 
+#     
+task_name: AutoTLRC
+nipype_name: AutoTLRC
+nipype_module: nipype.interfaces.afni.preprocess
+inputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    in_file: medimage/nifti1
+    # type=file|default=<undefined>: Original anatomical volume (+orig).The skull is removed by this scriptunless instructed otherwise (-no_ss).
+  metadata:
+  # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
+outputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    out_file: generic/file
+    # type=file: output file
+  callables:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set to the `callable` attribute of output fields
+  templates:
+  # dict[str, str] - `output_file_template` values to be provided to output fields
+  requirements:
+  # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
+tests:
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    outputtype:
+    # type=enum|default='AFNI'|allowed['AFNI','NIFTI','NIFTI_GZ']: AFNI output filetype
+    in_file:
+    # type=file|default=<undefined>: Original anatomical volume (+orig).The skull is removed by this scriptunless instructed otherwise (-no_ss).
+    base:
+    # type=str|default='': Reference anatomical volume. Usually this volume is in some standard space like TLRC or MNI space and with afni dataset view of (+tlrc). Preferably, this reference volume should have had the skull removed but that is not mandatory. AFNI's distribution contains several templates. For a longer list, use "whereami -show_templates" TT_N27+tlrc --> Single subject, skull stripped volume. This volume is also known as N27_SurfVol_NoSkull+tlrc elsewhere in AFNI and SUMA land. (www.loni.ucla.edu, www.bic.mni.mcgill.ca) This template has a full set of FreeSurfer (surfer.nmr.mgh.harvard.edu) surface models that can be used in SUMA. For details, see Talairach-related link: https://afni.nimh.nih.gov/afni/suma TT_icbm452+tlrc --> Average volume of 452 normal brains. Skull Stripped. (www.loni.ucla.edu) TT_avg152T1+tlrc --> Average volume of 152 normal brains. Skull Stripped.(www.bic.mni.mcgill.ca) TT_EPI+tlrc --> EPI template from spm2, masked as TT_avg152T1 TT_avg152 and TT_EPI volume sources are from SPM's distribution. (www.fil.ion.ucl.ac.uk/spm/) If you do not specify a path for the template, the script will attempt to locate the template AFNI's binaries directory. NOTE: These datasets have been slightly modified from their original size to match the standard TLRC dimensions (Jean Talairach and Pierre Tournoux Co-Planar Stereotaxic Atlas of the Human Brain Thieme Medical Publishers, New York, 1988). That was done for internal consistency in AFNI. You may use the original form of these volumes if you choose but your TLRC coordinates will not be consistent with AFNI's TLRC database (San Antonio Talairach Daemon database), for example.
+    no_ss:
+    # type=bool|default=False: Do not strip skull of input data set (because skull has already been removed or because template still has the skull) NOTE: The ``-no_ss`` option is not all that optional. Here is a table of when you should and should not use ``-no_ss``    +------------------+------------+---------------+   | Dataset          | Template                   |   +==================+============+===============+   |                  | w/ skull   | wo/ skull     |   +------------------+------------+---------------+   | WITH skull       | ``-no_ss`` | xxx           |   +------------------+------------+---------------+   | WITHOUT skull    | No Cigar   | ``-no_ss``    |   +------------------+------------+---------------+  Template means: Your template of choice Dset. means: Your anatomical dataset ``-no_ss`` means: Skull stripping should not be attempted on Dset xxx means: Don't put anything, the script will strip Dset No Cigar means: Don't try that combination, it makes no sense.
+    args:
+    # type=str|default='': Additional parameters to the command
+    environ:
+    # type=dict|default={}: Environment variables
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    in_file:
+    # type=file|default=<undefined>: Original anatomical volume (+orig).The skull is removed by this scriptunless instructed otherwise (-no_ss).
+    no_ss: 'True'
+    # type=bool|default=False: Do not strip skull of input data set (because skull has already been removed or because template still has the skull) NOTE: The ``-no_ss`` option is not all that optional. Here is a table of when you should and should not use ``-no_ss``    +------------------+------------+---------------+   | Dataset          | Template                   |   +==================+============+===============+   |                  | w/ skull   | wo/ skull     |   +------------------+------------+---------------+   | WITH skull       | ``-no_ss`` | xxx           |   +------------------+------------+---------------+   | WITHOUT skull    | No Cigar   | ``-no_ss``    |   +------------------+------------+---------------+  Template means: Your template of choice Dset. means: Your anatomical dataset ``-no_ss`` means: Skull stripping should not be attempted on Dset xxx means: Don't put anything, the script will strip Dset No Cigar means: Don't try that combination, it makes no sense.
+    base: '"TT_N27+tlrc"'
+    # type=str|default='': Reference anatomical volume. Usually this volume is in some standard space like TLRC or MNI space and with afni dataset view of (+tlrc). Preferably, this reference volume should have had the skull removed but that is not mandatory. AFNI's distribution contains several templates. For a longer list, use "whereami -show_templates" TT_N27+tlrc --> Single subject, skull stripped volume. This volume is also known as N27_SurfVol_NoSkull+tlrc elsewhere in AFNI and SUMA land. (www.loni.ucla.edu, www.bic.mni.mcgill.ca) This template has a full set of FreeSurfer (surfer.nmr.mgh.harvard.edu) surface models that can be used in SUMA. For details, see Talairach-related link: https://afni.nimh.nih.gov/afni/suma TT_icbm452+tlrc --> Average volume of 452 normal brains. Skull Stripped. (www.loni.ucla.edu) TT_avg152T1+tlrc --> Average volume of 152 normal brains. Skull Stripped.(www.bic.mni.mcgill.ca) TT_EPI+tlrc --> EPI template from spm2, masked as TT_avg152T1 TT_avg152 and TT_EPI volume sources are from SPM's distribution. (www.fil.ion.ucl.ac.uk/spm/) If you do not specify a path for the template, the script will attempt to locate the template AFNI's binaries directory. NOTE: These datasets have been slightly modified from their original size to match the standard TLRC dimensions (Jean Talairach and Pierre Tournoux Co-Planar Stereotaxic Atlas of the Human Brain Thieme Medical Publishers, New York, 1988). That was done for internal consistency in AFNI. You may use the original form of these volumes if you choose but your TLRC coordinates will not be consistent with AFNI's TLRC database (San Antonio Talairach Daemon database), for example.
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+doctests:
+- cmdline: '@auto_tlrc -base TT_N27+tlrc -input structural.nii -no_ss'
+  # str - the expected cmdline output
+  inputs:
+  # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
+  # If the field is of file-format type and the value is None, then the
+  # '.mock()' method of the corresponding class is used instead.
+    in_file:
+    # type=file|default=<undefined>: Original anatomical volume (+orig).The skull is removed by this scriptunless instructed otherwise (-no_ss).
+    no_ss: 'True'
+    # type=bool|default=False: Do not strip skull of input data set (because skull has already been removed or because template still has the skull) NOTE: The ``-no_ss`` option is not all that optional. Here is a table of when you should and should not use ``-no_ss``    +------------------+------------+---------------+   | Dataset          | Template                   |   +==================+============+===============+   |                  | w/ skull   | wo/ skull     |   +------------------+------------+---------------+   | WITH skull       | ``-no_ss`` | xxx           |   +------------------+------------+---------------+   | WITHOUT skull    | No Cigar   | ``-no_ss``    |   +------------------+------------+---------------+  Template means: Your template of choice Dset. means: Your anatomical dataset ``-no_ss`` means: Skull stripping should not be attempted on Dset xxx means: Don't put anything, the script will strip Dset No Cigar means: Don't try that combination, it makes no sense.
+    base: '"TT_N27+tlrc"'
+    # type=str|default='': Reference anatomical volume. Usually this volume is in some standard space like TLRC or MNI space and with afni dataset view of (+tlrc). Preferably, this reference volume should have had the skull removed but that is not mandatory. AFNI's distribution contains several templates. For a longer list, use "whereami -show_templates" TT_N27+tlrc --> Single subject, skull stripped volume. This volume is also known as N27_SurfVol_NoSkull+tlrc elsewhere in AFNI and SUMA land. (www.loni.ucla.edu, www.bic.mni.mcgill.ca) This template has a full set of FreeSurfer (surfer.nmr.mgh.harvard.edu) surface models that can be used in SUMA. For details, see Talairach-related link: https://afni.nimh.nih.gov/afni/suma TT_icbm452+tlrc --> Average volume of 452 normal brains. Skull Stripped. (www.loni.ucla.edu) TT_avg152T1+tlrc --> Average volume of 152 normal brains. Skull Stripped.(www.bic.mni.mcgill.ca) TT_EPI+tlrc --> EPI template from spm2, masked as TT_avg152T1 TT_avg152 and TT_EPI volume sources are from SPM's distribution. (www.fil.ion.ucl.ac.uk/spm/) If you do not specify a path for the template, the script will attempt to locate the template AFNI's binaries directory. NOTE: These datasets have been slightly modified from their original size to match the standard TLRC dimensions (Jean Talairach and Pierre Tournoux Co-Planar Stereotaxic Atlas of the Human Brain Thieme Medical Publishers, New York, 1988). That was done for internal consistency in AFNI. You may use the original form of these volumes if you choose but your TLRC coordinates will not be consistent with AFNI's TLRC database (San Antonio Talairach Daemon database), for example.
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  directive:
+  # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

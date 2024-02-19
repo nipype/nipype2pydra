@@ -1,0 +1,117 @@
+# This file is used to manually specify the semi-automatic conversion of
+# 'nipype.interfaces.slicer.filtering.n4itkbiasfieldcorrection.N4ITKBiasFieldCorrection' from Nipype to Pydra.
+#
+# Please fill-in/edit the fields below where appropriate
+#
+# Docs
+# ----
+# title: N4ITK MRI Bias correction
+# 
+#     category: Filtering
+# 
+#     description: Performs image bias correction using N4 algorithm. This module is based on the ITK filters contributed in the following publication:  Tustison N, Gee J "N4ITK: Nick's N3 ITK Implementation For MRI Bias Field Correction", The Insight Journal 2009 January-June, http://hdl.handle.net/10380/3053
+# 
+#     version: 9
+# 
+#     documentation-url: http://wiki.slicer.org/slicerWiki/index.php/Documentation/4.1/Modules/N4ITKBiasFieldCorrection
+# 
+#     contributor: Nick Tustison (UPenn), Andrey Fedorov (SPL, BWH), Ron Kikinis (SPL, BWH)
+# 
+#     acknowledgements: The development of this module was partially supported by NIH grants R01 AA016748-01, R01 CA111288 and U01 CA151261 as well as by NA-MIC, NAC, NCIGT and the Slicer community.
+#     
+task_name: N4ITKBiasFieldCorrection
+nipype_name: N4ITKBiasFieldCorrection
+nipype_module: nipype.interfaces.slicer.filtering.n4itkbiasfieldcorrection
+inputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    inputimage: generic/file
+    # type=file|default=<undefined>: Input image where you observe signal inhomegeneity
+    maskimage: generic/file
+    # type=file|default=<undefined>: Binary mask that defines the structure of your interest. NOTE: This parameter is OPTIONAL. If the mask is not specified, the module will use internally Otsu thresholding to define this mask. Better processing results can often be obtained when a meaningful mask is defined.
+    weightimage: generic/file
+    # type=file|default=<undefined>: Weight Image
+  metadata:
+  # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
+outputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    outputimage: generic/file
+    # type=file: Result of processing
+    # type=traitcompound|default=None: Result of processing
+    outputbiasfield: generic/file
+    # type=file: Recovered bias field (OPTIONAL)
+    # type=traitcompound|default=None: Recovered bias field (OPTIONAL)
+  callables:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set to the `callable` attribute of output fields
+  templates:
+  # dict[str, str] - `output_file_template` values to be provided to output fields
+  requirements:
+  # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
+tests:
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    inputimage:
+    # type=file|default=<undefined>: Input image where you observe signal inhomegeneity
+    maskimage:
+    # type=file|default=<undefined>: Binary mask that defines the structure of your interest. NOTE: This parameter is OPTIONAL. If the mask is not specified, the module will use internally Otsu thresholding to define this mask. Better processing results can often be obtained when a meaningful mask is defined.
+    outputimage:
+    # type=file: Result of processing
+    # type=traitcompound|default=None: Result of processing
+    outputbiasfield:
+    # type=file: Recovered bias field (OPTIONAL)
+    # type=traitcompound|default=None: Recovered bias field (OPTIONAL)
+    iterations:
+    # type=inputmultiobject|default=[]: Maximum number of iterations at each level of resolution. Larger values will increase execution time, but may lead to better results.
+    convergencethreshold:
+    # type=float|default=0.0: Stopping criterion for the iterative bias estimation. Larger values will lead to smaller execution time.
+    meshresolution:
+    # type=inputmultiobject|default=[]: Resolution of the initial bspline grid defined as a sequence of three numbers. The actual resolution will be defined by adding the bspline order (default is 3) to the resolution in each dimension specified here. For example, 1,1,1 will result in a 4x4x4 grid of control points. This parameter may need to be adjusted based on your input image. In the multi-resolution N4 framework, the resolution of the bspline grid at subsequent iterations will be doubled. The number of resolutions is implicitly defined by Number of iterations parameter (the size of this list is the number of resolutions)
+    splinedistance:
+    # type=float|default=0.0: An alternative means to define the spline grid, by setting the distance between the control points. This parameter is used only if the grid resolution is not specified.
+    shrinkfactor:
+    # type=int|default=0: Defines how much the image should be upsampled before estimating the inhomogeneity field. Increase if you want to reduce the execution time. 1 corresponds to the original resolution. Larger values will significantly reduce the computation time.
+    bsplineorder:
+    # type=int|default=0: Order of B-spline used in the approximation. Larger values will lead to longer execution times, may result in overfitting and poor result.
+    weightimage:
+    # type=file|default=<undefined>: Weight Image
+    histogramsharpening:
+    # type=inputmultiobject|default=[]: A vector of up to three values. Non-zero values correspond to Bias Field Full Width at Half Maximum, Wiener filter noise, and Number of histogram bins.
+    args:
+    # type=str|default='': Additional parameters to the command
+    environ:
+    # type=dict|default={}: Environment variables
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+doctests: []

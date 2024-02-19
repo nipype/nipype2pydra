@@ -1,0 +1,190 @@
+# This file is used to manually specify the semi-automatic conversion of
+# 'nipype.interfaces.freesurfer.model.Binarize' from Nipype to Pydra.
+#
+# Please fill-in/edit the fields below where appropriate
+#
+# Docs
+# ----
+# Use FreeSurfer mri_binarize to threshold an input volume
+# 
+#     Examples
+#     --------
+#     >>> binvol = Binarize(in_file='structural.nii', min=10, binary_file='foo_out.nii')
+#     >>> binvol.cmdline
+#     'mri_binarize --o foo_out.nii --i structural.nii --min 10.000000'
+# 
+#     
+task_name: Binarize
+nipype_name: Binarize
+nipype_module: nipype.interfaces.freesurfer.model
+inputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    in_file: medimage/nifti1
+    # type=file|default=<undefined>: input volume
+    merge_file: generic/file
+    # type=file|default=<undefined>: merge with mergevol
+    mask_file: generic/file
+    # type=file|default=<undefined>: must be within mask
+    subjects_dir: generic/directory
+    # type=directory|default=<undefined>: subjects directory
+  metadata:
+  # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
+outputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    binary_file: medimage/nifti1
+    # type=file: binarized output volume
+    # type=file|default=<undefined>: binary output volume
+    count_file: generic/file
+    # type=file: ascii file containing number of hits
+    # type=traitcompound|default=None: save number of hits in ascii file (hits, ntotvox, pct)
+  callables:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set to the `callable` attribute of output fields
+  templates:
+  # dict[str, str] - `output_file_template` values to be provided to output fields
+    binary_file: '"foo_out.nii"'
+    # type=file: binarized output volume
+    # type=file|default=<undefined>: binary output volume
+  requirements:
+  # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
+tests:
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    in_file:
+    # type=file|default=<undefined>: input volume
+    min:
+    # type=float|default=0.0: min thresh
+    max:
+    # type=float|default=0.0: max thresh
+    rmin:
+    # type=float|default=0.0: compute min based on rmin*globalmean
+    rmax:
+    # type=float|default=0.0: compute max based on rmax*globalmean
+    match:
+    # type=list|default=[]: match instead of threshold
+    wm:
+    # type=bool|default=False: set match vals to 2 and 41 (aseg for cerebral WM)
+    ventricles:
+    # type=bool|default=False: set match vals those for aseg ventricles+choroid (not 4th)
+    wm_ven_csf:
+    # type=bool|default=False: WM and ventricular CSF, including choroid (not 4th)
+    binary_file:
+    # type=file: binarized output volume
+    # type=file|default=<undefined>: binary output volume
+    out_type:
+    # type=enum|default='nii'|allowed['mgz','nii','nii.gz']: output file type
+    count_file:
+    # type=file: ascii file containing number of hits
+    # type=traitcompound|default=None: save number of hits in ascii file (hits, ntotvox, pct)
+    bin_val:
+    # type=int|default=0: set vox within thresh to val (default is 1)
+    bin_val_not:
+    # type=int|default=0: set vox outside range to val (default is 0)
+    invert:
+    # type=bool|default=False: set binval=0, binvalnot=1
+    frame_no:
+    # type=int|default=0: use 0-based frame of input (default is 0)
+    merge_file:
+    # type=file|default=<undefined>: merge with mergevol
+    mask_file:
+    # type=file|default=<undefined>: must be within mask
+    mask_thresh:
+    # type=float|default=0.0: set thresh for mask
+    abs:
+    # type=bool|default=False: take abs of invol first (ie, make unsigned)
+    bin_col_num:
+    # type=bool|default=False: set binarized voxel value to its column number
+    zero_edges:
+    # type=bool|default=False: zero the edge voxels
+    zero_slice_edge:
+    # type=bool|default=False: zero the edge slice voxels
+    dilate:
+    # type=int|default=0: niters: dilate binarization in 3D
+    erode:
+    # type=int|default=0: nerode: erode binarization in 3D (after any dilation)
+    erode2d:
+    # type=int|default=0: nerode2d: erode binarization in 2D (after any 3D erosion)
+    subjects_dir:
+    # type=directory|default=<undefined>: subjects directory
+    args:
+    # type=str|default='': Additional parameters to the command
+    environ:
+    # type=dict|default={}: Environment variables
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    in_file:
+    # type=file|default=<undefined>: input volume
+    min: '10'
+    # type=float|default=0.0: min thresh
+    binary_file: '"foo_out.nii"'
+    # type=file: binarized output volume
+    # type=file|default=<undefined>: binary output volume
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+doctests:
+- cmdline: mri_binarize --o foo_out.nii --i structural.nii --min 10.000000
+  # str - the expected cmdline output
+  inputs:
+  # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
+  # If the field is of file-format type and the value is None, then the
+  # '.mock()' method of the corresponding class is used instead.
+    in_file:
+    # type=file|default=<undefined>: input volume
+    min: '10'
+    # type=float|default=0.0: min thresh
+    binary_file: '"foo_out.nii"'
+    # type=file: binarized output volume
+    # type=file|default=<undefined>: binary output volume
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  directive:
+  # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

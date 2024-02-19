@@ -1,0 +1,179 @@
+# This file is used to manually specify the semi-automatic conversion of
+# 'nipype.interfaces.freesurfer.utils.FixTopology' from Nipype to Pydra.
+#
+# Please fill-in/edit the fields below where appropriate
+#
+# Docs
+# ----
+# 
+#     This program computes a mapping from the unit sphere onto the surface
+#     of the cortex from a previously generated approximation of the
+#     cortical surface, thus guaranteeing a topologically correct surface.
+# 
+#     Examples
+#     ========
+#     >>> from nipype.interfaces.freesurfer import FixTopology
+#     >>> ft = FixTopology()
+#     >>> ft.inputs.in_orig = 'lh.orig' # doctest: +SKIP
+#     >>> ft.inputs.in_inflated = 'lh.inflated' # doctest: +SKIP
+#     >>> ft.inputs.sphere = 'lh.qsphere.nofix' # doctest: +SKIP
+#     >>> ft.inputs.hemisphere = 'lh'
+#     >>> ft.inputs.subject_id = '10335'
+#     >>> ft.inputs.mgz = True
+#     >>> ft.inputs.ga = True
+#     >>> ft.cmdline # doctest: +SKIP
+#     'mris_fix_topology -ga -mgz -sphere qsphere.nofix 10335 lh'
+#     
+task_name: FixTopology
+nipype_name: FixTopology
+nipype_module: nipype.interfaces.freesurfer.utils
+inputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    in_orig: medimage-freesurfer/orig
+    # type=file|default=<undefined>: Undocumented input file <hemisphere>.orig
+    in_inflated: medimage-freesurfer/inflated
+    # type=file|default=<undefined>: Undocumented input file <hemisphere>.inflated
+    in_brain: generic/file
+    # type=file|default=<undefined>: Implicit input brain.mgz
+    in_wm: generic/file
+    # type=file|default=<undefined>: Implicit input wm.mgz
+    sphere: medimage-freesurfer/nofix
+    # type=file|default=<undefined>: Sphere input file
+    subjects_dir: generic/directory
+    # type=directory|default=<undefined>: subjects directory
+  metadata:
+  # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
+outputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    out_file: generic/file
+    # type=file: Output file for FixTopology
+  callables:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set to the `callable` attribute of output fields
+  templates:
+  # dict[str, str] - `output_file_template` values to be provided to output fields
+  requirements:
+  # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
+tests:
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    in_orig:
+    # type=file|default=<undefined>: Undocumented input file <hemisphere>.orig
+    in_inflated:
+    # type=file|default=<undefined>: Undocumented input file <hemisphere>.inflated
+    in_brain:
+    # type=file|default=<undefined>: Implicit input brain.mgz
+    in_wm:
+    # type=file|default=<undefined>: Implicit input wm.mgz
+    hemisphere:
+    # type=string|default='': Hemisphere being processed
+    subject_id:
+    # type=string|default='subject_id': Subject being processed
+    copy_inputs:
+    # type=bool|default=False: If running as a node, set this to True otherwise, the topology fixing will be done in place.
+    seed:
+    # type=int|default=0: Seed for setting random number generator
+    ga:
+    # type=bool|default=False: No documentation. Direct questions to analysis-bugs@nmr.mgh.harvard.edu
+    mgz:
+    # type=bool|default=False: No documentation. Direct questions to analysis-bugs@nmr.mgh.harvard.edu
+    sphere:
+    # type=file|default=<undefined>: Sphere input file
+    subjects_dir:
+    # type=directory|default=<undefined>: subjects directory
+    args:
+    # type=str|default='': Additional parameters to the command
+    environ:
+    # type=dict|default={}: Environment variables
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    in_orig:
+    # type=file|default=<undefined>: Undocumented input file <hemisphere>.orig
+    in_inflated:
+    # type=file|default=<undefined>: Undocumented input file <hemisphere>.inflated
+    sphere:
+    # type=file|default=<undefined>: Sphere input file
+    hemisphere: '"lh"'
+    # type=string|default='': Hemisphere being processed
+    subject_id: '"10335"'
+    # type=string|default='subject_id': Subject being processed
+    mgz: 'True'
+    # type=bool|default=False: No documentation. Direct questions to analysis-bugs@nmr.mgh.harvard.edu
+    ga: 'True'
+    # type=bool|default=False: No documentation. Direct questions to analysis-bugs@nmr.mgh.harvard.edu
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+doctests:
+- cmdline: mris_fix_topology -ga -mgz -sphere qsphere.nofix 10335 lh
+  # str - the expected cmdline output
+  inputs:
+  # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
+  # If the field is of file-format type and the value is None, then the
+  # '.mock()' method of the corresponding class is used instead.
+    in_orig:
+    # type=file|default=<undefined>: Undocumented input file <hemisphere>.orig
+    in_inflated:
+    # type=file|default=<undefined>: Undocumented input file <hemisphere>.inflated
+    sphere:
+    # type=file|default=<undefined>: Sphere input file
+    hemisphere: '"lh"'
+    # type=string|default='': Hemisphere being processed
+    subject_id: '"10335"'
+    # type=string|default='subject_id': Subject being processed
+    mgz: 'True'
+    # type=bool|default=False: No documentation. Direct questions to analysis-bugs@nmr.mgh.harvard.edu
+    ga: 'True'
+    # type=bool|default=False: No documentation. Direct questions to analysis-bugs@nmr.mgh.harvard.edu
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  directive:
+  # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

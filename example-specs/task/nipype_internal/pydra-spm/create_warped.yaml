@@ -1,0 +1,96 @@
+# This file is used to manually specify the semi-automatic conversion of
+# 'nipype.interfaces.spm.preprocess.CreateWarped' from Nipype to Pydra.
+#
+# Please fill-in/edit the fields below where appropriate
+#
+# Docs
+# ----
+# Apply a flow field estimated by DARTEL to create warped images
+# 
+#     http://www.fil.ion.ucl.ac.uk/spm/doc/manual.pdf#page=190
+# 
+#     Examples
+#     --------
+#     >>> import nipype.interfaces.spm as spm
+#     >>> create_warped = spm.CreateWarped()
+#     >>> create_warped.inputs.image_files = ['rc1s1.nii', 'rc1s2.nii']
+#     >>> create_warped.inputs.flowfield_files = ['u_rc1s1_Template.nii', 'u_rc1s2_Template.nii']
+#     >>> create_warped.run() # doctest: +SKIP
+# 
+#     
+task_name: CreateWarped
+nipype_name: CreateWarped
+nipype_module: nipype.interfaces.spm.preprocess
+inputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    paths: generic/directory+list-of
+    # type=inputmultiobject|default=[]: Paths to add to matlabpath
+  metadata:
+  # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
+outputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+  callables:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set to the `callable` attribute of output fields
+  templates:
+  # dict[str, str] - `output_file_template` values to be provided to output fields
+  requirements:
+  # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
+tests:
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    image_files:
+    # type=inputmultiobject|default=[]: A list of files to be warped
+    flowfield_files:
+    # type=inputmultiobject|default=[]: DARTEL flow fields u_rc1*
+    iterations:
+    # type=range|default=0: The number of iterations: log2(number of time steps)
+    interp:
+    # type=range|default=0: degree of b-spline used for interpolation
+    modulate:
+    # type=bool|default=False: Modulate images
+    matlab_cmd:
+    # type=str|default='': matlab command to use
+    paths:
+    # type=inputmultiobject|default=[]: Paths to add to matlabpath
+    mfile:
+    # type=bool|default=True: Run m-code using m-file
+    use_mcr:
+    # type=bool|default=False: Run m-code using SPM MCR
+    use_v8struct:
+    # type=bool|default=True: Generate SPM8 and higher compatible jobs
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+doctests: []

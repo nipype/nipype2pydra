@@ -1,0 +1,122 @@
+# This file is used to manually specify the semi-automatic conversion of
+# 'nipype.interfaces.camino.odf.QBallMX' from Nipype to Pydra.
+#
+# Please fill-in/edit the fields below where appropriate
+#
+# Docs
+# ----
+# 
+#     Generates a reconstruction matrix for Q-Ball. Used in LinRecon with
+#     the same scheme file to reconstruct data.
+# 
+#     Examples
+#     --------
+#     To create  a linear transform matrix using Spherical Harmonics (sh).
+# 
+#     >>> import nipype.interfaces.camino as cam
+#     >>> qballmx = cam.QBallMX()
+#     >>> qballmx.inputs.scheme_file = 'A.scheme'
+#     >>> qballmx.inputs.basistype = 'sh'
+#     >>> qballmx.inputs.order = 6
+#     >>> qballmx.run()    # doctest: +SKIP
+# 
+#     To create  a linear transform matrix using Radial Basis Functions
+#     (rbf). This command uses the default setting of rbf sigma = 0.2618
+#     (15 degrees), data smoothing sigma = 0.1309 (7.5 degrees), rbf
+#     pointset 246
+# 
+#     >>> import nipype.interfaces.camino as cam
+#     >>> qballmx = cam.QBallMX()
+#     >>> qballmx.inputs.scheme_file = 'A.scheme'
+#     >>> qballmx.run()      # doctest: +SKIP
+# 
+#     The linear transform matrix from any of these two examples can then
+#     be run over each voxel using LinRecon
+# 
+#     >>> qballcoeffs = cam.LinRecon()
+#     >>> qballcoeffs.inputs.in_file = 'SubjectA.Bfloat'
+#     >>> qballcoeffs.inputs.scheme_file = 'A.scheme'
+#     >>> qballcoeffs.inputs.qball_mat = 'A_qmat.Bdouble'
+#     >>> qballcoeffs.inputs.normalize = True
+#     >>> qballcoeffs.inputs.bgmask = 'brain_mask.nii'
+#     >>> qballcoeffs.run()     # doctest: +SKIP
+# 
+#     
+task_name: QBallMX
+nipype_name: QBallMX
+nipype_module: nipype.interfaces.camino.odf
+inputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    scheme_file: generic/file
+    # type=file|default=<undefined>: Specifies the scheme file for the diffusion MRI data
+  metadata:
+  # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
+outputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    qmat: generic/file
+    # type=file: Q-Ball reconstruction matrix
+  callables:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set to the `callable` attribute of output fields
+  templates:
+  # dict[str, str] - `output_file_template` values to be provided to output fields
+    out_file: out_file
+    # type=file|default=<undefined>: 
+  requirements:
+  # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
+tests:
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    basistype:
+    # type=enum|default='rbf'|allowed['rbf','sh']: Basis function type. "rbf" to use radial basis functions "sh" to use spherical harmonics
+    scheme_file:
+    # type=file|default=<undefined>: Specifies the scheme file for the diffusion MRI data
+    order:
+    # type=int|default=0: Specific to sh. Maximum order of the spherical harmonic series. Default is 4.
+    rbfpointset:
+    # type=int|default=0: Specific to rbf. Sets the number of radial basis functions to use. The value specified must be present in the Pointsets directory. The default value is 246.
+    rbfsigma:
+    # type=float|default=0.0: Specific to rbf. Sets the width of the interpolating basis functions. The default value is 0.2618 (15 degrees).
+    smoothingsigma:
+    # type=float|default=0.0: Specific to rbf. Sets the width of the smoothing basis functions. The default value is 0.1309 (7.5 degrees).
+    out_file:
+    # type=file|default=<undefined>: 
+    args:
+    # type=str|default='': Additional parameters to the command
+    environ:
+    # type=dict|default={}: Environment variables
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+doctests: []

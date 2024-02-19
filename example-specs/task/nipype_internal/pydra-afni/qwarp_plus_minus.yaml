@@ -1,0 +1,254 @@
+# This file is used to manually specify the semi-automatic conversion of
+# 'nipype.interfaces.afni.preprocess.QwarpPlusMinus' from Nipype to Pydra.
+#
+# Please fill-in/edit the fields below where appropriate
+#
+# Docs
+# ----
+# A version of 3dQwarp for performing field susceptibility correction
+#     using two images with opposing phase encoding directions.
+# 
+#     Examples
+#     --------
+#     >>> from nipype.interfaces import afni
+#     >>> qwarp = afni.QwarpPlusMinus()
+#     >>> qwarp.inputs.in_file = 'sub-01_dir-LR_epi.nii.gz'
+#     >>> qwarp.inputs.nopadWARP = True
+#     >>> qwarp.inputs.base_file = 'sub-01_dir-RL_epi.nii.gz'
+#     >>> qwarp.cmdline
+#     '3dQwarp -prefix Qwarp.nii.gz -plusminus -base sub-01_dir-RL_epi.nii.gz -source sub-01_dir-LR_epi.nii.gz -nopadWARP'
+#     >>> res = warp.run()  # doctest: +SKIP
+# 
+#     See Also
+#     --------
+#     For complete details, see the `3dQwarp Documentation.
+#     <https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dQwarp.html>`__
+# 
+#     
+task_name: QwarpPlusMinus
+nipype_name: QwarpPlusMinus
+nipype_module: nipype.interfaces.afni.preprocess
+inputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    source_file: generic/file
+    # type=file|default=<undefined>: Source image (opposite phase encoding direction than base image)
+    out_file: generic/file
+    # type=file|default='Qwarp.nii.gz': Output file
+    in_file: medimage/nifti-gz
+    # type=file|default=<undefined>: Source image (opposite phase encoding direction than base image).
+    base_file: medimage/nifti-gz
+    # type=file|default=<undefined>: Base image (opposite phase encoding direction than source image).
+    weight: generic/file
+    # type=file|default=<undefined>: Instead of computing the weight from the base dataset,directly input the weight volume from dataset 'www'.Useful if you know what over parts of the base image youwant to emphasize or de-emphasize the matching functional.
+    out_weight_file: generic/file
+    # type=file|default=<undefined>: Write the weight volume to disk as a dataset
+    emask: generic/file
+    # type=file|default=<undefined>: Here, 'ee' is a dataset to specify a mask of voxelsto EXCLUDE from the analysis -- all voxels in 'ee'that are NONZERO will not be used in the alignment.The base image always automasked -- the emask isextra, to indicate voxels you definitely DON'T wantincluded in the matching process, even if they areinside the brain.
+    iniwarp: generic/file+list-of
+    # type=list|default=[]: A dataset with an initial nonlinear warp to use.  * If this option is not used, the initial warp is the identity. * You can specify a catenation of warps (in quotes) here, as in   program 3dNwarpApply. * As a special case, if you just input an affine matrix in a .1D   file, that will work also -- it is treated as giving the initial   warp via the string "IDENT(base_dataset) matrix_file.aff12.1D". * You CANNOT use this option with -duplo !! * -iniwarp is usually used with -inilev to re-start 3dQwarp from   a previous stopping point.  
+    gridlist: generic/file
+    # type=file|default=<undefined>: This option provides an alternate way to specify the patch grid sizes used in the warp optimization process. 'gl' is a 1D file with a list of patches to use -- in most cases, you will want to use it in the following form: ``-gridlist '1D: 0 151 101 75 51'``  * Here, a 0 patch size means the global domain. Patch sizes   otherwise should be odd integers >= 5. * If you use the '0' patch size again after the first position,   you will actually get an iteration at the size of the   default patch level 1, where the patch sizes are 75% of   the volume dimension.  There is no way to force the program   to literally repeat the sui generis step of lev=0.  
+  metadata:
+  # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
+outputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    warped_source: generic/file
+    # type=file: Warped source file. If plusminus is used, this is the undistortedsource file.
+    warped_base: generic/file
+    # type=file: Undistorted base file.
+    source_warp: generic/file
+    # type=file: Displacement in mm for the source image.If plusminus is used this is the field suceptibility correctionwarp (in 'mm') for source image.
+    base_warp: generic/file
+    # type=file: Displacement in mm for the base image.If plus minus is used, this is the field suceptibility correctionwarp (in 'mm') for base image. This is only output if plusminusor iwarp options are passed
+    weights: generic/file
+    # type=file: Auto-computed weight volume.
+  callables:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set to the `callable` attribute of output fields
+  templates:
+  # dict[str, str] - `output_file_template` values to be provided to output fields
+  requirements:
+  # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
+tests:
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    source_file:
+    # type=file|default=<undefined>: Source image (opposite phase encoding direction than base image)
+    out_file:
+    # type=file|default='Qwarp.nii.gz': Output file
+    plusminus:
+    # type=bool|default=True: Normally, the warp displacements dis(x) are defined to matchbase(x) to source(x+dis(x)).  With this option, the matchis between base(x-dis(x)) and source(x+dis(x)) -- the twoimages 'meet in the middle'. For more info, view Qwarp` interface
+    in_file:
+    # type=file|default=<undefined>: Source image (opposite phase encoding direction than base image).
+    base_file:
+    # type=file|default=<undefined>: Base image (opposite phase encoding direction than source image).
+    resample:
+    # type=bool|default=False: This option simply resamples the source dataset to match the base dataset grid.  You can use this if the two datasets overlap well (as seen in the AFNI GUI), but are not on the same 3D grid.  * If they don't overlap well, allineate them first * The reampling here is done with the   'wsinc5' method, which has very little blurring artifact. * If the base and source datasets ARE on the same 3D grid,   then the -resample option will be ignored. * You CAN use -resample with these 3dQwarp options:   -plusminus  -inilev  -iniwarp  -duplo  
+    allineate:
+    # type=bool|default=False: This option will make 3dQwarp run 3dAllineate first, to align the source dataset to the base with an affine transformation. It will then use that alignment as a starting point for the nonlinear warping.
+    allineate_opts:
+    # type=str|default='': add extra options to the 3dAllineate command to be run by 3dQwarp.
+    nowarp:
+    # type=bool|default=False: Do not save the _WARP file.
+    iwarp:
+    # type=bool|default=False: Do compute and save the _WARPINV file.
+    pear:
+    # type=bool|default=False: Use strict Pearson correlation for matching.Not usually recommended, since the 'clipped Pearson' methodused by default will reduce the impact of outlier values.
+    noneg:
+    # type=bool|default=False: Replace negative values in either input volume with 0.  * If there ARE negative input values, and you do NOT use -noneg,   then strict Pearson correlation will be used, since the 'clipped'   method only is implemented for non-negative volumes. * '-noneg' is not the default, since there might be situations where   you want to align datasets with positive and negative values mixed. * But, in many cases, the negative values in a dataset are just the   result of interpolation artifacts (or other peculiarities), and so   they should be ignored.  That is what '-noneg' is for.  
+    nopenalty:
+    # type=bool|default=False: Replace negative values in either input volume with 0.  * If there ARE negative input values, and you do NOT use -noneg,   then strict Pearson correlation will be used, since the 'clipped'   method only is implemented for non-negative volumes. * '-noneg' is not the default, since there might be situations where   you want to align datasets with positive and negative values mixed. * But, in many cases, the negative values in a dataset are just the   result of interpolation artifacts (or other peculiarities), and so   they should be ignored. That is what '-noneg' is for.  
+    penfac:
+    # type=float|default=0.0: Use this value to weight the penalty. The default value is 1. Larger values mean the penalty counts more, reducing grid distortions, insha'Allah; '-nopenalty' is the same as '-penfac 0'. In 23 Sep 2013 Zhark increased the default value of the penalty by a factor of 5, and also made it get progressively larger with each level of refinement. Thus, warping results will vary from earlier instances of 3dQwarp.  * The progressive increase in the penalty at higher levels   means that the 'cost function' can actually look like the   alignment is getting worse when the levels change. * IF you wish to turn off this progression, for whatever   reason (e.g., to keep compatibility with older results),   use the option '-penold'.To be completely compatible with   the older 3dQwarp, you'll also have to use '-penfac 0.2'.  
+    noweight:
+    # type=bool|default=False: If you want a binary weight (the old default), use this option.That is, each voxel in the base volume automask will beweighted the same in the computation of the cost functional.
+    weight:
+    # type=file|default=<undefined>: Instead of computing the weight from the base dataset,directly input the weight volume from dataset 'www'.Useful if you know what over parts of the base image youwant to emphasize or de-emphasize the matching functional.
+    wball:
+    # type=list|default=[]: "``-wball x y z r f`` Enhance automatic weight from '-useweight' by a factor of 1+f\*Gaussian(FWHM=r) centered in the base image at DICOM coordinates (x,y,z) and with radius 'r'. The goal of this option is to try and make the alignment better in a specific part of the brain. Example:  -wball 0 14 6 30 40 to emphasize the thalamic area (in MNI/Talairach space).  * The 'r' parameter must be positive! * The 'f' parameter must be between 1 and 100 (inclusive). * '-wball' does nothing if you input your own weight   with the '-weight' option. * '-wball' does change the binary weight created by   the '-noweight' option. * You can only use '-wball' once in a run of 3dQwarp.  **The effect of '-wball' is not dramatic.** The example above makes the average brain image across a collection of subjects a little sharper in the thalamic area, which might have some small value.  If you care enough about alignment to use '-wball', then you should examine the results from 3dQwarp for each subject, to see if the alignments are good enough for your purposes.
+    wmask:
+    # type=tuple|default=(<nipype.interfaces.base.traits_extension.File object at 0x11cef9410>, <traits.trait_types.Float object at 0x11cef8f10>): Similar to '-wball', but here, you provide a dataset 'ws' that indicates where to increase the weight.  * The 'ws' dataset must be on the same 3D grid as the base dataset. * 'ws' is treated as a mask -- it only matters where it   is nonzero -- otherwise, the values inside are not used. * After 'ws' comes the factor 'f' by which to increase the   automatically computed weight.  Where 'ws' is nonzero,   the weighting will be multiplied by (1+f). * As with '-wball', the factor 'f' should be between 1 and 100.  
+    out_weight_file:
+    # type=file|default=<undefined>: Write the weight volume to disk as a dataset
+    blur:
+    # type=list|default=[]: Gaussian blur the input images by 'bb' (FWHM) voxels before doing the alignment (the output dataset will not be blurred). The default is 2.345 (for no good reason).  * Optionally, you can provide 2 values for 'bb', and then   the first one is applied to the base volume, the second   to the source volume.   e.g., '-blur 0 3' to skip blurring the base image   (if the base is a blurry template, for example). * A negative blur radius means to use 3D median filtering,   rather than Gaussian blurring.  This type of filtering will   better preserve edges, which can be important in alignment. * If the base is a template volume that is already blurry,   you probably don't want to blur it again, but blurring   the source volume a little is probably a good idea, to   help the program avoid trying to match tiny features. * Note that -duplo will blur the volumes some extra   amount for the initial small-scale warping, to make   that phase of the program converge more rapidly.  
+    pblur:
+    # type=list|default=[]: Use progressive blurring; that is, for larger patch sizes, the amount of blurring is larger.  The general idea is to avoid trying to match finer details when the patch size and incremental warps are coarse.  When '-blur' is used as well, it sets a minimum amount of blurring that will be used. [06 Aug 2014 -- '-pblur' may become the default someday].  * You can optionally give the fraction of the patch size that   is used for the progressive blur by providing a value between   0 and 0.25 after '-pblur'.  If you provide TWO values, the   the first fraction is used for progressively blurring the   base image and the second for the source image.  The default   parameters when just '-pblur' is given is the same as giving   the options as '-pblur 0.09 0.09'. * '-pblur' is useful when trying to match 2 volumes with high   amounts of detail; e.g, warping one subject's brain image to   match another's, or trying to warp to match a detailed template. * Note that using negative values with '-blur' means that the   progressive blurring will be done with median filters, rather   than Gaussian linear blurring.  Note: The combination of the -allineate and -pblur options will make the results of using 3dQwarp to align to a template somewhat less sensitive to initial head position and scaling.
+    emask:
+    # type=file|default=<undefined>: Here, 'ee' is a dataset to specify a mask of voxelsto EXCLUDE from the analysis -- all voxels in 'ee'that are NONZERO will not be used in the alignment.The base image always automasked -- the emask isextra, to indicate voxels you definitely DON'T wantincluded in the matching process, even if they areinside the brain.
+    noXdis:
+    # type=bool|default=False: Warp will not displace in x direction
+    noYdis:
+    # type=bool|default=False: Warp will not displace in y direction
+    noZdis:
+    # type=bool|default=False: Warp will not displace in z direction
+    iniwarp:
+    # type=list|default=[]: A dataset with an initial nonlinear warp to use.  * If this option is not used, the initial warp is the identity. * You can specify a catenation of warps (in quotes) here, as in   program 3dNwarpApply. * As a special case, if you just input an affine matrix in a .1D   file, that will work also -- it is treated as giving the initial   warp via the string "IDENT(base_dataset) matrix_file.aff12.1D". * You CANNOT use this option with -duplo !! * -iniwarp is usually used with -inilev to re-start 3dQwarp from   a previous stopping point.  
+    inilev:
+    # type=int|default=0: The initial refinement 'level' at which to start.  * Usually used with -iniwarp; CANNOT be used with -duplo. * The combination of -inilev and -iniwarp lets you take the   results of a previous 3dQwarp run and refine them further:   Note that the source dataset in the second run is the SAME as   in the first run.  If you don't see why this is necessary,   then you probably need to seek help from an AFNI guru.  
+    minpatch:
+    # type=int|default=0: The value of mm should be an odd integer.  * The default value of mm is 25. * For more accurate results than mm=25, try 19 or 13. * The smallest allowed patch size is 5. * You may want stop at a larger patch size (say 7 or 9) and use   the -Qfinal option to run that final level with quintic warps,   which might run faster and provide the same degree of warp detail. * Trying to make two different brain volumes match in fine detail   is usually a waste of time, especially in humans.  There is too   much variability in anatomy to match gyrus to gyrus accurately.   For this reason, the default minimum patch size is 25 voxels.   Using a smaller '-minpatch' might try to force the warp to   match features that do not match, and the result can be useless   image distortions -- another reason to LOOK AT THE RESULTS.  
+    maxlev:
+    # type=int|default=0: The initial refinement 'level' at which to start.  * Usually used with -iniwarp; CANNOT be used with -duplo. * The combination of -inilev and -iniwarp lets you take the   results of a previous 3dQwarp run and refine them further:   Note that the source dataset in the second run is the SAME as   in the first run.  If you don't see why this is necessary,   then you probably need to seek help from an AFNI guru.  
+    gridlist:
+    # type=file|default=<undefined>: This option provides an alternate way to specify the patch grid sizes used in the warp optimization process. 'gl' is a 1D file with a list of patches to use -- in most cases, you will want to use it in the following form: ``-gridlist '1D: 0 151 101 75 51'``  * Here, a 0 patch size means the global domain. Patch sizes   otherwise should be odd integers >= 5. * If you use the '0' patch size again after the first position,   you will actually get an iteration at the size of the   default patch level 1, where the patch sizes are 75% of   the volume dimension.  There is no way to force the program   to literally repeat the sui generis step of lev=0.  
+    allsave:
+    # type=bool|default=False:  This option lets you save the output warps from each level" of the refinement process.  Mostly used for experimenting." Will only save all the outputs if the program terminates" normally -- if it crashes, or freezes, then all these" warps are lost.
+    duplo:
+    # type=bool|default=False: Start off with 1/2 scale versions of the volumes," for getting a speedy coarse first alignment."  * Then scales back up to register the full volumes."   The goal is greater speed, and it seems to help this"   positively piggish program to be more expeditious." * However, accuracy is somewhat lower with '-duplo',"   for reasons that currently elude Zhark; for this reason,"   the Emperor does not usually use '-duplo'.  
+    workhard:
+    # type=bool|default=False: Iterate more times, which can help when the volumes are hard to align at all, or when you hope to get a more precise alignment.  * Slows the program down (possibly a lot), of course. * When you combine '-workhard'  with '-duplo', only the   full size volumes get the extra iterations. * For finer control over which refinement levels work hard,   you can use this option in the form (for example) ``-workhard:4:7``   which implies the extra iterations will be done at levels   4, 5, 6, and 7, but not otherwise. * You can also use '-superhard' to iterate even more, but   this extra option will REALLY slow things down.    * Under most circumstances, you should not need to use either     ``-workhard`` or ``-superhard``.   * The fastest way to register to a template image is via the     ``-duplo`` option, and without the ``-workhard`` or ``-superhard`` options.   * If you use this option in the form '-Workhard' (first letter     in upper case), then the second iteration at each level is     done with quintic polynomial warps.  
+    Qfinal:
+    # type=bool|default=False: At the finest patch size (the final level), use Hermite quintic polynomials for the warp instead of cubic polynomials.  * In a 3D 'patch', there are 2x2x2x3=24 cubic polynomial basis   function parameters over which to optimize (2 polynomials   dependent on each of the x,y,z directions, and 3 different   directions of displacement). * There are 3x3x3x3=81 quintic polynomial parameters per patch. * With -Qfinal, the final level will have more detail in   the allowed warps, at the cost of yet more CPU time. * However, no patch below 7x7x7 in size will be done with quintic   polynomials. * This option is also not usually needed, and is experimental.  
+    Qonly:
+    # type=bool|default=False: Use Hermite quintic polynomials at all levels.  * Very slow (about 4 times longer).  Also experimental. * Will produce a (discrete representation of a) C2 warp.  
+    nopad:
+    # type=bool|default=False: Do NOT use zero-padding on the 3D base and source images. [Default == zero-pad, if needed]  * The underlying model for deformations goes to zero at the   edge of the volume being warped.  However, if there is   significant data near an edge of the volume, then it won't   get displaced much, and so the results might not be good. * Zero padding is designed as a way to work around this potential   problem.  You should NOT need the '-nopad' option for any   reason that Zhark can think of, but it is here to be symmetrical   with 3dAllineate. * Note that the output (warped from source) dataset will be on the   base dataset grid whether or not zero-padding is allowed.  However,   unless you use the following option, allowing zero-padding (i.e.,   the default operation) will make the output WARP dataset(s) be   on a larger grid (also see '-expad' below).  
+    nopadWARP:
+    # type=bool|default=False: If for some reason you require the warp volume tomatch the base volume, then use this option to have the outputWARP dataset(s) truncated.
+    expad:
+    # type=int|default=0: This option instructs the program to pad the warp by an extra'EE' voxels (and then 3dQwarp starts optimizing it).This option is seldom needed, but can be useful if youmight later catenate the nonlinear warp -- via 3dNwarpCat --with an affine transformation that contains a large shift.Under that circumstance, the nonlinear warp might be shiftedpartially outside its original grid, so expanding that gridcan avoid this problem.Note that this option perforce turns off '-nopadWARP'.
+    ballopt:
+    # type=bool|default=False: Normally, the incremental warp parameters are optimized insidea rectangular 'box' (24 dimensional for cubic patches, 81 forquintic patches), whose limits define the amount of distortionallowed at each step.  Using '-ballopt' switches these limitsto be applied to a 'ball' (interior of a hypersphere), whichcan allow for larger incremental displacements.  Use thisoption if you think things need to be able to move farther.
+    baxopt:
+    # type=bool|default=False: Use the 'box' optimization limits instead of the 'ball'[this is the default at present].Note that if '-workhard' is used, then ball and box optimizationare alternated in the different iterations at each level, sothese two options have no effect in that case.
+    verb:
+    # type=bool|default=False: more detailed description of the process
+    quiet:
+    # type=bool|default=False: Cut out most of the fun fun fun progress messages :-(
+    overwrite:
+    # type=bool|default=False: Overwrite outputs
+    lpc:
+    # type=bool|default=False: Local Pearson minimization (i.e., EPI-T1 registration)This option has not be extensively testedIf you use '-lpc', then '-maxlev 0' is automatically set.If you want to go to more refined levels, you can set '-maxlev'This should be set up to have lpc as the second to last argumentand maxlev as the second to last argument, as needed by AFNIUsing maxlev > 1 is not recommended for EPI-T1 alignment.
+    lpa:
+    # type=bool|default=False: Local Pearson maximization. This option has not be extensively tested
+    hel:
+    # type=bool|default=False: Hellinger distance: a matching function for the adventurousThis option has NOT be extensively tested for usefulnessand should be considered experimental at this infundibulum.
+    mi:
+    # type=bool|default=False: Mutual Information: a matching function for the adventurousThis option has NOT be extensively tested for usefulnessand should be considered experimental at this infundibulum.
+    nmi:
+    # type=bool|default=False: Normalized Mutual Information: a matching function for the adventurousThis option has NOT been extensively tested for usefulnessand should be considered experimental at this infundibulum.
+    num_threads:
+    # type=int|default=1: set number of threads
+    outputtype:
+    # type=enum|default='AFNI'|allowed['AFNI','NIFTI','NIFTI_GZ']: AFNI output filetype
+    args:
+    # type=str|default='': Additional parameters to the command
+    environ:
+    # type=dict|default={}: Environment variables
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    in_file:
+    # type=file|default=<undefined>: Source image (opposite phase encoding direction than base image).
+    nopadWARP: 'True'
+    # type=bool|default=False: If for some reason you require the warp volume tomatch the base volume, then use this option to have the outputWARP dataset(s) truncated.
+    base_file:
+    # type=file|default=<undefined>: Base image (opposite phase encoding direction than source image).
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+doctests:
+- cmdline: 3dQwarp -prefix Qwarp.nii.gz -plusminus -base sub-01_dir-RL_epi.nii.gz -source sub-01_dir-LR_epi.nii.gz -nopadWARP
+  # str - the expected cmdline output
+  inputs:
+  # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
+  # If the field is of file-format type and the value is None, then the
+  # '.mock()' method of the corresponding class is used instead.
+    in_file:
+    # type=file|default=<undefined>: Source image (opposite phase encoding direction than base image).
+    nopadWARP: 'True'
+    # type=bool|default=False: If for some reason you require the warp volume tomatch the base volume, then use this option to have the outputWARP dataset(s) truncated.
+    base_file:
+    # type=file|default=<undefined>: Base image (opposite phase encoding direction than source image).
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  directive:
+  # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

@@ -1,0 +1,146 @@
+# This file is used to manually specify the semi-automatic conversion of
+# 'nipype.interfaces.afni.preprocess.Seg' from Nipype to Pydra.
+#
+# Please fill-in/edit the fields below where appropriate
+#
+# Docs
+# ----
+# 3dSeg segments brain volumes into tissue classes. The program allows
+#     for adding a variety of global and voxelwise priors. However for the
+#     moment, only mixing fractions and MRF are documented.
+# 
+#     For complete details, see the `3dSeg Documentation.
+#     <https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dSeg.html>`_
+# 
+#     Examples
+#     --------
+#     >>> from nipype.interfaces.afni import preprocess
+#     >>> seg = preprocess.Seg()
+#     >>> seg.inputs.in_file = 'structural.nii'
+#     >>> seg.inputs.mask = 'AUTO'
+#     >>> seg.cmdline
+#     '3dSeg -mask AUTO -anat structural.nii'
+#     >>> res = seg.run()  # doctest: +SKIP
+# 
+#     
+task_name: Seg
+nipype_name: Seg
+nipype_module: nipype.interfaces.afni.preprocess
+inputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    in_file: medimage/nifti1
+    # type=file|default=<undefined>: ANAT is the volume to segment
+  metadata:
+  # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
+outputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    out_file: generic/file
+    # type=file: output file
+  callables:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set to the `callable` attribute of output fields
+  templates:
+  # dict[str, str] - `output_file_template` values to be provided to output fields
+  requirements:
+  # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
+tests:
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    in_file:
+    # type=file|default=<undefined>: ANAT is the volume to segment
+    mask:
+    # type=traitcompound|default=None: only non-zero voxels in mask are analyzed. mask can either be a dataset or the string "AUTO" which would use AFNI's automask function to create the mask.
+    blur_meth:
+    # type=enum|default='BFT'|allowed['BFT','BIM']: set the blurring method for bias field estimation
+    bias_fwhm:
+    # type=float|default=0.0: The amount of blurring used when estimating the field bias with the Wells method
+    classes:
+    # type=str|default='': CLASS_STRING is a semicolon delimited string of class labels
+    bmrf:
+    # type=float|default=0.0: Weighting factor controlling spatial homogeneity of the classifications
+    bias_classes:
+    # type=str|default='': A semicolon delimited string of classes that contribute to the estimation of the bias field
+    prefix:
+    # type=str|default='': the prefix for the output folder containing all output volumes
+    mixfrac:
+    # type=str|default='': MIXFRAC sets up the volume-wide (within mask) tissue fractions while initializing the segmentation (see IGNORE for exception)
+    mixfloor:
+    # type=float|default=0.0: Set the minimum value for any class's mixing fraction
+    main_N:
+    # type=int|default=0: Number of iterations to perform.
+    args:
+    # type=str|default='': Additional parameters to the command
+    environ:
+    # type=dict|default={}: Environment variables
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    in_file:
+    # type=file|default=<undefined>: ANAT is the volume to segment
+    mask: '"AUTO"'
+    # type=traitcompound|default=None: only non-zero voxels in mask are analyzed. mask can either be a dataset or the string "AUTO" which would use AFNI's automask function to create the mask.
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+doctests:
+- cmdline: 3dSeg -mask AUTO -anat structural.nii
+  # str - the expected cmdline output
+  inputs:
+  # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
+  # If the field is of file-format type and the value is None, then the
+  # '.mock()' method of the corresponding class is used instead.
+    in_file:
+    # type=file|default=<undefined>: ANAT is the volume to segment
+    mask: '"AUTO"'
+    # type=traitcompound|default=None: only non-zero voxels in mask are analyzed. mask can either be a dataset or the string "AUTO" which would use AFNI's automask function to create the mask.
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  directive:
+  # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

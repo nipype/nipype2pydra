@@ -1,0 +1,248 @@
+# This file is used to manually specify the semi-automatic conversion of
+# 'nipype.interfaces.niftyfit.qt1.FitQt1' from Nipype to Pydra.
+#
+# Please fill-in/edit the fields below where appropriate
+#
+# Docs
+# ----
+# Interface for executable fit_qt1 from Niftyfit platform.
+# 
+#     Use NiftyFit to perform Qt1 fitting.
+# 
+#     T1 Fitting Routine (To inversion recovery or spgr data).
+#     Fits single component T1 maps in the first instance.
+# 
+#     `Source code <https://cmiclab.cs.ucl.ac.uk/CMIC/NiftyFit-Release>`_
+# 
+#     Examples
+#     --------
+# 
+#     >>> from nipype.interfaces.niftyfit import FitQt1
+#     >>> fit_qt1 = FitQt1()
+#     >>> fit_qt1.inputs.source_file = 'TI4D.nii.gz'
+#     >>> fit_qt1.cmdline
+#     'fit_qt1 -source TI4D.nii.gz -comp TI4D_comp.nii.gz -error TI4D_error.nii.gz -m0map TI4D_m0map.nii.gz -mcmap TI4D_mcmap.nii.gz -res TI4D_res.nii.gz -syn TI4D_syn.nii.gz -t1map TI4D_t1map.nii.gz'
+# 
+#     
+task_name: FitQt1
+nipype_name: FitQt1
+nipype_module: nipype.interfaces.niftyfit.qt1
+inputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    source_file: medimage/nifti-gz
+    # type=file|default=<undefined>: Filename of the 4D Multi-Echo T1 source image.
+    t1map_file: generic/file
+    # type=file: Filename of the estimated output T1 map (in ms)
+    # type=file|default=<undefined>: Filename of the estimated output T1 map (in ms).
+    m0map_file: generic/file
+    # type=file: Filename of the m0 map
+    # type=file|default=<undefined>: Filename of the estimated input M0 map.
+    mcmap_file: generic/file
+    # type=file: Filename of the estimated output multi-parameter map
+    # type=file|default=<undefined>: Filename of the estimated output multi-parameter map.
+    comp_file: generic/file
+    # type=file: Filename of the estimated multi-component T1 map.
+    # type=file|default=<undefined>: Filename of the estimated multi-component T1 map.
+    error_file: generic/file
+    # type=file: Filename of the error map (symmetric matrix, [Diag,OffDiag])
+    # type=file|default=<undefined>: Filename of the error map (symmetric matrix, [Diag,OffDiag]).
+    syn_file: generic/file
+    # type=file: Filename of the synthetic ASL data
+    # type=file|default=<undefined>: Filename of the synthetic ASL data.
+    res_file: generic/file
+    # type=file: Filename of the model fit residuals
+    # type=file|default=<undefined>: Filename of the model fit residuals
+    mask: generic/file
+    # type=file|default=<undefined>: Filename of image mask.
+    prior: generic/file
+    # type=file|default=<undefined>: Filename of parameter prior.
+    tis_list: generic/file
+    # type=file|default=<undefined>: Filename of list of pre-defined TIs.
+    t1_list: generic/file
+    # type=file|default=<undefined>: Filename of list of pre-defined T1s
+    flips_list: generic/file
+    # type=file|default=<undefined>: Filename of list of pre-defined flip angles (deg).
+    b1map: generic/file
+    # type=file|default=<undefined>: Filename of B1 estimate for fitting (or include in prior).
+    mcout: generic/file
+    # type=file|default=<undefined>: Filename of mc samples (ascii text file)
+  metadata:
+  # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
+outputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    t1map_file: generic/file
+    # type=file: Filename of the estimated output T1 map (in ms)
+    # type=file|default=<undefined>: Filename of the estimated output T1 map (in ms).
+    m0map_file: generic/file
+    # type=file: Filename of the m0 map
+    # type=file|default=<undefined>: Filename of the estimated input M0 map.
+    mcmap_file: generic/file
+    # type=file: Filename of the estimated output multi-parameter map
+    # type=file|default=<undefined>: Filename of the estimated output multi-parameter map.
+    comp_file: generic/file
+    # type=file: Filename of the estimated multi-component T1 map.
+    # type=file|default=<undefined>: Filename of the estimated multi-component T1 map.
+    error_file: generic/file
+    # type=file: Filename of the error map (symmetric matrix, [Diag,OffDiag])
+    # type=file|default=<undefined>: Filename of the error map (symmetric matrix, [Diag,OffDiag]).
+    syn_file: generic/file
+    # type=file: Filename of the synthetic ASL data
+    # type=file|default=<undefined>: Filename of the synthetic ASL data.
+    res_file: generic/file
+    # type=file: Filename of the model fit residuals
+    # type=file|default=<undefined>: Filename of the model fit residuals
+  callables:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set to the `callable` attribute of output fields
+  templates:
+  # dict[str, str] - `output_file_template` values to be provided to output fields
+  requirements:
+  # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
+tests:
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    source_file:
+    # type=file|default=<undefined>: Filename of the 4D Multi-Echo T1 source image.
+    t1map_file:
+    # type=file: Filename of the estimated output T1 map (in ms)
+    # type=file|default=<undefined>: Filename of the estimated output T1 map (in ms).
+    m0map_file:
+    # type=file: Filename of the m0 map
+    # type=file|default=<undefined>: Filename of the estimated input M0 map.
+    mcmap_file:
+    # type=file: Filename of the estimated output multi-parameter map
+    # type=file|default=<undefined>: Filename of the estimated output multi-parameter map.
+    comp_file:
+    # type=file: Filename of the estimated multi-component T1 map.
+    # type=file|default=<undefined>: Filename of the estimated multi-component T1 map.
+    error_file:
+    # type=file: Filename of the error map (symmetric matrix, [Diag,OffDiag])
+    # type=file|default=<undefined>: Filename of the error map (symmetric matrix, [Diag,OffDiag]).
+    syn_file:
+    # type=file: Filename of the synthetic ASL data
+    # type=file|default=<undefined>: Filename of the synthetic ASL data.
+    res_file:
+    # type=file: Filename of the model fit residuals
+    # type=file|default=<undefined>: Filename of the model fit residuals
+    mask:
+    # type=file|default=<undefined>: Filename of image mask.
+    prior:
+    # type=file|default=<undefined>: Filename of parameter prior.
+    te_value:
+    # type=float|default=0.0: TE Echo Time [0ms!].
+    tr_value:
+    # type=float|default=0.0: TR Repetition Time [10s!].
+    nb_comp:
+    # type=int|default=0: Number of components to fit [1] (currently IR/SR only)
+    lm_val:
+    # type=tuple|default=(0.0, 0.0): Set LM parameters (initial value, decrease rate) [100,1.2].
+    gn_flag:
+    # type=bool|default=False: Use Gauss-Newton algorithm [Levenberg-Marquardt].
+    slice_no:
+    # type=int|default=0: Fit to single slice number.
+    voxel:
+    # type=tuple|default=(0, 0, 0): Fit to single voxel only.
+    maxit:
+    # type=int|default=0: NLSQR iterations [100].
+    sr_flag:
+    # type=bool|default=False: Saturation Recovery fitting [default].
+    ir_flag:
+    # type=bool|default=False: Inversion Recovery fitting [default].
+    tis:
+    # type=list|default=[]: Inversion times for T1 data [1s,2s,5s].
+    tis_list:
+    # type=file|default=<undefined>: Filename of list of pre-defined TIs.
+    t1_list:
+    # type=file|default=<undefined>: Filename of list of pre-defined T1s
+    t1min:
+    # type=float|default=0.0: Minimum tissue T1 value [400ms].
+    t1max:
+    # type=float|default=0.0: Maximum tissue T1 value [4000ms].
+    spgr:
+    # type=bool|default=False: Spoiled Gradient Echo fitting
+    flips:
+    # type=list|default=[]: Flip angles
+    flips_list:
+    # type=file|default=<undefined>: Filename of list of pre-defined flip angles (deg).
+    b1map:
+    # type=file|default=<undefined>: Filename of B1 estimate for fitting (or include in prior).
+    mcout:
+    # type=file|default=<undefined>: Filename of mc samples (ascii text file)
+    mcsamples:
+    # type=int|default=0: Number of samples to keep [100].
+    mcmaxit:
+    # type=int|default=0: Number of iterations to run [10,000].
+    acceptance:
+    # type=float|default=0.0: Fraction of iterations to accept [0.23].
+    args:
+    # type=str|default='': Additional parameters to the command
+    environ:
+    # type=dict|default={}: Environment variables
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    source_file:
+    # type=file|default=<undefined>: Filename of the 4D Multi-Echo T1 source image.
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+doctests:
+- cmdline: fit_qt1 -source TI4D.nii.gz -comp TI4D_comp.nii.gz -error TI4D_error.nii.gz -m0map TI4D_m0map.nii.gz -mcmap TI4D_mcmap.nii.gz -res TI4D_res.nii.gz -syn TI4D_syn.nii.gz -t1map TI4D_t1map.nii.gz
+  # str - the expected cmdline output
+  inputs:
+  # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
+  # If the field is of file-format type and the value is None, then the
+  # '.mock()' method of the corresponding class is used instead.
+    source_file:
+    # type=file|default=<undefined>: Filename of the 4D Multi-Echo T1 source image.
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  directive:
+  # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

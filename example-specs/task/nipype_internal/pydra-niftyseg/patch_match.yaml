@@ -1,0 +1,165 @@
+# This file is used to manually specify the semi-automatic conversion of
+# 'nipype.interfaces.niftyseg.patchmatch.PatchMatch' from Nipype to Pydra.
+#
+# Please fill-in/edit the fields below where appropriate
+#
+# Docs
+# ----
+# Interface for executable seg_PatchMatch from NiftySeg platform.
+# 
+#     The database file is a text file and in each line we have a template
+#     file, a mask with the search region to consider and a file with the
+#     label to propagate.
+# 
+#     Input image, input mask, template images from database and masks from
+#     database must have the same 4D resolution (same number of XxYxZ voxels,
+#     modalities and/or time-points).
+#     Label files from database must have the same 3D resolution
+#     (XxYxZ voxels) than input image but can have different number of
+#     volumes than the input image allowing to propagate multiple labels
+#     in the same execution.
+# 
+#     `Source code <http://cmictig.cs.ucl.ac.uk/wiki/index.php/NiftySeg>`_ |
+#     `Documentation <http://cmictig.cs.ucl.ac.uk/wiki/index.php/NiftySeg_documentation>`_
+# 
+#     Examples
+#     --------
+#     >>> from nipype.interfaces import niftyseg
+#     >>> node = niftyseg.PatchMatch()
+#     >>> node.inputs.in_file = 'im1.nii'
+#     >>> node.inputs.mask_file = 'im2.nii'
+#     >>> node.inputs.database_file = 'db.xml'
+#     >>> node.cmdline
+#     'seg_PatchMatch -i im1.nii -m im2.nii -db db.xml -o im1_pm.nii.gz'
+# 
+#     
+task_name: PatchMatch
+nipype_name: PatchMatch
+nipype_module: nipype.interfaces.niftyseg.patchmatch
+inputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    in_file: medimage/nifti1
+    # type=file|default=<undefined>: Input image to segment
+    mask_file: medimage/nifti1
+    # type=file|default=<undefined>: Input mask for the area where applies PatchMatch
+    database_file: application/xml
+    # type=file|default=<undefined>: Database with the segmentations
+    out_file: generic/file
+    # type=file: Output segmentation
+    # type=file|default=<undefined>: The output filename of the patchmatch results
+  metadata:
+  # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
+outputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    out_file: generic/file
+    # type=file: Output segmentation
+    # type=file|default=<undefined>: The output filename of the patchmatch results
+  callables:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set to the `callable` attribute of output fields
+  templates:
+  # dict[str, str] - `output_file_template` values to be provided to output fields
+  requirements:
+  # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
+tests:
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    in_file:
+    # type=file|default=<undefined>: Input image to segment
+    mask_file:
+    # type=file|default=<undefined>: Input mask for the area where applies PatchMatch
+    database_file:
+    # type=file|default=<undefined>: Database with the segmentations
+    out_file:
+    # type=file: Output segmentation
+    # type=file|default=<undefined>: The output filename of the patchmatch results
+    patch_size:
+    # type=int|default=0: Patch size, #voxels
+    cs_size:
+    # type=int|default=0: Constrained search area size, number of times bigger than the patchsize
+    match_num:
+    # type=int|default=0: Number of better matching
+    pm_num:
+    # type=int|default=0: Number of patchmatch executions
+    it_num:
+    # type=int|default=0: Number of iterations for the patchmatch algorithm
+    args:
+    # type=str|default='': Additional parameters to the command
+    environ:
+    # type=dict|default={}: Environment variables
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    in_file:
+    # type=file|default=<undefined>: Input image to segment
+    mask_file:
+    # type=file|default=<undefined>: Input mask for the area where applies PatchMatch
+    database_file:
+    # type=file|default=<undefined>: Database with the segmentations
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+doctests:
+- cmdline: seg_PatchMatch -i im1.nii -m im2.nii -db db.xml -o im1_pm.nii.gz
+  # str - the expected cmdline output
+  inputs:
+  # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
+  # If the field is of file-format type and the value is None, then the
+  # '.mock()' method of the corresponding class is used instead.
+    in_file:
+    # type=file|default=<undefined>: Input image to segment
+    mask_file:
+    # type=file|default=<undefined>: Input mask for the area where applies PatchMatch
+    database_file:
+    # type=file|default=<undefined>: Database with the segmentations
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  directive:
+  # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

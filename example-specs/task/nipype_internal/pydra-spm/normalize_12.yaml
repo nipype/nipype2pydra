@@ -1,0 +1,122 @@
+# This file is used to manually specify the semi-automatic conversion of
+# 'nipype.interfaces.spm.preprocess.Normalize12' from Nipype to Pydra.
+#
+# Please fill-in/edit the fields below where appropriate
+#
+# Docs
+# ----
+# uses SPM12's new Normalise routine for warping an image to a template.
+#     Spatial normalisation is now done via the segmentation routine (which was
+#     known as ``New Segment`` in SPM8). Note that the normalisation in SPM12
+#     is done towards a file containing multiple tissue probability maps, which
+#     was not the case in SPM8.
+# 
+#     http://www.fil.ion.ucl.ac.uk/spm/doc/manual.pdf#page=49
+# 
+#     Examples
+#     --------
+#     >>> import nipype.interfaces.spm as spm
+#     >>> norm12 = spm.Normalize12()
+#     >>> norm12.inputs.image_to_align = 'structural.nii'
+#     >>> norm12.inputs.apply_to_files = 'functional.nii'
+#     >>> norm12.run() # doctest: +SKIP
+# 
+#     
+task_name: Normalize12
+nipype_name: Normalize12
+nipype_module: nipype.interfaces.spm.preprocess
+inputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    tpm: generic/file
+    # type=file|default=<undefined>: template in form of tissue probablitiy maps to normalize to
+    paths: generic/directory+list-of
+    # type=inputmultiobject|default=[]: Paths to add to matlabpath
+  metadata:
+  # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
+outputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+  callables:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set to the `callable` attribute of output fields
+  templates:
+  # dict[str, str] - `output_file_template` values to be provided to output fields
+  requirements:
+  # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
+tests:
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    image_to_align:
+    # type=imagefilespm|default=<undefined>: file to estimate normalization parameters with
+    apply_to_files:
+    # type=inputmultiobject|default=[]: files to apply transformation to
+    deformation_file:
+    # type=imagefilespm|default=<undefined>: file y_*.nii containing 3 deformation fields for the deformation in x, y and z dimension
+    jobtype:
+    # type=enum|default='estwrite'|allowed['est','estwrite','write']: Estimate, Write or do Both
+    bias_regularization:
+    # type=enum|default=0|allowed[0,0.0001,0.001,0.01,0.1,1,10,1e-05]: no(0) - extremely heavy (10)
+    bias_fwhm:
+    # type=enum|default=30|allowed['Inf',100,110,120,130,140,150,30,40,50,60,70,80,90]: FWHM of Gaussian smoothness of bias
+    tpm:
+    # type=file|default=<undefined>: template in form of tissue probablitiy maps to normalize to
+    affine_regularization_type:
+    # type=enum|default='mni'|allowed['mni','none','size']: mni, size, none
+    warping_regularization:
+    # type=list|default=[]: controls balance between parameters and data
+    smoothness:
+    # type=float|default=0.0: value (in mm) to smooth the data before normalization
+    sampling_distance:
+    # type=float|default=0.0: Sampling distance on data for parameter estimation
+    write_bounding_box:
+    # type=list|default=[]: 3x2-element list of lists representing the bounding box (in mm) to be written
+    write_voxel_sizes:
+    # type=list|default=[]: 3-element list representing the voxel sizes (in mm) of the written normalised images
+    write_interp:
+    # type=range|default=0: degree of b-spline used for interpolation
+    out_prefix:
+    # type=string|default='w': Normalized output prefix
+    matlab_cmd:
+    # type=str|default='': matlab command to use
+    paths:
+    # type=inputmultiobject|default=[]: Paths to add to matlabpath
+    mfile:
+    # type=bool|default=True: Run m-code using m-file
+    use_mcr:
+    # type=bool|default=False: Run m-code using SPM MCR
+    use_v8struct:
+    # type=bool|default=True: Generate SPM8 and higher compatible jobs
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+doctests: []

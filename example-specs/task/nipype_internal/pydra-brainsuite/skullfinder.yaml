@@ -1,0 +1,116 @@
+# This file is used to manually specify the semi-automatic conversion of
+# 'nipype.interfaces.brainsuite.brainsuite.Skullfinder' from Nipype to Pydra.
+#
+# Please fill-in/edit the fields below where appropriate
+#
+# Docs
+# ----
+# 
+#     Skull and scalp segmentation algorithm.
+# 
+#     Examples
+#     --------
+# 
+#     >>> from nipype.interfaces import brainsuite
+#     >>> from nipype.testing import example_data
+#     >>> skullfinder = brainsuite.Skullfinder()
+#     >>> skullfinder.inputs.inputMRIFile = example_data('structural.nii')
+#     >>> skullfinder.inputs.inputMaskFile = example_data('mask.nii')
+#     >>> results = skullfinder.run() #doctest: +SKIP
+# 
+#     
+task_name: Skullfinder
+nipype_name: Skullfinder
+nipype_module: nipype.interfaces.brainsuite.brainsuite
+inputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    inputMRIFile: generic/file
+    # type=file|default=<undefined>: input file
+    inputMaskFile: generic/file
+    # type=file|default=<undefined>: A brain mask file, 8-bit image (0=non-brain, 255=brain)
+  metadata:
+  # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
+outputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    outputLabelFile: generic/file
+    # type=file: path/name of label file
+    # type=file|default=<undefined>: output multi-colored label volume segmenting brain, scalp, inner skull & outer skull If unspecified, output file name will be auto generated.
+  callables:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set to the `callable` attribute of output fields
+  templates:
+  # dict[str, str] - `output_file_template` values to be provided to output fields
+    outputLabelFile: outputLabelFile
+    # type=file: path/name of label file
+    # type=file|default=<undefined>: output multi-colored label volume segmenting brain, scalp, inner skull & outer skull If unspecified, output file name will be auto generated.
+  requirements:
+  # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
+tests:
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    inputMRIFile:
+    # type=file|default=<undefined>: input file
+    inputMaskFile:
+    # type=file|default=<undefined>: A brain mask file, 8-bit image (0=non-brain, 255=brain)
+    outputLabelFile:
+    # type=file: path/name of label file
+    # type=file|default=<undefined>: output multi-colored label volume segmenting brain, scalp, inner skull & outer skull If unspecified, output file name will be auto generated.
+    verbosity:
+    # type=int|default=0: verbosity
+    lowerThreshold:
+    # type=int|default=0: Lower threshold for segmentation
+    upperThreshold:
+    # type=int|default=0: Upper threshold for segmentation
+    surfaceFilePrefix:
+    # type=str|default='': if specified, generate surface files for brain, skull, and scalp
+    bgLabelValue:
+    # type=int|default=0: background label value (0-255)
+    scalpLabelValue:
+    # type=int|default=0: scalp label value (0-255)
+    skullLabelValue:
+    # type=int|default=0: skull label value (0-255)
+    spaceLabelValue:
+    # type=int|default=0: space label value (0-255)
+    brainLabelValue:
+    # type=int|default=0: brain label value (0-255)
+    performFinalOpening:
+    # type=bool|default=False: perform a final opening operation on the scalp mask
+    args:
+    # type=str|default='': Additional parameters to the command
+    environ:
+    # type=dict|default={}: Environment variables
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+doctests: []

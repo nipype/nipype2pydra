@@ -1,0 +1,151 @@
+# This file is used to manually specify the semi-automatic conversion of
+# 'nipype.interfaces.semtools.diffusion.gtract.gtractFiberTracking' from Nipype to Pydra.
+#
+# Please fill-in/edit the fields below where appropriate
+#
+# Docs
+# ----
+# title: Fiber Tracking
+# 
+#     category: Diffusion.GTRACT
+# 
+#     description: This program implements four fiber tracking methods (Free, Streamline, GraphSearch, Guided). The output of the fiber tracking is vtkPolyData (i.e. Polylines) that can be loaded into Slicer3 for visualization. The poly data can be saved in either old VTK format files (.vtk) or in the new VTK XML format (.xml). The polylines contain point data that defines the Tensor at each point along the fiber tract. This can then be used to rendered as glyphs in Slicer3 and can be used to define several scalar measures without referencing back to the anisotropy images. (1) Free tracking is a basic streamlines algorithm. This is a direct implementation of the method original proposed by Basser et al. The tracking follows the primarty eigenvector. The tracking begins with seed points in the starting region. Only those voxels above the specified anisotropy threshold in the starting region are used as seed points. Tracking terminates either as a result of maximum fiber length, low ansiotropy, or large curvature. This is a great way to explore your data. (2) The streamlines algorithm is a direct implementation of the method originally proposed by Basser et al. The tracking follows the primary eigenvector. The tracking begins with seed points in the starting region. Only those voxels above the specified anisotropy threshold in the starting region are used as seed points. Tracking terminates either by reaching the ending region or reaching some stopping criteria. Stopping criteria are specified using the following parameters: tracking threshold, curvature threshold, and max length. Only paths terminating in the ending region are kept in this method. The TEND algorithm proposed by Lazar et al. (Human Brain Mapping 18:306-321, 2003) has been instrumented. This can be enabled using the --useTend option while performing Streamlines tracking. This utilizes the entire diffusion tensor to deflect the incoming vector instead of simply following the primary eigenvector. The TEND parameters are set using the --tendF and --tendG options. (3) Graph Search tracking is the first step in the full GTRACT algorithm developed by Cheng et al. (NeuroImage 31(3): 1075-1085, 2006) for finding the tracks in a tensor image. This method was developed to generate fibers in a Tensor representation where crossing fibers occur. The graph search algorithm follows the primary eigenvector in non-ambiguous regions and utilizes branching and a graph search algorithm in ambiguous regions. Ambiguous tracking regions are defined based on two criteria: Branching Al Threshold (anisotropy values below this value and above the traching threshold) and Curvature Major Eigen (angles of the primary eigenvector direction and the current tracking direction). In regions that meet this criteria, two or three tracking paths are considered. The first is the standard primary eigenvector direction. The second is the seconadary eigenvector direction. This is based on the assumption that these regions may be prolate regions. If the Random Walk option is selected then a third direction is also considered. This direction is defined by a cone pointing from the current position to the centroid of the ending region. The interior angle of the cone is specified by the user with the Branch/Guide Angle parameter. A vector contained inside of the cone is selected at random and used as the third direction. This method can also utilize the TEND option where the primary tracking direction is that specified by the TEND method instead of the primary eigenvector. The parameter '--maximumBranchPoints' allows the tracking to have this number of branches being considered at a time. If this number of branch points is exceeded at any time, then the algorithm will revert back to a streamline algorithm until the number of branches is reduced. This allows the user to constrain the computational complexity of the algorithm. (4) The second phase of the GTRACT algorithm is Guided Tracking. This method incorporates anatomical information about the track orientation using an initial guess of the fiber track. In the originally proposed GTRACT method, this would be created from the fibers resulting from the Graph Search tracking. However, in practice this can be created using any method and could be defined manually. To create the guide fiber the program gtractCreateGuideFiber can be used. This program will load a fiber tract that has been generated and create a centerline representation of the fiber tract (i.e. a single fiber). In this method, the fiber tracking follows the primary eigenvector direction unless it deviates from the guide fiber track by a angle greater than that specified by the '--guidedCurvatureThreshold' parameter. The user must specify the guide fiber when running this program.
+# 
+#     version: 4.0.0
+# 
+#     documentation-url: http://wiki.slicer.org/slicerWiki/index.php/Modules:GTRACT
+# 
+#     license: http://mri.radiology.uiowa.edu/copyright/GTRACT-Copyright.txt
+# 
+#     contributor: This tool was developed by Vincent Magnotta, Greg Harris and Yongqiang Zhao.
+# 
+#     acknowledgements: Funding for this version of the GTRACT program was provided by NIH/NINDS R01NS050568-01A2S1
+#     
+task_name: gtractFiberTracking
+nipype_name: gtractFiberTracking
+nipype_module: nipype.interfaces.semtools.diffusion.gtract
+inputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    inputTensorVolume: generic/file
+    # type=file|default=<undefined>: Required (for Free, Streamline, GraphSearch, and Guided fiber tracking methods): input tensor image file name
+    inputAnisotropyVolume: generic/file
+    # type=file|default=<undefined>: Required (for Free, Streamline, GraphSearch, and Guided fiber tracking methods): input anisotropy image file name
+    inputStartingSeedsLabelMapVolume: generic/file
+    # type=file|default=<undefined>: Required (for Free, Streamline, GraphSearch, and Guided fiber tracking methods): input starting seeds LabelMap image file name
+    inputEndingSeedsLabelMapVolume: generic/file
+    # type=file|default=<undefined>: Required (for Streamline, GraphSearch, and Guided fiber tracking methods): input ending seeds LabelMap image file name
+    inputTract: generic/file
+    # type=file|default=<undefined>: Required (for Guided fiber tracking method): guide fiber in vtkPolydata file containing one tract line.
+  metadata:
+  # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
+outputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    outputTract: generic/file
+    # type=file: Required (for Free, Streamline, GraphSearch, and Guided fiber tracking methods): name of output vtkPolydata file containing tract lines and the point data collected along them.
+    # type=traitcompound|default=None: Required (for Free, Streamline, GraphSearch, and Guided fiber tracking methods): name of output vtkPolydata file containing tract lines and the point data collected along them.
+  callables:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set to the `callable` attribute of output fields
+  templates:
+  # dict[str, str] - `output_file_template` values to be provided to output fields
+  requirements:
+  # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
+tests:
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    inputTensorVolume:
+    # type=file|default=<undefined>: Required (for Free, Streamline, GraphSearch, and Guided fiber tracking methods): input tensor image file name
+    inputAnisotropyVolume:
+    # type=file|default=<undefined>: Required (for Free, Streamline, GraphSearch, and Guided fiber tracking methods): input anisotropy image file name
+    inputStartingSeedsLabelMapVolume:
+    # type=file|default=<undefined>: Required (for Free, Streamline, GraphSearch, and Guided fiber tracking methods): input starting seeds LabelMap image file name
+    startingSeedsLabel:
+    # type=int|default=0: Label value for Starting Seeds (required if Label number used to create seed point in Slicer was not 1)
+    inputEndingSeedsLabelMapVolume:
+    # type=file|default=<undefined>: Required (for Streamline, GraphSearch, and Guided fiber tracking methods): input ending seeds LabelMap image file name
+    endingSeedsLabel:
+    # type=int|default=0: Label value for Ending Seeds (required if Label number used to create seed point in Slicer was not 1)
+    inputTract:
+    # type=file|default=<undefined>: Required (for Guided fiber tracking method): guide fiber in vtkPolydata file containing one tract line.
+    outputTract:
+    # type=file: Required (for Free, Streamline, GraphSearch, and Guided fiber tracking methods): name of output vtkPolydata file containing tract lines and the point data collected along them.
+    # type=traitcompound|default=None: Required (for Free, Streamline, GraphSearch, and Guided fiber tracking methods): name of output vtkPolydata file containing tract lines and the point data collected along them.
+    writeXMLPolyDataFile:
+    # type=bool|default=False: Flag to make use of the XML format for vtkPolyData fiber tracts.
+    trackingMethod:
+    # type=enum|default='Guided'|allowed['Free','GraphSearch','Guided','Streamline']: Fiber tracking Filter Type: Guided|Free|Streamline|GraphSearch
+    guidedCurvatureThreshold:
+    # type=float|default=0.0: Guided Curvature Threshold (Degrees)
+    maximumGuideDistance:
+    # type=float|default=0.0: Maximum distance for using the guide fiber direction
+    seedThreshold:
+    # type=float|default=0.0: Anisotropy threshold for seed selection (recommended for Free fiber tracking)
+    trackingThreshold:
+    # type=float|default=0.0: Anisotropy threshold for fiber tracking (anisotropy values of the next point along the path)
+    curvatureThreshold:
+    # type=float|default=0.0: Curvature threshold in degrees (recommended for Free  fiber tracking)
+    branchingThreshold:
+    # type=float|default=0.0: Anisotropy Branching threshold (recommended for GraphSearch fiber tracking method)
+    maximumBranchPoints:
+    # type=int|default=0: Maximum branch points (recommended for GraphSearch fiber tracking method)
+    useRandomWalk:
+    # type=bool|default=False: Flag to use random walk.
+    randomSeed:
+    # type=int|default=0: Random number generator seed
+    branchingAngle:
+    # type=float|default=0.0: Branching angle in degrees (recommended for GraphSearch fiber tracking method)
+    minimumLength:
+    # type=float|default=0.0: Minimum fiber length. Helpful for filtering invalid tracts.
+    maximumLength:
+    # type=float|default=0.0: Maximum fiber length (voxels)
+    stepSize:
+    # type=float|default=0.0: Fiber tracking step size
+    useLoopDetection:
+    # type=bool|default=False: Flag to make use of loop detection.
+    useTend:
+    # type=bool|default=False: Flag to make use of Tend F and Tend G parameters.
+    tendF:
+    # type=float|default=0.0: Tend F parameter
+    tendG:
+    # type=float|default=0.0: Tend G parameter
+    numberOfThreads:
+    # type=int|default=0: Explicitly specify the maximum number of threads to use.
+    args:
+    # type=str|default='': Additional parameters to the command
+    environ:
+    # type=dict|default={}: Environment variables
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+doctests: []

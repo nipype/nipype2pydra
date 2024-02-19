@@ -1,0 +1,112 @@
+# This file is used to manually specify the semi-automatic conversion of
+# 'nipype.interfaces.brainsuite.brainsuite.Cortex' from Nipype to Pydra.
+#
+# Please fill-in/edit the fields below where appropriate
+#
+# Docs
+# ----
+# 
+#     cortex extractor
+#     This program produces a cortical mask using tissue fraction estimates
+#     and a co-registered cerebellum/hemisphere mask.
+# 
+#     http://brainsuite.org/processing/surfaceextraction/cortex/
+# 
+#     Examples
+#     --------
+# 
+#     >>> from nipype.interfaces import brainsuite
+#     >>> from nipype.testing import example_data
+#     >>> cortex = brainsuite.Cortex()
+#     >>> cortex.inputs.inputHemisphereLabelFile = example_data('mask.nii')
+#     >>> cortex.inputs.inputTissueFractionFile = example_data('tissues.nii.gz')
+#     >>> results = cortex.run() #doctest: +SKIP
+# 
+#     
+task_name: Cortex
+nipype_name: Cortex
+nipype_module: nipype.interfaces.brainsuite.brainsuite
+inputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    inputHemisphereLabelFile: generic/file
+    # type=file|default=<undefined>: hemisphere / lobe label volume
+    inputTissueFractionFile: generic/file
+    # type=file|default=<undefined>: tissue fraction file (32-bit float)
+  metadata:
+  # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
+outputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    outputCerebrumMask: generic/file
+    # type=file: path/name of cerebrum mask
+    # type=file|default=<undefined>: output structure mask. If unspecified, output file name will be auto generated.
+  callables:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set to the `callable` attribute of output fields
+  templates:
+  # dict[str, str] - `output_file_template` values to be provided to output fields
+    outputCerebrumMask: outputCerebrumMask
+    # type=file: path/name of cerebrum mask
+    # type=file|default=<undefined>: output structure mask. If unspecified, output file name will be auto generated.
+  requirements:
+  # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
+tests:
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    inputHemisphereLabelFile:
+    # type=file|default=<undefined>: hemisphere / lobe label volume
+    outputCerebrumMask:
+    # type=file: path/name of cerebrum mask
+    # type=file|default=<undefined>: output structure mask. If unspecified, output file name will be auto generated.
+    inputTissueFractionFile:
+    # type=file|default=<undefined>: tissue fraction file (32-bit float)
+    tissueFractionThreshold:
+    # type=float|default=50.0: tissue fraction threshold (percentage)
+    computeWGBoundary:
+    # type=bool|default=True: compute WM/GM boundary
+    computeGCBoundary:
+    # type=bool|default=False: compute GM/CSF boundary
+    includeAllSubcorticalAreas:
+    # type=bool|default=True: include all subcortical areas in WM mask
+    verbosity:
+    # type=int|default=0: verbosity level
+    timer:
+    # type=bool|default=False: timing function
+    args:
+    # type=str|default='': Additional parameters to the command
+    environ:
+    # type=dict|default={}: Environment variables
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+doctests: []

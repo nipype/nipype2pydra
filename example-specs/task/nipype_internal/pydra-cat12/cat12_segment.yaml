@@ -1,0 +1,225 @@
+# This file is used to manually specify the semi-automatic conversion of
+# 'nipype.interfaces.cat12.preprocess.CAT12Segment' from Nipype to Pydra.
+#
+# Please fill-in/edit the fields below where appropriate
+#
+# Docs
+# ----
+# 
+#     CAT12: Segmentation
+# 
+#     This toolbox is an extension to the default segmentation in SPM12, but uses a completely different segmentation
+#     approach.
+#     The segmentation approach is based on an Adaptive Maximum A Posterior (MAP) technique without the need for a priori
+#     information about tissue probabilities. That is, the Tissue Probability Maps (TPM) are not used constantly in the
+#     sense of the classical Unified Segmentation approach (Ashburner et. al. 2005), but just for spatial normalization.
+#     The following AMAP estimation is adaptive in the sense that local variations of the parameters (i.e., means and
+#     variance) are modeled as slowly varying spatial functions (Rajapakse et al. 1997). This not only accounts for
+#     intensity inhomogeneities but also for other local variations of intensity.
+#     Additionally, the segmentation approach uses a Partial Volume Estimation (PVE) with a simplified mixed model of at
+#     most two tissue types (Tohka et al. 2004). We start with an initial segmentation into three pure classes: gray
+#     matter (GM), white matter (WM), and cerebrospinal fluid (CSF) based on the above described AMAP estimation. The
+#     initial segmentation is followed by a PVE of two additional mixed classes: GM-WM and GM-CSF. This results in an
+#     estimation of the amount (or fraction) of each pure tissue type present in every voxel (as single voxels - given by
+#     Another important extension to the SPM12 segmentation is the integration of the Dartel or Geodesic Shooting
+#     registration into the toolbox by an already existing Dartel/Shooting template in MNI space. This template was
+#     derived from 555 healthy control subjects of the IXI-database (http://www.brain-development.org) and provides the
+#     several Dartel or Shooting iterations. Thus, for the majority of studies the creation of sample-specific templates
+#     is not necessary anymore and is mainly recommended for children data.'};
+# 
+#     http://www.neuro.uni-jena.de/cat12/CAT12-Manual.pdf#page=15
+# 
+#     Examples
+#     --------
+#     >>> path_mr = 'structural.nii'
+#     >>> cat = CAT12Segment(in_files=path_mr)
+#     >>> cat.run() # doctest: +SKIP
+#     
+task_name: CAT12Segment
+nipype_name: CAT12Segment
+nipype_module: nipype.interfaces.cat12.preprocess
+inputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    paths: generic/directory+list-of
+    # type=inputmultiobject|default=[]: Paths to add to matlabpath
+  metadata:
+  # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
+outputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    label_rois: generic/file
+    # type=file: Files with thickness values of ROIs.
+    label_roi: generic/file
+    # type=file: Files with thickness values of ROI.
+    gm_modulated_image: generic/file
+    # type=file: Grey matter modulated image.
+    gm_dartel_image: generic/file
+    # type=file: Grey matter dartel image.
+    gm_native_image: generic/file
+    # type=file: Grey matter native space.
+    wm_modulated_image: generic/file
+    # type=file: White matter modulated image.
+    wm_dartel_image: generic/file
+    # type=file: White matter dartel image.
+    wm_native_image: generic/file
+    # type=file: White matter in native space.
+    csf_modulated_image: generic/file
+    # type=file: CSF modulated image.
+    csf_dartel_image: generic/file
+    # type=file: CSF dartel image.
+    csf_native_image: generic/file
+    # type=file: CSF in native space.
+    bias_corrected_image: generic/file
+    # type=file: Bias corrected image
+    rh_central_surface: generic/file
+    # type=file: Central right hemisphere files
+    rh_sphere_surface: generic/file
+    # type=file: Sphere right hemisphere files
+    lh_central_surface: generic/file
+    # type=file: Central left hemisphere files
+    lh_sphere_surface: generic/file
+    # type=file: Sphere left hemisphere files
+    report: generic/file
+    # type=file: Report file.
+  callables:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set to the `callable` attribute of output fields
+  templates:
+  # dict[str, str] - `output_file_template` values to be provided to output fields
+  requirements:
+  # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
+tests:
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    in_files:
+    # type=inputmultiobject|default=[]: file to segment
+    tpm:
+    # type=inputmultiobject|default=[]: Tissue Probability Map. Select the tissue probability image that includes 6 tissue probability classes for (1) grey matter, (2) white matter, (3) cerebrospinal fluid, (4) bone, (5) non-brain  soft tissue, and (6) the background.  CAT uses the TPM only for the initial SPM segmentation.
+    shooting_tpm:
+    # type=imagefilespm|default=<undefined>: Shooting Template 0.  The Shooting template must be in multi-volume nifti format and should contain GM, WM, and background segmentations and have to be saved with at least 16 bit. 
+    shooting_tpm_template_1:
+    # type=imagefilespm|default=<undefined>: Shooting Template 1.  The Shooting template must be in multi-volume nifti format and should contain GM, WM, and background segmentations and have to be saved with at least 16 bit. 
+    shooting_tpm_template_2:
+    # type=imagefilespm|default=<undefined>: Shooting Template 2.  The Shooting template must be in multi-volume nifti format and should contain GM, WM, and background segmentations and have to be saved with at least 16 bit. 
+    shooting_tpm_template_3:
+    # type=imagefilespm|default=<undefined>: Shooting Template 3.  The Shooting template must be in multi-volume nifti format and should contain GM, WM, and background segmentations and have to be saved with at least 16 bit. 
+    shooting_tpm_template_4:
+    # type=imagefilespm|default=<undefined>: Shooting Template 4.  The Shooting template must be in multi-volume nifti format and should contain GM, WM, and background segmentations and have to be saved with at least 16 bit. 
+    n_jobs:
+    # type=int|default=1: Number of threads
+    affine_regularization:
+    # type=str|default='mni': Affine Regularization. The procedure is a local optimisation, so it needs reasonable initial starting estimates. Images should be placed in approximate alignment using the Display function of SPM before beginning.  A Mutual Information affine registration with the tissue probability maps (DAgostino et al, 2004) is used to achieve approximate alignment.
+    power_spm_inhomogeneity_correction:
+    # type=float|default=0.5: Strength of the SPM inhomogeneity (bias) correction that simultaneously controls the SPM biasreg, biasfwhm, samp (resolution), and tol (iteration) parameter.
+    affine_preprocessing:
+    # type=int|default=1070: Affine registration and SPM preprocessing can fail in some subjects with deviating anatomy (e.g. other species/neonates) or in images with strong signal inhomogeneities, or untypical intensities (e.g. synthetic images). An initial bias correction can help to reduce such problems (see details below). Recommended are the "default" and "full" option.
+    initial_segmentation:
+    # type=int|default=0: In rare cases the Unified Segmentation can fail in highly abnormal brains, where e.g. the cerebrospinal fluid of superlarge ventricles (hydrocephalus) were classified as white matter. However, if the affine registration is correct, the AMAP segmentation with an prior-independent k-means initialization can be used to replace the SPM brain tissue classification. Moreover, if the default Dartel and Shooting registrations will fail then rhe "Optimized Shooting - superlarge ventricles" option for "Spatial registration" is ! required Values:  none: 0; light: 1; full: 2; default: 1070.
+    local_adaptive_seg:
+    # type=float|default=0.5: Additionally to WM-inhomogeneities, GM intensity can vary across different regions such as the motor cortex, the basal ganglia, or the occipital lobe. These changes have an anatomical background (e.g. iron content, myelinization), but are dependent on the MR-protocol and often lead to underestimation of GM at higher intensities and overestimation of CSF at lower intensities. Therefore, a local intensity transformation of all tissue classes is used to reduce these effects in the image. This local adaptive segmentation (LAS) is applied before the final AMAP segmentation.Possible Values:  SPM Unified Segmentation: 0  k-means AMAP: 2
+    skull_strip:
+    # type=float|default=2: Method of initial skull-stripping before AMAP segmentation. The SPM approach works quite stable for the majority of data. However, in some rare cases parts of GM (i.e. in frontal lobe) might be cut. If this happens the GCUT approach is a good alternative. GCUT is a graph-cut/region-growing approach starting from the WM area. APRG (adaptive probability region-growing) is a new method that refines the probability maps of the SPM approach by region-growing techniques of the gcut approach with a final surface-based optimization strategy. This is currently the method with the most accurate and reliable results. If you use already skull-stripped data you can turn off skull-stripping although this is automatically detected in most cases. Please note that the choice of the skull-stripping method will also influence the estimation of TIV, because the methods mainly differ in the handling of the outer CSF around the cortical surface.  Possible Values:  - none (already skull-stripped): -1;  - SPM approach: 0;   - GCUT approach: 0.50;   - APRG approach: 2
+    wm_hyper_intensity_correction:
+    # type=int|default=1: WARNING: Please note that the detection of WM hyperintensies is still under development and does not have the same accuracy as approaches that additionally consider FLAIR images (e.g. Lesion Segmentation Toolbox)! In aging or (neurodegenerative) diseases WM intensity can be reduced locally in T1 or increased in T2/PD images. These so-called WM hyperintensies (WMHs) can lead to preprocessing errors. Large GM areas next to the ventricle can cause normalization problems. Therefore, a temporary correction for normalization is useful if WMHs are expected. CAT allows different ways to handle WMHs:  0) No Correction (handled as GM).  1) Temporary (internal) correction as WM for spatial normalization and estimation of cortical thickness.  2) Permanent correction to WM. 
+    voxel_size:
+    # type=float|default=1.5: The (isotropic) voxel sizes of any spatially normalised written images. A non-finite value will be replaced by the average voxel size of the tissue probability maps used by the segmentation.
+    internal_resampling_process:
+    # type=tuple|default=(1, 0.1): help_resampling
+    ignore_errors:
+    # type=int|default=1: Error handling. Try to catch preprocessing errors and continue with the next data set or ignore all warnings (e.g., bad intensities) and use an experimental pipeline which is still in development. In case of errors, CAT continues with the next subject if this option is enabled. If the experimental option with backup functions is selected and warnings occur, CAT will try to use backup routines and skip some processing steps which require good T1 contrasts (e.g., LAS). If you want to avoid processing of critical data and ensure that only the main pipeline is used then select the option "Ignore errors (continue with the next subject)". It is strongly recommended to check for preprocessing problems, especially with non-T1 contrasts.  Values: none: 0, default: 1, details: 2.
+    surface_and_thickness_estimation:
+    # type=int|default=1: Surface and thickness estimation.  Use projection-based thickness (PBT) (Dahnke et al. 2012) to estimate cortical thickness and to create the central cortical surface for left and right hemisphere. Surface reconstruction includes topology correction (Yotter et al. 2011), spherical inflation (Yotter et al.) and spherical registration. Additionally you can also estimate surface parameters such as gyrification, cortical complexity or sulcal depth that can be subsequently analyzed at each vertex of the surface. Please note, that surface reconstruction and spherical registration additionally requires about 20-60 min of computation time. A fast (1-3 min) surface pipeline is available for visual preview (e.g., to check preprocessing quality) in the cross-sectional, but not in the longitudinal pipeline.  Only the initial surfaces are created with a lower resolution and without topology correction, spherical mapping and surface registration. Please note that the files with the estimated surface thickness can therefore not be used for further analysis!  For distinction, these files contain "preview" in their filename and they are not available as batch dependencies objects. 
+    surface_measures:
+    # type=int|default=1: Extract surface measures
+    neuromorphometrics:
+    # type=bool|default=True: Extract brain measures for Neuromorphometrics template
+    lpba40:
+    # type=bool|default=True: Extract brain measures for LPBA40 template
+    cobra:
+    # type=bool|default=True: Extract brain measures for COBRA template
+    hammers:
+    # type=bool|default=True: Extract brain measures for Hammers template
+    own_atlas:
+    # type=inputmultiobject|default=[]: Extract brain measures for a given template
+    gm_output_native:
+    # type=bool|default=False: Save modulated grey matter images.
+    gm_output_modulated:
+    # type=bool|default=True: Save native grey matter images.
+    gm_output_dartel:
+    # type=bool|default=False: Save dartel grey matter images.
+    wm_output_native:
+    # type=bool|default=False: Save dartel white matter images.
+    wm_output_modulated:
+    # type=bool|default=True: Save dartel white matter images.
+    wm_output_dartel:
+    # type=bool|default=False: Save dartel white matter images.
+    csf_output_native:
+    # type=bool|default=False: Save dartel CSF images.
+    csf_output_modulated:
+    # type=bool|default=True: Save dartel CSF images.
+    csf_output_dartel:
+    # type=bool|default=False: Save dartel CSF images.
+    label_native:
+    # type=bool|default=False: This is the option to save a labeled version of your segmentations in the native space for fast visual comparison. Labels are saved as Partial Volume Estimation (PVE) values with different mix classes for GM-WM (2.5) and GM-CSF (1.5). BG=0, CSF=1, GM=2, WM=3, WMH=4 (if WMHC=3), SL=1.5 (if SLC)
+    label_warped:
+    # type=bool|default=True: This is the option to save a labeled version of your segmentations in the warped space for fast visual comparison. Labels are saved as Partial Volume Estimation (PVE) values with different mix classes for GM-WM (2.5) and GM-CSF (1.5). BG=0, CSF=1, GM=2, WM=3, WMH=4 (if WMHC=3), SL=1.5 (if SLC)
+    label_dartel:
+    # type=bool|default=False: This is the option to save a labeled version of your segmentations in the dartel space for fast visual comparison. Labels are saved as Partial Volume Estimation (PVE) values with different mix classes for GM-WM (2.5) and GM-CSF (1.5). BG=0, CSF=1, GM=2, WM=3, WMH=4 (if WMHC=3), SL=1.5 (if SLC)
+    output_labelnative:
+    # type=bool|default=False: This is the option to save a labeled version of your segmentations in the native space for fast visual comparison. Labels are saved as Partial Volume Estimation (PVE) values with different mix classes for GM-WM (2.5) and GM-CSF (1.5). BG=0, CSF=1, GM=2, WM=3, WMH=4 (if WMHC=3), SL=1.5 (if SLC)
+    save_bias_corrected:
+    # type=bool|default=True: Save bias corrected image
+    las_native:
+    # type=bool|default=False: This is the option to save a bias, noise, and local intensity corrected version of the original T1 image in the native space. MR images are usually corrupted by a smooth, spatially varying artifact that modulates the intensity of the image (bias). These artifacts, although not usually a problem for visual inspection, can impede automated processing of the images. The bias corrected version should have more uniform intensities within the different types of tissues and can be saved in native space and/or normalised. Noise is corrected by an adaptive non-local mean (NLM) filter (Manjon 2008, Medical Image Analysis 12).
+    las_warped:
+    # type=bool|default=True: This is the option to save a bias, noise, and local intensity corrected version of the original T1 image in the warped space. MR images are usually corrupted by a smooth, spatially varying artifact that modulates the intensity of the image (bias). These artifacts, although not usually a problem for visual inspection, can impede automated processing of the images. The bias corrected version should have more uniform intensities within the different types of tissues and can be saved in native space and/or normalised. Noise is corrected by an adaptive non-local mean (NLM) filter (Manjon 2008, Medical Image Analysis 12).
+    las_dartel:
+    # type=bool|default=False: This is the option to save a bias, noise, and local intensity corrected version of the original T1 image in the dartel space. MR images are usually corrupted by a smooth, spatially varying artifact that modulates the intensity of the image (bias). These artifacts, although not usually a problem for visual inspection, can impede automated processing of the images. The bias corrected version should have more uniform intensities within the different types of tissues and can be saved in native space and/or normalised. Noise is corrected by an adaptive non-local mean (NLM) filter (Manjon 2008, Medical Image Analysis 12).
+    jacobianwarped:
+    # type=bool|default=True: This is the option to save the Jacobian determinant, which expresses local volume changes. This image can be used in a pure deformation based morphometry (DBM) design. Please note that the affine part of the deformation field is ignored. Thus, there is no need for any additional correction for different brain sizes using ICV.
+    warps:
+    # type=tuple|default=(1, 0): Deformation fields can be saved to disk, and used by the Deformations Utility and/or applied to coregistered data from other modalities (e.g. fMRI). For spatially normalising images to MNI space, you will need the forward deformation, whereas for spatially normalising (eg) GIFTI surface files, youll need the inverse. It is also possible to transform data in MNI space on to the individual subject, which also requires the inverse transform. Deformations are saved as .nii files, which contain three volumes to encode the x, y and z coordinates. Values: No:[0 0]; Image->Template (forward): [1 0]; Template->Image (inverse): [0 1];  inverse + forward: [1 1]
+    matlab_cmd:
+    # type=str|default='': matlab command to use
+    paths:
+    # type=inputmultiobject|default=[]: Paths to add to matlabpath
+    mfile:
+    # type=bool|default=True: Run m-code using m-file
+    use_mcr:
+    # type=bool|default=False: Run m-code using SPM MCR
+    use_v8struct:
+    # type=bool|default=True: Generate SPM8 and higher compatible jobs
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+doctests: []

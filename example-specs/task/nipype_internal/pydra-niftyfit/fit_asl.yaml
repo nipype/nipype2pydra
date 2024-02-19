@@ -1,0 +1,227 @@
+# This file is used to manually specify the semi-automatic conversion of
+# 'nipype.interfaces.niftyfit.asl.FitAsl' from Nipype to Pydra.
+#
+# Please fill-in/edit the fields below where appropriate
+#
+# Docs
+# ----
+# Interface for executable fit_asl from Niftyfit platform.
+# 
+#     Use NiftyFit to perform ASL fitting.
+# 
+#     ASL fitting routines (following EU Cost Action White Paper recommendations)
+#     Fits Cerebral Blood Flow maps in the first instance.
+# 
+#     `Source code <https://cmiclab.cs.ucl.ac.uk/CMIC/NiftyFit-Release>`_
+# 
+#     Examples
+#     --------
+#     >>> from nipype.interfaces import niftyfit
+#     >>> node = niftyfit.FitAsl()
+#     >>> node.inputs.source_file = 'asl.nii.gz'
+#     >>> node.cmdline
+#     'fit_asl -source asl.nii.gz -cbf asl_cbf.nii.gz -error asl_error.nii.gz -syn asl_syn.nii.gz'
+# 
+#     
+task_name: FitAsl
+nipype_name: FitAsl
+nipype_module: nipype.interfaces.niftyfit.asl
+inputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    source_file: medimage/nifti-gz
+    # type=file|default=<undefined>: Filename of the 4D ASL (control/label) source image (mandatory).
+    cbf_file: generic/file
+    # type=file: Filename of the Cerebral Blood Flow map (in ml/100g/min).
+    # type=file|default=<undefined>: Filename of the Cerebral Blood Flow map (in ml/100g/min).
+    error_file: generic/file
+    # type=file: Filename of the CBF error map.
+    # type=file|default=<undefined>: Filename of the CBF error map.
+    syn_file: generic/file
+    # type=file: Filename of the synthetic ASL data.
+    # type=file|default=<undefined>: Filename of the synthetic ASL data.
+    t1map: generic/file
+    # type=file|default=<undefined>: Filename of the estimated input T1 map (in ms).
+    m0map: generic/file
+    # type=file|default=<undefined>: Filename of the estimated input M0 map.
+    m0mape: generic/file
+    # type=file|default=<undefined>: Filename of the estimated input M0 map error.
+    ir_volume: generic/file
+    # type=file|default=<undefined>: Filename of a [1,2,5]s Inversion Recovery volume (T1/M0 fitting carried out internally).
+    ir_output: generic/file
+    # type=file|default=<undefined>: Output of [1,2,5]s Inversion Recovery fitting.
+    mask: generic/file
+    # type=file|default=<undefined>: Filename of image mask.
+    seg: generic/file
+    # type=file|default=<undefined>: Filename of the 4D segmentation (in ASL space) for L/T1 estimation and PV correction {WM,GM,CSF}.
+  metadata:
+  # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
+outputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    cbf_file: generic/file
+    # type=file: Filename of the Cerebral Blood Flow map (in ml/100g/min).
+    # type=file|default=<undefined>: Filename of the Cerebral Blood Flow map (in ml/100g/min).
+    error_file: generic/file
+    # type=file: Filename of the CBF error map.
+    # type=file|default=<undefined>: Filename of the CBF error map.
+    syn_file: generic/file
+    # type=file: Filename of the synthetic ASL data.
+    # type=file|default=<undefined>: Filename of the synthetic ASL data.
+  callables:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set to the `callable` attribute of output fields
+  templates:
+  # dict[str, str] - `output_file_template` values to be provided to output fields
+  requirements:
+  # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
+tests:
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    source_file:
+    # type=file|default=<undefined>: Filename of the 4D ASL (control/label) source image (mandatory).
+    pasl:
+    # type=bool|default=False: Fit PASL ASL data [default]
+    pcasl:
+    # type=bool|default=False: Fit PCASL ASL data
+    cbf_file:
+    # type=file: Filename of the Cerebral Blood Flow map (in ml/100g/min).
+    # type=file|default=<undefined>: Filename of the Cerebral Blood Flow map (in ml/100g/min).
+    error_file:
+    # type=file: Filename of the CBF error map.
+    # type=file|default=<undefined>: Filename of the CBF error map.
+    syn_file:
+    # type=file: Filename of the synthetic ASL data.
+    # type=file|default=<undefined>: Filename of the synthetic ASL data.
+    t1map:
+    # type=file|default=<undefined>: Filename of the estimated input T1 map (in ms).
+    m0map:
+    # type=file|default=<undefined>: Filename of the estimated input M0 map.
+    m0mape:
+    # type=file|default=<undefined>: Filename of the estimated input M0 map error.
+    ir_volume:
+    # type=file|default=<undefined>: Filename of a [1,2,5]s Inversion Recovery volume (T1/M0 fitting carried out internally).
+    ir_output:
+    # type=file|default=<undefined>: Output of [1,2,5]s Inversion Recovery fitting.
+    mask:
+    # type=file|default=<undefined>: Filename of image mask.
+    t1_art_cmp:
+    # type=float|default=0.0: T1 of arterial component [1650ms].
+    plasma_coeff:
+    # type=float|default=0.0: Single plasma/tissue partition coefficient [0.9ml/g].
+    eff:
+    # type=float|default=0.0: Labelling efficiency [0.99 (pasl), 0.85 (pcasl)], ensure any background suppression pulses are included in -eff
+    out:
+    # type=float|default=0.0: Outlier rejection for multi CL volumes (enter z-score threshold (e.g. 2.5)) [off].
+    pld:
+    # type=float|default=0.0: Post Labelling Delay [2000ms].
+    ldd:
+    # type=float|default=0.0: Labelling Duration [1800ms].
+    dpld:
+    # type=float|default=0.0: Difference in labelling delay per slice [0.0 ms/slice.
+    t_inv1:
+    # type=float|default=0.0: Saturation pulse time [800ms].
+    t_inv2:
+    # type=float|default=0.0: Inversion time [2000ms].
+    dt_inv2:
+    # type=float|default=0.0: Difference in inversion time per slice [0ms/slice].
+    gm_t1:
+    # type=float|default=0.0: T1 of GM [1150ms].
+    gm_plasma:
+    # type=float|default=0.0: Plasma/GM water partition [0.95ml/g].
+    gm_ttt:
+    # type=float|default=0.0: Time to GM [ATT+0ms].
+    wm_t1:
+    # type=float|default=0.0: T1 of WM [800ms].
+    wm_plasma:
+    # type=float|default=0.0: Plasma/WM water partition [0.82ml/g].
+    wm_ttt:
+    # type=float|default=0.0: Time to WM [ATT+0ms].
+    seg:
+    # type=file|default=<undefined>: Filename of the 4D segmentation (in ASL space) for L/T1 estimation and PV correction {WM,GM,CSF}.
+    sig:
+    # type=bool|default=False: Use sigmoid to estimate L from T1: L(T1|gmL,wmL) [Off].
+    pv0:
+    # type=int|default=0: Simple PV correction (CBF=vg*CBFg + vw*CBFw, with CBFw=f*CBFg) [0.25].
+    pv2:
+    # type=int|default=0: In plane PV kernel size [3x3].
+    pv3:
+    # type=tuple|default=(0, 0, 0): 3D kernel size [3x3x1].
+    mul:
+    # type=float|default=0.0: Multiply CBF by this value (e.g. if CL are mislabelled use -1.0).
+    mulgm:
+    # type=bool|default=False: Multiply CBF by segmentation [Off].
+    pv_threshold:
+    # type=bool|default=False: Set PV threshold for switching off LSQR [O.05].
+    segstyle:
+    # type=bool|default=False: Set CBF as [gm,wm] not [wm,gm].
+    args:
+    # type=str|default='': Additional parameters to the command
+    environ:
+    # type=dict|default={}: Environment variables
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    source_file:
+    # type=file|default=<undefined>: Filename of the 4D ASL (control/label) source image (mandatory).
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+doctests:
+- cmdline: fit_asl -source asl.nii.gz -cbf asl_cbf.nii.gz -error asl_error.nii.gz -syn asl_syn.nii.gz
+  # str - the expected cmdline output
+  inputs:
+  # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
+  # If the field is of file-format type and the value is None, then the
+  # '.mock()' method of the corresponding class is used instead.
+    source_file:
+    # type=file|default=<undefined>: Filename of the 4D ASL (control/label) source image (mandatory).
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  directive:
+  # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

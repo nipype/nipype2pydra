@@ -1,0 +1,155 @@
+# This file is used to manually specify the semi-automatic conversion of
+# 'nipype.interfaces.quickshear.Quickshear' from Nipype to Pydra.
+#
+# Please fill-in/edit the fields below where appropriate
+#
+# Docs
+# ----
+# 
+#     Quickshear is a simple geometric defacing algorithm
+# 
+#     Given an anatomical image and a reasonable brainmask, Quickshear estimates
+#     a shearing plane with the brain mask on one side and the face on the other,
+#     zeroing out the face side.
+# 
+#     >>> from nipype.interfaces.quickshear import Quickshear
+#     >>> qs = Quickshear(in_file='T1.nii', mask_file='brain_mask.nii')
+#     >>> qs.cmdline
+#     'quickshear T1.nii brain_mask.nii T1_defaced.nii'
+# 
+#     In the absence of a precomputed mask, a simple pipeline can be generated
+#     with any tool that generates brain masks:
+# 
+#     >>> from nipype.pipeline import engine as pe
+#     >>> from nipype.interfaces import utility as niu
+#     >>> from nipype.interfaces.fsl import BET
+#     >>> deface_wf = pe.Workflow('deface_wf')
+#     >>> inputnode = pe.Node(niu.IdentityInterface(['in_file']),
+#     ...                     name='inputnode')
+#     >>> outputnode = pe.Node(niu.IdentityInterface(['out_file']),
+#     ...                      name='outputnode')
+#     >>> bet = pe.Node(BET(mask=True), name='bet')
+#     >>> quickshear = pe.Node(Quickshear(), name='quickshear')
+#     >>> deface_wf.connect([
+#     ...     (inputnode, bet, [('in_file', 'in_file')]),
+#     ...     (inputnode, quickshear, [('in_file', 'in_file')]),
+#     ...     (bet, quickshear, [('mask_file', 'mask_file')]),
+#     ...     (quickshear, outputnode, [('out_file', 'out_file')]),
+#     ...     ])
+#     >>> inputnode.inputs.in_file = 'T1.nii'
+#     >>> res = deface_wf.run()  # doctest: +SKIP
+#     
+task_name: Quickshear
+nipype_name: Quickshear
+nipype_module: nipype.interfaces.quickshear
+inputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    in_file: medimage/nifti1
+    # type=file|default=<undefined>: neuroimage to deface
+    mask_file: medimage/nifti1
+    # type=file|default=<undefined>: brain mask
+    out_file: generic/file
+    # type=file: defaced output image
+    # type=file|default=<undefined>: defaced output image
+  metadata:
+  # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
+outputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    out_file: generic/file
+    # type=file: defaced output image
+    # type=file|default=<undefined>: defaced output image
+  callables:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set to the `callable` attribute of output fields
+  templates:
+  # dict[str, str] - `output_file_template` values to be provided to output fields
+  requirements:
+  # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
+tests:
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    in_file:
+    # type=file|default=<undefined>: neuroimage to deface
+    mask_file:
+    # type=file|default=<undefined>: brain mask
+    out_file:
+    # type=file: defaced output image
+    # type=file|default=<undefined>: defaced output image
+    buff:
+    # type=int|default=0: buffer size (in voxels) between shearing plane and the brain
+    args:
+    # type=str|default='': Additional parameters to the command
+    environ:
+    # type=dict|default={}: Environment variables
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    in_file:
+    # type=file|default=<undefined>: neuroimage to deface
+    mask_file:
+    # type=file|default=<undefined>: brain mask
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+doctests:
+- cmdline: quickshear T1.nii brain_mask.nii T1_defaced.nii
+  # str - the expected cmdline output
+  inputs:
+  # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
+  # If the field is of file-format type and the value is None, then the
+  # '.mock()' method of the corresponding class is used instead.
+    in_file:
+    # type=file|default=<undefined>: neuroimage to deface
+    mask_file:
+    # type=file|default=<undefined>: brain mask
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  directive:
+  # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

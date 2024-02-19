@@ -1,0 +1,277 @@
+# This file is used to manually specify the semi-automatic conversion of
+# 'nipype.interfaces.freesurfer.utils.ParcellationStats' from Nipype to Pydra.
+#
+# Please fill-in/edit the fields below where appropriate
+#
+# Docs
+# ----
+# 
+#     This program computes a number of anatomical properties.
+# 
+#     Examples
+#     ========
+#     >>> from nipype.interfaces.freesurfer import ParcellationStats
+#     >>> import os
+#     >>> parcstats = ParcellationStats()
+#     >>> parcstats.inputs.subject_id = '10335'
+#     >>> parcstats.inputs.hemisphere = 'lh'
+#     >>> parcstats.inputs.wm = './../mri/wm.mgz' # doctest: +SKIP
+#     >>> parcstats.inputs.transform = './../mri/transforms/talairach.xfm' # doctest: +SKIP
+#     >>> parcstats.inputs.brainmask = './../mri/brainmask.mgz' # doctest: +SKIP
+#     >>> parcstats.inputs.aseg = './../mri/aseg.presurf.mgz' # doctest: +SKIP
+#     >>> parcstats.inputs.ribbon = './../mri/ribbon.mgz' # doctest: +SKIP
+#     >>> parcstats.inputs.lh_pial = 'lh.pial' # doctest: +SKIP
+#     >>> parcstats.inputs.rh_pial = 'lh.pial' # doctest: +SKIP
+#     >>> parcstats.inputs.lh_white = 'lh.white' # doctest: +SKIP
+#     >>> parcstats.inputs.rh_white = 'rh.white' # doctest: +SKIP
+#     >>> parcstats.inputs.thickness = 'lh.thickness' # doctest: +SKIP
+#     >>> parcstats.inputs.surface = 'white'
+#     >>> parcstats.inputs.out_table = 'lh.test.stats'
+#     >>> parcstats.inputs.out_color = 'test.ctab'
+#     >>> parcstats.cmdline # doctest: +SKIP
+#     'mris_anatomical_stats -c test.ctab -f lh.test.stats 10335 lh white'
+#     
+task_name: ParcellationStats
+nipype_name: ParcellationStats
+nipype_module: nipype.interfaces.freesurfer.utils
+inputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    wm: medimage/mgh-gz
+    # type=file|default=<undefined>: Input file must be <subject_id>/mri/wm.mgz
+    lh_white: medimage-freesurfer/white
+    # type=file|default=<undefined>: Input file must be <subject_id>/surf/lh.white
+    rh_white: medimage-freesurfer/white
+    # type=file|default=<undefined>: Input file must be <subject_id>/surf/rh.white
+    lh_pial: medimage-freesurfer/pial
+    # type=file|default=<undefined>: Input file must be <subject_id>/surf/lh.pial
+    rh_pial: medimage-freesurfer/pial
+    # type=file|default=<undefined>: Input file must be <subject_id>/surf/rh.pial
+    transform: medimage-freesurfer/xfm
+    # type=file|default=<undefined>: Input file must be <subject_id>/mri/transforms/talairach.xfm
+    thickness: medimage-freesurfer/thickness
+    # type=file|default=<undefined>: Input file must be <subject_id>/surf/?h.thickness
+    brainmask: medimage/mgh-gz
+    # type=file|default=<undefined>: Input file must be <subject_id>/mri/brainmask.mgz
+    aseg: medimage/mgh-gz
+    # type=file|default=<undefined>: Input file must be <subject_id>/mri/aseg.presurf.mgz
+    ribbon: medimage/mgh-gz
+    # type=file|default=<undefined>: Input file must be <subject_id>/mri/ribbon.mgz
+    cortex_label: generic/file
+    # type=file|default=<undefined>: implicit input file {hemi}.cortex.label
+    in_cortex: generic/file
+    # type=file|default=<undefined>: Input cortex label
+    in_annotation: generic/file
+    # type=file|default=<undefined>: compute properties for each label in the annotation file separately
+    in_label: generic/file
+    # type=file|default=<undefined>: limit calculations to specified label
+    subjects_dir: generic/directory
+    # type=directory|default=<undefined>: subjects directory
+  metadata:
+  # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
+outputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    out_table: medimage-freesurfer/stats
+    # type=file: Table output to tablefile
+    # type=file|default=<undefined>: Table output to tablefile
+    out_color: medimage-freesurfer/ctab
+    # type=file: Output annotation files's colortable to text file
+    # type=file|default=<undefined>: Output annotation files's colortable to text file
+  callables:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set to the `callable` attribute of output fields
+  templates:
+  # dict[str, str] - `output_file_template` values to be provided to output fields
+    out_table: '"lh.test.stats"'
+    # type=file: Table output to tablefile
+    # type=file|default=<undefined>: Table output to tablefile
+    out_color: '"test.ctab"'
+    # type=file: Output annotation files's colortable to text file
+    # type=file|default=<undefined>: Output annotation files's colortable to text file
+  requirements:
+  # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
+tests:
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    subject_id:
+    # type=string|default='subject_id': Subject being processed
+    hemisphere:
+    # type=enum|default='lh'|allowed['lh','rh']: Hemisphere being processed
+    wm:
+    # type=file|default=<undefined>: Input file must be <subject_id>/mri/wm.mgz
+    lh_white:
+    # type=file|default=<undefined>: Input file must be <subject_id>/surf/lh.white
+    rh_white:
+    # type=file|default=<undefined>: Input file must be <subject_id>/surf/rh.white
+    lh_pial:
+    # type=file|default=<undefined>: Input file must be <subject_id>/surf/lh.pial
+    rh_pial:
+    # type=file|default=<undefined>: Input file must be <subject_id>/surf/rh.pial
+    transform:
+    # type=file|default=<undefined>: Input file must be <subject_id>/mri/transforms/talairach.xfm
+    thickness:
+    # type=file|default=<undefined>: Input file must be <subject_id>/surf/?h.thickness
+    brainmask:
+    # type=file|default=<undefined>: Input file must be <subject_id>/mri/brainmask.mgz
+    aseg:
+    # type=file|default=<undefined>: Input file must be <subject_id>/mri/aseg.presurf.mgz
+    ribbon:
+    # type=file|default=<undefined>: Input file must be <subject_id>/mri/ribbon.mgz
+    cortex_label:
+    # type=file|default=<undefined>: implicit input file {hemi}.cortex.label
+    surface:
+    # type=string|default='': Input surface (e.g. 'white')
+    mgz:
+    # type=bool|default=False: Look for mgz files
+    in_cortex:
+    # type=file|default=<undefined>: Input cortex label
+    in_annotation:
+    # type=file|default=<undefined>: compute properties for each label in the annotation file separately
+    in_label:
+    # type=file|default=<undefined>: limit calculations to specified label
+    tabular_output:
+    # type=bool|default=False: Tabular output
+    out_table:
+    # type=file: Table output to tablefile
+    # type=file|default=<undefined>: Table output to tablefile
+    out_color:
+    # type=file: Output annotation files's colortable to text file
+    # type=file|default=<undefined>: Output annotation files's colortable to text file
+    copy_inputs:
+    # type=bool|default=False: If running as a node, set this to True.This will copy the input files to the node directory.
+    th3:
+    # type=bool|default=False: turns on new vertex-wise volume calc for mris_anat_stats
+    subjects_dir:
+    # type=directory|default=<undefined>: subjects directory
+    args:
+    # type=str|default='': Additional parameters to the command
+    environ:
+    # type=dict|default={}: Environment variables
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    subject_id: '"10335"'
+    # type=string|default='subject_id': Subject being processed
+    hemisphere: '"lh"'
+    # type=enum|default='lh'|allowed['lh','rh']: Hemisphere being processed
+    wm:
+    # type=file|default=<undefined>: Input file must be <subject_id>/mri/wm.mgz
+    transform:
+    # type=file|default=<undefined>: Input file must be <subject_id>/mri/transforms/talairach.xfm
+    brainmask:
+    # type=file|default=<undefined>: Input file must be <subject_id>/mri/brainmask.mgz
+    aseg:
+    # type=file|default=<undefined>: Input file must be <subject_id>/mri/aseg.presurf.mgz
+    ribbon:
+    # type=file|default=<undefined>: Input file must be <subject_id>/mri/ribbon.mgz
+    lh_pial:
+    # type=file|default=<undefined>: Input file must be <subject_id>/surf/lh.pial
+    rh_pial:
+    # type=file|default=<undefined>: Input file must be <subject_id>/surf/rh.pial
+    lh_white:
+    # type=file|default=<undefined>: Input file must be <subject_id>/surf/lh.white
+    rh_white:
+    # type=file|default=<undefined>: Input file must be <subject_id>/surf/rh.white
+    thickness:
+    # type=file|default=<undefined>: Input file must be <subject_id>/surf/?h.thickness
+    surface: '"white"'
+    # type=string|default='': Input surface (e.g. 'white')
+    out_table: '"lh.test.stats"'
+    # type=file: Table output to tablefile
+    # type=file|default=<undefined>: Table output to tablefile
+    out_color: '"test.ctab"'
+    # type=file: Output annotation files's colortable to text file
+    # type=file|default=<undefined>: Output annotation files's colortable to text file
+  imports: &id001
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  - module: os
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+doctests:
+- cmdline: mris_anatomical_stats -c test.ctab -f lh.test.stats 10335 lh white
+  # str - the expected cmdline output
+  inputs:
+  # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
+  # If the field is of file-format type and the value is None, then the
+  # '.mock()' method of the corresponding class is used instead.
+    subject_id: '"10335"'
+    # type=string|default='subject_id': Subject being processed
+    hemisphere: '"lh"'
+    # type=enum|default='lh'|allowed['lh','rh']: Hemisphere being processed
+    wm:
+    # type=file|default=<undefined>: Input file must be <subject_id>/mri/wm.mgz
+    transform:
+    # type=file|default=<undefined>: Input file must be <subject_id>/mri/transforms/talairach.xfm
+    brainmask:
+    # type=file|default=<undefined>: Input file must be <subject_id>/mri/brainmask.mgz
+    aseg:
+    # type=file|default=<undefined>: Input file must be <subject_id>/mri/aseg.presurf.mgz
+    ribbon:
+    # type=file|default=<undefined>: Input file must be <subject_id>/mri/ribbon.mgz
+    lh_pial:
+    # type=file|default=<undefined>: Input file must be <subject_id>/surf/lh.pial
+    rh_pial:
+    # type=file|default=<undefined>: Input file must be <subject_id>/surf/rh.pial
+    lh_white:
+    # type=file|default=<undefined>: Input file must be <subject_id>/surf/lh.white
+    rh_white:
+    # type=file|default=<undefined>: Input file must be <subject_id>/surf/rh.white
+    thickness:
+    # type=file|default=<undefined>: Input file must be <subject_id>/surf/?h.thickness
+    surface: '"white"'
+    # type=string|default='': Input surface (e.g. 'white')
+    out_table: '"lh.test.stats"'
+    # type=file: Table output to tablefile
+    # type=file|default=<undefined>: Table output to tablefile
+    out_color: '"test.ctab"'
+    # type=file: Output annotation files's colortable to text file
+    # type=file|default=<undefined>: Output annotation files's colortable to text file
+  imports: *id001
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  directive:
+  # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

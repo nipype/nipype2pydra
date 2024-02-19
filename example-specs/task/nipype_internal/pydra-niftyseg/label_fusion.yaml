@@ -1,0 +1,208 @@
+# This file is used to manually specify the semi-automatic conversion of
+# 'nipype.interfaces.niftyseg.label_fusion.LabelFusion' from Nipype to Pydra.
+#
+# Please fill-in/edit the fields below where appropriate
+#
+# Docs
+# ----
+# Interface for executable seg_LabelFusion from NiftySeg platform using
+#     type STEPS as classifier Fusion.
+# 
+#     This executable implements 4 fusion strategies (-STEPS, -STAPLE, -MV or
+#     - SBA), all of them using either a global (-GNCC), ROI-based (-ROINCC),
+#     local (-LNCC) or no image similarity (-ALL). Combinations of fusion
+#     algorithms and similarity metrics give rise to different variants of known
+#     algorithms. As an example, using LNCC and MV as options will run a locally
+#     weighted voting strategy with LNCC derived weights, while using STAPLE and
+#     LNCC is equivalent to running STEPS as per its original formulation.
+#     A few other options pertaining the use of an MRF (-MRF beta), the initial
+#     sensitivity and specificity estimates and the use of only non-consensus
+#     voxels (-unc) for the STAPLE and STEPS algorithm. All processing can be
+#     masked (-mask), greatly reducing memory consumption.
+# 
+#     As an example, the command to use STEPS should be:
+#     seg_LabFusion -in 4D_Propragated_Labels_to_fuse.nii -out     FusedSegmentation.nii -STEPS 2 15 TargetImage.nii     4D_Propagated_Intensities.nii
+# 
+#     `Source code <http://cmictig.cs.ucl.ac.uk/wiki/index.php/NiftySeg>`_ |
+#     `Documentation <http://cmictig.cs.ucl.ac.uk/wiki/index.php/NiftySeg_documentation>`_
+# 
+#     Examples
+#     --------
+#     >>> from nipype.interfaces import niftyseg
+#     >>> node = niftyseg.LabelFusion()
+#     >>> node.inputs.in_file = 'im1.nii'
+#     >>> node.inputs.kernel_size = 2.0
+#     >>> node.inputs.file_to_seg = 'im2.nii'
+#     >>> node.inputs.template_file = 'im3.nii'
+#     >>> node.inputs.template_num = 2
+#     >>> node.inputs.classifier_type = 'STEPS'
+#     >>> node.cmdline
+#     'seg_LabFusion -in im1.nii -STEPS 2.000000 2 im2.nii im3.nii -out im1_steps.nii'
+# 
+#     
+task_name: LabelFusion
+nipype_name: LabelFusion
+nipype_module: nipype.interfaces.niftyseg.label_fusion
+inputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    in_file: medimage/nifti1
+    # type=file|default=<undefined>: Filename of the 4D integer label image.
+    template_file: medimage/nifti1
+    # type=file|default=<undefined>: Registered templates (4D Image)
+    file_to_seg: medimage/nifti1
+    # type=file|default=<undefined>: Original image to segment (3D Image)
+    mask_file: generic/file
+    # type=file|default=<undefined>: Filename of the ROI for label fusion
+    out_file: generic/file
+    # type=file: image written after calculations
+    # type=file|default=<undefined>: Output consensus segmentation
+  metadata:
+  # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
+outputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    out_file: generic/file
+    # type=file: image written after calculations
+    # type=file|default=<undefined>: Output consensus segmentation
+  callables:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set to the `callable` attribute of output fields
+  templates:
+  # dict[str, str] - `output_file_template` values to be provided to output fields
+  requirements:
+  # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
+tests:
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    in_file:
+    # type=file|default=<undefined>: Filename of the 4D integer label image.
+    template_file:
+    # type=file|default=<undefined>: Registered templates (4D Image)
+    file_to_seg:
+    # type=file|default=<undefined>: Original image to segment (3D Image)
+    mask_file:
+    # type=file|default=<undefined>: Filename of the ROI for label fusion
+    out_file:
+    # type=file: image written after calculations
+    # type=file|default=<undefined>: Output consensus segmentation
+    prob_flag:
+    # type=bool|default=False: Probabilistic/Fuzzy segmented image
+    verbose:
+    # type=enum|default='0'|allowed['0','1','2']: Verbose level [0 = off, 1 = on, 2 = debug] (default = 0)
+    unc:
+    # type=bool|default=False: Only consider non-consensus voxels to calculate statistics
+    classifier_type:
+    # type=enum|default='STEPS'|allowed['MV','SBA','STAPLE','STEPS']: Type of Classifier Fusion.
+    kernel_size:
+    # type=float|default=0.0: Gaussian kernel size in mm to compute the local similarity
+    template_num:
+    # type=int|default=0: Number of labels to use
+    sm_ranking:
+    # type=enum|default='ALL'|allowed['ALL','GNCC','LNCC','ROINCC']: Ranking for STAPLE and MV
+    dilation_roi:
+    # type=int|default=0: Dilation of the ROI ( <int> d>=1 )
+    proportion:
+    # type=float|default=0.0: Proportion of the label (only for single labels).
+    prob_update_flag:
+    # type=bool|default=False: Update label proportions at each iteration
+    set_pq:
+    # type=tuple|default=(0.0, 0.0): Value of P and Q [ 0 < (P,Q) < 1 ] (default = 0.99 0.99)
+    mrf_value:
+    # type=float|default=0.0: MRF prior strength (between 0 and 5)
+    max_iter:
+    # type=int|default=0: Maximum number of iterations (default = 15).
+    unc_thresh:
+    # type=float|default=0.0: If <float> percent of labels agree, then area is not uncertain.
+    conv:
+    # type=float|default=0.0: Ratio for convergence (default epsilon = 10^-5).
+    args:
+    # type=str|default='': Additional parameters to the command
+    environ:
+    # type=dict|default={}: Environment variables
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    in_file:
+    # type=file|default=<undefined>: Filename of the 4D integer label image.
+    kernel_size: '2.0'
+    # type=float|default=0.0: Gaussian kernel size in mm to compute the local similarity
+    file_to_seg:
+    # type=file|default=<undefined>: Original image to segment (3D Image)
+    template_file:
+    # type=file|default=<undefined>: Registered templates (4D Image)
+    template_num: '2'
+    # type=int|default=0: Number of labels to use
+    classifier_type: '"STEPS"'
+    # type=enum|default='STEPS'|allowed['MV','SBA','STAPLE','STEPS']: Type of Classifier Fusion.
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+doctests:
+- cmdline: seg_LabFusion -in im1.nii -STEPS 2.000000 2 im2.nii im3.nii -out im1_steps.nii
+  # str - the expected cmdline output
+  inputs:
+  # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
+  # If the field is of file-format type and the value is None, then the
+  # '.mock()' method of the corresponding class is used instead.
+    in_file:
+    # type=file|default=<undefined>: Filename of the 4D integer label image.
+    kernel_size: '2.0'
+    # type=float|default=0.0: Gaussian kernel size in mm to compute the local similarity
+    file_to_seg:
+    # type=file|default=<undefined>: Original image to segment (3D Image)
+    template_file:
+    # type=file|default=<undefined>: Registered templates (4D Image)
+    template_num: '2'
+    # type=int|default=0: Number of labels to use
+    classifier_type: '"STEPS"'
+    # type=enum|default='STEPS'|allowed['MV','SBA','STAPLE','STEPS']: Type of Classifier Fusion.
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  directive:
+  # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

@@ -1,0 +1,139 @@
+# This file is used to manually specify the semi-automatic conversion of
+# 'nipype.interfaces.semtools.diffusion.gtract.gtractCoRegAnatomy' from Nipype to Pydra.
+#
+# Please fill-in/edit the fields below where appropriate
+#
+# Docs
+# ----
+# title: Coregister B0 to Anatomy B-Spline
+# 
+#     category: Diffusion.GTRACT
+# 
+#     description: This program will register a Nrrd diffusion weighted 4D vector image to a fixed anatomical image. Two registration methods are supported for alignment with anatomical images: Rigid and B-Spline. The rigid registration performs a rigid body registration with the anatomical images and should be done as well to initialize the B-Spline transform. The B-SPline transform is the deformable transform, where the user can control the amount of deformation based on the number of control points as well as the maximum distance that these points can move. The B-Spline registration places a low dimensional grid in the image, which is deformed. This allows for some susceptibility related distortions to be removed from the diffusion weighted images. In general the amount of motion in the slice selection and read-out directions direction should be kept low. The distortion is in the phase encoding direction in the images. It is recommended that skull stripped (i.e. image containing only brain with skull removed) images should be used for image co-registration with the B-Spline transform.
+# 
+#     version: 4.0.0
+# 
+#     documentation-url: http://wiki.slicer.org/slicerWiki/index.php/Modules:GTRACT
+# 
+#     license: http://mri.radiology.uiowa.edu/copyright/GTRACT-Copyright.txt
+# 
+#     contributor: This tool was developed by Vincent Magnotta and Greg Harris.
+# 
+#     acknowledgements: Funding for this version of the GTRACT program was provided by NIH/NINDS R01NS050568-01A2S1
+#     
+task_name: gtractCoRegAnatomy
+nipype_name: gtractCoRegAnatomy
+nipype_module: nipype.interfaces.semtools.diffusion.gtract
+inputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    inputVolume: generic/file
+    # type=file|default=<undefined>: Required: input vector image file name. It is recommended that the input volume is the skull stripped baseline image of the DWI scan.
+    inputAnatomicalVolume: generic/file
+    # type=file|default=<undefined>: Required: input anatomical image file name. It is recommended that the input anatomical image has been skull stripped and has the same orientation as the DWI scan.
+    inputRigidTransform: generic/file
+    # type=file|default=<undefined>: Required (for B-Spline type co-registration): input rigid transform file name. Used as a starting point for the anatomical B-Spline registration.
+  metadata:
+  # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
+outputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    outputTransformName: generic/file
+    # type=file: Required: filename for the  fit transform.
+    # type=traitcompound|default=None: Required: filename for the  fit transform.
+  callables:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set to the `callable` attribute of output fields
+  templates:
+  # dict[str, str] - `output_file_template` values to be provided to output fields
+  requirements:
+  # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
+tests:
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    inputVolume:
+    # type=file|default=<undefined>: Required: input vector image file name. It is recommended that the input volume is the skull stripped baseline image of the DWI scan.
+    inputAnatomicalVolume:
+    # type=file|default=<undefined>: Required: input anatomical image file name. It is recommended that the input anatomical image has been skull stripped and has the same orientation as the DWI scan.
+    vectorIndex:
+    # type=int|default=0: Vector image index in the moving image (within the DWI) to be used for registration.
+    inputRigidTransform:
+    # type=file|default=<undefined>: Required (for B-Spline type co-registration): input rigid transform file name. Used as a starting point for the anatomical B-Spline registration.
+    outputTransformName:
+    # type=file: Required: filename for the  fit transform.
+    # type=traitcompound|default=None: Required: filename for the  fit transform.
+    transformType:
+    # type=enum|default='Rigid'|allowed['Bspline','Rigid']: Transform Type: Rigid|Bspline
+    numberOfIterations:
+    # type=int|default=0: Number of iterations in the selected 3D fit
+    gridSize:
+    # type=inputmultiobject|default=[]: Number of grid subdivisions in all 3 directions
+    borderSize:
+    # type=int|default=0: Size of border
+    numberOfHistogramBins:
+    # type=int|default=0: Number of histogram bins
+    spatialScale:
+    # type=int|default=0: Scales the number of voxels in the image by this value to specify the number of voxels used in the registration
+    convergence:
+    # type=float|default=0.0: Convergence Factor
+    gradientTolerance:
+    # type=float|default=0.0: Gradient Tolerance
+    maxBSplineDisplacement:
+    # type=float|default=0.0:  Sets the maximum allowed displacements in image physical coordinates for BSpline control grid along each axis.  A value of 0.0 indicates that the problem should be unbounded.  NOTE:  This only constrains the BSpline portion, and does not limit the displacement from the associated bulk transform.  This can lead to a substantial reduction in computation time in the BSpline optimizer.,       
+    maximumStepSize:
+    # type=float|default=0.0: Maximum permitted step size to move in the selected 3D fit
+    minimumStepSize:
+    # type=float|default=0.0: Minimum required step size to move in the selected 3D fit without converging -- decrease this to make the fit more exacting
+    translationScale:
+    # type=float|default=0.0: How much to scale up changes in position compared to unit rotational changes in radians -- decrease this to put more translation in the fit
+    relaxationFactor:
+    # type=float|default=0.0: Fraction of gradient from Jacobian to attempt to move in the selected 3D fit
+    numberOfSamples:
+    # type=int|default=0: The number of voxels sampled for mutual information computation.  Increase this for a slower, more careful fit. NOTE that it is suggested to use samplingPercentage instead of this option. However, if set, it overwrites the samplingPercentage option.  
+    samplingPercentage:
+    # type=float|default=0.0: This is a number in (0.0,1.0] interval that shows the percentage of the input fixed image voxels that are sampled for mutual information computation.  Increase this for a slower, more careful fit. You can also limit the sampling focus with ROI masks and ROIAUTO mask generation. The default is to use approximately 5% of voxels (for backwards compatibility 5% ~= 500000/(256*256*256)). Typical values range from 1% for low detail images to 20% for high detail images.
+    useMomentsAlign:
+    # type=bool|default=False: MomentsAlign assumes that the center of mass of the images represent similar structures.  Perform a MomentsAlign registration as part of the sequential registration steps.   This option MUST come first, and CAN NOT be used with either CenterOfHeadLAlign, GeometryAlign, or initialTransform file.  This family of options superceeds the use of transformType if any of them are set.
+    useGeometryAlign:
+    # type=bool|default=False: GeometryAlign on assumes that the center of the voxel lattice of the images represent similar structures. Perform a GeometryCenterAlign registration as part of the sequential registration steps.   This option MUST come first, and CAN NOT be used with either MomentsAlign, CenterOfHeadAlign, or initialTransform file.  This family of options superceeds the use of transformType if any of them are set.
+    useCenterOfHeadAlign:
+    # type=bool|default=False: CenterOfHeadAlign attempts to find a hemisphere full of foreground voxels from the superior direction as an estimate of where the center of a head shape would be to drive a center of mass estimate.  Perform a CenterOfHeadAlign registration as part of the sequential registration steps.   This option MUST come first, and CAN NOT be used with either MomentsAlign, GeometryAlign, or initialTransform file.  This family of options superceeds the use of transformType if any of them are set.
+    numberOfThreads:
+    # type=int|default=0: Explicitly specify the maximum number of threads to use.
+    args:
+    # type=str|default='': Additional parameters to the command
+    environ:
+    # type=dict|default={}: Environment variables
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+doctests: []

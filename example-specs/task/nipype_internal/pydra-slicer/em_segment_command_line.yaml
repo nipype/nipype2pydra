@@ -1,0 +1,148 @@
+# This file is used to manually specify the semi-automatic conversion of
+# 'nipype.interfaces.slicer.segmentation.specialized.EMSegmentCommandLine' from Nipype to Pydra.
+#
+# Please fill-in/edit the fields below where appropriate
+#
+# Docs
+# ----
+# title:
+#       EMSegment Command-line
+# 
+# 
+#     category:
+#       Segmentation.Specialized
+# 
+# 
+#     description:
+#       This module is used to simplify the process of segmenting large collections of images by providing a command line interface to the EMSegment algorithm for script and batch processing.
+# 
+# 
+#     documentation-url: http://www.slicer.org/slicerWiki/index.php/Documentation/4.0/EMSegment_Command-line
+# 
+#     contributor: Sebastien Barre, Brad Davis, Kilian Pohl, Polina Golland, Yumin Yuan, Daniel Haehn
+# 
+#     acknowledgements: Many people and organizations have contributed to the funding, design, and development of the EMSegment algorithm and its various implementations.
+# 
+#     
+task_name: EMSegmentCommandLine
+nipype_name: EMSegmentCommandLine
+nipype_module: nipype.interfaces.slicer.segmentation.specialized
+inputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    mrmlSceneFileName: generic/file
+    # type=file|default=<undefined>: Active MRML scene that contains EMSegment algorithm parameters.
+    targetVolumeFileNames: generic/file+list-of
+    # type=inputmultiobject|default=[]: File names of target volumes (to be segmented).  The number of target images must be equal to the number of target images specified in the parameter set, and these images must be spatially aligned.
+    resultStandardVolumeFileName: generic/file
+    # type=file|default=<undefined>: Used for testing.  Compare segmentation results to this image and return EXIT_FAILURE if they do not match.
+    atlasVolumeFileNames: generic/file+list-of
+    # type=inputmultiobject|default=[]: Use an alternative atlas to the one that is specified by the mrml file - note the order matters ! 
+    intermediateResultsDirectory: generic/directory
+    # type=directory|default=<undefined>: Directory where EMSegmenter will write intermediate data (e.g., aligned atlas data).
+  metadata:
+  # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
+outputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    resultVolumeFileName: generic/file
+    # type=file: The file name that the segmentation result volume will be written to.
+    # type=traitcompound|default=None: The file name that the segmentation result volume will be written to.
+    generateEmptyMRMLSceneAndQuit: generic/file
+    # type=file: Used for testing.  Only write a scene with default mrml parameters.
+    # type=traitcompound|default=None: Used for testing.  Only write a scene with default mrml parameters.
+    resultMRMLSceneFileName: generic/file
+    # type=file: Write out the MRML scene after command line substitutions have been made.
+    # type=traitcompound|default=None: Write out the MRML scene after command line substitutions have been made.
+  callables:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set to the `callable` attribute of output fields
+  templates:
+  # dict[str, str] - `output_file_template` values to be provided to output fields
+  requirements:
+  # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
+tests:
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    mrmlSceneFileName:
+    # type=file|default=<undefined>: Active MRML scene that contains EMSegment algorithm parameters.
+    resultVolumeFileName:
+    # type=file: The file name that the segmentation result volume will be written to.
+    # type=traitcompound|default=None: The file name that the segmentation result volume will be written to.
+    targetVolumeFileNames:
+    # type=inputmultiobject|default=[]: File names of target volumes (to be segmented).  The number of target images must be equal to the number of target images specified in the parameter set, and these images must be spatially aligned.
+    intermediateResultsDirectory:
+    # type=directory|default=<undefined>: Directory where EMSegmenter will write intermediate data (e.g., aligned atlas data).
+    parametersMRMLNodeName:
+    # type=str|default='': The name of the EMSegment parameters node within the active MRML scene.  Leave blank for default.
+    disableMultithreading:
+    # type=int|default=0: Disable multithreading for the EMSegmenter algorithm only! Preprocessing might still run in multi-threaded mode. -1: Do not overwrite default value. 0: Disable. 1: Enable.
+    dontUpdateIntermediateData:
+    # type=int|default=0: Disable update of intermediate results.  -1: Do not overwrite default value. 0: Disable. 1: Enable.
+    verbose:
+    # type=bool|default=False: Enable verbose output.
+    loadTargetCentered:
+    # type=bool|default=False: Read target files centered.
+    loadAtlasNonCentered:
+    # type=bool|default=False: Read atlas files non-centered.
+    taskPreProcessingSetting:
+    # type=str|default='': Specifies the different task parameter. Leave blank for default.
+    keepTempFiles:
+    # type=bool|default=False: If flag is set then at the end of command the temporary files are not removed
+    resultStandardVolumeFileName:
+    # type=file|default=<undefined>: Used for testing.  Compare segmentation results to this image and return EXIT_FAILURE if they do not match.
+    dontWriteResults:
+    # type=bool|default=False: Used for testing.  Don't actually write the resulting labelmap to disk.
+    generateEmptyMRMLSceneAndQuit:
+    # type=file: Used for testing.  Only write a scene with default mrml parameters.
+    # type=traitcompound|default=None: Used for testing.  Only write a scene with default mrml parameters.
+    resultMRMLSceneFileName:
+    # type=file: Write out the MRML scene after command line substitutions have been made.
+    # type=traitcompound|default=None: Write out the MRML scene after command line substitutions have been made.
+    disableCompression:
+    # type=bool|default=False: Don't use compression when writing result image to disk.
+    atlasVolumeFileNames:
+    # type=inputmultiobject|default=[]: Use an alternative atlas to the one that is specified by the mrml file - note the order matters ! 
+    registrationPackage:
+    # type=str|default='': specify the registration package for preprocessing (CMTK or BRAINS or PLASTIMATCH or DEMONS)
+    registrationAffineType:
+    # type=int|default=0: specify the accuracy of the affine registration. -2: Do not overwrite default, -1: Test, 0: Disable, 1: Fast, 2: Accurate
+    registrationDeformableType:
+    # type=int|default=0: specify the accuracy of the deformable registration. -2: Do not overwrite default, -1: Test, 0: Disable, 1: Fast, 2: Accurate
+    args:
+    # type=str|default='': Additional parameters to the command
+    environ:
+    # type=dict|default={}: Environment variables
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+doctests: []

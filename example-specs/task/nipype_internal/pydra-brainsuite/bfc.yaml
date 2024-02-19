@@ -1,0 +1,160 @@
+# This file is used to manually specify the semi-automatic conversion of
+# 'nipype.interfaces.brainsuite.brainsuite.Bfc' from Nipype to Pydra.
+#
+# Please fill-in/edit the fields below where appropriate
+#
+# Docs
+# ----
+# 
+#     bias field corrector (BFC)
+#     This program corrects gain variation in T1-weighted MRI.
+# 
+#     http://brainsuite.org/processing/surfaceextraction/bfc/
+# 
+#     Examples
+#     --------
+# 
+#     >>> from nipype.interfaces import brainsuite
+#     >>> from nipype.testing import example_data
+#     >>> bfc = brainsuite.Bfc()
+#     >>> bfc.inputs.inputMRIFile = example_data('structural.nii')
+#     >>> bfc.inputs.inputMaskFile = example_data('mask.nii')
+#     >>> results = bfc.run() #doctest: +SKIP
+# 
+#     
+task_name: Bfc
+nipype_name: Bfc
+nipype_module: nipype.interfaces.brainsuite.brainsuite
+inputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    inputMRIFile: generic/file
+    # type=file|default=<undefined>: input skull-stripped MRI volume
+    inputMaskFile: generic/file
+    # type=file|default=<undefined>: mask file
+    outputBiasField: generic/file
+    # type=file: path/name of bias field output file
+    # type=file|default=<undefined>: save bias field estimate
+    outputMaskedBiasField: generic/file
+    # type=file: path/name of masked bias field output
+    # type=file|default=<undefined>: save bias field estimate (masked)
+    correctionScheduleFile: generic/file
+    # type=file: path/name of schedule file
+    # type=file|default=<undefined>: list of parameters 
+  metadata:
+  # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
+outputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    outputMRIVolume: generic/file
+    # type=file: path/name of output file
+    # type=file|default=<undefined>: output bias-corrected MRI volume. If unspecified, output file name will be auto generated.
+    outputBiasField: generic/file
+    # type=file: path/name of bias field output file
+    # type=file|default=<undefined>: save bias field estimate
+    outputMaskedBiasField: generic/file
+    # type=file: path/name of masked bias field output
+    # type=file|default=<undefined>: save bias field estimate (masked)
+    correctionScheduleFile: generic/file
+    # type=file: path/name of schedule file
+    # type=file|default=<undefined>: list of parameters 
+  callables:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set to the `callable` attribute of output fields
+  templates:
+  # dict[str, str] - `output_file_template` values to be provided to output fields
+    outputMRIVolume: outputMRIVolume
+    # type=file: path/name of output file
+    # type=file|default=<undefined>: output bias-corrected MRI volume. If unspecified, output file name will be auto generated.
+  requirements:
+  # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
+tests:
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    inputMRIFile:
+    # type=file|default=<undefined>: input skull-stripped MRI volume
+    inputMaskFile:
+    # type=file|default=<undefined>: mask file
+    outputMRIVolume:
+    # type=file: path/name of output file
+    # type=file|default=<undefined>: output bias-corrected MRI volume. If unspecified, output file name will be auto generated.
+    outputBiasField:
+    # type=file: path/name of bias field output file
+    # type=file|default=<undefined>: save bias field estimate
+    outputMaskedBiasField:
+    # type=file: path/name of masked bias field output
+    # type=file|default=<undefined>: save bias field estimate (masked)
+    histogramRadius:
+    # type=int|default=0: histogram radius (voxels)
+    biasEstimateSpacing:
+    # type=int|default=0: bias sample spacing (voxels)
+    controlPointSpacing:
+    # type=int|default=0: control point spacing (voxels)
+    splineLambda:
+    # type=float|default=0.0: spline stiffness weighting parameter
+    histogramType:
+    # type=enum|default='ellipse'|allowed['block','ellipse']: Options for type of histogram:    * ``ellipse``: use ellipsoid for ROI histogram   * ``block``:use block for ROI histogram  
+    iterativeMode:
+    # type=bool|default=False: iterative mode (overrides -r, -s, -c, -w settings)
+    correctionScheduleFile:
+    # type=file: path/name of schedule file
+    # type=file|default=<undefined>: list of parameters 
+    biasFieldEstimatesOutputPrefix:
+    # type=str|default='': save iterative bias field estimates as <prefix>.n.field.nii.gz
+    correctedImagesOutputPrefix:
+    # type=str|default='': save iterative corrected images as <prefix>.n.bfc.nii.gz
+    correctWholeVolume:
+    # type=bool|default=False: apply correction field to entire volume
+    minBias:
+    # type=float|default=0.5: minimum allowed bias value
+    maxBias:
+    # type=float|default=1.5: maximum allowed bias value
+    biasRange:
+    # type=enum|default='low'|allowed['high','low','medium']: Preset options for bias_model    * low: small bias model [0.95,1.05]   * medium: medium bias model [0.90,1.10]   * high: high bias model [0.80,1.20]  
+    intermediate_file_type:
+    # type=enum|default='analyze'|allowed['analyze','gzippedAnalyze','gzippedNifti','nifti']: Options for the format in which intermediate files are generated
+    convergenceThreshold:
+    # type=float|default=0.0: convergence threshold
+    biasEstimateConvergenceThreshold:
+    # type=float|default=0.0: bias estimate convergence threshold (values > 0.1 disable)
+    verbosityLevel:
+    # type=int|default=0: verbosity level (0=silent)
+    timer:
+    # type=bool|default=False: display timing information
+    args:
+    # type=str|default='': Additional parameters to the command
+    environ:
+    # type=dict|default={}: Environment variables
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+doctests: []

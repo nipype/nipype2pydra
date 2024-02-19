@@ -1,0 +1,203 @@
+# This file is used to manually specify the semi-automatic conversion of
+# 'nipype.interfaces.workbench.cifti.CiftiSmooth' from Nipype to Pydra.
+#
+# Please fill-in/edit the fields below where appropriate
+#
+# Docs
+# ----
+# 
+#     Smooth a CIFTI file
+# 
+#     The input cifti file must have a brain models mapping on the chosen
+#     dimension, columns for .dtseries, and either for .dconn.  By default,
+#     data in different structures is smoothed independently (i.e., "parcel
+#     constrained" smoothing), so volume structures that touch do not smooth
+#     across this boundary.  Specify ``merged_volume`` to ignore these
+#     boundaries. Surface smoothing uses the ``GEO_GAUSS_AREA`` smoothing method.
+# 
+#     The ``*_corrected_areas`` options are intended for when it is unavoidable
+#     to smooth on group average surfaces, it is only an approximate correction
+#     for the reduction of structure in a group average surface.  It is better
+#     to smooth the data on individuals before averaging, when feasible.
+# 
+#     The ``fix_zeros_*`` options will treat values of zero as lack of data, and
+#     not use that value when generating the smoothed values, but will fill
+#     zeros with extrapolated values.  The ROI should have a brain models
+#     mapping along columns, exactly matching the mapping of the chosen
+#     direction in the input file.  Data outside the ROI is ignored.
+# 
+#     >>> from nipype.interfaces.workbench import CiftiSmooth
+#     >>> smooth = CiftiSmooth()
+#     >>> smooth.inputs.in_file = 'sub-01_task-rest.dtseries.nii'
+#     >>> smooth.inputs.sigma_surf = 4
+#     >>> smooth.inputs.sigma_vol = 4
+#     >>> smooth.inputs.direction = 'COLUMN'
+#     >>> smooth.inputs.right_surf = 'sub-01.R.midthickness.32k_fs_LR.surf.gii'
+#     >>> smooth.inputs.left_surf = 'sub-01.L.midthickness.32k_fs_LR.surf.gii'
+#     >>> smooth.cmdline
+#     'wb_command -cifti-smoothing sub-01_task-rest.dtseries.nii 4.0 4.0 COLUMN     smoothed_sub-01_task-rest.dtseries.nii     -left-surface sub-01.L.midthickness.32k_fs_LR.surf.gii     -right-surface sub-01.R.midthickness.32k_fs_LR.surf.gii'
+#     
+task_name: CiftiSmooth
+nipype_name: CiftiSmooth
+nipype_module: nipype.interfaces.workbench.cifti
+inputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    in_file: medimage/nifti1
+    # type=file|default=<undefined>: The input CIFTI file
+    out_file: generic/file
+    # type=file: output CIFTI file
+    # type=file|default=<undefined>: The output CIFTI
+    left_surf: medimage/gifti
+    # type=file|default=<undefined>: Specify the left surface to use
+    left_corrected_areas: generic/file
+    # type=file|default=<undefined>: vertex areas (as a metric) to use instead of computing them from the left surface.
+    right_surf: medimage/gifti
+    # type=file|default=<undefined>: Specify the right surface to use
+    right_corrected_areas: generic/file
+    # type=file|default=<undefined>: vertex areas (as a metric) to use instead of computing them from the right surface
+    cerebellum_surf: generic/file
+    # type=file|default=<undefined>: specify the cerebellum surface to use
+    cerebellum_corrected_areas: generic/file
+    # type=file|default=<undefined>: vertex areas (as a metric) to use instead of computing them from the cerebellum surface
+    cifti_roi: generic/file
+    # type=file|default=<undefined>: CIFTI file for ROI smoothing
+  metadata:
+  # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
+outputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    out_file: generic/file
+    # type=file: output CIFTI file
+    # type=file|default=<undefined>: The output CIFTI
+  callables:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set to the `callable` attribute of output fields
+  templates:
+  # dict[str, str] - `output_file_template` values to be provided to output fields
+  requirements:
+  # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
+tests:
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    in_file:
+    # type=file|default=<undefined>: The input CIFTI file
+    sigma_surf:
+    # type=float|default=0.0: the sigma for the gaussian surface smoothing kernel, in mm
+    sigma_vol:
+    # type=float|default=0.0: the sigma for the gaussian volume smoothing kernel, in mm
+    direction:
+    # type=enum|default='ROW'|allowed['COLUMN','ROW']: which dimension to smooth along, ROW or COLUMN
+    out_file:
+    # type=file: output CIFTI file
+    # type=file|default=<undefined>: The output CIFTI
+    left_surf:
+    # type=file|default=<undefined>: Specify the left surface to use
+    left_corrected_areas:
+    # type=file|default=<undefined>: vertex areas (as a metric) to use instead of computing them from the left surface.
+    right_surf:
+    # type=file|default=<undefined>: Specify the right surface to use
+    right_corrected_areas:
+    # type=file|default=<undefined>: vertex areas (as a metric) to use instead of computing them from the right surface
+    cerebellum_surf:
+    # type=file|default=<undefined>: specify the cerebellum surface to use
+    cerebellum_corrected_areas:
+    # type=file|default=<undefined>: vertex areas (as a metric) to use instead of computing them from the cerebellum surface
+    cifti_roi:
+    # type=file|default=<undefined>: CIFTI file for ROI smoothing
+    fix_zeros_vol:
+    # type=bool|default=False: treat values of zero in the volume as missing data
+    fix_zeros_surf:
+    # type=bool|default=False: treat values of zero on the surface as missing data
+    merged_volume:
+    # type=bool|default=False: smooth across subcortical structure boundaries
+    args:
+    # type=str|default='': Additional parameters to the command
+    environ:
+    # type=dict|default={}: Environment variables
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    in_file:
+    # type=file|default=<undefined>: The input CIFTI file
+    sigma_surf: '4'
+    # type=float|default=0.0: the sigma for the gaussian surface smoothing kernel, in mm
+    sigma_vol: '4'
+    # type=float|default=0.0: the sigma for the gaussian volume smoothing kernel, in mm
+    direction: '"COLUMN"'
+    # type=enum|default='ROW'|allowed['COLUMN','ROW']: which dimension to smooth along, ROW or COLUMN
+    right_surf:
+    # type=file|default=<undefined>: Specify the right surface to use
+    left_surf:
+    # type=file|default=<undefined>: Specify the left surface to use
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+doctests:
+- cmdline: wb_command -cifti-smoothing sub-01_task-rest.dtseries.nii 4.0 4.0 COLUMN smoothed_sub-01_task-rest.dtseries.nii -left-surface sub-01.L.midthickness.32k_fs_LR.surf.gii -right-surface sub-01.R.midthickness.32k_fs_LR.surf.gii
+  # str - the expected cmdline output
+  inputs:
+  # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
+  # If the field is of file-format type and the value is None, then the
+  # '.mock()' method of the corresponding class is used instead.
+    in_file:
+    # type=file|default=<undefined>: The input CIFTI file
+    sigma_surf: '4'
+    # type=float|default=0.0: the sigma for the gaussian surface smoothing kernel, in mm
+    sigma_vol: '4'
+    # type=float|default=0.0: the sigma for the gaussian volume smoothing kernel, in mm
+    direction: '"COLUMN"'
+    # type=enum|default='ROW'|allowed['COLUMN','ROW']: which dimension to smooth along, ROW or COLUMN
+    right_surf:
+    # type=file|default=<undefined>: Specify the right surface to use
+    left_surf:
+    # type=file|default=<undefined>: Specify the left surface to use
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  directive:
+  # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

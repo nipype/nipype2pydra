@@ -1,0 +1,106 @@
+# This file is used to manually specify the semi-automatic conversion of
+# 'nipype.interfaces.camino2trackvis.convert.Camino2Trackvis' from Nipype to Pydra.
+#
+# Please fill-in/edit the fields below where appropriate
+#
+# Docs
+# ----
+# Wraps camino_to_trackvis from Camino-Trackvis
+# 
+#     Convert files from camino .Bfloat format to trackvis .trk format.
+# 
+#     Example
+#     -------
+# 
+#     >>> import nipype.interfaces.camino2trackvis as cam2trk
+#     >>> c2t = cam2trk.Camino2Trackvis()
+#     >>> c2t.inputs.in_file = 'data.Bfloat'
+#     >>> c2t.inputs.out_file = 'streamlines.trk'
+#     >>> c2t.inputs.min_length = 30
+#     >>> c2t.inputs.data_dims = [128, 104, 64]
+#     >>> c2t.inputs.voxel_dims = [2.0, 2.0, 2.0]
+#     >>> c2t.inputs.voxel_order = 'LAS'
+#     >>> c2t.run()          # doctest: +SKIP
+#     
+task_name: Camino2Trackvis
+nipype_name: Camino2Trackvis
+nipype_module: nipype.interfaces.camino2trackvis.convert
+inputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    in_file: generic/file
+    # type=file|default=<undefined>: The input .Bfloat (camino) file.
+    voxel_order: generic/file
+    # type=file|default=<undefined>: Set the order in which various directions were stored.        Specify with three letters consisting of one each          from the pairs LR, AP, and SI. These stand for Left-Right,         Anterior-Posterior, and Superior-Inferior.          Whichever is specified in each position will          be the direction of increasing order.          Read coordinate system from a NIfTI file.
+    nifti_file: generic/file
+    # type=file|default=<undefined>: Read coordinate system from a NIfTI file.
+  metadata:
+  # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
+outputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    trackvis: generic/file
+    # type=file: The filename to which to write the .trk (trackvis) file.
+  callables:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set to the `callable` attribute of output fields
+  templates:
+  # dict[str, str] - `output_file_template` values to be provided to output fields
+    out_file: out_file
+    # type=file|default=<undefined>: The filename to which to write the .trk (trackvis) file.
+  requirements:
+  # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
+tests:
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    in_file:
+    # type=file|default=<undefined>: The input .Bfloat (camino) file.
+    out_file:
+    # type=file|default=<undefined>: The filename to which to write the .trk (trackvis) file.
+    min_length:
+    # type=float|default=0.0: The minimum length of tracts to output
+    data_dims:
+    # type=list|default=[]: Three comma-separated integers giving the number of voxels along each dimension of the source scans.
+    voxel_dims:
+    # type=list|default=[]: Three comma-separated numbers giving the size of each voxel in mm.
+    voxel_order:
+    # type=file|default=<undefined>: Set the order in which various directions were stored.        Specify with three letters consisting of one each          from the pairs LR, AP, and SI. These stand for Left-Right,         Anterior-Posterior, and Superior-Inferior.          Whichever is specified in each position will          be the direction of increasing order.          Read coordinate system from a NIfTI file.
+    nifti_file:
+    # type=file|default=<undefined>: Read coordinate system from a NIfTI file.
+    args:
+    # type=str|default='': Additional parameters to the command
+    environ:
+    # type=dict|default={}: Environment variables
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+doctests: []

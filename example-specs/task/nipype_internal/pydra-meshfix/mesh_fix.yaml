@@ -1,0 +1,198 @@
+# This file is used to manually specify the semi-automatic conversion of
+# 'nipype.interfaces.meshfix.MeshFix' from Nipype to Pydra.
+#
+# Please fill-in/edit the fields below where appropriate
+#
+# Docs
+# ----
+# 
+#     MeshFix v1.2-alpha - by Marco Attene, Mirko Windhoff, Axel Thielscher.
+# 
+#     .. seealso::
+# 
+#         http://jmeshlib.sourceforge.net
+#             Sourceforge page
+# 
+#         http://simnibs.de/installation/meshfixandgetfem
+#             Ubuntu installation instructions
+# 
+#     If MeshFix is used for research purposes, please cite the following paper:
+#     M. Attene - A lightweight approach to repairing digitized polygon meshes.
+#     The Visual Computer, 2010. (c) Springer.
+# 
+#     Accepted input formats are OFF, PLY and STL.
+#     Other formats (like .msh for gmsh) are supported only partially.
+# 
+#     Example
+#     -------
+# 
+#     >>> import nipype.interfaces.meshfix as mf
+#     >>> fix = mf.MeshFix()
+#     >>> fix.inputs.in_file1 = 'lh-pial.stl'
+#     >>> fix.inputs.in_file2 = 'rh-pial.stl'
+#     >>> fix.run()                            # doctest: +SKIP
+#     >>> fix.cmdline
+#     'meshfix lh-pial.stl rh-pial.stl -o lh-pial_fixed.off'
+#     
+task_name: MeshFix
+nipype_name: MeshFix
+nipype_module: nipype.interfaces.meshfix
+inputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    in_file1: model/stl
+    # type=file|default=<undefined>: 
+    in_file2: model/stl
+    # type=file|default=<undefined>: 
+  metadata:
+  # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
+outputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    mesh_file: generic/file
+    # type=file: The output mesh file
+  callables:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set to the `callable` attribute of output fields
+  templates:
+  # dict[str, str] - `output_file_template` values to be provided to output fields
+    out_filename: out_filename
+    # type=file|default=<undefined>: The output filename for the fixed mesh file
+  requirements:
+  # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
+tests:
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    number_of_biggest_shells:
+    # type=int|default=0: Only the N biggest shells are kept
+    epsilon_angle:
+    # type=range|default=0.0: Epsilon angle in degrees (must be between 0 and 2)
+    join_overlapping_largest_components:
+    # type=bool|default=False: Join 2 biggest components if they overlap, remove the rest.
+    join_closest_components:
+    # type=bool|default=False: Join the closest pair of components.
+    quiet_mode:
+    # type=bool|default=False: Quiet mode, don't write much to stdout.
+    dont_clean:
+    # type=bool|default=False: Don't Clean
+    save_as_stl:
+    # type=bool|default=False: Result is saved in stereolithographic format (.stl)
+    save_as_vrml:
+    # type=bool|default=False: Result is saved in VRML1.0 format (.wrl)
+    save_as_freesurfer_mesh:
+    # type=bool|default=False: Result is saved in freesurfer mesh format
+    remove_handles:
+    # type=bool|default=False: Remove handles
+    uniform_remeshing_steps:
+    # type=int|default=0: Number of steps for uniform remeshing of the whole mesh
+    uniform_remeshing_vertices:
+    # type=int|default=0: Constrains the number of vertices.Must be used with uniform_remeshing_steps
+    laplacian_smoothing_steps:
+    # type=int|default=0: The number of laplacian smoothing steps to apply
+    x_shift:
+    # type=int|default=0: Shifts the coordinates of the vertices when saving. Output must be in FreeSurfer format
+    cut_outer:
+    # type=int|default=0: Remove triangles of 1st that are outside of the 2nd shell.
+    cut_inner:
+    # type=int|default=0: Remove triangles of 1st that are inside of the 2nd shell. Dilate 2nd by N; Fill holes and keep only 1st afterwards.
+    decouple_inin:
+    # type=int|default=0: Treat 1st file as inner, 2nd file as outer component.Resolve overlaps by moving inners triangles inwards. Constrain the min distance between the components > d.
+    decouple_outin:
+    # type=int|default=0: Treat 1st file as outer, 2nd file as inner component.Resolve overlaps by moving outers triangles inwards. Constrain the min distance between the components > d.
+    decouple_outout:
+    # type=int|default=0: Treat 1st file as outer, 2nd file as inner component.Resolve overlaps by moving outers triangles outwards. Constrain the min distance between the components > d.
+    finetuning_inwards:
+    # type=bool|default=False: Used to fine-tune the minimal distance between surfaces.
+    finetuning_outwards:
+    # type=bool|default=False: Similar to finetuning_inwards, but ensures minimal distance in the other direction
+    finetuning_distance:
+    # type=float|default=0.0: Used to fine-tune the minimal distance between surfaces.A minimal distance d is ensured, and reached in n substeps. When using the surfaces for subsequent volume meshing by gmsh, this step prevent too flat tetrahedra2)
+    finetuning_substeps:
+    # type=int|default=0: Used to fine-tune the minimal distance between surfaces.A minimal distance d is ensured, and reached in n substeps. When using the surfaces for subsequent volume meshing by gmsh, this step prevent too flat tetrahedra2)
+    dilation:
+    # type=int|default=0: Dilate the surface by d. d < 0 means shrinking.
+    set_intersections_to_one:
+    # type=bool|default=False: If the mesh contains intersections, return value = 1.If saved in gmsh format, intersections will be highlighted.
+    in_file1:
+    # type=file|default=<undefined>: 
+    in_file2:
+    # type=file|default=<undefined>: 
+    output_type:
+    # type=enum|default='off'|allowed['fs','msh','off','stl','vrml','wrl']: The output type to save the file as.
+    out_filename:
+    # type=file|default=<undefined>: The output filename for the fixed mesh file
+    args:
+    # type=str|default='': Additional parameters to the command
+    environ:
+    # type=dict|default={}: Environment variables
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    in_file1:
+    # type=file|default=<undefined>: 
+    in_file2:
+    # type=file|default=<undefined>: 
+  imports: &id001
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  - module: nipype.interfaces.meshfix as mf
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+doctests:
+- cmdline: meshfix lh-pial.stl rh-pial.stl -o lh-pial_fixed.off
+  # str - the expected cmdline output
+  inputs:
+  # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
+  # If the field is of file-format type and the value is None, then the
+  # '.mock()' method of the corresponding class is used instead.
+    in_file1:
+    # type=file|default=<undefined>: 
+    in_file2:
+    # type=file|default=<undefined>: 
+  imports: *id001
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  directive:
+  # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

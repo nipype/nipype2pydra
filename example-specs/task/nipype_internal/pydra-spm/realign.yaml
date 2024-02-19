@@ -1,0 +1,119 @@
+# This file is used to manually specify the semi-automatic conversion of
+# 'nipype.interfaces.spm.preprocess.Realign' from Nipype to Pydra.
+#
+# Please fill-in/edit the fields below where appropriate
+#
+# Docs
+# ----
+# Use spm_realign for estimating within modality rigid body alignment
+# 
+#     http://www.fil.ion.ucl.ac.uk/spm/doc/manual.pdf#page=25
+# 
+#     Examples
+#     --------
+# 
+#     >>> import nipype.interfaces.spm as spm
+#     >>> realign = spm.Realign()
+#     >>> realign.inputs.in_files = 'functional.nii'
+#     >>> realign.inputs.register_to_mean = True
+#     >>> realign.run() # doctest: +SKIP
+# 
+#     
+task_name: Realign
+nipype_name: Realign
+nipype_module: nipype.interfaces.spm.preprocess
+inputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    weight_img: generic/file
+    # type=file|default=<undefined>: filename of weighting image
+    paths: generic/directory+list-of
+    # type=inputmultiobject|default=[]: Paths to add to matlabpath
+  metadata:
+  # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
+outputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    mean_image: generic/file
+    # type=file: Mean image file from the realignment
+  callables:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set to the `callable` attribute of output fields
+  templates:
+  # dict[str, str] - `output_file_template` values to be provided to output fields
+  requirements:
+  # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
+tests:
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    in_files:
+    # type=inputmultiobject|default=[]: list of filenames to realign
+    jobtype:
+    # type=enum|default='estwrite'|allowed['estimate','estwrite','write']: one of: estimate, write, estwrite
+    quality:
+    # type=range|default=0.0: 0.1 = fast, 1.0 = precise
+    fwhm:
+    # type=range|default=0.0: gaussian smoothing kernel width
+    separation:
+    # type=range|default=0.0: sampling separation in mm
+    register_to_mean:
+    # type=bool|default=False: Indicate whether realignment is done to the mean image
+    weight_img:
+    # type=file|default=<undefined>: filename of weighting image
+    interp:
+    # type=range|default=0: degree of b-spline used for interpolation
+    wrap:
+    # type=list|default=[]: Check if interpolation should wrap in [x,y,z]
+    write_which:
+    # type=list|default=[2, 1]: determines which images to reslice
+    write_interp:
+    # type=range|default=0: degree of b-spline used for interpolation
+    write_wrap:
+    # type=list|default=[]: Check if interpolation should wrap in [x,y,z]
+    write_mask:
+    # type=bool|default=False: True/False mask output image
+    out_prefix:
+    # type=string|default='r': realigned output prefix
+    matlab_cmd:
+    # type=str|default='': matlab command to use
+    paths:
+    # type=inputmultiobject|default=[]: Paths to add to matlabpath
+    mfile:
+    # type=bool|default=True: Run m-code using m-file
+    use_mcr:
+    # type=bool|default=False: Run m-code using SPM MCR
+    use_v8struct:
+    # type=bool|default=True: Generate SPM8 and higher compatible jobs
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+doctests: []

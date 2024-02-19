@@ -1,0 +1,128 @@
+# This file is used to manually specify the semi-automatic conversion of
+# 'nipype.interfaces.diffusion_toolkit.odf.ODFTracker' from Nipype to Pydra.
+#
+# Please fill-in/edit the fields below where appropriate
+#
+# Docs
+# ----
+# Use odf_tracker to generate track file
+task_name: ODFTracker
+nipype_name: ODFTracker
+nipype_module: nipype.interfaces.diffusion_toolkit.odf
+inputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    max: generic/file
+    # type=file|default=<undefined>: 
+    ODF: generic/file
+    # type=file|default=<undefined>: 
+    out_file: generic/file
+    # type=file|default='tracks.trk': output track file
+    mask1_file: generic/file
+    # type=file|default=<undefined>: first mask image
+    mask2_file: generic/file
+    # type=file|default=<undefined>: second mask image
+  metadata:
+  # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
+outputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    track_file: generic/file
+    # type=file: output track file
+  callables:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set to the `callable` attribute of output fields
+  templates:
+  # dict[str, str] - `output_file_template` values to be provided to output fields
+  requirements:
+  # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
+tests:
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    max:
+    # type=file|default=<undefined>: 
+    ODF:
+    # type=file|default=<undefined>: 
+    input_data_prefix:
+    # type=str|default='odf': recon data prefix
+    out_file:
+    # type=file|default='tracks.trk': output track file
+    input_output_type:
+    # type=enum|default='nii'|allowed['analyze','ni1','nii','nii.gz']: input and output file type
+    runge_kutta2:
+    # type=bool|default=False: use 2nd order Runge-Kutta method for tracking. default tracking method is non-interpolate streamline
+    step_length:
+    # type=float|default=0.0: set step length, in the unit of minimum voxel size. default value is 0.1.
+    angle_threshold:
+    # type=float|default=0.0: set angle threshold. default value is 35 degree for default tracking method and 25 for rk2
+    random_seed:
+    # type=int|default=0: use random location in a voxel instead of the center of the voxel to seed. can also define number of seed per voxel. default is 1
+    invert_x:
+    # type=bool|default=False: invert x component of the vector
+    invert_y:
+    # type=bool|default=False: invert y component of the vector
+    invert_z:
+    # type=bool|default=False: invert z component of the vector
+    swap_xy:
+    # type=bool|default=False: swap x and y vectors while tracking
+    swap_yz:
+    # type=bool|default=False: swap y and z vectors while tracking
+    swap_zx:
+    # type=bool|default=False: swap x and z vectors while tracking
+    disc:
+    # type=bool|default=False: use disc tracking
+    mask1_file:
+    # type=file|default=<undefined>: first mask image
+    mask1_threshold:
+    # type=float|default=0.0: threshold value for the first mask image, if not given, the program will try automatically find the threshold
+    mask2_file:
+    # type=file|default=<undefined>: second mask image
+    mask2_threshold:
+    # type=float|default=0.0: threshold value for the second mask image, if not given, the program will try automatically find the threshold
+    limit:
+    # type=int|default=0: in some special case, such as heart data, some track may go into infinite circle and take long time to stop. this option allows setting a limit for the longest tracking steps (voxels)
+    dsi:
+    # type=bool|default=False: specify the input odf data is dsi. because dsi recon uses fixed pre-calculated matrix, some special orientation patch needs to be applied to keep dti/dsi/q-ball consistent.
+    image_orientation_vectors:
+    # type=list|default=[]: specify image orientation vectors. if just one argument given, will treat it as filename and read the orientation vectors from the file. if 6 arguments are given, will treat them as 6 float numbers and construct the 1st and 2nd vector and calculate the 3rd one automatically. this information will be used to determine image orientation, as well as to adjust gradient vectors with oblique angle when
+    slice_order:
+    # type=int|default=0: set the slice order. 1 means normal, -1 means reversed. default value is 1
+    voxel_order:
+    # type=enum|default='RAS'|allowed['LAI','LAS','LPI','LPS','RAI','RAS','RPI','RPS']: specify the voxel order in RL/AP/IS (human brain) reference. must be 3 letters with no space in between. for example, RAS means the voxel row is from L->R, the column is from P->A and the slice order is from I->S. by default voxel order is determined by the image orientation (but NOT guaranteed to be correct because of various standards). for example, siemens axial image is LPS, coronal image is LIP and sagittal image is PIL. this information also is NOT needed for tracking but will be saved in the track file and is essential for track display to map onto the right coordinates
+    args:
+    # type=str|default='': Additional parameters to the command
+    environ:
+    # type=dict|default={}: Environment variables
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+doctests: []

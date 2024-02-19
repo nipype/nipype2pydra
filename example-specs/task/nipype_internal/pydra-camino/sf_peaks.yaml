@@ -1,0 +1,179 @@
+# This file is used to manually specify the semi-automatic conversion of
+# 'nipype.interfaces.camino.odf.SFPeaks' from Nipype to Pydra.
+#
+# Please fill-in/edit the fields below where appropriate
+#
+# Docs
+# ----
+# 
+#     Finds the peaks of spherical functions.
+# 
+#     This utility reads coefficients of the spherical functions and
+#     outputs a list of peak directions of the function. It computes the
+#     value of the function at each of a set of sample points. Then it
+#     finds local maxima by finding all points at which the function is
+#     larger than for any other point within a fixed search radius (the
+#     default  is 0.4). The utility then uses Powell's algorithm to
+#     optimize the position of each local maximum. Finally the utility
+#     removes duplicates and tiny peaks with function value smaller than
+#     some threshold, which is the mean of the function plus some number
+#     of standard deviations. By default the program checks for con-
+#     sistency with a second set of starting points, but skips the
+#     optimization step. To speed up execution, you can turn off the con-
+#     sistency check by setting the noconsistencycheck flag to True.
+# 
+#     By  default, the utility constructs a set of sample points by
+#     randomly rotating a unit icosahedron repeatedly (the default is 1000
+#     times, which produces a set of 6000 points) and concatenating the
+#     lists of vertices. The 'pointset = <index>' attribute can tell the
+#     utility to use an evenly distributed set of points (index 0 gives
+#     1082 points, 1 gives 1922, 2 gives 4322, 3 gives 8672, 4 gives 15872,
+#     5 gives 32762, 6 gives 72032), which is quicker, because you can get
+#     away with fewer points. We estimate that you can use a factor of 2.5
+#     less evenly distributed points than randomly distributed points and
+#     still expect similar performance levels.
+# 
+#     The output for each voxel is:
+# 
+#     - exitcode (inherited from the input data).
+#     - ln(A(0))
+#     - number of peaks found.
+#     - flag for consistency with a repeated run (number of directions is
+#       the same and the directions are the same to within a threshold.)
+#     - mean(f).
+#     - std(f).
+#     - direction 1 (x, y, z, f, H00, H01, H10, H11).
+#     - direction 2 (x, y, z, f, H00, H01, H10, H11).
+#     - direction 3 (x, y, z, f, H00, H01, H10, H11).
+# 
+#     H is the Hessian of f at the peak. It is the matrix: ::
+# 
+#         [d^2f/ds^2 d^2f/dsdt]
+#         [d^2f/dtds d^2f/dt^2]
+#         = [H00 H01]
+#           [H10 H11]
+# 
+#     where s and t are orthogonal coordinates local to the peak.
+# 
+#     By default the maximum number of peak directions output in each
+#     voxel is three. If less than three directions are found, zeros are
+#     output for later directions. The peaks are ordered by the value of
+#     the function at the peak. If more than the maximum number of
+#     directions are found only the strongest ones are output. The maximum
+#     number can be changed setting the 'numpds' attribute.
+# 
+#     The utility can read various kinds of spherical function, but must
+#     be told what kind of function is input using the 'inputmodel'
+#     attribute. The description of the 'inputmodel' attribute lists
+#     additional information required by SFPeaks for each input model.
+# 
+# 
+#     Example
+#     -------
+#     First run QBallMX and create a linear transform matrix using
+#     Spherical Harmonics (sh).
+# 
+#     >>> import nipype.interfaces.camino as cam
+#     >>> sf_peaks = cam.SFPeaks()
+#     >>> sf_peaks.inputs.in_file = 'A_recon_params.Bdouble'
+#     >>> sf_peaks.inputs.inputmodel = 'sh'
+#     >>> sf_peaks.inputs.order = 4
+#     >>> sf_peaks.inputs.density = 100
+#     >>> sf_peaks.inputs.searchradius = 1.0
+#     >>> sf_peaks.run()  # doctest: +SKIP
+# 
+#     
+task_name: SFPeaks
+nipype_name: SFPeaks
+nipype_module: nipype.interfaces.camino.odf
+inputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    in_file: generic/file
+    # type=file|default=<undefined>: Voxel-order data of spherical functions
+    scheme_file: generic/file
+    # type=file|default=<undefined>: Specific to maxent. Specifies the scheme file.
+  metadata:
+  # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
+outputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    peaks: generic/file
+    # type=file: Peaks of the spherical functions.
+  callables:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set to the `callable` attribute of output fields
+  templates:
+  # dict[str, str] - `output_file_template` values to be provided to output fields
+    out_file: out_file
+    # type=file|default=<undefined>: 
+  requirements:
+  # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
+tests:
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    in_file:
+    # type=file|default=<undefined>: Voxel-order data of spherical functions
+    inputmodel:
+    # type=enum|default='sh'|allowed['maxent','rbf','sh']: Type of functions input via in_file. Currently supported options are:   sh - Spherical harmonic series. Specify the maximum order of the SH series        with the "order" attribute if different from the default of 4.   maxent - Maximum entropy representations output by MESD. The reconstruction            directions input to MESD must be specified. By default this is the            same set of gradient directions (excluding zero gradients) in the            scheme file, so specify the "schemefile" attribute unless the            "mepointset" attribute was set in MESD.   rbf - Sums of radial basis functions. Specify the pointset with the attribute         "rbfpointset" if different from the default. See QBallMX.
+    order:
+    # type=int|default=0: Specific to sh. Maximum order of the spherical harmonic series.
+    scheme_file:
+    # type=file|default=<undefined>: Specific to maxent. Specifies the scheme file.
+    rbfpointset:
+    # type=int|default=0: Specific to rbf. Sets the number of radial basis functions to use. The value specified must be present in the Pointsets directory. The default value is 246.
+    mepointset:
+    # type=int|default=0: Use a set of directions other than those in the scheme file for the deconvolution kernel. The number refers to the number of directions on the unit sphere. For example, "mepointset = 54" uses the directions in "camino/PointSets/Elec054.txt" Use this option only if you told MESD to use a custom set of directions with the same option. Otherwise, specify the scheme file with the "schemefile" attribute.
+    numpds:
+    # type=int|default=0: The largest number of peak directions to output in each voxel.
+    noconsistencycheck:
+    # type=bool|default=False: Turns off the consistency check. The output shows all consistencies as true.
+    searchradius:
+    # type=float|default=0.0: The search radius in the peak finding algorithm. The default is 0.4 (cf. "density")
+    density:
+    # type=int|default=0: The  number  of  randomly  rotated icosahedra to use in constructing the set of points for random sampling in the peak finding algorithm. Default is 1000, which works well for very spiky maxent functions. For other types of function, it is reasonable to set the density much lower and increase the search radius slightly, which speeds up the computation.
+    pointset:
+    # type=int|default=0: To sample using an evenly distributed set of points instead. The integer can be 0, 1, ..., 7. Index 0 gives 1082 points, 1 gives 1922, 2 gives 3002, 3 gives 4322, 4 gives 5882, 5 gives 8672, 6 gives 12002, 7 gives 15872.
+    pdthresh:
+    # type=float|default=0.0: Base threshold on the actual peak direction strength divided by the mean of the function.  The default is 1.0 (the peak must be equal or greater than the mean).
+    stdsfrommean:
+    # type=float|default=0.0: This is the number of standard deviations of the function to be added to the "pdthresh" attribute in the peak directions pruning.
+    out_file:
+    # type=file|default=<undefined>: 
+    args:
+    # type=str|default='': Additional parameters to the command
+    environ:
+    # type=dict|default={}: Environment variables
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+doctests: []

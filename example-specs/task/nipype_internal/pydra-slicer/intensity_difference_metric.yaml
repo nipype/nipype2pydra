@@ -1,0 +1,112 @@
+# This file is used to manually specify the semi-automatic conversion of
+# 'nipype.interfaces.slicer.quantification.changequantification.IntensityDifferenceMetric' from Nipype to Pydra.
+#
+# Please fill-in/edit the fields below where appropriate
+#
+# Docs
+# ----
+# title:
+#       Intensity Difference Change Detection (FAST)
+# 
+# 
+#     category:
+#       Quantification.ChangeQuantification
+# 
+# 
+#     description:
+#       Quantifies the changes between two spatially aligned images based on the pixel-wise difference of image intensities.
+# 
+# 
+#     version: 0.1
+# 
+#     contributor: Andrey Fedorov
+# 
+#     acknowledgements:
+# 
+#     
+task_name: IntensityDifferenceMetric
+nipype_name: IntensityDifferenceMetric
+nipype_module: nipype.interfaces.slicer.quantification.changequantification
+inputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    baselineVolume: generic/file
+    # type=file|default=<undefined>: Baseline volume to be compared to
+    baselineSegmentationVolume: generic/file
+    # type=file|default=<undefined>: Label volume that contains segmentation of the structure of interest in the baseline volume.
+    followupVolume: generic/file
+    # type=file|default=<undefined>: Followup volume to be compare to the baseline
+  metadata:
+  # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
+outputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    outputVolume: generic/file
+    # type=file: Output volume to keep the results of change quantification.
+    # type=traitcompound|default=None: Output volume to keep the results of change quantification.
+    reportFileName: generic/file
+    # type=file: Report file name
+    # type=traitcompound|default=None: Report file name
+  callables:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set to the `callable` attribute of output fields
+  templates:
+  # dict[str, str] - `output_file_template` values to be provided to output fields
+  requirements:
+  # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
+tests:
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    sensitivityThreshold:
+    # type=float|default=0.0: This parameter should be between 0 and 1, and defines how sensitive the metric should be to the intensity changes.
+    changingBandSize:
+    # type=int|default=0: How far (in mm) from the boundary of the segmentation should the intensity changes be considered.
+    baselineVolume:
+    # type=file|default=<undefined>: Baseline volume to be compared to
+    baselineSegmentationVolume:
+    # type=file|default=<undefined>: Label volume that contains segmentation of the structure of interest in the baseline volume.
+    followupVolume:
+    # type=file|default=<undefined>: Followup volume to be compare to the baseline
+    outputVolume:
+    # type=file: Output volume to keep the results of change quantification.
+    # type=traitcompound|default=None: Output volume to keep the results of change quantification.
+    reportFileName:
+    # type=file: Report file name
+    # type=traitcompound|default=None: Report file name
+    args:
+    # type=str|default='': Additional parameters to the command
+    environ:
+    # type=dict|default={}: Environment variables
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+doctests: []

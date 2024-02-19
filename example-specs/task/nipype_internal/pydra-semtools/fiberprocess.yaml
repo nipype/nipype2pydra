@@ -1,0 +1,129 @@
+# This file is used to manually specify the semi-automatic conversion of
+# 'nipype.interfaces.semtools.diffusion.tractography.fiberprocess.fiberprocess' from Nipype to Pydra.
+#
+# Please fill-in/edit the fields below where appropriate
+#
+# Docs
+# ----
+# title: FiberProcess (DTIProcess)
+# 
+#     category: Diffusion.Tractography
+# 
+#     description: fiberprocess is a tool that manage fiber files extracted from the fibertrack tool or any fiber tracking algorithm. It takes as an input .fib and .vtk files (--fiber_file) and saves the changed fibers (--fiber_output) into the 2 same formats. The main purpose of this tool is to deform the fiber file with a transformation field as an input (--displacement_field or --h_field depending if you deal with dfield or hfield). To use that option you need to specify the tensor field from which the fiber file was extracted with the option --tensor_volume. The transformation applied on the fiber file is the inverse of the one input. If the transformation is from one case to an atlas, fiberprocess assumes that the fiber file is in the atlas space and you want it in the original case space, so it's the inverse of the transformation which has been computed.
+#     You have 2 options for fiber modification. You can either deform the fibers (their geometry) into the space OR you can keep the same geometry but map the diffusion properties (fa, md, lbd's...) of the original tensor field along the fibers at the corresponding locations. This is triggered by the --no_warp option. To use the previous example: when you have a tensor field in the original space and the deformed tensor field in the atlas space, you want to track the fibers in the atlas space, keeping this geometry but with the original case diffusion properties. Then you can specify the transformations field (from original case -> atlas) and the original tensor field with the --tensor_volume option.
+#     With fiberprocess you can also binarize a fiber file. Using the --voxelize option will create an image where each voxel through which a fiber is passing is set to 1. The output is going to be a binary image with the values 0 or 1 by default but the 1 value voxel can be set to any number with the --voxel_label option. Finally you can create an image where the value at the voxel is the number of fiber passing through. (--voxelize_count_fibers)
+# 
+#     version: 1.0.0
+# 
+#     documentation-url: http://www.slicer.org/slicerWiki/index.php/Documentation/Nightly/Extensions/DTIProcess
+# 
+#     license: Copyright (c)  Casey Goodlett. All rights reserved.
+#         See http://www.ia.unc.edu/dev/Copyright.htm for details.
+#         This software is distributed WITHOUT ANY WARRANTY; without even
+#         the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+#         PURPOSE.  See the above copyright notices for more information.
+# 
+#     contributor: Casey Goodlett
+#     
+task_name: fiberprocess
+nipype_name: fiberprocess
+nipype_module: nipype.interfaces.semtools.diffusion.tractography.fiberprocess
+inputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    fiber_file: generic/file
+    # type=file|default=<undefined>: DTI fiber file
+    tensor_volume: generic/file
+    # type=file|default=<undefined>: Interpolate tensor values from the given field
+    h_field: generic/file
+    # type=file|default=<undefined>: HField for warp and statistics lookup. If this option is used tensor-volume must also be specified.
+    displacement_field: generic/file
+    # type=file|default=<undefined>: Displacement Field for warp and statistics lookup.  If this option is used tensor-volume must also be specified.
+  metadata:
+  # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
+outputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    fiber_output: generic/file
+    # type=file: Output fiber file. May be warped or updated with new data depending on other options used.
+    # type=traitcompound|default=None: Output fiber file. May be warped or updated with new data depending on other options used.
+    voxelize: generic/file
+    # type=file: Voxelize fiber into a label map (the labelmap filename is the argument of -V). The tensor file must be specified using -T for information about the size, origin, spacing of the image. The deformation is applied before the voxelization 
+    # type=traitcompound|default=None: Voxelize fiber into a label map (the labelmap filename is the argument of -V). The tensor file must be specified using -T for information about the size, origin, spacing of the image. The deformation is applied before the voxelization 
+  callables:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set to the `callable` attribute of output fields
+  templates:
+  # dict[str, str] - `output_file_template` values to be provided to output fields
+  requirements:
+  # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
+tests:
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    fiber_file:
+    # type=file|default=<undefined>: DTI fiber file
+    fiber_output:
+    # type=file: Output fiber file. May be warped or updated with new data depending on other options used.
+    # type=traitcompound|default=None: Output fiber file. May be warped or updated with new data depending on other options used.
+    tensor_volume:
+    # type=file|default=<undefined>: Interpolate tensor values from the given field
+    h_field:
+    # type=file|default=<undefined>: HField for warp and statistics lookup. If this option is used tensor-volume must also be specified.
+    displacement_field:
+    # type=file|default=<undefined>: Displacement Field for warp and statistics lookup.  If this option is used tensor-volume must also be specified.
+    saveProperties:
+    # type=bool|default=False: save the tensor property as scalar data into the vtk (only works for vtk fiber files). 
+    no_warp:
+    # type=bool|default=False: Do not warp the geometry of the tensors only obtain the new statistics.
+    fiber_radius:
+    # type=float|default=0.0: set radius of all fibers to this value
+    index_space:
+    # type=bool|default=False: Use index-space for fiber output coordinates, otherwise us world space for fiber output coordinates (from tensor file).
+    voxelize:
+    # type=file: Voxelize fiber into a label map (the labelmap filename is the argument of -V). The tensor file must be specified using -T for information about the size, origin, spacing of the image. The deformation is applied before the voxelization 
+    # type=traitcompound|default=None: Voxelize fiber into a label map (the labelmap filename is the argument of -V). The tensor file must be specified using -T for information about the size, origin, spacing of the image. The deformation is applied before the voxelization 
+    voxelize_count_fibers:
+    # type=bool|default=False: Count number of fibers per-voxel instead of just setting to 1
+    voxel_label:
+    # type=int|default=0: Label for voxelized fiber
+    verbose:
+    # type=bool|default=False: produce verbose output
+    noDataChange:
+    # type=bool|default=False: Do not change data ??? 
+    args:
+    # type=str|default='': Additional parameters to the command
+    environ:
+    # type=dict|default={}: Environment variables
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+doctests: []

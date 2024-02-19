@@ -19,12 +19,12 @@ def gen_test_conftest():
 
 @pytest.fixture(
     params=[
-        str(p.relative_to(EXAMPLE_TASKS_DIR)).replace("/", "-")[:-5]
+        str(p.relative_to(EXAMPLE_TASKS_DIR)).replace("/", "__")[:-5]
         for p in (EXAMPLE_TASKS_DIR).glob("**/*.yaml")
     ]
 )
 def task_spec_file(request):
-    return EXAMPLE_TASKS_DIR.joinpath(*request.param.split("-")).with_suffix(".yaml")
+    return EXAMPLE_TASKS_DIR.joinpath(*request.param.split("__")).with_suffix(".yaml")
 
 
 @pytest.fixture(params=[str(p.stem) for p in EXAMPLE_WORKFLOWS_DIR.glob("*.yaml")])

@@ -1,0 +1,202 @@
+# This file is used to manually specify the semi-automatic conversion of
+# 'nipype.interfaces.minc.minc.Resample' from Nipype to Pydra.
+#
+# Please fill-in/edit the fields below where appropriate
+#
+# Docs
+# ----
+# 
+#     Resample a minc file.'
+# 
+#     Examples
+#     --------
+# 
+#     >>> from nipype.interfaces.minc import Resample
+#     >>> from nipype.interfaces.minc.testdata import minc2Dfile
+#     >>> r = Resample(input_file=minc2Dfile, output_file='/tmp/out.mnc') # Resample the file.
+#     >>> r.run() # doctest: +SKIP
+# 
+#     
+task_name: Resample
+nipype_name: Resample
+nipype_module: nipype.interfaces.minc.minc
+inputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    input_file: generic/file
+    # type=file|default=<undefined>: input file for resampling
+    input_grid_files: generic/file+list-of
+    # type=inputmultiobject|default=[]: input grid file(s)
+    transformation: generic/file
+    # type=file|default=<undefined>: File giving world transformation. (Default = identity).
+    like: generic/file
+    # type=file|default=<undefined>: Specifies a model file for the resampling.
+  metadata:
+  # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
+outputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    output_file: generic/file
+    # type=file: output file
+    # type=file|default=<undefined>: output file
+  callables:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set to the `callable` attribute of output fields
+  templates:
+  # dict[str, str] - `output_file_template` values to be provided to output fields
+    output_file: output_file
+    # type=file: output file
+    # type=file|default=<undefined>: output file
+  requirements:
+  # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
+tests:
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    input_file:
+    # type=file|default=<undefined>: input file for resampling
+    output_file:
+    # type=file: output file
+    # type=file|default=<undefined>: output file
+    input_grid_files:
+    # type=inputmultiobject|default=[]: input grid file(s)
+    two:
+    # type=bool|default=False: Create a MINC 2 output file.
+    clobber:
+    # type=bool|default=True: Overwrite existing file.
+    trilinear_interpolation:
+    # type=bool|default=False: Do trilinear interpolation.
+    tricubic_interpolation:
+    # type=bool|default=False: Do tricubic interpolation.
+    nearest_neighbour_interpolation:
+    # type=bool|default=False: Do nearest neighbour interpolation.
+    sinc_interpolation:
+    # type=bool|default=False: Do windowed sinc interpolation.
+    half_width_sinc_window:
+    # type=enum|default=5|allowed[1,10,2,3,4,5,6,7,8,9]: Set half-width of sinc window (1-10). Default value: 5.
+    sinc_window_hanning:
+    # type=bool|default=False: Set sinc window type to Hanning.
+    sinc_window_hamming:
+    # type=bool|default=False: Set sinc window type to Hamming.
+    transformation:
+    # type=file|default=<undefined>: File giving world transformation. (Default = identity).
+    invert_transformation:
+    # type=bool|default=False: Invert the transformation before using it.
+    vio_transform:
+    # type=bool|default=False: VIO_Transform the input sampling with the transform (default).
+    no_input_sampling:
+    # type=bool|default=False: Use the input sampling without transforming (old behaviour).
+    like:
+    # type=file|default=<undefined>: Specifies a model file for the resampling.
+    format_byte:
+    # type=bool|default=False: Write out byte data.
+    format_short:
+    # type=bool|default=False: Write out short integer data.
+    format_int:
+    # type=bool|default=False: Write out 32-bit integer data.
+    format_long:
+    # type=bool|default=False: Superseded by -int.
+    format_float:
+    # type=bool|default=False: Write out single-precision floating-point data.
+    format_double:
+    # type=bool|default=False: Write out double-precision floating-point data.
+    format_signed:
+    # type=bool|default=False: Write signed integer data.
+    format_unsigned:
+    # type=bool|default=False: Write unsigned integer data (default).
+    output_range:
+    # type=tuple|default=(0.0, 0.0): Valid range for output data. Default value: -1.79769e+308 -1.79769e+308.
+    transverse_slices:
+    # type=bool|default=False: Write out transverse slices.
+    sagittal_slices:
+    # type=bool|default=False: Write out sagittal slices
+    coronal_slices:
+    # type=bool|default=False: Write out coronal slices
+    no_fill:
+    # type=bool|default=False: Use value zero for points outside of input volume.
+    fill:
+    # type=bool|default=False: Use a fill value for points outside of input volume.
+    fill_value:
+    # type=float|default=0.0: Specify a fill value for points outside of input volume.Default value: 1.79769e+308.
+    keep_real_range:
+    # type=bool|default=False: Keep the real scale of the input volume.
+    nokeep_real_range:
+    # type=bool|default=False: Do not keep the real scale of the data (default).
+    spacetype:
+    # type=str|default='': Set the spacetype attribute to a specified string.
+    talairach:
+    # type=bool|default=False: Output is in Talairach space.
+    origin:
+    # type=tuple|default=(0.0, 0.0, 0.0): Origin of first pixel in 3D space.Default value: 1.79769e+308 1.79769e+308 1.79769e+308.
+    standard_sampling:
+    # type=bool|default=False: Set the sampling to standard values (step, start and dircos).
+    units:
+    # type=str|default='': Specify the units of the output sampling.
+    nelements:
+    # type=tuple|default=(0, 0, 0): Number of elements along each dimension (X, Y, Z).
+    xnelements:
+    # type=int|default=0: Number of elements along the X dimension.
+    ynelements:
+    # type=int|default=0: Number of elements along the Y dimension.
+    znelements:
+    # type=int|default=0: Number of elements along the Z dimension.
+    step:
+    # type=tuple|default=(0, 0, 0): Step size along each dimension (X, Y, Z). Default value: (0, 0, 0).
+    xstep:
+    # type=int|default=0: Step size along the X dimension. Default value: 0.
+    ystep:
+    # type=int|default=0: Step size along the Y dimension. Default value: 0.
+    zstep:
+    # type=int|default=0: Step size along the Z dimension. Default value: 0.
+    start:
+    # type=tuple|default=(0.0, 0.0, 0.0): Start point along each dimension (X, Y, Z).Default value: 1.79769e+308 1.79769e+308 1.79769e+308.
+    xstart:
+    # type=float|default=0.0: Start point along the X dimension. Default value: 1.79769e+308.
+    ystart:
+    # type=float|default=0.0: Start point along the Y dimension. Default value: 1.79769e+308.
+    zstart:
+    # type=float|default=0.0: Start point along the Z dimension. Default value: 1.79769e+308.
+    dircos:
+    # type=tuple|default=(0.0, 0.0, 0.0): Direction cosines along each dimension (X, Y, Z). Default value:1.79769e+308 1.79769e+308 1.79769e+308 1.79769e+308 ...  1.79769e+308 1.79769e+308 1.79769e+308 1.79769e+308 1.79769e+308.
+    xdircos:
+    # type=float|default=0.0: Direction cosines along the X dimension.Default value: 1.79769e+308 1.79769e+308 1.79769e+308.
+    ydircos:
+    # type=float|default=0.0: Direction cosines along the Y dimension.Default value: 1.79769e+308 1.79769e+308 1.79769e+308.
+    zdircos:
+    # type=float|default=0.0: Direction cosines along the Z dimension.Default value: 1.79769e+308 1.79769e+308 1.79769e+308.
+    args:
+    # type=str|default='': Additional parameters to the command
+    environ:
+    # type=dict|default={}: Environment variables
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+doctests: []

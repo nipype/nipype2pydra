@@ -1,0 +1,102 @@
+# This file is used to manually specify the semi-automatic conversion of
+# 'nipype.interfaces.camino.dti.ComputeEigensystem' from Nipype to Pydra.
+#
+# Please fill-in/edit the fields below where appropriate
+#
+# Docs
+# ----
+# 
+#     Computes the eigensystem from tensor fitted data.
+# 
+#     Reads diffusion tensor (single, two-tensor, three-tensor or multitensor) data from the
+#     standard input, computes the eigenvalues and eigenvectors of each tensor and outputs the
+#     results to the standard output. For multiple-tensor data the program outputs the
+#     eigensystem of each tensor. For each tensor the program outputs: {l_1, e_11, e_12, e_13,
+#     l_2, e_21, e_22, e_33, l_3, e_31, e_32, e_33}, where l_1 >= l_2 >= l_3 and e_i = (e_i1,
+#     e_i2, e_i3) is the eigenvector with eigenvalue l_i. For three-tensor data, for example,
+#     the output contains thirty-six values per voxel.
+# 
+#     Example
+#     -------
+# 
+#     >>> import nipype.interfaces.camino as cmon
+#     >>> dteig = cmon.ComputeEigensystem()
+#     >>> dteig.inputs.in_file = 'tensor_fitted_data.Bdouble'
+#     >>> dteig.run()          # doctest: +SKIP
+#     
+task_name: ComputeEigensystem
+nipype_name: ComputeEigensystem
+nipype_module: nipype.interfaces.camino.dti
+inputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    in_file: generic/file
+    # type=file|default=<undefined>: Tensor-fitted data filename
+  metadata:
+  # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
+outputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    eigen: generic/file
+    # type=file: Trace of the diffusion tensor
+  callables:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set to the `callable` attribute of output fields
+  templates:
+  # dict[str, str] - `output_file_template` values to be provided to output fields
+    out_file: out_file
+    # type=file|default=<undefined>: 
+  requirements:
+  # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
+tests:
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    in_file:
+    # type=file|default=<undefined>: Tensor-fitted data filename
+    inputmodel:
+    # type=enum|default='dt'|allowed['dt','multitensor']: Specifies the model that the input data contains parameters for
+    maxcomponents:
+    # type=int|default=0: The maximum number of tensor components in a voxel of the input data.
+    inputdatatype:
+    # type=enum|default='double'|allowed['char','double','float','int','long','short']: Specifies the data type of the input data. The data type can be any of the following strings: "char", "short", "int", "long", "float" or "double".Default is double data type
+    outputdatatype:
+    # type=enum|default='double'|allowed['char','double','float','int','long','short']: Specifies the data type of the output data.
+    out_file:
+    # type=file|default=<undefined>: 
+    args:
+    # type=str|default='': Additional parameters to the command
+    environ:
+    # type=dict|default={}: Environment variables
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+doctests: []

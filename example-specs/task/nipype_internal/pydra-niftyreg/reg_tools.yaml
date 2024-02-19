@@ -1,0 +1,174 @@
+# This file is used to manually specify the semi-automatic conversion of
+# 'nipype.interfaces.niftyreg.regutils.RegTools' from Nipype to Pydra.
+#
+# Please fill-in/edit the fields below where appropriate
+#
+# Docs
+# ----
+# Interface for executable reg_tools from NiftyReg platform.
+# 
+#     Tool delivering various actions related to registration such as
+#     resampling the input image to a chosen resolution or remove the nan and
+#     inf in the input image by a specified value.
+# 
+#     `Source code <https://cmiclab.cs.ucl.ac.uk/mmodat/niftyreg>`_
+# 
+#     Examples
+#     --------
+#     >>> from nipype.interfaces import niftyreg
+#     >>> node = niftyreg.RegTools()
+#     >>> node.inputs.in_file = 'im1.nii'
+#     >>> node.inputs.mul_val = 4
+#     >>> node.inputs.omp_core_val = 4
+#     >>> node.cmdline
+#     'reg_tools -in im1.nii -mul 4.0 -omp 4 -out im1_tools.nii.gz'
+# 
+#     
+task_name: RegTools
+nipype_name: RegTools
+nipype_module: nipype.interfaces.niftyreg.regutils
+inputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    in_file: medimage/nifti1
+    # type=file|default=<undefined>: The input image file path
+    out_file: generic/file
+    # type=file: The output file
+    # type=file|default=<undefined>: The output file name
+    mask_file: generic/file
+    # type=file|default=<undefined>: Values outside the mask are set to NaN
+    rms_val: generic/file
+    # type=file|default=<undefined>: Compute the mean RMS between the images
+  metadata:
+  # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
+outputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    out_file: generic/file
+    # type=file: The output file
+    # type=file|default=<undefined>: The output file name
+  callables:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set to the `callable` attribute of output fields
+  templates:
+  # dict[str, str] - `output_file_template` values to be provided to output fields
+  requirements:
+  # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
+tests:
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    in_file:
+    # type=file|default=<undefined>: The input image file path
+    out_file:
+    # type=file: The output file
+    # type=file|default=<undefined>: The output file name
+    iso_flag:
+    # type=bool|default=False: Make output image isotropic
+    noscl_flag:
+    # type=bool|default=False: Set scale, slope to 0 and 1
+    mask_file:
+    # type=file|default=<undefined>: Values outside the mask are set to NaN
+    thr_val:
+    # type=float|default=0.0: Binarise the input image with the given threshold
+    bin_flag:
+    # type=bool|default=False: Binarise the input image
+    rms_val:
+    # type=file|default=<undefined>: Compute the mean RMS between the images
+    div_val:
+    # type=traitcompound|default=None: Divide the input by image or value
+    mul_val:
+    # type=traitcompound|default=None: Multiply the input by image or value
+    add_val:
+    # type=traitcompound|default=None: Add to the input image or value
+    sub_val:
+    # type=traitcompound|default=None: Add to the input image or value
+    down_flag:
+    # type=bool|default=False: Downsample the image by a factor of 2
+    smo_s_val:
+    # type=tuple|default=(0.0, 0.0, 0.0): Smooth the input image using a cubic spline kernel
+    chg_res_val:
+    # type=tuple|default=(0.0, 0.0, 0.0): Change the resolution of the input image
+    smo_g_val:
+    # type=tuple|default=(0.0, 0.0, 0.0): Smooth the input image using a Gaussian kernel
+    inter_val:
+    # type=enum|default='NN'|allowed['CUB','LIN','NN','SINC']: Interpolation order to use to warp the floating image
+    omp_core_val:
+    # type=int|default=1: Number of openmp thread to use
+    args:
+    # type=str|default='': Additional parameters to the command
+    environ:
+    # type=dict|default={}: Environment variables
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    in_file:
+    # type=file|default=<undefined>: The input image file path
+    mul_val: '4'
+    # type=traitcompound|default=None: Multiply the input by image or value
+    omp_core_val: '4'
+    # type=int|default=1: Number of openmp thread to use
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+doctests:
+- cmdline: reg_tools -in im1.nii -mul 4.0 -omp 4 -out im1_tools.nii.gz
+  # str - the expected cmdline output
+  inputs:
+  # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
+  # If the field is of file-format type and the value is None, then the
+  # '.mock()' method of the corresponding class is used instead.
+    in_file:
+    # type=file|default=<undefined>: The input image file path
+    mul_val: '4'
+    # type=traitcompound|default=None: Multiply the input by image or value
+    omp_core_val: '4'
+    # type=int|default=1: Number of openmp thread to use
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  directive:
+  # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

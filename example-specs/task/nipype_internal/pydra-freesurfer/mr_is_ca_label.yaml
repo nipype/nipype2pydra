@@ -1,0 +1,198 @@
+# This file is used to manually specify the semi-automatic conversion of
+# 'nipype.interfaces.freesurfer.preprocess.MRIsCALabel' from Nipype to Pydra.
+#
+# Please fill-in/edit the fields below where appropriate
+#
+# Docs
+# ----
+# 
+#     For a single subject, produces an annotation file, in which each
+#     cortical surface vertex is assigned a neuroanatomical label.This
+#     automatic procedure employs data from a previously-prepared atlas
+#     file. An atlas file is created from a training set, capturing region
+#     data manually drawn by neuroanatomists combined with statistics on
+#     variability correlated to geometric information derived from the
+#     cortical model (sulcus and curvature). Besides the atlases provided
+#     with FreeSurfer, new ones can be prepared using mris_ca_train).
+# 
+#     Examples
+#     ========
+# 
+#     >>> from nipype.interfaces import freesurfer
+#     >>> ca_label = freesurfer.MRIsCALabel()
+#     >>> ca_label.inputs.subject_id = "test"
+#     >>> ca_label.inputs.hemisphere = "lh"
+#     >>> ca_label.inputs.canonsurf = "lh.pial"
+#     >>> ca_label.inputs.curv = "lh.pial"
+#     >>> ca_label.inputs.sulc = "lh.pial"
+#     >>> ca_label.inputs.classifier = "im1.nii" # in pracice, use .gcs extension
+#     >>> ca_label.inputs.smoothwm = "lh.pial"
+#     >>> ca_label.cmdline
+#     'mris_ca_label test lh lh.pial im1.nii lh.aparc.annot'
+#     
+task_name: MRIsCALabel
+nipype_name: MRIsCALabel
+nipype_module: nipype.interfaces.freesurfer.preprocess
+inputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    canonsurf: medimage-freesurfer/pial
+    # type=file|default=<undefined>: Input canonical surface file
+    classifier: medimage/nifti1
+    # type=file|default=<undefined>: Classifier array input file
+    smoothwm: medimage-freesurfer/pial
+    # type=file|default=<undefined>: implicit input {hemisphere}.smoothwm
+    curv: medimage-freesurfer/pial
+    # type=file|default=<undefined>: implicit input {hemisphere}.curv
+    sulc: medimage-freesurfer/pial
+    # type=file|default=<undefined>: implicit input {hemisphere}.sulc
+    out_file: generic/file
+    # type=file: Output volume from MRIsCALabel
+    # type=file|default=<undefined>: Annotated surface output file
+    label: generic/file
+    # type=file|default=<undefined>: Undocumented flag. Autorecon3 uses ../label/{hemisphere}.cortex.label as input file
+    aseg: generic/file
+    # type=file|default=<undefined>: Undocumented flag. Autorecon3 uses ../mri/aseg.presurf.mgz as input file
+    subjects_dir: generic/directory
+    # type=directory|default=<undefined>: subjects directory
+  metadata:
+  # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
+outputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    out_file: generic/file
+    # type=file: Output volume from MRIsCALabel
+    # type=file|default=<undefined>: Annotated surface output file
+  callables:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set to the `callable` attribute of output fields
+  templates:
+  # dict[str, str] - `output_file_template` values to be provided to output fields
+  requirements:
+  # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
+tests:
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    subject_id:
+    # type=string|default='subject_id': Subject name or ID
+    hemisphere:
+    # type=enum|default='lh'|allowed['lh','rh']: Hemisphere ('lh' or 'rh')
+    canonsurf:
+    # type=file|default=<undefined>: Input canonical surface file
+    classifier:
+    # type=file|default=<undefined>: Classifier array input file
+    smoothwm:
+    # type=file|default=<undefined>: implicit input {hemisphere}.smoothwm
+    curv:
+    # type=file|default=<undefined>: implicit input {hemisphere}.curv
+    sulc:
+    # type=file|default=<undefined>: implicit input {hemisphere}.sulc
+    out_file:
+    # type=file: Output volume from MRIsCALabel
+    # type=file|default=<undefined>: Annotated surface output file
+    label:
+    # type=file|default=<undefined>: Undocumented flag. Autorecon3 uses ../label/{hemisphere}.cortex.label as input file
+    aseg:
+    # type=file|default=<undefined>: Undocumented flag. Autorecon3 uses ../mri/aseg.presurf.mgz as input file
+    seed:
+    # type=int|default=0: 
+    copy_inputs:
+    # type=bool|default=False: Copies implicit inputs to node directory and creates a temp subjects_directory. Use this when running as a node
+    num_threads:
+    # type=int|default=0: allows for specifying more threads
+    subjects_dir:
+    # type=directory|default=<undefined>: subjects directory
+    args:
+    # type=str|default='': Additional parameters to the command
+    environ:
+    # type=dict|default={}: Environment variables
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    subject_id: '"test"'
+    # type=string|default='subject_id': Subject name or ID
+    hemisphere: '"lh"'
+    # type=enum|default='lh'|allowed['lh','rh']: Hemisphere ('lh' or 'rh')
+    canonsurf:
+    # type=file|default=<undefined>: Input canonical surface file
+    curv:
+    # type=file|default=<undefined>: implicit input {hemisphere}.curv
+    sulc:
+    # type=file|default=<undefined>: implicit input {hemisphere}.sulc
+    classifier:
+    # type=file|default=<undefined>: Classifier array input file
+    smoothwm:
+    # type=file|default=<undefined>: implicit input {hemisphere}.smoothwm
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+doctests:
+- cmdline: mris_ca_label test lh lh.pial im1.nii lh.aparc.annot
+  # str - the expected cmdline output
+  inputs:
+  # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
+  # If the field is of file-format type and the value is None, then the
+  # '.mock()' method of the corresponding class is used instead.
+    subject_id: '"test"'
+    # type=string|default='subject_id': Subject name or ID
+    hemisphere: '"lh"'
+    # type=enum|default='lh'|allowed['lh','rh']: Hemisphere ('lh' or 'rh')
+    canonsurf:
+    # type=file|default=<undefined>: Input canonical surface file
+    curv:
+    # type=file|default=<undefined>: implicit input {hemisphere}.curv
+    sulc:
+    # type=file|default=<undefined>: implicit input {hemisphere}.sulc
+    classifier:
+    # type=file|default=<undefined>: Classifier array input file
+    smoothwm:
+    # type=file|default=<undefined>: implicit input {hemisphere}.smoothwm
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  directive:
+  # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

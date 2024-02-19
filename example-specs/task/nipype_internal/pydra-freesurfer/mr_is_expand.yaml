@@ -1,0 +1,157 @@
+# This file is used to manually specify the semi-automatic conversion of
+# 'nipype.interfaces.freesurfer.utils.MRIsExpand' from Nipype to Pydra.
+#
+# Please fill-in/edit the fields below where appropriate
+#
+# Docs
+# ----
+# 
+#     Expands a surface (typically ?h.white) outwards while maintaining
+#     smoothness and self-intersection constraints.
+# 
+#     Examples
+#     ========
+#     >>> from nipype.interfaces.freesurfer import MRIsExpand
+#     >>> mris_expand = MRIsExpand(thickness=True, distance=0.5)
+#     >>> mris_expand.inputs.in_file = 'lh.white'
+#     >>> mris_expand.cmdline
+#     'mris_expand -thickness lh.white 0.5 expanded'
+#     >>> mris_expand.inputs.out_name = 'graymid'
+#     >>> mris_expand.cmdline
+#     'mris_expand -thickness lh.white 0.5 graymid'
+#     
+task_name: MRIsExpand
+nipype_name: MRIsExpand
+nipype_module: nipype.interfaces.freesurfer.utils
+inputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    in_file: medimage-freesurfer/white
+    # type=file|default=<undefined>: Surface to expand
+    subjects_dir: generic/directory
+    # type=directory|default=<undefined>: subjects directory
+  metadata:
+  # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
+outputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    out_file: generic/file
+    # type=file: Output surface file
+  callables:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set to the `callable` attribute of output fields
+  templates:
+  # dict[str, str] - `output_file_template` values to be provided to output fields
+  requirements:
+  # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
+tests:
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    in_file:
+    # type=file|default=<undefined>: Surface to expand
+    distance:
+    # type=float|default=0.0: Distance in mm or fraction of cortical thickness
+    out_name:
+    # type=str|default='expanded': Output surface file. If no path, uses directory of ``in_file``. If no path AND missing "lh." or "rh.", derive from ``in_file``
+    thickness:
+    # type=bool|default=False: Expand by fraction of cortical thickness, not mm
+    thickness_name:
+    # type=str|default='': Name of thickness file (implicit: "thickness") If no path, uses directory of ``in_file`` If no path AND missing "lh." or "rh.", derive from `in_file`
+    pial:
+    # type=str|default='': Name of pial file (implicit: "pial") If no path, uses directory of ``in_file`` If no path AND missing "lh." or "rh.", derive from ``in_file``
+    sphere:
+    # type=str|default='sphere': WARNING: Do not change this trait
+    spring:
+    # type=float|default=0.0: Spring term (implicit: 0.05)
+    dt:
+    # type=float|default=0.0: dt (implicit: 0.25)
+    write_iterations:
+    # type=int|default=0: Write snapshots of expansion every N iterations
+    smooth_averages:
+    # type=int|default=0: Smooth surface with N iterations after expansion
+    nsurfaces:
+    # type=int|default=0: Number of surfacces to write during expansion
+    subjects_dir:
+    # type=directory|default=<undefined>: subjects directory
+    args:
+    # type=str|default='': Additional parameters to the command
+    environ:
+    # type=dict|default={}: Environment variables
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    in_file:
+    # type=file|default=<undefined>: Surface to expand
+    out_name: '"graymid"'
+    # type=str|default='expanded': Output surface file. If no path, uses directory of ``in_file``. If no path AND missing "lh." or "rh.", derive from ``in_file``
+    thickness: 'True'
+    # type=bool|default=False: Expand by fraction of cortical thickness, not mm
+    distance: '0.5'
+    # type=float|default=0.0: Distance in mm or fraction of cortical thickness
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+doctests:
+- cmdline: mris_expand -thickness lh.white 0.5 graymid
+  # str - the expected cmdline output
+  inputs:
+  # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
+  # If the field is of file-format type and the value is None, then the
+  # '.mock()' method of the corresponding class is used instead.
+    in_file:
+    # type=file|default=<undefined>: Surface to expand
+    out_name: '"graymid"'
+    # type=str|default='expanded': Output surface file. If no path, uses directory of ``in_file``. If no path AND missing "lh." or "rh.", derive from ``in_file``
+    thickness: 'True'
+    # type=bool|default=False: Expand by fraction of cortical thickness, not mm
+    distance: '0.5'
+    # type=float|default=0.0: Distance in mm or fraction of cortical thickness
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  directive:
+  # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

@@ -1,0 +1,216 @@
+# This file is used to manually specify the semi-automatic conversion of
+# 'nipype.interfaces.afni.preprocess.Means' from Nipype to Pydra.
+#
+# Please fill-in/edit the fields below where appropriate
+#
+# Docs
+# ----
+# Takes the voxel-by-voxel mean of all input datasets using 3dMean
+# 
+#     For complete details, see the `3dMean Documentation.
+#     <https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dMean.html>`_
+# 
+#     Examples
+#     --------
+#     >>> from nipype.interfaces import afni
+#     >>> means = afni.Means()
+#     >>> means.inputs.in_file_a = 'im1.nii'
+#     >>> means.inputs.in_file_b = 'im2.nii'
+#     >>> means.inputs.out_file =  'output.nii'
+#     >>> means.cmdline
+#     '3dMean -prefix output.nii im1.nii im2.nii'
+#     >>> res = means.run()  # doctest: +SKIP
+# 
+#     >>> from nipype.interfaces import afni
+#     >>> means = afni.Means()
+#     >>> means.inputs.in_file_a = 'im1.nii'
+#     >>> means.inputs.out_file =  'output.nii'
+#     >>> means.inputs.datum = 'short'
+#     >>> means.cmdline
+#     '3dMean -datum short -prefix output.nii im1.nii'
+#     >>> res = means.run()  # doctest: +SKIP
+# 
+#     
+task_name: Means
+nipype_name: Means
+nipype_module: nipype.interfaces.afni.preprocess
+inputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    in_file_a: medimage/nifti1
+    # type=file|default=<undefined>: input file to 3dMean
+    in_file_b: medimage/nifti1
+    # type=file|default=<undefined>: another input file to 3dMean
+    out_file: medimage/nifti1
+    # type=file: output file
+    # type=file|default=<undefined>: output image file name
+  metadata:
+  # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
+outputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    out_file: medimage/nifti1
+    # type=file: output file
+    # type=file|default=<undefined>: output image file name
+  callables:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set to the `callable` attribute of output fields
+  templates:
+  # dict[str, str] - `output_file_template` values to be provided to output fields
+  requirements:
+  # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
+tests:
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    in_file_a:
+    # type=file|default=<undefined>: input file to 3dMean
+    in_file_b:
+    # type=file|default=<undefined>: another input file to 3dMean
+    datum:
+    # type=str|default='': Sets the data type of the output dataset
+    out_file:
+    # type=file: output file
+    # type=file|default=<undefined>: output image file name
+    scale:
+    # type=str|default='': scaling of output
+    non_zero:
+    # type=bool|default=False: use only non-zero values
+    std_dev:
+    # type=bool|default=False: calculate std dev
+    sqr:
+    # type=bool|default=False: mean square instead of value
+    summ:
+    # type=bool|default=False: take sum, (not average)
+    count:
+    # type=bool|default=False: compute count of non-zero voxels
+    mask_inter:
+    # type=bool|default=False: create intersection mask
+    mask_union:
+    # type=bool|default=False: create union mask
+    num_threads:
+    # type=int|default=1: set number of threads
+    outputtype:
+    # type=enum|default='AFNI'|allowed['AFNI','NIFTI','NIFTI_GZ']: AFNI output filetype
+    args:
+    # type=str|default='': Additional parameters to the command
+    environ:
+    # type=dict|default={}: Environment variables
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    in_file_a:
+    # type=file|default=<undefined>: input file to 3dMean
+    in_file_b:
+    # type=file|default=<undefined>: another input file to 3dMean
+    out_file:
+    # type=file: output file
+    # type=file|default=<undefined>: output image file name
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    in_file_a:
+    # type=file|default=<undefined>: input file to 3dMean
+    out_file:
+    # type=file: output file
+    # type=file|default=<undefined>: output image file name
+    datum: '"short"'
+    # type=str|default='': Sets the data type of the output dataset
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+doctests:
+- cmdline: 3dMean -prefix output.nii im1.nii im2.nii
+  # str - the expected cmdline output
+  inputs:
+  # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
+  # If the field is of file-format type and the value is None, then the
+  # '.mock()' method of the corresponding class is used instead.
+    in_file_a:
+    # type=file|default=<undefined>: input file to 3dMean
+    in_file_b:
+    # type=file|default=<undefined>: another input file to 3dMean
+    out_file:
+    # type=file: output file
+    # type=file|default=<undefined>: output image file name
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  directive:
+  # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS
+- cmdline: 3dMean -datum short -prefix output.nii im1.nii
+  # str - the expected cmdline output
+  inputs:
+  # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
+  # If the field is of file-format type and the value is None, then the
+  # '.mock()' method of the corresponding class is used instead.
+    in_file_a:
+    # type=file|default=<undefined>: input file to 3dMean
+    out_file:
+    # type=file: output file
+    # type=file|default=<undefined>: output image file name
+    datum: '"short"'
+    # type=str|default='': Sets the data type of the output dataset
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  directive:
+  # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

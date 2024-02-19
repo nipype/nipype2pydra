@@ -1,0 +1,91 @@
+# This file is used to manually specify the semi-automatic conversion of
+# 'nipype.interfaces.slicer.diffusion.diffusion.DTIimport' from Nipype to Pydra.
+#
+# Please fill-in/edit the fields below where appropriate
+#
+# Docs
+# ----
+# title: DTIimport
+# 
+#     category: Diffusion.Diffusion Data Conversion
+# 
+#     description: Import tensor datasets from various formats, including the NifTi file format
+# 
+#     version: 1.0
+# 
+#     documentation-url: http://wiki.slicer.org/slicerWiki/index.php/Documentation/4.1/Modules/DTIImport
+# 
+#     contributor: Sonia Pujol (SPL, BWH)
+# 
+#     acknowledgements: This work is part of the National Alliance for Medical Image Computing (NA-MIC), funded by the National Institutes of Health through the NIH Roadmap for Medical Research, Grant U54 EB005149.
+#     
+task_name: DTIimport
+nipype_name: DTIimport
+nipype_module: nipype.interfaces.slicer.diffusion.diffusion
+inputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    inputFile: generic/file
+    # type=file|default=<undefined>: Input DTI file
+  metadata:
+  # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
+outputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    outputTensor: generic/file
+    # type=file: Output DTI volume
+    # type=traitcompound|default=None: Output DTI volume
+  callables:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set to the `callable` attribute of output fields
+  templates:
+  # dict[str, str] - `output_file_template` values to be provided to output fields
+  requirements:
+  # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
+tests:
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    inputFile:
+    # type=file|default=<undefined>: Input DTI file
+    outputTensor:
+    # type=file: Output DTI volume
+    # type=traitcompound|default=None: Output DTI volume
+    testingmode:
+    # type=bool|default=False: Enable testing mode. Sample helix file (helix-DTI.nhdr) will be loaded into Slicer and converted in Nifti.
+    args:
+    # type=str|default='': Additional parameters to the command
+    environ:
+    # type=dict|default={}: Environment variables
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+doctests: []

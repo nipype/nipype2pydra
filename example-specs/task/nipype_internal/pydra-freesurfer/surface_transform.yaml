@@ -1,0 +1,120 @@
+# This file is used to manually specify the semi-automatic conversion of
+# 'nipype.interfaces.freesurfer.utils.SurfaceTransform' from Nipype to Pydra.
+#
+# Please fill-in/edit the fields below where appropriate
+#
+# Docs
+# ----
+# Transform a surface file from one subject to another via a spherical registration.
+# 
+#     Both the source and target subject must reside in your Subjects Directory,
+#     and they must have been processed with recon-all, unless you are transforming
+#     to one of the icosahedron meshes.
+# 
+#     Examples
+#     --------
+# 
+#     >>> from nipype.interfaces.freesurfer import SurfaceTransform
+#     >>> sxfm = SurfaceTransform()
+#     >>> sxfm.inputs.source_file = "lh.cope1.nii.gz"
+#     >>> sxfm.inputs.source_subject = "my_subject"
+#     >>> sxfm.inputs.target_subject = "fsaverage"
+#     >>> sxfm.inputs.hemi = "lh"
+#     >>> sxfm.run() # doctest: +SKIP
+# 
+#     
+task_name: SurfaceTransform
+nipype_name: SurfaceTransform
+nipype_module: nipype.interfaces.freesurfer.utils
+inputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    source_file: generic/file
+    # type=file|default=<undefined>: surface file with source values
+    source_annot_file: generic/file
+    # type=file|default=<undefined>: surface annotation file
+    subjects_dir: generic/directory
+    # type=directory|default=<undefined>: subjects directory
+  metadata:
+  # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
+outputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    out_file: generic/file
+    # type=file: transformed surface file
+    # type=file|default=<undefined>: surface file to write
+  callables:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set to the `callable` attribute of output fields
+  templates:
+  # dict[str, str] - `output_file_template` values to be provided to output fields
+    out_file: out_file
+    # type=file: transformed surface file
+    # type=file|default=<undefined>: surface file to write
+  requirements:
+  # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
+tests:
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    source_file:
+    # type=file|default=<undefined>: surface file with source values
+    source_annot_file:
+    # type=file|default=<undefined>: surface annotation file
+    source_subject:
+    # type=string|default='': subject id for source surface
+    hemi:
+    # type=enum|default='lh'|allowed['lh','rh']: hemisphere to transform
+    target_subject:
+    # type=string|default='': subject id of target surface
+    target_ico_order:
+    # type=enum|default=1|allowed[1,2,3,4,5,6,7]: order of the icosahedron if target_subject is 'ico'
+    source_type:
+    # type=enum|default='cor'|allowed['afni','analyze','analyze4d','bfloat','brik','bshort','cor','gdf','mgh','mgz','minc','nifti1','nii','niigz','otl','outline','sdt','spm']: source file format
+    target_type:
+    # type=enum|default='cor'|allowed['afni','analyze','analyze4d','bfloat','brik','bshort','cor','gdf','gii','mgh','mgz','minc','nifti1','nii','niigz','otl','outline','sdt','spm']: output format
+    reshape:
+    # type=bool|default=False: reshape output surface to conform with Nifti
+    reshape_factor:
+    # type=int|default=0: number of slices in reshaped image
+    out_file:
+    # type=file: transformed surface file
+    # type=file|default=<undefined>: surface file to write
+    subjects_dir:
+    # type=directory|default=<undefined>: subjects directory
+    args:
+    # type=str|default='': Additional parameters to the command
+    environ:
+    # type=dict|default={}: Environment variables
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+doctests: []

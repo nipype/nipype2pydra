@@ -1,0 +1,122 @@
+# This file is used to manually specify the semi-automatic conversion of
+# 'nipype.interfaces.brainsuite.brainsuite.Dfs' from Nipype to Pydra.
+#
+# Please fill-in/edit the fields below where appropriate
+#
+# Docs
+# ----
+# 
+#     Surface Generator
+#     Generates mesh surfaces using an isosurface algorithm.
+# 
+#     http://brainsuite.org/processing/surfaceextraction/inner-cortical-surface/
+# 
+#     Examples
+#     --------
+# 
+#     >>> from nipype.interfaces import brainsuite
+#     >>> from nipype.testing import example_data
+#     >>> dfs = brainsuite.Dfs()
+#     >>> dfs.inputs.inputVolumeFile = example_data('structural.nii')
+#     >>> results = dfs.run() #doctest: +SKIP
+# 
+#     
+task_name: Dfs
+nipype_name: Dfs
+nipype_module: nipype.interfaces.brainsuite.brainsuite
+inputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    inputVolumeFile: generic/file
+    # type=file|default=<undefined>: input 3D volume
+    inputShadingVolume: generic/file
+    # type=file|default=<undefined>: shade surface model with data from image volume
+  metadata:
+  # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
+outputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    outputSurfaceFile: generic/file
+    # type=file: path/name of surface file
+    # type=file|default=<undefined>: output surface mesh file. If unspecified, output file name will be auto generated.
+  callables:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set to the `callable` attribute of output fields
+  templates:
+  # dict[str, str] - `output_file_template` values to be provided to output fields
+    outputSurfaceFile: outputSurfaceFile
+    # type=file: path/name of surface file
+    # type=file|default=<undefined>: output surface mesh file. If unspecified, output file name will be auto generated.
+  requirements:
+  # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
+tests:
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    inputVolumeFile:
+    # type=file|default=<undefined>: input 3D volume
+    outputSurfaceFile:
+    # type=file: path/name of surface file
+    # type=file|default=<undefined>: output surface mesh file. If unspecified, output file name will be auto generated.
+    inputShadingVolume:
+    # type=file|default=<undefined>: shade surface model with data from image volume
+    smoothingIterations:
+    # type=int|default=10: number of smoothing iterations
+    smoothingConstant:
+    # type=float|default=0.5: smoothing constant
+    curvatureWeighting:
+    # type=float|default=5.0: curvature weighting
+    scalingPercentile:
+    # type=float|default=0.0: scaling percentile
+    nonZeroTessellation:
+    # type=bool|default=False: tessellate non-zero voxels
+    tessellationThreshold:
+    # type=float|default=0.0: To be used with specialTessellation. Set this value first, then set specialTessellation value. Usage: tessellate voxels greater_than, less_than, or equal_to <tessellationThreshold>
+    specialTessellation:
+    # type=enum|default='greater_than'|allowed['equal_to','greater_than','less_than']: To avoid throwing a UserWarning, set tessellationThreshold first. Then set this attribute. Usage: tessellate voxels greater_than, less_than, or equal_to <tessellationThreshold>
+    zeroPadFlag:
+    # type=bool|default=False: zero-pad volume (avoids clipping at edges)
+    noNormalsFlag:
+    # type=bool|default=False: do not compute vertex normals
+    postSmoothFlag:
+    # type=bool|default=False: smooth vertices after coloring
+    verbosity:
+    # type=int|default=0: verbosity (0 = quiet)
+    timer:
+    # type=bool|default=False: timing function
+    args:
+    # type=str|default='': Additional parameters to the command
+    environ:
+    # type=dict|default={}: Environment variables
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+doctests: []

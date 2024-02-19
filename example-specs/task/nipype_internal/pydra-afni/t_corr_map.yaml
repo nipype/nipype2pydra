@@ -1,0 +1,278 @@
+# This file is used to manually specify the semi-automatic conversion of
+# 'nipype.interfaces.afni.preprocess.TCorrMap' from Nipype to Pydra.
+#
+# Please fill-in/edit the fields below where appropriate
+#
+# Docs
+# ----
+# For each voxel time series, computes the correlation between it
+#     and all other voxels, and combines this set of values into the
+#     output dataset(s) in some way.
+# 
+#     For complete details, see the `3dTcorrMap Documentation.
+#     <https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dTcorrMap.html>`_
+# 
+#     Examples
+#     --------
+#     >>> from nipype.interfaces import afni
+#     >>> tcm = afni.TCorrMap()
+#     >>> tcm.inputs.in_file = 'functional.nii'
+#     >>> tcm.inputs.mask = 'mask.nii'
+#     >>> tcm.mean_file = 'functional_meancorr.nii'
+#     >>> tcm.cmdline # doctest: +SKIP
+#     '3dTcorrMap -input functional.nii -mask mask.nii -Mean functional_meancorr.nii'
+#     >>> res = tcm.run()  # doctest: +SKIP
+# 
+#     
+task_name: TCorrMap
+nipype_name: TCorrMap
+nipype_module: nipype.interfaces.afni.preprocess
+inputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    in_file: medimage/nifti1
+    # type=file|default=<undefined>: 
+    seeds: generic/file
+    # type=file|default=<undefined>: 
+    mask: medimage/nifti1
+    # type=file|default=<undefined>: 
+    regress_out_timeseries: generic/file
+    # type=file|default=<undefined>: 
+    mean_file: generic/file
+    # type=file: 
+    # type=file|default=<undefined>: 
+    zmean: generic/file
+    # type=file: 
+    # type=file|default=<undefined>: 
+    qmean: generic/file
+    # type=file: 
+    # type=file|default=<undefined>: 
+    pmean: generic/file
+    # type=file: 
+    # type=file|default=<undefined>: 
+    absolute_threshold: generic/file
+    # type=file: 
+    # type=file|default=<undefined>: 
+    var_absolute_threshold: generic/file
+    # type=file: 
+    # type=file|default=<undefined>: 
+    var_absolute_threshold_normalize: generic/file
+    # type=file: 
+    # type=file|default=<undefined>: 
+    correlation_maps: generic/file
+    # type=file: 
+    # type=file|default=<undefined>: 
+    correlation_maps_masked: generic/file
+    # type=file: 
+    # type=file|default=<undefined>: 
+    average_expr: generic/file
+    # type=file: 
+    # type=file|default=<undefined>: 
+    average_expr_nonzero: generic/file
+    # type=file: 
+    # type=file|default=<undefined>: 
+    sum_expr: generic/file
+    # type=file: 
+    # type=file|default=<undefined>: 
+    histogram: generic/file
+    # type=file: 
+    # type=file|default=<undefined>: 
+    out_file: generic/file
+    # type=file|default=<undefined>: output image file name
+  metadata:
+  # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
+outputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    mean_file: generic/file
+    # type=file: 
+    # type=file|default=<undefined>: 
+    zmean: generic/file
+    # type=file: 
+    # type=file|default=<undefined>: 
+    qmean: generic/file
+    # type=file: 
+    # type=file|default=<undefined>: 
+    pmean: generic/file
+    # type=file: 
+    # type=file|default=<undefined>: 
+    absolute_threshold: generic/file
+    # type=file: 
+    # type=file|default=<undefined>: 
+    var_absolute_threshold: generic/file
+    # type=file: 
+    # type=file|default=<undefined>: 
+    var_absolute_threshold_normalize: generic/file
+    # type=file: 
+    # type=file|default=<undefined>: 
+    correlation_maps: generic/file
+    # type=file: 
+    # type=file|default=<undefined>: 
+    correlation_maps_masked: generic/file
+    # type=file: 
+    # type=file|default=<undefined>: 
+    average_expr: generic/file
+    # type=file: 
+    # type=file|default=<undefined>: 
+    average_expr_nonzero: generic/file
+    # type=file: 
+    # type=file|default=<undefined>: 
+    sum_expr: generic/file
+    # type=file: 
+    # type=file|default=<undefined>: 
+    histogram: generic/file
+    # type=file: 
+    # type=file|default=<undefined>: 
+  callables:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set to the `callable` attribute of output fields
+  templates:
+  # dict[str, str] - `output_file_template` values to be provided to output fields
+  requirements:
+  # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
+tests:
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    in_file:
+    # type=file|default=<undefined>: 
+    seeds:
+    # type=file|default=<undefined>: 
+    mask:
+    # type=file|default=<undefined>: 
+    automask:
+    # type=bool|default=False: 
+    polort:
+    # type=int|default=0: 
+    bandpass:
+    # type=tuple|default=(<traits.trait_types.Float object at 0x11cede190>, <traits.trait_types.Float object at 0x11cede550>): 
+    regress_out_timeseries:
+    # type=file|default=<undefined>: 
+    blur_fwhm:
+    # type=float|default=0.0: 
+    seeds_width:
+    # type=float|default=0.0: 
+    mean_file:
+    # type=file: 
+    # type=file|default=<undefined>: 
+    zmean:
+    # type=file: 
+    # type=file|default=<undefined>: 
+    qmean:
+    # type=file: 
+    # type=file|default=<undefined>: 
+    pmean:
+    # type=file: 
+    # type=file|default=<undefined>: 
+    thresholds:
+    # type=list|default=[]: 
+    absolute_threshold:
+    # type=file: 
+    # type=file|default=<undefined>: 
+    var_absolute_threshold:
+    # type=file: 
+    # type=file|default=<undefined>: 
+    var_absolute_threshold_normalize:
+    # type=file: 
+    # type=file|default=<undefined>: 
+    correlation_maps:
+    # type=file: 
+    # type=file|default=<undefined>: 
+    correlation_maps_masked:
+    # type=file: 
+    # type=file|default=<undefined>: 
+    expr:
+    # type=str|default='': 
+    average_expr:
+    # type=file: 
+    # type=file|default=<undefined>: 
+    average_expr_nonzero:
+    # type=file: 
+    # type=file|default=<undefined>: 
+    sum_expr:
+    # type=file: 
+    # type=file|default=<undefined>: 
+    histogram_bin_numbers:
+    # type=int|default=0: 
+    histogram:
+    # type=file: 
+    # type=file|default=<undefined>: 
+    num_threads:
+    # type=int|default=1: set number of threads
+    outputtype:
+    # type=enum|default='AFNI'|allowed['AFNI','NIFTI','NIFTI_GZ']: AFNI output filetype
+    out_file:
+    # type=file|default=<undefined>: output image file name
+    args:
+    # type=str|default='': Additional parameters to the command
+    environ:
+    # type=dict|default={}: Environment variables
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    in_file:
+    # type=file|default=<undefined>: 
+    mask:
+    # type=file|default=<undefined>: 
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+doctests:
+- cmdline: 3dTcorrMap -input functional.nii -mask mask.nii -Mean functional_meancorr.nii
+  # str - the expected cmdline output
+  inputs:
+  # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
+  # If the field is of file-format type and the value is None, then the
+  # '.mock()' method of the corresponding class is used instead.
+    in_file:
+    # type=file|default=<undefined>: 
+    mask:
+    # type=file|default=<undefined>: 
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  directive:
+  # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

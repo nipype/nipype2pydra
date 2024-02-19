@@ -1,0 +1,153 @@
+# This file is used to manually specify the semi-automatic conversion of
+# 'nipype.interfaces.camino.calib.SFPICOCalibData' from Nipype to Pydra.
+#
+# Please fill-in/edit the fields below where appropriate
+#
+# Docs
+# ----
+# 
+#     Generates Spherical Function PICo Calibration Data.
+# 
+#     SFPICOCalibData creates synthetic data for use with SFLUTGen. The
+#     synthetic data is generated using a mixture of gaussians, in the
+#     same way datasynth generates data.  Each voxel of data models a
+#     slightly different fibre configuration (varying FA and fibre-
+#     crossings) and undergoes a random rotation to help account for any
+#     directional bias in the chosen acquisition scheme.  A second file,
+#     which stores information about the datafile, is generated along with
+#     the datafile.
+# 
+#     Examples
+#     --------
+#     To create a calibration dataset using the default settings
+# 
+#     >>> import nipype.interfaces.camino as cam
+#     >>> calib = cam.SFPICOCalibData()
+#     >>> calib.inputs.scheme_file = 'A.scheme'
+#     >>> calib.inputs.snr = 20
+#     >>> calib.inputs.info_file = 'PICO_calib.info'
+#     >>> calib.run()   # doctest: +SKIP
+# 
+#     The default settings create a large dataset (249,231 voxels), of
+#     which 3401 voxels contain a single fibre population per voxel and
+#     the rest of the voxels contain two fibre-populations. The amount of
+#     data produced can be varied by specifying the ranges and steps of
+#     the parameters for both the one and two fibre datasets used.
+# 
+#     To create a custom calibration dataset
+# 
+#     >>> import nipype.interfaces.camino as cam
+#     >>> calib = cam.SFPICOCalibData()
+#     >>> calib.inputs.scheme_file = 'A.scheme'
+#     >>> calib.inputs.snr = 20
+#     >>> calib.inputs.info_file = 'PICO_calib.info'
+#     >>> calib.inputs.twodtfarange = [0.3, 0.9]
+#     >>> calib.inputs.twodtfastep = 0.02
+#     >>> calib.inputs.twodtanglerange = [0, 0.785]
+#     >>> calib.inputs.twodtanglestep = 0.03925
+#     >>> calib.inputs.twodtmixmax = 0.8
+#     >>> calib.inputs.twodtmixstep = 0.1
+#     >>> calib.run()      # doctest: +SKIP
+# 
+#     This would provide 76,313 voxels of synthetic data, where 3401 voxels
+#     simulate the one fibre cases and 72,912 voxels simulate the various
+#     two fibre cases. However, care should be taken to ensure that enough
+#     data is generated for calculating the LUT.      # doctest: +SKIP
+# 
+#     
+task_name: SFPICOCalibData
+nipype_name: SFPICOCalibData
+nipype_module: nipype.interfaces.camino.calib
+inputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    scheme_file: generic/file
+    # type=file|default=<undefined>: Specifies the scheme file for the diffusion MRI data
+  metadata:
+  # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
+outputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    PICOCalib: generic/file
+    # type=file: Calibration dataset
+    calib_info: generic/file
+    # type=file: Calibration dataset
+  callables:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set to the `callable` attribute of output fields
+  templates:
+  # dict[str, str] - `output_file_template` values to be provided to output fields
+    info_file: info_file
+    # type=file|default=<undefined>: The name to be given to the information output filename.
+    out_file: out_file
+    # type=file|default=<undefined>: 
+  requirements:
+  # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
+tests:
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    snr:
+    # type=float|default=0.0: Specifies  the  signal-to-noise ratio of the non-diffusion-weighted measurements to use in simulations.
+    scheme_file:
+    # type=file|default=<undefined>: Specifies the scheme file for the diffusion MRI data
+    info_file:
+    # type=file|default=<undefined>: The name to be given to the information output filename.
+    trace:
+    # type=float|default=0.0: Trace of the diffusion tensor(s) used in the test function.
+    onedtfarange:
+    # type=list|default=[]: Minimum and maximum FA for the single tensor synthetic data.
+    onedtfastep:
+    # type=float|default=0.0: FA step size controlling how many steps there are between the minimum and maximum FA settings.
+    twodtfarange:
+    # type=list|default=[]: Minimum and maximum FA for the two tensor synthetic data. FA is varied for both tensors to give all the different permutations.
+    twodtfastep:
+    # type=float|default=0.0: FA step size controlling how many steps there are between the minimum and maximum FA settings for the two tensor cases.
+    twodtanglerange:
+    # type=list|default=[]: Minimum and maximum crossing angles between the two fibres.
+    twodtanglestep:
+    # type=float|default=0.0: Angle step size controlling how many steps there are between the minimum and maximum crossing angles for the two tensor cases.
+    twodtmixmax:
+    # type=float|default=0.0: Mixing parameter controlling the proportion of one fibre population to the other. The minimum mixing parameter is (1 - twodtmixmax).
+    twodtmixstep:
+    # type=float|default=0.0: Mixing parameter step size for the two tensor cases. Specify how many mixing parameter increments to use.
+    seed:
+    # type=float|default=0.0: Specifies the random seed to use for noise generation in simulation trials.
+    out_file:
+    # type=file|default=<undefined>: 
+    args:
+    # type=str|default='': Additional parameters to the command
+    environ:
+    # type=dict|default={}: Environment variables
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+doctests: []

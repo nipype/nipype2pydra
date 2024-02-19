@@ -1,0 +1,117 @@
+# This file is used to manually specify the semi-automatic conversion of
+# 'nipype.interfaces.cat12.surface.ExtractROIBasedSurfaceMeasures' from Nipype to Pydra.
+#
+# Please fill-in/edit the fields below where appropriate
+#
+# Docs
+# ----
+# 
+#     Extract ROI-based surface values
+#     While ROI-based values for VBM (volume) data are automatically saved in the ``label`` folder as XML file it is
+#     necessary to additionally extract these values for surface data (except for thickness which is automatically
+#     extracted during segmentation). This has to be done after preprocessing the data and creating cortical surfaces.
+# 
+#     You can extract ROI-based values for cortical thickness but also for any other surface parameter that was extracted
+#     using the Extract Additional Surface Parameters such as volume, area, depth, gyrification and fractal dimension.
+# 
+# 
+#      http://www.neuro.uni-jena.de/cat12/CAT12-Manual.pdf#page=53
+# 
+#      Examples
+#      --------
+#     >>> # Template surface files
+#     >>> lh_atlas = 'lh.aparc_a2009s.freesurfer.annot'
+#     >>> rh_atlas = 'rh.aparc_a2009s.freesurfer.annot'
+#     >>> surf_files = ['lh.sphere.reg.structural.gii', 'rh.sphere.reg.structural.gii', 'lh.sphere.structural.gii', 'rh.sphere.structural.gii', 'lh.central.structural.gii', 'rh.central.structural.gii', 'lh.pbt.structural', 'rh.pbt.structural']
+#     >>> lh_measure = 'lh.area.structural'
+#     >>> extract_additional_measures = ExtractROIBasedSurfaceMeasures(surface_files=surf_files, lh_surface_measure=lh_measure, lh_roi_atlas=lh_atlas, rh_roi_atlas=rh_atlas)
+#     >>> extract_additional_measures.run() # doctest: +SKIP
+# 
+# 
+#     
+task_name: ExtractROIBasedSurfaceMeasures
+nipype_name: ExtractROIBasedSurfaceMeasures
+nipype_module: nipype.interfaces.cat12.surface
+inputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    surface_files: generic/file+list-of
+    # type=inputmultiobject|default=[]: Surface data files. This variable should be a list with all
+    lh_roi_atlas: generic/file+list-of
+    # type=inputmultiobject|default=[]: (Left) ROI Atlas. These are the ROI's 
+    rh_roi_atlas: generic/file+list-of
+    # type=inputmultiobject|default=[]: (Right) ROI Atlas. These are the ROI's 
+    lh_surface_measure: generic/file+list-of
+    # type=inputmultiobject|default=[]: (Left) Surface data files. 
+    rh_surface_measure: generic/file+list-of
+    # type=inputmultiobject|default=[]: (Right) Surface data files.
+    paths: generic/directory+list-of
+    # type=inputmultiobject|default=[]: Paths to add to matlabpath
+  metadata:
+  # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
+outputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+  callables:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set to the `callable` attribute of output fields
+  templates:
+  # dict[str, str] - `output_file_template` values to be provided to output fields
+  requirements:
+  # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
+tests:
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    surface_files:
+    # type=inputmultiobject|default=[]: Surface data files. This variable should be a list with all
+    lh_roi_atlas:
+    # type=inputmultiobject|default=[]: (Left) ROI Atlas. These are the ROI's 
+    rh_roi_atlas:
+    # type=inputmultiobject|default=[]: (Right) ROI Atlas. These are the ROI's 
+    lh_surface_measure:
+    # type=inputmultiobject|default=[]: (Left) Surface data files. 
+    rh_surface_measure:
+    # type=inputmultiobject|default=[]: (Right) Surface data files.
+    matlab_cmd:
+    # type=str|default='': matlab command to use
+    paths:
+    # type=inputmultiobject|default=[]: Paths to add to matlabpath
+    mfile:
+    # type=bool|default=True: Run m-code using m-file
+    use_mcr:
+    # type=bool|default=False: Run m-code using SPM MCR
+    use_v8struct:
+    # type=bool|default=True: Generate SPM8 and higher compatible jobs
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+doctests: []

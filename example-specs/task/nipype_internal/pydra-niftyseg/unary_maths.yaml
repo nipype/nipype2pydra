@@ -1,0 +1,307 @@
+# This file is used to manually specify the semi-automatic conversion of
+# 'nipype.interfaces.niftyseg.maths.UnaryMaths' from Nipype to Pydra.
+#
+# Please fill-in/edit the fields below where appropriate
+#
+# Docs
+# ----
+# Unary mathematical operations.
+# 
+#     See Also
+#     --------
+#     `Source code <http://cmictig.cs.ucl.ac.uk/wiki/index.php/NiftySeg>`__ --
+#     `Documentation <http://cmictig.cs.ucl.ac.uk/wiki/index.php/NiftySeg_documentation>`__
+# 
+#     Examples
+#     --------
+#     >>> import copy
+#     >>> from nipype.interfaces import niftyseg
+#     >>> unary = niftyseg.UnaryMaths()
+#     >>> unary.inputs.output_datatype = 'float'
+#     >>> unary.inputs.in_file = 'im1.nii'
+# 
+#     >>> # Test sqrt operation
+#     >>> unary_sqrt = copy.deepcopy(unary)
+#     >>> unary_sqrt.inputs.operation = 'sqrt'
+#     >>> unary_sqrt.cmdline
+#     'seg_maths im1.nii -sqrt -odt float im1_sqrt.nii'
+#     >>> unary_sqrt.run()  # doctest: +SKIP
+# 
+#     >>> # Test sqrt operation
+#     >>> unary_abs = copy.deepcopy(unary)
+#     >>> unary_abs.inputs.operation = 'abs'
+#     >>> unary_abs.cmdline
+#     'seg_maths im1.nii -abs -odt float im1_abs.nii'
+#     >>> unary_abs.run()  # doctest: +SKIP
+# 
+#     >>> # Test bin operation
+#     >>> unary_bin = copy.deepcopy(unary)
+#     >>> unary_bin.inputs.operation = 'bin'
+#     >>> unary_bin.cmdline
+#     'seg_maths im1.nii -bin -odt float im1_bin.nii'
+#     >>> unary_bin.run()  # doctest: +SKIP
+# 
+#     >>> # Test otsu operation
+#     >>> unary_otsu = copy.deepcopy(unary)
+#     >>> unary_otsu.inputs.operation = 'otsu'
+#     >>> unary_otsu.cmdline
+#     'seg_maths im1.nii -otsu -odt float im1_otsu.nii'
+#     >>> unary_otsu.run()  # doctest: +SKIP
+# 
+#     >>> # Test isnan operation
+#     >>> unary_isnan = copy.deepcopy(unary)
+#     >>> unary_isnan.inputs.operation = 'isnan'
+#     >>> unary_isnan.cmdline
+#     'seg_maths im1.nii -isnan -odt float im1_isnan.nii'
+#     >>> unary_isnan.run()  # doctest: +SKIP
+# 
+#     
+task_name: UnaryMaths
+nipype_name: UnaryMaths
+nipype_module: nipype.interfaces.niftyseg.maths
+inputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    in_file: medimage/nifti1
+    # type=file|default=<undefined>: image to operate on
+    out_file: generic/file
+    # type=file: image written after calculations
+    # type=file|default=<undefined>: image to write
+  metadata:
+  # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
+outputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    out_file: generic/file
+    # type=file: image written after calculations
+    # type=file|default=<undefined>: image to write
+  callables:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set to the `callable` attribute of output fields
+  templates:
+  # dict[str, str] - `output_file_template` values to be provided to output fields
+  requirements:
+  # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
+tests:
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    operation:
+    # type=enum|default='sqrt'|allowed['4to5','abs','bin','concomp26','concomp6','euc','exp','fill','isnan','lconcomp','log','otsu','range','recip','removenan','scl','splitlab','sqrt','subsamp2','tmax','tmean','tmin','tpmax']: Operation to perform:      * sqrt - Square root of the image).     * exp - Exponential root of the image.     * log - Log of the image.     * recip - Reciprocal (1/I) of the image.     * abs - Absolute value of the image.     * bin - Binarise the image.     * otsu - Otsu thresholding of the current image.     * lconcomp - Take the largest connected component     * concomp6 - Label the different connected components with a 6NN kernel     * concomp26 - Label the different connected components with a 26NN kernel     * fill - Fill holes in binary object (e.g. fill ventricle in brain mask).     * euc - Euclidean distance transform     * tpmax - Get the time point with the highest value (binarise 4D probabilities)     * tmean - Mean value of all time points.     * tmax - Max value of all time points.     * tmin - Mean value of all time points.     * splitlab - Split the integer labels into multiple timepoints     * removenan - Remove all NaNs and replace then with 0     * isnan - Binary image equal to 1 if the value is NaN and 0 otherwise     * subsamp2 - Subsample the image by 2 using NN sampling (qform and sform scaled)     * scl  - Reset scale and slope info.     * 4to5 - Flip the 4th and 5th dimension.     * range - Reset the image range to the min max.  
+    in_file:
+    # type=file|default=<undefined>: image to operate on
+    out_file:
+    # type=file: image written after calculations
+    # type=file|default=<undefined>: image to write
+    output_datatype:
+    # type=enum|default='float'|allowed['char','double','float','input','int','short']: datatype to use for output (default uses input type)
+    args:
+    # type=str|default='': Additional parameters to the command
+    environ:
+    # type=dict|default={}: Environment variables
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    output_datatype: '"float"'
+    # type=enum|default='float'|allowed['char','double','float','input','int','short']: datatype to use for output (default uses input type)
+    in_file:
+    # type=file|default=<undefined>: image to operate on
+    operation: '"sqrt"'
+    # type=enum|default='sqrt'|allowed['4to5','abs','bin','concomp26','concomp6','euc','exp','fill','isnan','lconcomp','log','otsu','range','recip','removenan','scl','splitlab','sqrt','subsamp2','tmax','tmean','tmin','tpmax']: Operation to perform:      * sqrt - Square root of the image).     * exp - Exponential root of the image.     * log - Log of the image.     * recip - Reciprocal (1/I) of the image.     * abs - Absolute value of the image.     * bin - Binarise the image.     * otsu - Otsu thresholding of the current image.     * lconcomp - Take the largest connected component     * concomp6 - Label the different connected components with a 6NN kernel     * concomp26 - Label the different connected components with a 26NN kernel     * fill - Fill holes in binary object (e.g. fill ventricle in brain mask).     * euc - Euclidean distance transform     * tpmax - Get the time point with the highest value (binarise 4D probabilities)     * tmean - Mean value of all time points.     * tmax - Max value of all time points.     * tmin - Mean value of all time points.     * splitlab - Split the integer labels into multiple timepoints     * removenan - Remove all NaNs and replace then with 0     * isnan - Binary image equal to 1 if the value is NaN and 0 otherwise     * subsamp2 - Subsample the image by 2 using NN sampling (qform and sform scaled)     * scl  - Reset scale and slope info.     * 4to5 - Flip the 4th and 5th dimension.     * range - Reset the image range to the min max.  
+  imports: &id001
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  - module: copy
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    operation: '"abs"'
+    # type=enum|default='sqrt'|allowed['4to5','abs','bin','concomp26','concomp6','euc','exp','fill','isnan','lconcomp','log','otsu','range','recip','removenan','scl','splitlab','sqrt','subsamp2','tmax','tmean','tmin','tpmax']: Operation to perform:      * sqrt - Square root of the image).     * exp - Exponential root of the image.     * log - Log of the image.     * recip - Reciprocal (1/I) of the image.     * abs - Absolute value of the image.     * bin - Binarise the image.     * otsu - Otsu thresholding of the current image.     * lconcomp - Take the largest connected component     * concomp6 - Label the different connected components with a 6NN kernel     * concomp26 - Label the different connected components with a 26NN kernel     * fill - Fill holes in binary object (e.g. fill ventricle in brain mask).     * euc - Euclidean distance transform     * tpmax - Get the time point with the highest value (binarise 4D probabilities)     * tmean - Mean value of all time points.     * tmax - Max value of all time points.     * tmin - Mean value of all time points.     * splitlab - Split the integer labels into multiple timepoints     * removenan - Remove all NaNs and replace then with 0     * isnan - Binary image equal to 1 if the value is NaN and 0 otherwise     * subsamp2 - Subsample the image by 2 using NN sampling (qform and sform scaled)     * scl  - Reset scale and slope info.     * 4to5 - Flip the 4th and 5th dimension.     * range - Reset the image range to the min max.  
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    operation: '"bin"'
+    # type=enum|default='sqrt'|allowed['4to5','abs','bin','concomp26','concomp6','euc','exp','fill','isnan','lconcomp','log','otsu','range','recip','removenan','scl','splitlab','sqrt','subsamp2','tmax','tmean','tmin','tpmax']: Operation to perform:      * sqrt - Square root of the image).     * exp - Exponential root of the image.     * log - Log of the image.     * recip - Reciprocal (1/I) of the image.     * abs - Absolute value of the image.     * bin - Binarise the image.     * otsu - Otsu thresholding of the current image.     * lconcomp - Take the largest connected component     * concomp6 - Label the different connected components with a 6NN kernel     * concomp26 - Label the different connected components with a 26NN kernel     * fill - Fill holes in binary object (e.g. fill ventricle in brain mask).     * euc - Euclidean distance transform     * tpmax - Get the time point with the highest value (binarise 4D probabilities)     * tmean - Mean value of all time points.     * tmax - Max value of all time points.     * tmin - Mean value of all time points.     * splitlab - Split the integer labels into multiple timepoints     * removenan - Remove all NaNs and replace then with 0     * isnan - Binary image equal to 1 if the value is NaN and 0 otherwise     * subsamp2 - Subsample the image by 2 using NN sampling (qform and sform scaled)     * scl  - Reset scale and slope info.     * 4to5 - Flip the 4th and 5th dimension.     * range - Reset the image range to the min max.  
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    operation: '"otsu"'
+    # type=enum|default='sqrt'|allowed['4to5','abs','bin','concomp26','concomp6','euc','exp','fill','isnan','lconcomp','log','otsu','range','recip','removenan','scl','splitlab','sqrt','subsamp2','tmax','tmean','tmin','tpmax']: Operation to perform:      * sqrt - Square root of the image).     * exp - Exponential root of the image.     * log - Log of the image.     * recip - Reciprocal (1/I) of the image.     * abs - Absolute value of the image.     * bin - Binarise the image.     * otsu - Otsu thresholding of the current image.     * lconcomp - Take the largest connected component     * concomp6 - Label the different connected components with a 6NN kernel     * concomp26 - Label the different connected components with a 26NN kernel     * fill - Fill holes in binary object (e.g. fill ventricle in brain mask).     * euc - Euclidean distance transform     * tpmax - Get the time point with the highest value (binarise 4D probabilities)     * tmean - Mean value of all time points.     * tmax - Max value of all time points.     * tmin - Mean value of all time points.     * splitlab - Split the integer labels into multiple timepoints     * removenan - Remove all NaNs and replace then with 0     * isnan - Binary image equal to 1 if the value is NaN and 0 otherwise     * subsamp2 - Subsample the image by 2 using NN sampling (qform and sform scaled)     * scl  - Reset scale and slope info.     * 4to5 - Flip the 4th and 5th dimension.     * range - Reset the image range to the min max.  
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    operation: '"isnan"'
+    # type=enum|default='sqrt'|allowed['4to5','abs','bin','concomp26','concomp6','euc','exp','fill','isnan','lconcomp','log','otsu','range','recip','removenan','scl','splitlab','sqrt','subsamp2','tmax','tmean','tmin','tpmax']: Operation to perform:      * sqrt - Square root of the image).     * exp - Exponential root of the image.     * log - Log of the image.     * recip - Reciprocal (1/I) of the image.     * abs - Absolute value of the image.     * bin - Binarise the image.     * otsu - Otsu thresholding of the current image.     * lconcomp - Take the largest connected component     * concomp6 - Label the different connected components with a 6NN kernel     * concomp26 - Label the different connected components with a 26NN kernel     * fill - Fill holes in binary object (e.g. fill ventricle in brain mask).     * euc - Euclidean distance transform     * tpmax - Get the time point with the highest value (binarise 4D probabilities)     * tmean - Mean value of all time points.     * tmax - Max value of all time points.     * tmin - Mean value of all time points.     * splitlab - Split the integer labels into multiple timepoints     * removenan - Remove all NaNs and replace then with 0     * isnan - Binary image equal to 1 if the value is NaN and 0 otherwise     * subsamp2 - Subsample the image by 2 using NN sampling (qform and sform scaled)     * scl  - Reset scale and slope info.     * 4to5 - Flip the 4th and 5th dimension.     * range - Reset the image range to the min max.  
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+doctests:
+- cmdline: seg_maths im1.nii -sqrt -odt float im1_sqrt.nii
+  # str - the expected cmdline output
+  inputs:
+  # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
+  # If the field is of file-format type and the value is None, then the
+  # '.mock()' method of the corresponding class is used instead.
+    output_datatype: '"float"'
+    # type=enum|default='float'|allowed['char','double','float','input','int','short']: datatype to use for output (default uses input type)
+    in_file:
+    # type=file|default=<undefined>: image to operate on
+    operation: '"sqrt"'
+    # type=enum|default='sqrt'|allowed['4to5','abs','bin','concomp26','concomp6','euc','exp','fill','isnan','lconcomp','log','otsu','range','recip','removenan','scl','splitlab','sqrt','subsamp2','tmax','tmean','tmin','tpmax']: Operation to perform:      * sqrt - Square root of the image).     * exp - Exponential root of the image.     * log - Log of the image.     * recip - Reciprocal (1/I) of the image.     * abs - Absolute value of the image.     * bin - Binarise the image.     * otsu - Otsu thresholding of the current image.     * lconcomp - Take the largest connected component     * concomp6 - Label the different connected components with a 6NN kernel     * concomp26 - Label the different connected components with a 26NN kernel     * fill - Fill holes in binary object (e.g. fill ventricle in brain mask).     * euc - Euclidean distance transform     * tpmax - Get the time point with the highest value (binarise 4D probabilities)     * tmean - Mean value of all time points.     * tmax - Max value of all time points.     * tmin - Mean value of all time points.     * splitlab - Split the integer labels into multiple timepoints     * removenan - Remove all NaNs and replace then with 0     * isnan - Binary image equal to 1 if the value is NaN and 0 otherwise     * subsamp2 - Subsample the image by 2 using NN sampling (qform and sform scaled)     * scl  - Reset scale and slope info.     * 4to5 - Flip the 4th and 5th dimension.     * range - Reset the image range to the min max.  
+  imports: *id001
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  directive:
+  # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS
+- cmdline: seg_maths im1.nii -abs -odt float im1_abs.nii
+  # str - the expected cmdline output
+  inputs:
+  # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
+  # If the field is of file-format type and the value is None, then the
+  # '.mock()' method of the corresponding class is used instead.
+    operation: '"abs"'
+    # type=enum|default='sqrt'|allowed['4to5','abs','bin','concomp26','concomp6','euc','exp','fill','isnan','lconcomp','log','otsu','range','recip','removenan','scl','splitlab','sqrt','subsamp2','tmax','tmean','tmin','tpmax']: Operation to perform:      * sqrt - Square root of the image).     * exp - Exponential root of the image.     * log - Log of the image.     * recip - Reciprocal (1/I) of the image.     * abs - Absolute value of the image.     * bin - Binarise the image.     * otsu - Otsu thresholding of the current image.     * lconcomp - Take the largest connected component     * concomp6 - Label the different connected components with a 6NN kernel     * concomp26 - Label the different connected components with a 26NN kernel     * fill - Fill holes in binary object (e.g. fill ventricle in brain mask).     * euc - Euclidean distance transform     * tpmax - Get the time point with the highest value (binarise 4D probabilities)     * tmean - Mean value of all time points.     * tmax - Max value of all time points.     * tmin - Mean value of all time points.     * splitlab - Split the integer labels into multiple timepoints     * removenan - Remove all NaNs and replace then with 0     * isnan - Binary image equal to 1 if the value is NaN and 0 otherwise     * subsamp2 - Subsample the image by 2 using NN sampling (qform and sform scaled)     * scl  - Reset scale and slope info.     * 4to5 - Flip the 4th and 5th dimension.     * range - Reset the image range to the min max.  
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  directive:
+  # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS
+- cmdline: seg_maths im1.nii -bin -odt float im1_bin.nii
+  # str - the expected cmdline output
+  inputs:
+  # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
+  # If the field is of file-format type and the value is None, then the
+  # '.mock()' method of the corresponding class is used instead.
+    operation: '"bin"'
+    # type=enum|default='sqrt'|allowed['4to5','abs','bin','concomp26','concomp6','euc','exp','fill','isnan','lconcomp','log','otsu','range','recip','removenan','scl','splitlab','sqrt','subsamp2','tmax','tmean','tmin','tpmax']: Operation to perform:      * sqrt - Square root of the image).     * exp - Exponential root of the image.     * log - Log of the image.     * recip - Reciprocal (1/I) of the image.     * abs - Absolute value of the image.     * bin - Binarise the image.     * otsu - Otsu thresholding of the current image.     * lconcomp - Take the largest connected component     * concomp6 - Label the different connected components with a 6NN kernel     * concomp26 - Label the different connected components with a 26NN kernel     * fill - Fill holes in binary object (e.g. fill ventricle in brain mask).     * euc - Euclidean distance transform     * tpmax - Get the time point with the highest value (binarise 4D probabilities)     * tmean - Mean value of all time points.     * tmax - Max value of all time points.     * tmin - Mean value of all time points.     * splitlab - Split the integer labels into multiple timepoints     * removenan - Remove all NaNs and replace then with 0     * isnan - Binary image equal to 1 if the value is NaN and 0 otherwise     * subsamp2 - Subsample the image by 2 using NN sampling (qform and sform scaled)     * scl  - Reset scale and slope info.     * 4to5 - Flip the 4th and 5th dimension.     * range - Reset the image range to the min max.  
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  directive:
+  # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS
+- cmdline: seg_maths im1.nii -otsu -odt float im1_otsu.nii
+  # str - the expected cmdline output
+  inputs:
+  # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
+  # If the field is of file-format type and the value is None, then the
+  # '.mock()' method of the corresponding class is used instead.
+    operation: '"otsu"'
+    # type=enum|default='sqrt'|allowed['4to5','abs','bin','concomp26','concomp6','euc','exp','fill','isnan','lconcomp','log','otsu','range','recip','removenan','scl','splitlab','sqrt','subsamp2','tmax','tmean','tmin','tpmax']: Operation to perform:      * sqrt - Square root of the image).     * exp - Exponential root of the image.     * log - Log of the image.     * recip - Reciprocal (1/I) of the image.     * abs - Absolute value of the image.     * bin - Binarise the image.     * otsu - Otsu thresholding of the current image.     * lconcomp - Take the largest connected component     * concomp6 - Label the different connected components with a 6NN kernel     * concomp26 - Label the different connected components with a 26NN kernel     * fill - Fill holes in binary object (e.g. fill ventricle in brain mask).     * euc - Euclidean distance transform     * tpmax - Get the time point with the highest value (binarise 4D probabilities)     * tmean - Mean value of all time points.     * tmax - Max value of all time points.     * tmin - Mean value of all time points.     * splitlab - Split the integer labels into multiple timepoints     * removenan - Remove all NaNs and replace then with 0     * isnan - Binary image equal to 1 if the value is NaN and 0 otherwise     * subsamp2 - Subsample the image by 2 using NN sampling (qform and sform scaled)     * scl  - Reset scale and slope info.     * 4to5 - Flip the 4th and 5th dimension.     * range - Reset the image range to the min max.  
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  directive:
+  # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS
+- cmdline: seg_maths im1.nii -isnan -odt float im1_isnan.nii
+  # str - the expected cmdline output
+  inputs:
+  # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
+  # If the field is of file-format type and the value is None, then the
+  # '.mock()' method of the corresponding class is used instead.
+    operation: '"isnan"'
+    # type=enum|default='sqrt'|allowed['4to5','abs','bin','concomp26','concomp6','euc','exp','fill','isnan','lconcomp','log','otsu','range','recip','removenan','scl','splitlab','sqrt','subsamp2','tmax','tmean','tmin','tpmax']: Operation to perform:      * sqrt - Square root of the image).     * exp - Exponential root of the image.     * log - Log of the image.     * recip - Reciprocal (1/I) of the image.     * abs - Absolute value of the image.     * bin - Binarise the image.     * otsu - Otsu thresholding of the current image.     * lconcomp - Take the largest connected component     * concomp6 - Label the different connected components with a 6NN kernel     * concomp26 - Label the different connected components with a 26NN kernel     * fill - Fill holes in binary object (e.g. fill ventricle in brain mask).     * euc - Euclidean distance transform     * tpmax - Get the time point with the highest value (binarise 4D probabilities)     * tmean - Mean value of all time points.     * tmax - Max value of all time points.     * tmin - Mean value of all time points.     * splitlab - Split the integer labels into multiple timepoints     * removenan - Remove all NaNs and replace then with 0     * isnan - Binary image equal to 1 if the value is NaN and 0 otherwise     * subsamp2 - Subsample the image by 2 using NN sampling (qform and sform scaled)     * scl  - Reset scale and slope info.     * 4to5 - Flip the 4th and 5th dimension.     * range - Reset the image range to the min max.  
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  directive:
+  # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

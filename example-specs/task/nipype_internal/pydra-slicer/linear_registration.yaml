@@ -1,0 +1,117 @@
+# This file is used to manually specify the semi-automatic conversion of
+# 'nipype.interfaces.slicer.legacy.registration.LinearRegistration' from Nipype to Pydra.
+#
+# Please fill-in/edit the fields below where appropriate
+#
+# Docs
+# ----
+# title: Linear Registration
+# 
+#     category: Legacy.Registration
+# 
+#     description: Registers two images together using a rigid transform and mutual information.
+# 
+#     version: 0.1.0.$Revision: 19608 $(alpha)
+# 
+#     documentation-url: http://wiki.slicer.org/slicerWiki/index.php/Documentation/4.1/Modules/LinearRegistration
+# 
+#     contributor: Daniel Blezek (GE)
+# 
+#     acknowledgements: This work is part of the National Alliance for Medical Image Computing (NAMIC), funded by the National Institutes of Health through the NIH Roadmap for Medical Research, Grant U54 EB005149.
+#     
+task_name: LinearRegistration
+nipype_name: LinearRegistration
+nipype_module: nipype.interfaces.slicer.legacy.registration
+inputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    initialtransform: generic/file
+    # type=file|default=<undefined>: Initial transform for aligning the fixed and moving image. Maps positions in the fixed coordinate frame to positions in the moving coordinate frame. Optional.
+    FixedImageFileName: generic/file
+    # type=file|default=<undefined>: Fixed image to which to register
+    MovingImageFileName: generic/file
+    # type=file|default=<undefined>: Moving image
+  metadata:
+  # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
+outputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    outputtransform: generic/file
+    # type=file: Transform calculated that aligns the fixed and moving image. Maps positions in the fixed coordinate frame to the moving coordinate frame. Optional (specify an output transform or an output volume or both).
+    # type=traitcompound|default=None: Transform calculated that aligns the fixed and moving image. Maps positions in the fixed coordinate frame to the moving coordinate frame. Optional (specify an output transform or an output volume or both).
+    resampledmovingfilename: generic/file
+    # type=file: Resampled moving image to the fixed image coordinate frame. Optional (specify an output transform or an output volume or both).
+    # type=traitcompound|default=None: Resampled moving image to the fixed image coordinate frame. Optional (specify an output transform or an output volume or both).
+  callables:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set to the `callable` attribute of output fields
+  templates:
+  # dict[str, str] - `output_file_template` values to be provided to output fields
+  requirements:
+  # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
+tests:
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    fixedsmoothingfactor:
+    # type=int|default=0: Amount of smoothing applied to fixed image prior to registration. Default is 0 (none). Range is 0-5 (unitless). Consider smoothing the input data if there is considerable amounts of noise or the noise pattern in the fixed and moving images is very different.
+    movingsmoothingfactor:
+    # type=int|default=0: Amount of smoothing applied to moving image prior to registration. Default is 0 (none). Range is 0-5 (unitless). Consider smoothing the input data if there is considerable amounts of noise or the noise pattern in the fixed and moving images is very different.
+    histogrambins:
+    # type=int|default=0: Number of histogram bins to use for Mattes Mutual Information. Reduce the number of bins if a registration fails. If the number of bins is too large, the estimated PDFs will be a field of impulses and will inhibit reliable registration estimation.
+    spatialsamples:
+    # type=int|default=0: Number of spatial samples to use in estimating Mattes Mutual Information. Larger values yield more accurate PDFs and improved registration quality.
+    iterations:
+    # type=inputmultiobject|default=[]: Comma separated list of iterations. Must have the same number of elements as the learning rate.
+    learningrate:
+    # type=inputmultiobject|default=[]: Comma separated list of learning rates. Learning rate is a scale factor on the gradient of the registration objective function (gradient with respect to the parameters of the transformation) used to update the parameters of the transformation during optimization. Smaller values cause the optimizer to take smaller steps through the parameter space. Larger values are typically used early in the registration process to take large jumps in parameter space followed by smaller values to home in on the optimum value of the registration objective function. Default is: 0.01, 0.005, 0.0005, 0.0002. Must have the same number of elements as iterations.
+    translationscale:
+    # type=float|default=0.0: Relative scale of translations to rotations, i.e. a value of 100 means 10mm = 1 degree. (Actual scale used 1/(TranslationScale^2)). This parameter is used to 'weight' or 'standardized' the transform parameters and their effect on the registration objective function.
+    initialtransform:
+    # type=file|default=<undefined>: Initial transform for aligning the fixed and moving image. Maps positions in the fixed coordinate frame to positions in the moving coordinate frame. Optional.
+    FixedImageFileName:
+    # type=file|default=<undefined>: Fixed image to which to register
+    MovingImageFileName:
+    # type=file|default=<undefined>: Moving image
+    outputtransform:
+    # type=file: Transform calculated that aligns the fixed and moving image. Maps positions in the fixed coordinate frame to the moving coordinate frame. Optional (specify an output transform or an output volume or both).
+    # type=traitcompound|default=None: Transform calculated that aligns the fixed and moving image. Maps positions in the fixed coordinate frame to the moving coordinate frame. Optional (specify an output transform or an output volume or both).
+    resampledmovingfilename:
+    # type=file: Resampled moving image to the fixed image coordinate frame. Optional (specify an output transform or an output volume or both).
+    # type=traitcompound|default=None: Resampled moving image to the fixed image coordinate frame. Optional (specify an output transform or an output volume or both).
+    args:
+    # type=str|default='': Additional parameters to the command
+    environ:
+    # type=dict|default={}: Environment variables
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+doctests: []

@@ -1,0 +1,152 @@
+# This file is used to manually specify the semi-automatic conversion of
+# 'nipype.interfaces.camino.convert.AnalyzeHeader' from Nipype to Pydra.
+#
+# Please fill-in/edit the fields below where appropriate
+#
+# Docs
+# ----
+# 
+#     Create or read an Analyze 7.5 header file.
+# 
+#     Analyze image header, provides support for the most common header fields.
+#     Some fields, such as patient_id, are not currently supported. The program allows
+#     three nonstandard options: the field image_dimension.funused1 is the image scale.
+#     The intensity of each pixel in the associated .img file is (image value from file) * scale.
+#     Also, the origin of the Talairach coordinates (midline of the anterior commisure) are encoded
+#     in the field data_history.originator. These changes are included for compatibility with SPM.
+# 
+#     All headers written with this program are big endian by default.
+# 
+#     Example
+#     -------
+# 
+#     >>> import nipype.interfaces.camino as cmon
+#     >>> hdr = cmon.AnalyzeHeader()
+#     >>> hdr.inputs.in_file = 'tensor_fitted_data.Bdouble'
+#     >>> hdr.inputs.scheme_file = 'A.scheme'
+#     >>> hdr.inputs.data_dims = [256,256,256]
+#     >>> hdr.inputs.voxel_dims = [1,1,1]
+#     >>> hdr.run()          # doctest: +SKIP
+#     
+task_name: AnalyzeHeader
+nipype_name: AnalyzeHeader
+nipype_module: nipype.interfaces.camino.convert
+inputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    in_file: generic/file
+    # type=file|default=<undefined>: Tensor-fitted data filename
+    scheme_file: generic/file
+    # type=file|default=<undefined>: Camino scheme file (b values / vectors, see camino.fsl2scheme)
+    readheader: generic/file
+    # type=file|default=<undefined>: Reads header information from file and prints to stdout. If this option is not specified, then the program writes a header based on the other arguments.
+    printimagedims: generic/file
+    # type=file|default=<undefined>: Prints image data and voxel dimensions as Camino arguments and exits.
+    printprogargs: generic/file
+    # type=file|default=<undefined>: Prints data dimension (and type, if relevant) arguments for a specific Camino program, where prog is one of shredder, scanner2voxel, vcthreshselect, pdview, track.
+    printintelbyteorder: generic/file
+    # type=file|default=<undefined>: Prints 1 if the header is little-endian, 0 otherwise.
+    printbigendian: generic/file
+    # type=file|default=<undefined>: Prints 1 if the header is big-endian, 0 otherwise.
+    initfromheader: generic/file
+    # type=file|default=<undefined>: Reads header information from file and initializes a new header with the values read from the file. You may replace any combination of fields in the new header by specifying subsequent options.
+  metadata:
+  # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
+outputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    header: generic/file
+    # type=file: Analyze header
+  callables:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set to the `callable` attribute of output fields
+  templates:
+  # dict[str, str] - `output_file_template` values to be provided to output fields
+    out_file: out_file
+    # type=file|default=<undefined>: 
+  requirements:
+  # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
+tests:
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    in_file:
+    # type=file|default=<undefined>: Tensor-fitted data filename
+    scheme_file:
+    # type=file|default=<undefined>: Camino scheme file (b values / vectors, see camino.fsl2scheme)
+    readheader:
+    # type=file|default=<undefined>: Reads header information from file and prints to stdout. If this option is not specified, then the program writes a header based on the other arguments.
+    printimagedims:
+    # type=file|default=<undefined>: Prints image data and voxel dimensions as Camino arguments and exits.
+    printprogargs:
+    # type=file|default=<undefined>: Prints data dimension (and type, if relevant) arguments for a specific Camino program, where prog is one of shredder, scanner2voxel, vcthreshselect, pdview, track.
+    printintelbyteorder:
+    # type=file|default=<undefined>: Prints 1 if the header is little-endian, 0 otherwise.
+    printbigendian:
+    # type=file|default=<undefined>: Prints 1 if the header is big-endian, 0 otherwise.
+    initfromheader:
+    # type=file|default=<undefined>: Reads header information from file and initializes a new header with the values read from the file. You may replace any combination of fields in the new header by specifying subsequent options.
+    data_dims:
+    # type=list|default=[]: data dimensions in voxels
+    voxel_dims:
+    # type=list|default=[]: voxel dimensions in mm
+    centre:
+    # type=list|default=[]: Voxel specifying origin of Talairach coordinate system for SPM, default [0 0 0].
+    picoseed:
+    # type=list|default=[]: Voxel specifying the seed (for PICo maps), default [0 0 0].
+    nimages:
+    # type=int|default=0: Number of images in the img file. Default 1.
+    datatype:
+    # type=enum|default='byte'|allowed['[u]int','[u]short','byte','char','complex','double','float']: The char datatype is 8 bit (not the 16 bit char of Java), as specified by the Analyze 7.5 standard. The byte, ushort and uint types are not part of the Analyze specification but are supported by SPM.
+    offset:
+    # type=int|default=0: According to the Analyze 7.5 standard, this is the byte offset in the .img file at which voxels start. This value can be negative to specify that the absolute value is applied for every image in the file.
+    greylevels:
+    # type=list|default=[]: Minimum and maximum greylevels. Stored as shorts in the header.
+    scaleslope:
+    # type=float|default=0.0: Intensities in the image are scaled by this factor by SPM and MRICro. Default is 1.0.
+    scaleinter:
+    # type=float|default=0.0: Constant to add to the image intensities. Used by SPM and MRIcro.
+    description:
+    # type=string|default='': Short description - No spaces, max length 79 bytes. Will be null terminated automatically.
+    intelbyteorder:
+    # type=bool|default=False: Write header in intel byte order (little-endian).
+    networkbyteorder:
+    # type=bool|default=False: Write header in network byte order (big-endian). This is the default for new headers.
+    out_file:
+    # type=file|default=<undefined>: 
+    args:
+    # type=str|default='': Additional parameters to the command
+    environ:
+    # type=dict|default={}: Environment variables
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+doctests: []

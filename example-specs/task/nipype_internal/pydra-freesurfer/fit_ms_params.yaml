@@ -1,0 +1,142 @@
+# This file is used to manually specify the semi-automatic conversion of
+# 'nipype.interfaces.freesurfer.preprocess.FitMSParams' from Nipype to Pydra.
+#
+# Please fill-in/edit the fields below where appropriate
+#
+# Docs
+# ----
+# Estimate tissue parameters from a set of FLASH images.
+# 
+#     Examples
+#     --------
+#     >>> from nipype.interfaces.freesurfer import FitMSParams
+#     >>> msfit = FitMSParams()
+#     >>> msfit.inputs.in_files = ['flash_05.mgz', 'flash_30.mgz']
+#     >>> msfit.inputs.out_dir = 'flash_parameters'
+#     >>> msfit.cmdline
+#     'mri_ms_fitparms  flash_05.mgz flash_30.mgz flash_parameters'
+# 
+#     
+task_name: FitMSParams
+nipype_name: FitMSParams
+nipype_module: nipype.interfaces.freesurfer.preprocess
+inputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    in_files: medimage/mgh-gz+list-of
+    # type=list|default=[]: list of FLASH images (must be in mgh format)
+    xfm_list: generic/file+list-of
+    # type=list|default=[]: list of transform files to apply to each FLASH image
+    subjects_dir: generic/directory
+    # type=directory|default=<undefined>: subjects directory
+  metadata:
+  # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
+outputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    t1_image: generic/file
+    # type=file: image of estimated T1 relaxation values
+    pd_image: generic/file
+    # type=file: image of estimated proton density values
+    t2star_image: generic/file
+    # type=file: image of estimated T2* values
+  callables:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set to the `callable` attribute of output fields
+  templates:
+  # dict[str, str] - `output_file_template` values to be provided to output fields
+    out_dir: '"flash_parameters"'
+    # type=directory|default=<undefined>: directory to store output in
+  requirements:
+  # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
+tests:
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    in_files:
+    # type=list|default=[]: list of FLASH images (must be in mgh format)
+    tr_list:
+    # type=list|default=[]: list of TRs of the input files (in msec)
+    te_list:
+    # type=list|default=[]: list of TEs of the input files (in msec)
+    flip_list:
+    # type=list|default=[]: list of flip angles of the input files
+    xfm_list:
+    # type=list|default=[]: list of transform files to apply to each FLASH image
+    out_dir:
+    # type=directory|default=<undefined>: directory to store output in
+    subjects_dir:
+    # type=directory|default=<undefined>: subjects directory
+    args:
+    # type=str|default='': Additional parameters to the command
+    environ:
+    # type=dict|default={}: Environment variables
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    in_files:
+    # type=list|default=[]: list of FLASH images (must be in mgh format)
+    out_dir: '"flash_parameters"'
+    # type=directory|default=<undefined>: directory to store output in
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+doctests:
+- cmdline: mri_ms_fitparms flash_05.mgz flash_30.mgz flash_parameters
+  # str - the expected cmdline output
+  inputs:
+  # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
+  # If the field is of file-format type and the value is None, then the
+  # '.mock()' method of the corresponding class is used instead.
+    in_files:
+    # type=list|default=[]: list of FLASH images (must be in mgh format)
+    out_dir: '"flash_parameters"'
+    # type=directory|default=<undefined>: directory to store output in
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  directive:
+  # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

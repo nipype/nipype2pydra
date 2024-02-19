@@ -1,0 +1,123 @@
+# This file is used to manually specify the semi-automatic conversion of
+# 'nipype.interfaces.dipy.tracks.StreamlineTractography' from Nipype to Pydra.
+#
+# Please fill-in/edit the fields below where appropriate
+#
+# Docs
+# ----
+# 
+#     Streamline tractography using EuDX [Garyfallidis12]_.
+# 
+#     .. [Garyfallidis12] Garyfallidis E., “Towards an accurate brain
+#       tractography”, PhD thesis, University of Cambridge, 2012
+# 
+#     Example
+#     -------
+# 
+#     >>> from nipype.interfaces import dipy as ndp
+#     >>> track = ndp.StreamlineTractography()
+#     >>> track.inputs.in_file = '4d_dwi.nii'
+#     >>> track.inputs.in_model = 'model.pklz'
+#     >>> track.inputs.tracking_mask = 'dilated_wm_mask.nii'
+#     >>> res = track.run() # doctest: +SKIP
+#     
+task_name: StreamlineTractography
+nipype_name: StreamlineTractography
+nipype_module: nipype.interfaces.dipy.tracks
+inputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    in_file: generic/file
+    # type=file|default=<undefined>: input diffusion data
+    in_model: generic/file
+    # type=file|default=<undefined>: input f/d-ODF model extracted from.
+    tracking_mask: generic/file
+    # type=file|default=<undefined>: input mask within which perform tracking
+    seed_mask: generic/file
+    # type=file|default=<undefined>: input mask within which perform seeding
+    in_peaks: generic/file
+    # type=file|default=<undefined>: peaks computed from the odf
+    seed_coord: generic/file
+    # type=file|default=<undefined>: file containing the list of seed voxel coordinates (N,3)
+  metadata:
+  # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
+outputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    tracks: generic/file
+    # type=file: TrackVis file containing extracted streamlines
+    gfa: generic/file
+    # type=file: The resulting GFA (generalized FA) computed using the peaks of the ODF
+    odf_peaks: generic/file
+    # type=file: peaks computed from the odf
+    out_seeds: generic/file
+    # type=file: file containing the (N,3) *voxel* coordinates used in seeding.
+  callables:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set to the `callable` attribute of output fields
+  templates:
+  # dict[str, str] - `output_file_template` values to be provided to output fields
+  requirements:
+  # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
+tests:
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    in_file:
+    # type=file|default=<undefined>: input diffusion data
+    in_model:
+    # type=file|default=<undefined>: input f/d-ODF model extracted from.
+    tracking_mask:
+    # type=file|default=<undefined>: input mask within which perform tracking
+    seed_mask:
+    # type=file|default=<undefined>: input mask within which perform seeding
+    in_peaks:
+    # type=file|default=<undefined>: peaks computed from the odf
+    seed_coord:
+    # type=file|default=<undefined>: file containing the list of seed voxel coordinates (N,3)
+    gfa_thresh:
+    # type=float|default=0.2: GFA threshold to compute tracking mask
+    peak_threshold:
+    # type=float|default=0.5: threshold to consider peaks from model
+    min_angle:
+    # type=float|default=25.0: minimum separation angle
+    multiprocess:
+    # type=bool|default=True: use multiprocessing
+    save_seeds:
+    # type=bool|default=False: save seeding voxels coordinates
+    num_seeds:
+    # type=int|default=10000: desired number of tracks in tractography
+    out_prefix:
+    # type=str|default='': output prefix for file names
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+doctests: []

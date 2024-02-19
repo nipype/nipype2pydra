@@ -1,0 +1,94 @@
+# This file is used to manually specify the semi-automatic conversion of
+# 'nipype.interfaces.nitime.analysis.CoherenceAnalyzer' from Nipype to Pydra.
+#
+# Please fill-in/edit the fields below where appropriate
+#
+# Docs
+# ----
+# Wraps nitime.analysis.CoherenceAnalyzer: Coherence/y
+task_name: CoherenceAnalyzer
+nipype_name: CoherenceAnalyzer
+nipype_module: nipype.interfaces.nitime.analysis
+inputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    in_file: generic/file
+    # type=file|default=<undefined>: csv file with ROIs on the columns and time-points on the rows. ROI names at the top row
+    output_csv_file: generic/file
+    # type=file|default=<undefined>: File to write outputs (coherence,time-delay) with file-names: ``file_name_{coherence,timedelay}``
+    output_figure_file: generic/file
+    # type=file|default=<undefined>: File to write output figures (coherence,time-delay) with file-names: ``file_name_{coherence,timedelay}``. Possible formats: .png,.svg,.pdf,.jpg,...
+  metadata:
+  # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
+outputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    coherence_csv: generic/file
+    # type=file: A csv file containing the pairwise  coherence values
+    timedelay_csv: generic/file
+    # type=file: A csv file containing the pairwise time delay values
+    coherence_fig: generic/file
+    # type=file: Figure representing coherence values
+    timedelay_fig: generic/file
+    # type=file: Figure representing coherence values
+  callables:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set to the `callable` attribute of output fields
+  templates:
+  # dict[str, str] - `output_file_template` values to be provided to output fields
+  requirements:
+  # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
+tests:
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    in_file:
+    # type=file|default=<undefined>: csv file with ROIs on the columns and time-points on the rows. ROI names at the top row
+    TR:
+    # type=float|default=0.0: The TR used to collect the data in your csv file <in_file>
+    in_TS:
+    # type=any|default=None: a nitime TimeSeries object
+    NFFT:
+    # type=range|default=64: This is the size of the window used for the spectral estimation. Use values between 32 and the number of samples in your time-series.(Defaults to 64.)
+    n_overlap:
+    # type=range|default=0: The number of samples which overlapbetween subsequent windows.(Defaults to 0)
+    frequency_range:
+    # type=list|default=[0.02, 0.15]: The range of frequencies overwhich the analysis will average.[low,high] (Default [0.02,0.15]
+    output_csv_file:
+    # type=file|default=<undefined>: File to write outputs (coherence,time-delay) with file-names: ``file_name_{coherence,timedelay}``
+    output_figure_file:
+    # type=file|default=<undefined>: File to write output figures (coherence,time-delay) with file-names: ``file_name_{coherence,timedelay}``. Possible formats: .png,.svg,.pdf,.jpg,...
+    figure_type:
+    # type=enum|default='matrix'|allowed['matrix','network']: The type of plot to generate, where 'matrix' denotes a matrix image and'network' denotes a graph representation. Default: 'matrix'
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+doctests: []

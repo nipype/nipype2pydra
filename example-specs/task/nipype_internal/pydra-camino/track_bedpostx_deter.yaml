@@ -1,0 +1,145 @@
+# This file is used to manually specify the semi-automatic conversion of
+# 'nipype.interfaces.camino.dti.TrackBedpostxDeter' from Nipype to Pydra.
+#
+# Please fill-in/edit the fields below where appropriate
+#
+# Docs
+# ----
+# 
+#     Data from FSL's bedpostx can be imported into Camino for deterministic tracking.
+#     (Use TrackBedpostxProba for bedpostx probabilistic tractography.)
+# 
+#     The tracking is based on the vector images dyads1.nii.gz, ... , dyadsN.nii.gz,
+#     where there are a maximum of N compartments (corresponding to each fiber
+#     population) in each voxel.
+# 
+#     It also uses the N images mean_f1samples.nii.gz, ..., mean_fNsamples.nii.gz,
+#     normalized such that the sum of all compartments is 1. Compartments where the
+#     mean_f is less than a threshold are discarded and not used for tracking.
+#     The default value is 0.01. This can be changed with the min_vol_frac option.
+# 
+#     Example
+#     -------
+#     >>> import nipype.interfaces.camino as cam
+#     >>> track = cam.TrackBedpostxDeter()
+#     >>> track.inputs.bedpostxdir = 'bedpostxout'
+#     >>> track.inputs.seed_file = 'seed_mask.nii'
+#     >>> track.run()          # doctest: +SKIP
+# 
+#     
+task_name: TrackBedpostxDeter
+nipype_name: TrackBedpostxDeter
+nipype_module: nipype.interfaces.camino.dti
+inputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    in_file: generic/file
+    # type=file|default=<undefined>: input data file
+    seed_file: generic/file
+    # type=file|default=<undefined>: seed file
+    anisfile: generic/file
+    # type=file|default=<undefined>: File containing the anisotropy map. This is required to apply an anisotropy threshold with non tensor data. If the map issupplied it is always used, even in tensor data.
+    output_root: generic/file
+    # type=file|default=<undefined>: root directory for output
+    bedpostxdir: generic/directory
+    # type=directory|default=<undefined>: Directory containing bedpostx output
+  metadata:
+  # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
+outputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    tracked: generic/file
+    # type=file: output file containing reconstructed tracts
+  callables:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set to the `callable` attribute of output fields
+  templates:
+  # dict[str, str] - `output_file_template` values to be provided to output fields
+    out_file: out_file
+    # type=file|default=<undefined>: output data file
+  requirements:
+  # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
+tests:
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    bedpostxdir:
+    # type=directory|default=<undefined>: Directory containing bedpostx output
+    min_vol_frac:
+    # type=float|default=0.0: Zeros out compartments in bedpostx data with a mean volume fraction f of less than min_vol_frac.  The default is 0.01.
+    in_file:
+    # type=file|default=<undefined>: input data file
+    seed_file:
+    # type=file|default=<undefined>: seed file
+    inputmodel:
+    # type=enum|default='dt'|allowed['ballstick','bayesdirac','bayesdirac_dt','bedpostx','bedpostx_dyad','dt','multitensor','pico','repbs_dt','repbs_multitensor','sfpeak','wildbs_dt']: input model type
+    tracker:
+    # type=enum|default='fact'|allowed['euler','fact','rk4']: The tracking algorithm controls streamlines are generated from the data. The choices are: - FACT, which follows the local fibre orientation in each voxel. No interpolation is used.- EULER, which uses a fixed step size along the local fibre orientation. With nearest-neighbour interpolation, this method may be very similar to FACT, except that the step size is fixed, whereas FACT steps extend to the boundary of the next voxel (distance variable depending on the entry and exit points to the voxel).- RK4: Fourth-order Runge-Kutta method. The step size is fixed, however the eventual direction of the step is determined by taking and averaging a series of partial steps.
+    interpolator:
+    # type=enum|default='nn'|allowed['linear','nn','prob_nn']: The interpolation algorithm determines how the fiber orientation(s) are defined at a given continuous point within the input image. Interpolators are only used when the tracking algorithm is not FACT. The choices are: - NN: Nearest-neighbour interpolation, just uses the local voxel data directly.- PROB_NN: Probabilistic nearest-neighbor interpolation,  similar  to the method pro- posed by Behrens et al [Magnetic Resonance in Medicine, 50:1077-1088, 2003]. The data is not interpolated, but at each point we randomly choose one of the 8 voxels sur- rounding a point. The probability of choosing a particular voxel is based on how close the point is to the centre of that voxel.- LINEAR: Linear interpolation of the vector field containing the principal directions at each point.
+    stepsize:
+    # type=float|default=0.0: Step size for EULER and RK4 tracking. The default is 1mm.
+    inputdatatype:
+    # type=enum|default='float'|allowed['double','float']: input file type
+    gzip:
+    # type=bool|default=False: save the output image in gzip format
+    maxcomponents:
+    # type=int|default=0: The maximum number of tensor components in a voxel. This determines the size of the input file and does not say anything about the voxel classification. The default is 2 if the input model is multitensor and 1 if the input model is dt.
+    numpds:
+    # type=int|default=0: The maximum number of PDs in a voxel for input models sfpeak and pico. The default is 3 for input model sfpeak and 1 for input model pico. This option determines the size of the voxels in the input file and does not affect tracking. For tensor data, use the -maxcomponents option.
+    data_dims:
+    # type=list|default=[]: data dimensions in voxels
+    voxel_dims:
+    # type=list|default=[]: voxel dimensions in mm
+    ipthresh:
+    # type=float|default=0.0: Curvature threshold for tracking, expressed as the minimum dot product between two streamline orientations calculated over the length of a voxel. If the dot product between the previous and current directions is less than this threshold, then the streamline terminates. The default setting will terminate fibres that curve by more than 80 degrees. Set this to -1.0 to disable curvature checking completely.
+    curvethresh:
+    # type=float|default=0.0: Curvature threshold for tracking, expressed as the maximum angle (in degrees) between between two streamline orientations calculated over the length of a voxel. If the angle is greater than this, then the streamline terminates.
+    curveinterval:
+    # type=float|default=0.0: Interval over which the curvature threshold should be evaluated, in mm. The default is 5mm. When using the default curvature threshold of 90 degrees, this means that streamlines will terminate if they curve by more than  90  degrees over a path length of 5mm.
+    anisthresh:
+    # type=float|default=0.0: Terminate fibres that enter a voxel with lower anisotropy than the threshold.
+    anisfile:
+    # type=file|default=<undefined>: File containing the anisotropy map. This is required to apply an anisotropy threshold with non tensor data. If the map issupplied it is always used, even in tensor data.
+    outputtracts:
+    # type=enum|default='float'|allowed['double','float','oogl']: output tract file type
+    out_file:
+    # type=file|default=<undefined>: output data file
+    output_root:
+    # type=file|default=<undefined>: root directory for output
+    args:
+    # type=str|default='': Additional parameters to the command
+    environ:
+    # type=dict|default={}: Environment variables
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+doctests: []

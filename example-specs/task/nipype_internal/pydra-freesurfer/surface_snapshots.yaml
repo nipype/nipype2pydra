@@ -1,0 +1,170 @@
+# This file is used to manually specify the semi-automatic conversion of
+# 'nipype.interfaces.freesurfer.utils.SurfaceSnapshots' from Nipype to Pydra.
+#
+# Please fill-in/edit the fields below where appropriate
+#
+# Docs
+# ----
+# Use Tksurfer to save pictures of the cortical surface.
+# 
+#     By default, this takes snapshots of the lateral, medial, ventral,
+#     and dorsal surfaces.  See the ``six_images`` option to add the
+#     anterior and posterior surfaces.
+# 
+#     You may also supply your own tcl script (see the Freesurfer wiki for
+#     information on scripting tksurfer). The screenshot stem is set as the
+#     environment variable "_SNAPSHOT_STEM", which you can use in your
+#     own scripts.
+# 
+#     Node that this interface will not run if you do not have graphics
+#     enabled on your system.
+# 
+#     Examples
+#     --------
+# 
+#     >>> import nipype.interfaces.freesurfer as fs
+#     >>> shots = fs.SurfaceSnapshots(subject_id="fsaverage", hemi="lh", surface="pial")
+#     >>> shots.inputs.overlay = "zstat1.nii.gz"
+#     >>> shots.inputs.overlay_range = (2.3, 6)
+#     >>> shots.inputs.overlay_reg = "register.dat"
+#     >>> res = shots.run() # doctest: +SKIP
+# 
+#     
+task_name: SurfaceSnapshots
+nipype_name: SurfaceSnapshots
+nipype_module: nipype.interfaces.freesurfer.utils
+inputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    overlay: generic/file
+    # type=file|default=<undefined>: load an overlay volume/surface
+    overlay_reg: generic/file
+    # type=file|default=<undefined>: registration matrix file to register overlay to surface
+    annot_file: generic/file
+    # type=file|default=<undefined>: path to annotation file to display
+    label_file: generic/file
+    # type=file|default=<undefined>: path to label file to display
+    colortable: generic/file
+    # type=file|default=<undefined>: load colortable file
+    patch_file: generic/file
+    # type=file|default=<undefined>: load a patch
+    subjects_dir: generic/directory
+    # type=directory|default=<undefined>: subjects directory
+  metadata:
+  # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
+outputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+  callables:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set to the `callable` attribute of output fields
+  templates:
+  # dict[str, str] - `output_file_template` values to be provided to output fields
+    tcl_script: tcl_script
+    # type=file|default=<undefined>: override default screenshot script
+  requirements:
+  # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
+tests:
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    subject_id:
+    # type=string|default='': subject to visualize
+    hemi:
+    # type=enum|default='lh'|allowed['lh','rh']: hemisphere to visualize
+    surface:
+    # type=string|default='': surface to visualize
+    show_curv:
+    # type=bool|default=False: show curvature
+    show_gray_curv:
+    # type=bool|default=False: show curvature in gray
+    overlay:
+    # type=file|default=<undefined>: load an overlay volume/surface
+    overlay_reg:
+    # type=file|default=<undefined>: registration matrix file to register overlay to surface
+    identity_reg:
+    # type=bool|default=False: use the identity matrix to register the overlay to the surface
+    mni152_reg:
+    # type=bool|default=False: use to display a volume in MNI152 space on the average subject
+    overlay_range:
+    # type=traitcompound|default=None: overlay range--either min, (min, max) or (min, mid, max)
+    overlay_range_offset:
+    # type=float|default=0.0: overlay range will be symmetric around offset value
+    truncate_overlay:
+    # type=bool|default=False: truncate the overlay display
+    reverse_overlay:
+    # type=bool|default=False: reverse the overlay display
+    invert_overlay:
+    # type=bool|default=False: invert the overlay display
+    demean_overlay:
+    # type=bool|default=False: remove mean from overlay
+    annot_file:
+    # type=file|default=<undefined>: path to annotation file to display
+    annot_name:
+    # type=string|default='': name of annotation to display (must be in $subject/label directory
+    label_file:
+    # type=file|default=<undefined>: path to label file to display
+    label_name:
+    # type=string|default='': name of label to display (must be in $subject/label directory
+    colortable:
+    # type=file|default=<undefined>: load colortable file
+    label_under:
+    # type=bool|default=False: draw label/annotation under overlay
+    label_outline:
+    # type=bool|default=False: draw label/annotation as outline
+    patch_file:
+    # type=file|default=<undefined>: load a patch
+    orig_suffix:
+    # type=string|default='': set the orig surface suffix string
+    sphere_suffix:
+    # type=string|default='': set the sphere.reg suffix string
+    show_color_scale:
+    # type=bool|default=False: display the color scale bar
+    show_color_text:
+    # type=bool|default=False: display text in the color scale bar
+    six_images:
+    # type=bool|default=False: also take anterior and posterior snapshots
+    screenshot_stem:
+    # type=string|default='': stem to use for screenshot file names
+    stem_template_args:
+    # type=list|default=[]: input names to use as arguments for a string-formated stem template
+    tcl_script:
+    # type=file|default=<undefined>: override default screenshot script
+    subjects_dir:
+    # type=directory|default=<undefined>: subjects directory
+    args:
+    # type=str|default='': Additional parameters to the command
+    environ:
+    # type=dict|default={}: Environment variables
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+doctests: []

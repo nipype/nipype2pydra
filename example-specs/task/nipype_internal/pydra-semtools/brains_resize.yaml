@@ -1,0 +1,93 @@
+# This file is used to manually specify the semi-automatic conversion of
+# 'nipype.interfaces.semtools.registration.brainsresize.BRAINSResize' from Nipype to Pydra.
+#
+# Please fill-in/edit the fields below where appropriate
+#
+# Docs
+# ----
+# title: Resize Image (BRAINS)
+# 
+#     category: Registration
+# 
+#     description: This program is useful for downsampling an image by a constant scale factor.
+# 
+#     version: 3.0.0
+# 
+#     license: https://www.nitrc.org/svn/brains/BuildScripts/trunk/License.txt
+# 
+#     contributor: This tool was developed by Hans Johnson.
+# 
+#     acknowledgements: The development of this tool was supported by funding from grants NS050568 and NS40068 from the National Institute of Neurological Disorders and Stroke and grants MH31593, MH40856, from the National Institute of Mental Health.
+#     
+task_name: BRAINSResize
+nipype_name: BRAINSResize
+nipype_module: nipype.interfaces.semtools.registration.brainsresize
+inputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    inputVolume: generic/file
+    # type=file|default=<undefined>: Image To Scale
+  metadata:
+  # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
+outputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    outputVolume: generic/file
+    # type=file: Resulting scaled image
+    # type=traitcompound|default=None: Resulting scaled image
+  callables:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set to the `callable` attribute of output fields
+  templates:
+  # dict[str, str] - `output_file_template` values to be provided to output fields
+  requirements:
+  # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
+tests:
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    inputVolume:
+    # type=file|default=<undefined>: Image To Scale
+    outputVolume:
+    # type=file: Resulting scaled image
+    # type=traitcompound|default=None: Resulting scaled image
+    pixelType:
+    # type=enum|default='float'|allowed['binary','float','int','short','uchar','uint','ushort']: Specifies the pixel type for the input/output images.  The 'binary' pixel type uses a modified algorithm whereby the image is read in as unsigned char, a signed distance map is created, signed distance map is resampled, and then a thresholded image of type unsigned char is written to disk.
+    scaleFactor:
+    # type=float|default=0.0: The scale factor for the image spacing.
+    args:
+    # type=str|default='': Additional parameters to the command
+    environ:
+    # type=dict|default={}: Environment variables
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+doctests: []
