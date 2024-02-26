@@ -3,7 +3,7 @@ import click
 import yaml
 from nipype2pydra import __version__
 import nipype2pydra.task
-from .workflow import WorkflowConverter
+from nipype2pydra.workflow import WorkflowConverter
 
 
 # Define the base CLI entrypoint
@@ -64,3 +64,9 @@ def workflow(yaml_spec, output_file):
     converter = WorkflowConverter(spec)
     out_str = converter.generate()
     output_file.write_text(out_str)
+
+
+if __name__ == "__main__":
+    import sys
+
+    cli(sys.argv[1:])

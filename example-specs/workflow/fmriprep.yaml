@@ -29,7 +29,8 @@ args:
   # skull_strip_t1w:
   # skull_strip_template:
   # skull_strip_fixed_seed:
-  # spaces:
+  spaces: 
+  - MNI152NLin2009cAsym
   # use_syn_sdc:
 splits:
 - func_name: registration
