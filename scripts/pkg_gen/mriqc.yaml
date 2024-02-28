@@ -1,0 +1,49 @@
+packages:
+- anatomical
+- bids
+- common
+- data_types
+- datalad
+- diffusion
+- functional
+- reports
+- synthstrip
+- tests
+- transitional
+- webapi
+interfaces:
+  anatomical:
+  - ArtifactMask
+  - ComputeQI2
+  - Harmonize
+  - RotationMask   
+  - StructuralQC  
+  bids:
+  - IQMFileSink
+  common:
+  - EnsureSize
+  - ConformImage
+  datalad:
+  - DataladIdentityInterface
+  diffusion:
+  - ReadDWIMetadata
+  - WeightedStat
+  - NumberOfShells
+  - ExtractB0
+  - CorrectSignalDrift
+  - SplitShells
+  - FilterShells
+  - DipyDTI
+  functional:
+  - FunctionalQC
+  - Spikes
+  - SelectEcho
+  - GatherTimeseries
+  reports:
+  - AddProvenance
+  synthstrip:
+  - SynthStrip
+  transitional:
+  - GCOR
+  webapi:
+  - UploadIQMs
