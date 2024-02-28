@@ -497,9 +497,9 @@ class FunctionTaskConverter(BaseTaskConverter):
                 )
             )
         for func in ref_local_funcs:
-            referenced_inputs.update(
-                self._get_referenced(func, referenced_funcs, referenced_methods)
-            )
+            rf_inputs, rf_outputs = self._get_referenced(func, referenced_funcs, referenced_methods)
+            referenced_inputs.update(rf_inputs)
+            referenced_outputs.update(rf_outputs)
         for meth in ref_methods:
             ref_inputs, ref_outputs = self._get_referenced(
                 meth,
@@ -575,7 +575,7 @@ class FunctionTaskConverter(BaseTaskConverter):
         return pre + ", ".join(args + new_args) + post
 
 
-def split_parens_contents(snippet):
+def split_parens_contents(snippet, brackets: bool = False):
     """Splits the code snippet at the first opening parenthesis into a 3-tuple
     consisting of the pre-paren text, the contents of the parens and the post-paren
 
@@ -583,6 +583,8 @@ def split_parens_contents(snippet):
     ----------
     snippet: str
         the code snippet to split
+    brackets: bool, optional
+        whether to split at brackets instead of parens, by default False
 
     Returns
     -------
@@ -593,15 +595,23 @@ def split_parens_contents(snippet):
     post: str
         the text after the closing parenthesis
     """
-    splits = re.split(r"(\(|\))", snippet, flags=re.MULTILINE | re.DOTALL)
+    if brackets:
+        open = '['
+        close = ']'
+        pattern = r"(\[|\])"
+    else:
+        open = '('
+        close = ')'
+        pattern = r"(\(|\))"
+    splits = re.split(pattern, snippet, flags=re.MULTILINE | re.DOTALL)
     depth = 1
     pre = "".join(splits[:2])
     contents = ""
     for i, s in enumerate(splits[2:], start=2):
-        if s == "(":
+        if s == open:
             depth += 1
         else:
-            if s == ")":
+            if s == close:
                 depth -= 1
                 if depth == 0:
                     return pre, contents, "".join(splits[i:])
@@ -627,6 +637,9 @@ def get_local_constants(mod):
         if "(" in following.splitlines()[0]:
             pre, args, _ = split_parens_contents(following)
             local_vars.append((attr_name, pre + re.sub(r"\n *", "", args) + ")"))
+        elif "[" in following.splitlines()[0]:
+            pre, args, _ = split_parens_contents(following, brackets=True)
+            local_vars.append((attr_name, pre + re.sub(r"\n *", "", args) + "]"))
         else:
             local_vars.append((attr_name, following.splitlines()[0]))
     return local_vars

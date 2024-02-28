@@ -56,6 +56,7 @@ inputs:
 outputs:
   omit:
   # list[str] - fields to omit from the Pydra interface
+  - out_file
   rename:
   # dict[str, str] - fields to rename in the Pydra interface
   types:

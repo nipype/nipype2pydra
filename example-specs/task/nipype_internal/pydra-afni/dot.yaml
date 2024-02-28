@@ -40,7 +40,7 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    in_files: medimage-afni/nii[0]+list-of
+    in_files: medimage/nifti+list-of
     # type=list|default=[]: list of input files, possibly with subbrick selectors
     out_file: text/text-file
     # type=file: output file

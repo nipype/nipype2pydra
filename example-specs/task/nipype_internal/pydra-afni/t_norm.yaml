@@ -39,7 +39,7 @@ inputs:
   # passed to the field in the automatically generated unittests.
     in_file: medimage/nifti1
     # type=file|default=<undefined>: input file to 3dTNorm
-    out_file: medimage-afni/unit errts+tlrc
+    out_file: generic/file
     # type=file: output file
     # type=file|default=<undefined>: output image file name
   metadata:
@@ -55,7 +55,7 @@ outputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    out_file: medimage-afni/unit errts+tlrc
+    out_file: generic/file
     # type=file: output file
     # type=file|default=<undefined>: output image file name
   callables:

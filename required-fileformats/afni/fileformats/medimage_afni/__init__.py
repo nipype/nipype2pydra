@@ -1,12 +1,9 @@
 from fileformats.generic import File
 
+
 class Oned(File):
     ext = ".1D"
-    binary = True
-
-
-class Oned(File):
-    ext = ".1d"
+    alternate_exts = (".1d",)
     binary = True
 
 
@@ -37,14 +34,4 @@ class Dset(File):
 
 class Head(File):
     ext = ".HEAD"
-    binary = True
-
-
-class Nii[0](File):
-    ext = ".nii[0]"
-    binary = True
-
-
-class Unit errts+tlrc(File):
-    ext = ".unit errts+tlrc"
     binary = True

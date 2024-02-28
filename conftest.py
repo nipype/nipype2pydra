@@ -20,7 +20,7 @@ def gen_test_conftest():
 @pytest.fixture(
     params=[
         str(p.relative_to(EXAMPLE_TASKS_DIR)).replace("/", "__")[:-5]
-        for p in (EXAMPLE_TASKS_DIR).glob("nipype_internal/pydra-afni/**/*.yaml")
+        for p in (EXAMPLE_TASKS_DIR).glob("**/*.yaml")
     ]
 )
 def task_spec_file(request):

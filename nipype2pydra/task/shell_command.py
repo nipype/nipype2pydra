@@ -1,8 +1,10 @@
 import re
 import attrs
 import inspect
+from copy import copy
 from .base import BaseTaskConverter
 from fileformats.core.mixin import WithClassifiers
+from fileformats.generic import File, Directory
 
 
 @attrs.define
@@ -35,6 +37,8 @@ class ShellCommandTaskConverter(BaseTaskConverter):
                 return f"{t.unclassified.__name__}[{unwraped_classifiers}]"
             return t.__name__
 
+        nonstd_types = copy(nonstd_types)
+
         def types_to_names(spec_fields):
             spec_fields_str = []
             for el in spec_fields:
@@ -50,6 +54,10 @@ class ShellCommandTaskConverter(BaseTaskConverter):
                         # Alter modules in type string to match those that will be imported
                         field_type_str = field_type_str.replace("typing", "ty")
                         field_type_str = re.sub(r"(\w+\.)+(?<!ty\.)(\w+)", r"\2", field_type_str)
+                if field_type_str == "File":
+                    nonstd_types.add(File)
+                elif field_type_str == "Directory":
+                    nonstd_types.add(Directory)
                 el[1] = "#" + field_type_str + "#"
                 spec_fields_str.append(tuple(el))
             return spec_fields_str

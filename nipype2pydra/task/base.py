@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 import typing as ty
 import re
+import logging
 from abc import ABCMeta, abstractmethod
 from importlib import import_module
 from types import ModuleType
@@ -23,6 +24,8 @@ from fileformats.generic import File
 
 
 T = ty.TypeVar("T")
+
+logger = logging.getLogger("nipype2pydra")
 
 
 def from_dict_converter(
@@ -534,9 +537,10 @@ class BaseTaskConverter(metaclass=ABCMeta):
                 tmpl = self.string_formats(argstr=template, name=name_source[0])
             else:
                 tmpl = template
-            pydra_metadata["output_file_template"] = tmpl
+            if nm in self.nipype_interface.output_spec().class_trait_names():
+                pydra_metadata["output_file_template"] = tmpl
             if pydra_type in [specs.File, specs.Directory]:
-                pydra_type = str
+                pydra_type = Path
         elif getattr(field, "genfile"):
             if nm in self.outputs.templates:
                 try:
@@ -713,8 +717,10 @@ class BaseTaskConverter(metaclass=ABCMeta):
             spec_str, fast=False, mode=black.FileMode()
         )
 
+        # FIXME: bit of a hack, should make sure that multi-input/output objects
+        #        are referenced properly without this substitution
         spec_str = re.sub(
-            r"(?<!specs\.)Multi(Input|Output)", r"specs.Multi\1", spec_str
+            r"(?<!specs\.|mport )Multi(Input|Output)", r"specs.Multi\1", spec_str
         )
 
         with open(filename, "w") as f:
@@ -745,7 +751,7 @@ class BaseTaskConverter(metaclass=ABCMeta):
                 pass
             else:
                 if prev_stmt != stmt:
-                    raise ValueError(
+                    logger.warning(
                         f"Cannot add import statement {stmt} as it clashes with "
                         f"previous import {prev_stmt}"
                     )

@@ -47,6 +47,7 @@ def test_task_conversion(task_spec_file, cli_runner, work_dir, gen_test_conftest
             pydra_module = import_module(output_module_path)
         except Exception as e:
             add_exc_note(e, f"Attempting to import {task_spec['task_name']} from '{output_module_path}'")
+            raise e
     pydra_task = getattr(pydra_module, task_spec["task_name"])
     nipype_interface = getattr(
         import_module(task_spec["nipype_module"]), task_spec["nipype_name"]
@@ -76,7 +77,7 @@ def test_task_conversion(task_spec_file, cli_runner, work_dir, gen_test_conftest
             or n in outputs_omit
             or (n.endswith("_items") and n[: -len("_items")] in nipype_output_names)
         )
-    )    
+    )
 
     # tests_fspath = pkg_root.joinpath(*output_module_path.split(".")).parent / "tests"
 
