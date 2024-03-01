@@ -520,6 +520,7 @@ def initialise_task_repo(output_dir, task_template: Path, pkg: str) -> Path:
     with open(pkg_dir / "pyproject.toml") as f:
         pyproject_toml = f.read()
     pyproject_toml = pyproject_toml.replace("README.md", "README.rst")
+    pyproject_toml = pyproject_toml.replace("test = [\n", "test = [\n    \"nipype2pydra\",\n")
     with open(pkg_dir / "pyproject.toml", "w") as f:
         f.write(pyproject_toml)
 

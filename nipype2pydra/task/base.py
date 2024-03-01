@@ -849,7 +849,7 @@ class BaseTaskConverter(metaclass=ABCMeta):
                         spec_str += f"    task.inputs.{nm} = {value}\n"
             if hasattr(self.nipype_interface, "_cmd"):
                 spec_str += r'    print(f"CMDLINE: {task.cmdline}\n\n")' + "\n"
-            spec_str += "    res = task(plugin=\"with-timeout\")\n"
+            spec_str += "    res = task(plugin=PassAfterTimeoutWorker)\n"
             spec_str += "    print('RESULT: ', res)\n"
             for name, value in test.expected_outputs.items():
                 spec_str += f"    assert res.output.{name} == {value}\n"
@@ -858,7 +858,7 @@ class BaseTaskConverter(metaclass=ABCMeta):
         imports = self.construct_imports(
             nonstd_types,
             spec_str,
-            base={"import pytest"}  # , "from conftest import pass_after_timeout"},
+            base={"import pytest", "from nipype2pydra.testing import PassAfterTimeoutWorker"},
         )
         spec_str = "\n".join(imports) + "\n\n" + spec_str
 
@@ -877,7 +877,7 @@ class BaseTaskConverter(metaclass=ABCMeta):
         conftest_fspath = filename_test.parent / "conftest.py"
         if not conftest_fspath.exists():
             with open(conftest_fspath, "w") as f:
-                f.write(self.TIMEOUT_PASS)
+                f.write(self.CONFTEST)
 
     def create_doctests(self, input_fields, nonstd_types):
         """adding doctests to the interfaces"""
@@ -894,7 +894,7 @@ class BaseTaskConverter(metaclass=ABCMeta):
                     else:
                         val = attrs.NOTHING
                 else:
-                    if type(val) is str:
+                    if isinstance(val, str):
                         val = f'"{val}"'
                 if val is not attrs.NOTHING:
                     doctest_str += f"    >>> task.inputs.{nm} = {val}\n"
@@ -933,74 +933,25 @@ class BaseTaskConverter(metaclass=ABCMeta):
         "trait_modified",
     ]
 
-    TIMEOUT_PASS = """import time
-from traceback import format_exc
-import threading
-from dataclasses import dataclass
-from _pytest.runner import TestReport
+    CONFTEST = """
+# For debugging in IDE's don't catch raised exceptions and let the IDE
+# break at it
+if os.getenv("_PYTEST_RAISE", "0") != "0":
 
+    @pytest.hookimpl(tryfirst=True)
+    def pytest_exception_interact(call):
+        raise call.excinfo.value  # raise internal errors instead of capturing them
 
-def pass_after_timeout(seconds, poll_interval=0.1):
-    \"\"\"Cancel the test after a certain period, after which it is assumed that the arguments
-    passed to the underying command have passed its internal validation (so we don't have
-    to wait until the tool completes)
+    @pytest.hookimpl(tryfirst=True)
+    def pytest_internalerror(excinfo):
+        raise excinfo.value  # raise internal errors instead of capturing them
 
-    Parameters
-    ----------
-    seconds : int
-        the number of seconds to wait until cancelling the test (and marking it as passed)
-    \"\"\"
+    def pytest_configure(config):
+        config.option.capture = 'no'  # allow print statements to show up in the console
+        config.option.log_cli = True  # show log messages in the console
+        config.option.log_level = "INFO"  # set the log level to INFO
 
-    def decorator(test_func):
-        def wrapper(*args, **kwargs):
-            @dataclass
-            class TestState:
-                \"\"\"A way of passing a reference to the result that can be updated by
-                the test thread\"\"\"
-
-                result = None
-                trace_back = None
-
-            state = TestState()
-
-            def test_runner():
-                try:
-                    state.result = test_func(*args, **kwargs)
-                except Exception:
-                    state.trace_back = format_exc()
-                    raise
-
-            thread = threading.Thread(target=test_runner)
-            thread.start()
-
-            # Calculate the end time for the timeout
-            end_time = time.time() + seconds
-
-            while thread.is_alive() and time.time() < end_time:
-                time.sleep(poll_interval)
-
-            if thread.is_alive():
-                thread.join()
-                return state.result
-
-            if state.trace_back:
-                raise state.trace_back
-
-            outcome = "passed after timeout"
-            rep = TestReport.from_item_and_call(
-                item=args[0],
-                when="call",
-                excinfo=None,
-                outcome=outcome,
-                sections=None,
-                duration=0,
-                keywords=None,
-            )
-            args[0].ihook.pytest_runtest_logreport(report=rep)
-
-            return state.result
-
-        return wrapper
-
-    return decorator
+    CATCH_CLI_EXCEPTIONS = False
+else:
+    CATCH_CLI_EXCEPTIONS = True
 """
