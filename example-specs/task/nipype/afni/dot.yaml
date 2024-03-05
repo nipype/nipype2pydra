@@ -1,0 +1,169 @@
+# This file is used to manually specify the semi-automatic conversion of
+# 'nipype.interfaces.afni.utils.Dot' from Nipype to Pydra.
+#
+# Please fill-in/edit the fields below where appropriate
+#
+# Docs
+# ----
+# Correlation coefficient between sub-brick pairs.
+#     All datasets in in_files list will be concatenated.
+#     You can use sub-brick selectors in the file specification.
+# 
+#     .. warning::
+# 
+#         This program is not efficient when more than two subbricks are input.
+# 
+#     For complete details, see the `3ddot Documentation.
+#     <https://afni.nimh.nih.gov/pub/dist/doc/program_help/3ddot.html>`_
+# 
+#     >>> from nipype.interfaces import afni
+#     >>> dot = afni.Dot()
+#     >>> dot.inputs.in_files = ['functional.nii[0]', 'structural.nii']
+#     >>> dot.inputs.dodice = True
+#     >>> dot.inputs.out_file = 'out.mask_ae_dice.txt'
+#     >>> dot.cmdline
+#     '3dDot -dodice functional.nii[0]  structural.nii   |& tee out.mask_ae_dice.txt'
+#     >>> res = copy3d.run()  # doctest: +SKIP
+# 
+#     
+task_name: Dot
+nipype_name: Dot
+nipype_module: nipype.interfaces.afni.utils
+inputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    in_files: generic/file+list-of
+    # type=list|default=[]: list of input files, possibly with subbrick selectors
+    mask: generic/file
+    # type=file|default=<undefined>: Use this dataset as a mask
+  metadata:
+  # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
+outputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    out_file: text/text-file
+    # type=file: output file
+    # type=file|default=<undefined>: collect output to a file
+  callables:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set to the `callable` attribute of output fields
+  templates:
+  # dict[str, str] - `output_file_template` values to be provided to output fields
+  requirements:
+  # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
+tests:
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    in_files:
+    # type=list|default=[]: list of input files, possibly with subbrick selectors
+    out_file:
+    # type=file: output file
+    # type=file|default=<undefined>: collect output to a file
+    mask:
+    # type=file|default=<undefined>: Use this dataset as a mask
+    mrange:
+    # type=tuple|default=(<traits.trait_types.Float object at 0x10bec5dd0>, <traits.trait_types.Float object at 0x10bec5cd0>): Means to further restrict the voxels from 'mset' so thatonly those mask values within this range (inclusive) willbe used.
+    demean:
+    # type=bool|default=False: Remove the mean from each volume prior to computing the correlation
+    docor:
+    # type=bool|default=False: Return the correlation coefficient (default).
+    dodot:
+    # type=bool|default=False: Return the dot product (unscaled).
+    docoef:
+    # type=bool|default=False: Return the least square fit coefficients {{a,b}} so that dset2 is approximately a + b\*dset1
+    dosums:
+    # type=bool|default=False: Return the 6 numbers xbar=<x> ybar=<y> <(x-xbar)^2> <(y-ybar)^2> <(x-xbar)(y-ybar)> and the correlation coefficient.
+    dodice:
+    # type=bool|default=False: Return the Dice coefficient (the Sorensen-Dice index).
+    doeta2:
+    # type=bool|default=False: Return eta-squared (Cohen, NeuroImage 2008).
+    full:
+    # type=bool|default=False: Compute the whole matrix. A waste of time, but handy for parsing.
+    show_labels:
+    # type=bool|default=False: Print sub-brick labels to help identify what is being correlated. This option is useful whenyou have more than 2 sub-bricks at input.
+    upper:
+    # type=bool|default=False: Compute upper triangular matrix
+    num_threads:
+    # type=int|default=1: set number of threads
+    outputtype:
+    # type=enum|default='AFNI'|allowed['AFNI','NIFTI','NIFTI_GZ']: AFNI output filetype
+    args:
+    # type=str|default='': Additional parameters to the command
+    environ:
+    # type=dict|default={}: Environment variables
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    in_files:
+    # type=list|default=[]: list of input files, possibly with subbrick selectors
+    dodice: 'True'
+    # type=bool|default=False: Return the Dice coefficient (the Sorensen-Dice index).
+    out_file: '"out.mask_ae_dice.txt"'
+    # type=file: output file
+    # type=file|default=<undefined>: collect output to a file
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+doctests:
+- cmdline: 3dDot -dodice functional.nii[0] structural.nii |& tee out.mask_ae_dice.txt
+  # str - the expected cmdline output
+  inputs:
+  # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
+  # If the field is of file-format type and the value is None, then the
+  # '.mock()' method of the corresponding class is used instead.
+    in_files:
+    # type=list|default=[]: list of input files, possibly with subbrick selectors
+    dodice: 'True'
+    # type=bool|default=False: Return the Dice coefficient (the Sorensen-Dice index).
+    out_file: '"out.mask_ae_dice.txt"'
+    # type=file: output file
+    # type=file|default=<undefined>: collect output to a file
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  directive:
+  # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

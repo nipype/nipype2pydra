@@ -1,0 +1,156 @@
+# This file is used to manually specify the semi-automatic conversion of
+# 'nipype.interfaces.afni.utils.ReHo' from Nipype to Pydra.
+#
+# Please fill-in/edit the fields below where appropriate
+#
+# Docs
+# ----
+# Compute regional homogeneity for a given neighbourhood.l,
+#     based on a local neighborhood of that voxel.
+# 
+#     For complete details, see the `3dReHo Documentation.
+#     <https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dReHo.html>`_
+# 
+#     Examples
+#     --------
+#     >>> from nipype.interfaces import afni
+#     >>> reho = afni.ReHo()
+#     >>> reho.inputs.in_file = 'functional.nii'
+#     >>> reho.inputs.out_file = 'reho.nii.gz'
+#     >>> reho.inputs.neighborhood = 'vertices'
+#     >>> reho.cmdline
+#     '3dReHo -prefix reho.nii.gz -inset functional.nii -nneigh 27'
+#     >>> res = reho.run()  # doctest: +SKIP
+# 
+#     
+task_name: ReHo
+nipype_name: ReHo
+nipype_module: nipype.interfaces.afni.utils
+inputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    in_file: medimage/nifti1
+    # type=file|default=<undefined>: input dataset
+    mask_file: generic/file
+    # type=file|default=<undefined>: Mask within which ReHo should be calculated voxelwise
+    label_set: generic/file
+    # type=file|default=<undefined>: a set of ROIs, each labelled with distinct integers. ReHo will then be calculated per ROI.
+  metadata:
+  # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
+outputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    out_file: medimage/nifti-gz
+    # type=file: Voxelwise regional homogeneity map
+    # type=file|default=<undefined>: Output dataset.
+    out_vals: generic/file
+    # type=file: Table of labelwise regional homogeneity values
+  callables:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set to the `callable` attribute of output fields
+  templates:
+  # dict[str, str] - `output_file_template` values to be provided to output fields
+  requirements:
+  # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
+tests:
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    in_file:
+    # type=file|default=<undefined>: input dataset
+    out_file:
+    # type=file: Voxelwise regional homogeneity map
+    # type=file|default=<undefined>: Output dataset.
+    chi_sq:
+    # type=bool|default=False: Output the Friedman chi-squared value in addition to the Kendall's W. This option is currently compatible only with the AFNI (BRIK/HEAD) output type; the chi-squared value will be the second sub-brick of the output dataset.
+    mask_file:
+    # type=file|default=<undefined>: Mask within which ReHo should be calculated voxelwise
+    neighborhood:
+    # type=enum|default='faces'|allowed['edges','faces','vertices']:  voxels in neighborhood. can be: ``faces`` (for voxel and 6 facewise neighbors, only), ``edges`` (for voxel and 18 face- and edge-wise neighbors), ``vertices`` (for voxel and 26 face-, edge-, and node-wise neighbors).
+    sphere:
+    # type=float|default=0.0: \ For additional voxelwise neighborhood control, the radius R of a desired neighborhood can be put in; R is a floating point number, and must be >1. Examples of the numbers of voxels in a given radius are as follows (you can roughly approximate with the ol' :math:`4\pi\,R^3/3` thing):      * R=2.0 -> V=33     * R=2.3 -> V=57,     * R=2.9 -> V=93,     * R=3.1 -> V=123,     * R=3.9 -> V=251,     * R=4.5 -> V=389,     * R=6.1 -> V=949,  but you can choose most any value.
+    ellipsoid:
+    # type=tuple|default=(0.0, 0.0, 0.0): \ Tuple indicating the x, y, and z radius of an ellipsoid defining the neighbourhood of each voxel. The 'hood is then made according to the following relation: :math:`(i/A)^2 + (j/B)^2 + (k/C)^2 \le 1.` which will have approx. :math:`V=4 \pi \, A B C/3`. The impetus for this freedom was for use with data having anisotropic voxel edge lengths.
+    label_set:
+    # type=file|default=<undefined>: a set of ROIs, each labelled with distinct integers. ReHo will then be calculated per ROI.
+    overwrite:
+    # type=bool|default=False: overwrite output file if it already exists
+    args:
+    # type=str|default='': Additional parameters to the command
+    environ:
+    # type=dict|default={}: Environment variables
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    in_file:
+    # type=file|default=<undefined>: input dataset
+    out_file: '"reho.nii.gz"'
+    # type=file: Voxelwise regional homogeneity map
+    # type=file|default=<undefined>: Output dataset.
+    neighborhood: '"vertices"'
+    # type=enum|default='faces'|allowed['edges','faces','vertices']:  voxels in neighborhood. can be: ``faces`` (for voxel and 6 facewise neighbors, only), ``edges`` (for voxel and 18 face- and edge-wise neighbors), ``vertices`` (for voxel and 26 face-, edge-, and node-wise neighbors).
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+doctests:
+- cmdline: 3dReHo -prefix reho.nii.gz -inset functional.nii -nneigh 27
+  # str - the expected cmdline output
+  inputs:
+  # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
+  # If the field is of file-format type and the value is None, then the
+  # '.mock()' method of the corresponding class is used instead.
+    in_file:
+    # type=file|default=<undefined>: input dataset
+    out_file: '"reho.nii.gz"'
+    # type=file: Voxelwise regional homogeneity map
+    # type=file|default=<undefined>: Output dataset.
+    neighborhood: '"vertices"'
+    # type=enum|default='faces'|allowed['edges','faces','vertices']:  voxels in neighborhood. can be: ``faces`` (for voxel and 6 facewise neighbors, only), ``edges`` (for voxel and 18 face- and edge-wise neighbors), ``vertices`` (for voxel and 26 face-, edge-, and node-wise neighbors).
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  directive:
+  # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

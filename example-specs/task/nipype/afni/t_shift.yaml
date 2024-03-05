@@ -1,0 +1,402 @@
+# This file is used to manually specify the semi-automatic conversion of
+# 'nipype.interfaces.afni.preprocess.TShift' from Nipype to Pydra.
+#
+# Please fill-in/edit the fields below where appropriate
+#
+# Docs
+# ----
+# Shifts voxel time series from input so that separate slices are aligned
+#     to the same temporal origin.
+# 
+#     For complete details, see the `3dTshift Documentation.
+#     <https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dTshift.html>`_
+# 
+#     Examples
+#     --------
+#     Slice timing details may be specified explicitly via the ``slice_timing``
+#     input:
+# 
+#     >>> from nipype.interfaces import afni
+#     >>> TR = 2.5
+#     >>> tshift = afni.TShift()
+#     >>> tshift.inputs.in_file = 'functional.nii'
+#     >>> tshift.inputs.tzero = 0.0
+#     >>> tshift.inputs.tr = '%.1fs' % TR
+#     >>> tshift.inputs.slice_timing = list(np.arange(40) / TR)
+#     >>> tshift.cmdline
+#     '3dTshift -prefix functional_tshift -tpattern @slice_timing.1D -TR 2.5s -tzero 0.0 functional.nii'
+# 
+#     When the ``slice_timing`` input is used, the ``timing_file`` output is populated,
+#     in this case with the generated file.
+# 
+#     >>> tshift._list_outputs()['timing_file']  # doctest: +ELLIPSIS
+#     '.../slice_timing.1D'
+# 
+#     >>> np.loadtxt(tshift._list_outputs()['timing_file']).tolist()[:5]
+#     [0.0, 0.4, 0.8, 1.2, 1.6]
+# 
+#     If ``slice_encoding_direction`` is set to ``'k-'``, the slice timing is reversed:
+# 
+#     >>> tshift.inputs.slice_encoding_direction = 'k-'
+#     >>> tshift.cmdline
+#     '3dTshift -prefix functional_tshift -tpattern @slice_timing.1D -TR 2.5s -tzero 0.0 functional.nii'
+#     >>> np.loadtxt(tshift._list_outputs()['timing_file']).tolist()[:5]
+#     [15.6, 15.2, 14.8, 14.4, 14.0]
+# 
+#     This method creates a ``slice_timing.1D`` file to be passed to ``3dTshift``.
+#     A pre-existing slice-timing file may be used in the same way:
+# 
+#     >>> tshift = afni.TShift()
+#     >>> tshift.inputs.in_file = 'functional.nii'
+#     >>> tshift.inputs.tzero = 0.0
+#     >>> tshift.inputs.tr = '%.1fs' % TR
+#     >>> tshift.inputs.slice_timing = 'slice_timing.1D'
+#     >>> tshift.cmdline
+#     '3dTshift -prefix functional_tshift -tpattern @slice_timing.1D -TR 2.5s -tzero 0.0 functional.nii'
+# 
+#     When a pre-existing file is provided, ``timing_file`` is simply passed through.
+# 
+#     >>> tshift._list_outputs()['timing_file']  # doctest: +ELLIPSIS
+#     '.../slice_timing.1D'
+# 
+#     Alternatively, pre-specified slice timing patterns may be specified with the
+#     ``tpattern`` input.
+#     For example, to specify an alternating, ascending slice timing pattern:
+# 
+#     >>> tshift = afni.TShift()
+#     >>> tshift.inputs.in_file = 'functional.nii'
+#     >>> tshift.inputs.tzero = 0.0
+#     >>> tshift.inputs.tr = '%.1fs' % TR
+#     >>> tshift.inputs.tpattern = 'alt+z'
+#     >>> tshift.cmdline
+#     '3dTshift -prefix functional_tshift -tpattern alt+z -TR 2.5s -tzero 0.0 functional.nii'
+# 
+#     For backwards compatibility, ``tpattern`` may also take filenames prefixed
+#     with ``@``.
+#     However, in this case, filenames are not validated, so this usage will be
+#     deprecated in future versions of Nipype.
+# 
+#     >>> tshift = afni.TShift()
+#     >>> tshift.inputs.in_file = 'functional.nii'
+#     >>> tshift.inputs.tzero = 0.0
+#     >>> tshift.inputs.tr = '%.1fs' % TR
+#     >>> tshift.inputs.tpattern = '@slice_timing.1D'
+#     >>> tshift.cmdline
+#     '3dTshift -prefix functional_tshift -tpattern @slice_timing.1D -TR 2.5s -tzero 0.0 functional.nii'
+# 
+#     In these cases, ``timing_file`` is undefined.
+# 
+#     >>> tshift._list_outputs()['timing_file']  # doctest: +ELLIPSIS
+#     <undefined>
+# 
+#     In any configuration, the interface may be run as usual:
+# 
+#     >>> res = tshift.run()  # doctest: +SKIP
+#     
+task_name: TShift
+nipype_name: TShift
+nipype_module: nipype.interfaces.afni.preprocess
+inputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    in_file: medimage/nifti1
+    # type=file|default=<undefined>: input file to 3dTshift
+  metadata:
+  # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
+outputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    out_file: generic/file
+    # type=file: output file
+    # type=file|default=<undefined>: output image file name
+    timing_file: generic/file
+    # type=file: AFNI formatted timing file, if ``slice_timing`` is a list
+  callables:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set to the `callable` attribute of output fields
+  templates:
+  # dict[str, str] - `output_file_template` values to be provided to output fields
+  requirements:
+  # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
+tests:
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    in_file:
+    # type=file|default=<undefined>: input file to 3dTshift
+    out_file:
+    # type=file: output file
+    # type=file|default=<undefined>: output image file name
+    tr:
+    # type=str|default='': manually set the TR. You can attach suffix "s" for seconds or "ms" for milliseconds.
+    tzero:
+    # type=float|default=0.0: align each slice to given time offset
+    tslice:
+    # type=int|default=0: align each slice to time offset of given slice
+    ignore:
+    # type=int|default=0: ignore the first set of points specified
+    interp:
+    # type=enum|default='Fourier'|allowed['Fourier','cubic','heptic','linear','quintic']: different interpolation methods (see 3dTshift for details) default = Fourier
+    tpattern:
+    # type=traitcompound|default=None: use specified slice time pattern rather than one in header
+    slice_timing:
+    # type=traitcompound|default=None: time offsets from the volume acquisition onset for each slice
+    slice_encoding_direction:
+    # type=enum|default='k'|allowed['k','k-']: Direction in which slice_timing is specified (default: k). If negative,slice_timing is defined in reverse order, that is, the first entry corresponds to the slice with the largest index, and the final entry corresponds to slice index zero. Only in effect when slice_timing is passed as list, not when it is passed as file.
+    rlt:
+    # type=bool|default=False: Before shifting, remove the mean and linear trend
+    rltplus:
+    # type=bool|default=False: Before shifting, remove the mean and linear trend and later put back the mean
+    num_threads:
+    # type=int|default=1: set number of threads
+    outputtype:
+    # type=enum|default='AFNI'|allowed['AFNI','NIFTI','NIFTI_GZ']: AFNI output filetype
+    args:
+    # type=str|default='': Additional parameters to the command
+    environ:
+    # type=dict|default={}: Environment variables
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    in_file:
+    # type=file|default=<undefined>: input file to 3dTshift
+    tzero: '0.0'
+    # type=float|default=0.0: align each slice to given time offset
+    tr: '"%.1fs" % TR'
+    # type=str|default='': manually set the TR. You can attach suffix "s" for seconds or "ms" for milliseconds.
+    slice_timing: list(np.arange(40) / TR)
+    # type=traitcompound|default=None: time offsets from the volume acquisition onset for each slice
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    slice_encoding_direction: '"k-"'
+    # type=enum|default='k'|allowed['k','k-']: Direction in which slice_timing is specified (default: k). If negative,slice_timing is defined in reverse order, that is, the first entry corresponds to the slice with the largest index, and the final entry corresponds to slice index zero. Only in effect when slice_timing is passed as list, not when it is passed as file.
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    in_file:
+    # type=file|default=<undefined>: input file to 3dTshift
+    tzero: '0.0'
+    # type=float|default=0.0: align each slice to given time offset
+    tr: '"%.1fs" % TR'
+    # type=str|default='': manually set the TR. You can attach suffix "s" for seconds or "ms" for milliseconds.
+    slice_timing: '"slice_timing.1D"'
+    # type=traitcompound|default=None: time offsets from the volume acquisition onset for each slice
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    in_file:
+    # type=file|default=<undefined>: input file to 3dTshift
+    tzero: '0.0'
+    # type=float|default=0.0: align each slice to given time offset
+    tr: '"%.1fs" % TR'
+    # type=str|default='': manually set the TR. You can attach suffix "s" for seconds or "ms" for milliseconds.
+    tpattern: '"alt+z"'
+    # type=traitcompound|default=None: use specified slice time pattern rather than one in header
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    in_file:
+    # type=file|default=<undefined>: input file to 3dTshift
+    tzero: '0.0'
+    # type=float|default=0.0: align each slice to given time offset
+    tr: '"%.1fs" % TR'
+    # type=str|default='': manually set the TR. You can attach suffix "s" for seconds or "ms" for milliseconds.
+    tpattern: '"@slice_timing.1D"'
+    # type=traitcompound|default=None: use specified slice time pattern rather than one in header
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+doctests:
+- cmdline: 3dTshift -prefix functional_tshift -tpattern @slice_timing.1D -TR 2.5s -tzero 0.0 functional.nii
+  # str - the expected cmdline output
+  inputs:
+  # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
+  # If the field is of file-format type and the value is None, then the
+  # '.mock()' method of the corresponding class is used instead.
+    in_file:
+    # type=file|default=<undefined>: input file to 3dTshift
+    tzero: '0.0'
+    # type=float|default=0.0: align each slice to given time offset
+    tr: '"%.1fs" % TR'
+    # type=str|default='': manually set the TR. You can attach suffix "s" for seconds or "ms" for milliseconds.
+    slice_timing: list(np.arange(40) / TR)
+    # type=traitcompound|default=None: time offsets from the volume acquisition onset for each slice
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  directive:
+  # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS
+- cmdline: 3dTshift -prefix functional_tshift -tpattern @slice_timing.1D -TR 2.5s -tzero 0.0 functional.nii" >>> np.loadtxt(tshift._list_outputs()["timing_file
+  # str - the expected cmdline output
+  inputs:
+  # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
+  # If the field is of file-format type and the value is None, then the
+  # '.mock()' method of the corresponding class is used instead.
+    slice_encoding_direction: '"k-"'
+    # type=enum|default='k'|allowed['k','k-']: Direction in which slice_timing is specified (default: k). If negative,slice_timing is defined in reverse order, that is, the first entry corresponds to the slice with the largest index, and the final entry corresponds to slice index zero. Only in effect when slice_timing is passed as list, not when it is passed as file.
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  directive:
+  # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS
+- cmdline: 3dTshift -prefix functional_tshift -tpattern @slice_timing.1D -TR 2.5s -tzero 0.0 functional.nii
+  # str - the expected cmdline output
+  inputs:
+  # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
+  # If the field is of file-format type and the value is None, then the
+  # '.mock()' method of the corresponding class is used instead.
+    in_file:
+    # type=file|default=<undefined>: input file to 3dTshift
+    tzero: '0.0'
+    # type=float|default=0.0: align each slice to given time offset
+    tr: '"%.1fs" % TR'
+    # type=str|default='': manually set the TR. You can attach suffix "s" for seconds or "ms" for milliseconds.
+    slice_timing: '"slice_timing.1D"'
+    # type=traitcompound|default=None: time offsets from the volume acquisition onset for each slice
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  directive:
+  # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS
+- cmdline: 3dTshift -prefix functional_tshift -tpattern alt+z -TR 2.5s -tzero 0.0 functional.nii
+  # str - the expected cmdline output
+  inputs:
+  # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
+  # If the field is of file-format type and the value is None, then the
+  # '.mock()' method of the corresponding class is used instead.
+    in_file:
+    # type=file|default=<undefined>: input file to 3dTshift
+    tzero: '0.0'
+    # type=float|default=0.0: align each slice to given time offset
+    tr: '"%.1fs" % TR'
+    # type=str|default='': manually set the TR. You can attach suffix "s" for seconds or "ms" for milliseconds.
+    tpattern: '"alt+z"'
+    # type=traitcompound|default=None: use specified slice time pattern rather than one in header
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  directive:
+  # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS
+- cmdline: 3dTshift -prefix functional_tshift -tpattern @slice_timing.1D -TR 2.5s -tzero 0.0 functional.nii
+  # str - the expected cmdline output
+  inputs:
+  # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
+  # If the field is of file-format type and the value is None, then the
+  # '.mock()' method of the corresponding class is used instead.
+    in_file:
+    # type=file|default=<undefined>: input file to 3dTshift
+    tzero: '0.0'
+    # type=float|default=0.0: align each slice to given time offset
+    tr: '"%.1fs" % TR'
+    # type=str|default='': manually set the TR. You can attach suffix "s" for seconds or "ms" for milliseconds.
+    tpattern: '"@slice_timing.1D"'
+    # type=traitcompound|default=None: use specified slice time pattern rather than one in header
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  directive:
+  # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

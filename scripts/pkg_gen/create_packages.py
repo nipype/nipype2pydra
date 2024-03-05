@@ -7,6 +7,7 @@ from copy import copy
 import subprocess as sp
 import shutil
 import tarfile
+import string
 from pathlib import Path
 import attrs
 from warnings import warn
@@ -33,6 +34,8 @@ from nipype2pydra.utils import to_snake_case
 RESOURCES_DIR = Path(__file__).parent / "resources"
 
 EXPECTED_FORMATS = [Nifti1, NiftiGz, TextFile, TextMatrix, DatFile, Xml]
+
+EXT_SPECIAL_CHARS = tuple((set(string.punctuation) - set(".-")) | set(" "))
 
 
 def ext2format_name(ext: str) -> str:
@@ -91,6 +94,7 @@ def download_tasks_template(output_path: Path):
 @click.option("--work-dir", type=click.Path(path_type=Path), default=None)
 @click.option("--task-template", type=click.Path(path_type=Path), default=None)
 @click.option("--packages-to-import", type=click.Path(path_type=Path), default=None)
+@click.option("--example-packages", type=click.Path(path_type=Path), default=None, help="Packages to save into the example-spec directory")
 @click.option(
     "--base-package",
     type=str,
@@ -103,6 +107,7 @@ def generate_packages(
     task_template: ty.Optional[Path],
     packages_to_import: ty.Optional[Path],
     base_package: str,
+    example_packages: ty.Optional[Path],
 ):
     if work_dir is None:
         work_dir = Path(tempfile.mkdtemp())
@@ -262,6 +267,8 @@ def generate_packages(
                                     fspath.strip(),
                                     mode=File.ExtensionDecomposition.single,
                                 )[2]
+                                if any(c in format_ext for c in EXT_SPECIAL_CHARS):
+                                    return File  # Skip any extensions with special chars
                                 unmatched_formats.append(
                                     f"{module}.{interface}: {fspath}"
                                 )
@@ -467,6 +474,22 @@ def generate_packages(
         )
         sp.check_call("git tag 0.1.0", shell=True, cwd=pkg_dir)
 
+    if example_packages:
+        with open(example_packages) as f:
+            example_pkg_names = yaml.load(f, Loader=yaml.SafeLoader)
+
+        basepkg = base_package
+        if base_package.endswith(".interfaces"):
+            basepkg = basepkg[:-len(".interfaces")]
+
+        examples_dir = Path(__file__).parent.parent.parent / "example-specs" / "task" / basepkg
+        if examples_dir.exists():
+            shutil.rmtree(examples_dir)
+        examples_dir.mkdir()
+        for example_pkg_name in example_pkg_names:
+            specs_dir = output_dir / ("pydra-" + example_pkg_name) / "nipype-auto-conv" / "specs"
+            shutil.copytree(specs_dir, examples_dir / example_pkg_name)
+
     unmatched_extensions = set(
         File.decompose_fspath(
             f.split(":")[1].strip(), mode=File.ExtensionDecomposition.single
@@ -587,6 +610,7 @@ def parse_nipype_interface(
     """Generate preamble comments at start of file with args and doc strings"""
     input_helps = {}
     file_inputs = []
+    file_outputs = []
     dir_inputs = []
     genfile_outputs = []
     multi_inputs = []
@@ -603,7 +627,10 @@ def parse_nipype_interface(
             if inpt.genfile:
                 genfile_outputs.append(inpt_name)
             elif trait_type_name == "File":
-                file_inputs.append(inpt_name)
+                if isinstance(inpt.default, str) or "out_" in inpt_name:
+                    file_outputs.append(inpt_name)
+                else:
+                    file_inputs.append(inpt_name)
             elif trait_type_name == "Directory":
                 dir_inputs.append(inpt_name)
             elif trait_type_name == "InputMultiObject":
@@ -623,7 +650,6 @@ def parse_nipype_interface(
                 else:
                     dir_inputs.append(inpt_name)
                 multi_inputs.append(inpt_name)
-    file_outputs = []
     dir_outputs = []
     output_helps = {}
     if nipype_interface.output_spec:

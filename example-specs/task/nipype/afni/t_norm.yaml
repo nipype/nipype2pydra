@@ -1,0 +1,152 @@
+# This file is used to manually specify the semi-automatic conversion of
+# 'nipype.interfaces.afni.preprocess.TNorm' from Nipype to Pydra.
+#
+# Please fill-in/edit the fields below where appropriate
+#
+# Docs
+# ----
+# Shifts voxel time series from input so that separate slices are aligned
+#     to the same temporal origin.
+# 
+#     For complete details, see the `3dTnorm Documentation.
+#     <https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dTnorm.html>`_
+# 
+#     Examples
+#     --------
+#     >>> from nipype.interfaces import afni
+#     >>> tnorm = afni.TNorm()
+#     >>> tnorm.inputs.in_file = 'functional.nii'
+#     >>> tnorm.inputs.norm2 = True
+#     >>> tnorm.inputs.out_file = 'rm.errts.unit errts+tlrc'
+#     >>> tnorm.cmdline
+#     '3dTnorm -norm2 -prefix rm.errts.unit errts+tlrc functional.nii'
+#     >>> res = tshift.run()  # doctest: +SKIP
+# 
+#     
+task_name: TNorm
+nipype_name: TNorm
+nipype_module: nipype.interfaces.afni.preprocess
+inputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    in_file: medimage/nifti1
+    # type=file|default=<undefined>: input file to 3dTNorm
+  metadata:
+  # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
+outputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    out_file: generic/file
+    # type=file: output file
+    # type=file|default=<undefined>: output image file name
+  callables:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set to the `callable` attribute of output fields
+  templates:
+  # dict[str, str] - `output_file_template` values to be provided to output fields
+  requirements:
+  # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
+tests:
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    in_file:
+    # type=file|default=<undefined>: input file to 3dTNorm
+    out_file:
+    # type=file: output file
+    # type=file|default=<undefined>: output image file name
+    norm2:
+    # type=bool|default=False: L2 normalize (sum of squares = 1) [DEFAULT]
+    normR:
+    # type=bool|default=False: normalize so sum of squares = number of time points \* e.g., so RMS = 1.
+    norm1:
+    # type=bool|default=False: L1 normalize (sum of absolute values = 1)
+    normx:
+    # type=bool|default=False: Scale so max absolute value = 1 (L_infinity norm)
+    polort:
+    # type=int|default=0: Detrend with polynomials of order p before normalizing [DEFAULT = don't do this]. Use '-polort 0' to remove the mean, for example
+    L1fit:
+    # type=bool|default=False: Detrend with L1 regression (L2 is the default) This option is here just for the hell of it
+    num_threads:
+    # type=int|default=1: set number of threads
+    outputtype:
+    # type=enum|default='AFNI'|allowed['AFNI','NIFTI','NIFTI_GZ']: AFNI output filetype
+    args:
+    # type=str|default='': Additional parameters to the command
+    environ:
+    # type=dict|default={}: Environment variables
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    in_file:
+    # type=file|default=<undefined>: input file to 3dTNorm
+    norm2: 'True'
+    # type=bool|default=False: L2 normalize (sum of squares = 1) [DEFAULT]
+    out_file: '"rm.errts.unit errts+tlrc"'
+    # type=file: output file
+    # type=file|default=<undefined>: output image file name
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+doctests:
+- cmdline: 3dTnorm -norm2 -prefix rm.errts.unit errts+tlrc functional.nii
+  # str - the expected cmdline output
+  inputs:
+  # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
+  # If the field is of file-format type and the value is None, then the
+  # '.mock()' method of the corresponding class is used instead.
+    in_file:
+    # type=file|default=<undefined>: input file to 3dTNorm
+    norm2: 'True'
+    # type=bool|default=False: L2 normalize (sum of squares = 1) [DEFAULT]
+    out_file: '"rm.errts.unit errts+tlrc"'
+    # type=file: output file
+    # type=file|default=<undefined>: output image file name
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  directive:
+  # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

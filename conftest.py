@@ -8,23 +8,13 @@ from click.testing import CliRunner
 
 PKG_DIR = Path(__file__).parent
 EXAMPLE_SPECS_DIR = PKG_DIR / "example-specs"
-EXAMPLE_TASKS_DIR = EXAMPLE_SPECS_DIR / "task"
+EXAMPLE_TASKS_DIR = EXAMPLE_SPECS_DIR / "task" / "nipype"
 EXAMPLE_WORKFLOWS_DIR = EXAMPLE_SPECS_DIR / "workflow"
 
 
 @pytest.fixture
 def gen_test_conftest():
     return PKG_DIR / "scripts" / "pkg_gen" / "resources" / "conftest.py"
-
-
-@pytest.fixture(
-    params=[
-        str(p.relative_to(EXAMPLE_TASKS_DIR)).replace("/", "__")[:-5]
-        for p in (EXAMPLE_TASKS_DIR).glob("**/*.yaml")
-    ]
-)
-def task_spec_file(request):
-    return EXAMPLE_TASKS_DIR.joinpath(*request.param.split("__")).with_suffix(".yaml")
 
 
 @pytest.fixture(params=[str(p.stem) for p in EXAMPLE_WORKFLOWS_DIR.glob("*.yaml")])

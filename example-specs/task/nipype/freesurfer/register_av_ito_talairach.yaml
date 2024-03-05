@@ -1,0 +1,155 @@
+# This file is used to manually specify the semi-automatic conversion of
+# 'nipype.interfaces.freesurfer.registration.RegisterAVItoTalairach' from Nipype to Pydra.
+#
+# Please fill-in/edit the fields below where appropriate
+#
+# Docs
+# ----
+# 
+#     converts the vox2vox from talairach_avi to a talairach.xfm file
+# 
+#     This is a script that converts the vox2vox from talairach_avi to a
+#     talairach.xfm file. It is meant to replace the following cmd line:
+# 
+#     tkregister2_cmdl         --mov $InVol         --targ $FREESURFER_HOME/average/mni305.cor.mgz         --xfmout ${XFM}         --vox2vox talsrcimg_to_${target}_t4_vox2vox.txt         --noedit         --reg talsrcimg.reg.tmp.dat
+#     set targ = $FREESURFER_HOME/average/mni305.cor.mgz
+#     set subject = mgh-02407836-v2
+#     set InVol = $SUBJECTS_DIR/$subject/mri/orig.mgz
+#     set vox2vox = $SUBJECTS_DIR/$subject/mri/transforms/talsrcimg_to_711-2C_as_mni_average_305_t4_vox2vox.txt
+# 
+#     Examples
+#     ========
+# 
+#     >>> from nipype.interfaces.freesurfer import RegisterAVItoTalairach
+#     >>> register = RegisterAVItoTalairach()
+#     >>> register.inputs.in_file = 'structural.mgz'                 # doctest: +SKIP
+#     >>> register.inputs.target = 'mni305.cor.mgz'                  # doctest: +SKIP
+#     >>> register.inputs.vox2vox = 'talsrcimg_to_structural_t4_vox2vox.txt' # doctest: +SKIP
+#     >>> register.cmdline                                           # doctest: +SKIP
+#     'avi2talxfm structural.mgz mni305.cor.mgz talsrcimg_to_structural_t4_vox2vox.txt talairach.auto.xfm'
+# 
+#     >>> register.run() # doctest: +SKIP
+#     
+task_name: RegisterAVItoTalairach
+nipype_name: RegisterAVItoTalairach
+nipype_module: nipype.interfaces.freesurfer.registration
+inputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    in_file: medimage/mgh-gz
+    # type=file|default=<undefined>: The input file
+    target: medimage/mgh-gz
+    # type=file|default=<undefined>: The target file
+    vox2vox: text/text-file
+    # type=file|default=<undefined>: The vox2vox file
+    subjects_dir: generic/directory
+    # type=directory|default=<undefined>: subjects directory
+  metadata:
+  # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
+outputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    out_file: generic/file
+    # type=file: The output file for RegisterAVItoTalairach
+    # type=file|default='talairach.auto.xfm': The transform output
+    log_file: generic/file
+    # type=file: The output log
+  callables:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set to the `callable` attribute of output fields
+  templates:
+  # dict[str, str] - `output_file_template` values to be provided to output fields
+  requirements:
+  # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
+tests:
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    in_file:
+    # type=file|default=<undefined>: The input file
+    target:
+    # type=file|default=<undefined>: The target file
+    vox2vox:
+    # type=file|default=<undefined>: The vox2vox file
+    out_file:
+    # type=file: The output file for RegisterAVItoTalairach
+    # type=file|default='talairach.auto.xfm': The transform output
+    subjects_dir:
+    # type=directory|default=<undefined>: subjects directory
+    args:
+    # type=str|default='': Additional parameters to the command
+    environ:
+    # type=dict|default={}: Environment variables
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    in_file:
+    # type=file|default=<undefined>: The input file
+    target:
+    # type=file|default=<undefined>: The target file
+    vox2vox:
+    # type=file|default=<undefined>: The vox2vox file
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+doctests:
+- cmdline: avi2talxfm structural.mgz mni305.cor.mgz talsrcimg_to_structural_t4_vox2vox.txt talairach.auto.xfm
+  # str - the expected cmdline output
+  inputs:
+  # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
+  # If the field is of file-format type and the value is None, then the
+  # '.mock()' method of the corresponding class is used instead.
+    in_file:
+    # type=file|default=<undefined>: The input file
+    target:
+    # type=file|default=<undefined>: The target file
+    vox2vox:
+    # type=file|default=<undefined>: The vox2vox file
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  directive:
+  # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

@@ -1,0 +1,265 @@
+# This file is used to manually specify the semi-automatic conversion of
+# 'nipype.interfaces.afni.model.Deconvolve' from Nipype to Pydra.
+#
+# Please fill-in/edit the fields below where appropriate
+#
+# Docs
+# ----
+# Performs OLS regression given a 4D neuroimage file and stimulus timings
+# 
+#     For complete details, see the `3dDeconvolve Documentation.
+#     <https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dDeconvolve.html>`_
+# 
+#     Examples
+#     ========
+# 
+#     >>> from nipype.interfaces import afni
+#     >>> deconvolve = afni.Deconvolve()
+#     >>> deconvolve.inputs.in_files = ['functional.nii', 'functional2.nii']
+#     >>> deconvolve.inputs.out_file = 'output.nii'
+#     >>> deconvolve.inputs.x1D = 'output.1D'
+#     >>> stim_times = [(1, 'timeseries.txt', 'SPMG1(4)')]
+#     >>> deconvolve.inputs.stim_times = stim_times
+#     >>> deconvolve.inputs.stim_label = [(1, 'Houses')]
+#     >>> deconvolve.inputs.gltsym = ['SYM: +Houses']
+#     >>> deconvolve.inputs.glt_label = [(1, 'Houses')]
+#     >>> deconvolve.cmdline
+#     "3dDeconvolve -input functional.nii functional2.nii -bucket output.nii -x1D output.1D -num_stimts 1 -stim_times 1 timeseries.txt 'SPMG1(4)' -stim_label 1 Houses -num_glt 1 -gltsym 'SYM: +Houses' -glt_label 1 Houses"
+#     >>> res = deconvolve.run()  # doctest: +SKIP
+#     
+task_name: Deconvolve
+nipype_name: Deconvolve
+nipype_module: nipype.interfaces.afni.model
+inputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    in_files: medimage/nifti1+list-of
+    # type=inputmultiobject|default=[]: filenames of 3D+time input datasets. More than one filename can be given and the datasets will be auto-catenated in time. You can input a 1D time series file here, but the time axis should run along the ROW direction, not the COLUMN direction as in the 'input1D' option.
+    input1D: generic/file
+    # type=file|default=<undefined>: filename of single (fMRI) .1D time series where time runs down the column.
+    mask: generic/file
+    # type=file|default=<undefined>: filename of 3D mask dataset; only data time series from within the mask will be analyzed; results for voxels outside the mask will be set to zero.
+    STATmask: generic/file
+    # type=file|default=<undefined>: build a mask from provided file, and use this mask for the purpose of reporting truncation-to float issues AND for computing the FDR curves. The actual results ARE not masked with this option (only with 'mask' or 'automask' options).
+    censor: generic/file
+    # type=file|default=<undefined>: filename of censor .1D time series. This is a file of 1s and 0s, indicating which time points are to be included (1) and which are to be excluded (0).
+    x1D: medimage-afni/oned
+    # type=file: save out X matrix
+    # type=file|default=<undefined>: specify name for saved X matrix
+  metadata:
+  # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
+outputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    out_file: medimage/nifti1
+    # type=file: output statistics file
+    # type=file|default=<undefined>: output statistics file
+    reml_script: generic/file
+    # type=file: automatically generated script to run 3dREMLfit
+    x1D: medimage-afni/oned
+    # type=file: save out X matrix
+    # type=file|default=<undefined>: specify name for saved X matrix
+    cbucket: generic/file
+    # type=file: output regression coefficients file (if generated)
+    # type=str|default='': Name for dataset in which to save the regression coefficients (no statistics). This dataset will be used in a -xrestore run [not yet implemented] instead of the bucket dataset, if possible.
+  callables:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set to the `callable` attribute of output fields
+  templates:
+  # dict[str, str] - `output_file_template` values to be provided to output fields
+  requirements:
+  # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
+tests:
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    in_files:
+    # type=inputmultiobject|default=[]: filenames of 3D+time input datasets. More than one filename can be given and the datasets will be auto-catenated in time. You can input a 1D time series file here, but the time axis should run along the ROW direction, not the COLUMN direction as in the 'input1D' option.
+    sat:
+    # type=bool|default=False: check the dataset time series for initial saturation transients, which should normally have been excised before data analysis.
+    trans:
+    # type=bool|default=False: check the dataset time series for initial saturation transients, which should normally have been excised before data analysis.
+    noblock:
+    # type=bool|default=False: normally, if you input multiple datasets with 'input', then the separate datasets are taken to be separate image runs that get separate baseline models. Use this options if you want to have the program consider these to be all one big run.* If any of the input dataset has only 1 sub-brick, then this option is automatically invoked!* If the auto-catenation feature isn't used, then this option has no effect, no how, no way.
+    force_TR:
+    # type=float|default=0.0: use this value instead of the TR in the 'input' dataset. (It's better to fix the input using Refit.)
+    input1D:
+    # type=file|default=<undefined>: filename of single (fMRI) .1D time series where time runs down the column.
+    TR_1D:
+    # type=float|default=0.0: TR to use with 'input1D'. This option has no effect if you do not also use 'input1D'.
+    legendre:
+    # type=bool|default=False: use Legendre polynomials for null hypothesis (baseline model)
+    nolegendre:
+    # type=bool|default=False: use power polynomials for null hypotheses. Don't do this unless you are crazy!
+    nodmbase:
+    # type=bool|default=False: don't de-mean baseline time series
+    dmbase:
+    # type=bool|default=False: de-mean baseline time series (default if 'polort' >= 0)
+    svd:
+    # type=bool|default=False: use SVD instead of Gaussian elimination (default)
+    nosvd:
+    # type=bool|default=False: use Gaussian elimination instead of SVD
+    rmsmin:
+    # type=float|default=0.0: minimum rms error to reject reduced model (default = 0; don't use this option normally!)
+    nocond:
+    # type=bool|default=False: DON'T calculate matrix condition number
+    singvals:
+    # type=bool|default=False: print out the matrix singular values
+    goforit:
+    # type=int|default=0: use this to proceed even if the matrix has bad problems (e.g., duplicate columns, large condition number, etc.).
+    allzero_OK:
+    # type=bool|default=False: don't consider all zero matrix columns to be the type of error that 'gotforit' is needed to ignore.
+    dname:
+    # type=tuple|default=('', ''): set environmental variable to provided value
+    mask:
+    # type=file|default=<undefined>: filename of 3D mask dataset; only data time series from within the mask will be analyzed; results for voxels outside the mask will be set to zero.
+    automask:
+    # type=bool|default=False: build a mask automatically from input data (will be slow for long time series datasets)
+    STATmask:
+    # type=file|default=<undefined>: build a mask from provided file, and use this mask for the purpose of reporting truncation-to float issues AND for computing the FDR curves. The actual results ARE not masked with this option (only with 'mask' or 'automask' options).
+    censor:
+    # type=file|default=<undefined>: filename of censor .1D time series. This is a file of 1s and 0s, indicating which time points are to be included (1) and which are to be excluded (0).
+    polort:
+    # type=int|default=0: degree of polynomial corresponding to the null hypothesis [default: 1]
+    ortvec:
+    # type=tuple|default=(<undefined>, ''): this option lets you input a rectangular array of 1 or more baseline vectors from a file. This method is a fast way to include a lot of baseline regressors in one step. 
+    x1D:
+    # type=file: save out X matrix
+    # type=file|default=<undefined>: specify name for saved X matrix
+    x1D_stop:
+    # type=bool|default=False: stop running after writing .xmat.1D file
+    cbucket:
+    # type=file: output regression coefficients file (if generated)
+    # type=str|default='': Name for dataset in which to save the regression coefficients (no statistics). This dataset will be used in a -xrestore run [not yet implemented] instead of the bucket dataset, if possible.
+    out_file:
+    # type=file: output statistics file
+    # type=file|default=<undefined>: output statistics file
+    num_threads:
+    # type=int|default=0: run the program with provided number of sub-processes
+    fout:
+    # type=bool|default=False: output F-statistic for each stimulus
+    rout:
+    # type=bool|default=False: output the R^2 statistic for each stimulus
+    tout:
+    # type=bool|default=False: output the T-statistic for each stimulus
+    vout:
+    # type=bool|default=False: output the sample variance (MSE) for each stimulus
+    nofdr:
+    # type=bool|default=False: Don't compute the statistic-vs-FDR curves for the bucket dataset.
+    global_times:
+    # type=bool|default=False: use global timing for stimulus timing files
+    local_times:
+    # type=bool|default=False: use local timing for stimulus timing files
+    num_stimts:
+    # type=int|default=0: number of stimulus timing files
+    stim_times:
+    # type=list|default=[]: generate a response model from a set of stimulus times given in file.
+    stim_label:
+    # type=list|default=[]: label for kth input stimulus (e.g., Label1)
+    stim_times_subtract:
+    # type=float|default=0.0: this option means to subtract specified seconds from each time encountered in any 'stim_times' option. The purpose of this option is to make it simple to adjust timing files for the removal of images from the start of each imaging run.
+    num_glt:
+    # type=int|default=0: number of general linear tests (i.e., contrasts)
+    gltsym:
+    # type=list|default=[]: general linear tests (i.e., contrasts) using symbolic conventions (e.g., '+Label1 -Label2')
+    glt_label:
+    # type=list|default=[]: general linear test (i.e., contrast) labels
+    outputtype:
+    # type=enum|default='AFNI'|allowed['AFNI','NIFTI','NIFTI_GZ']: AFNI output filetype
+    args:
+    # type=str|default='': Additional parameters to the command
+    environ:
+    # type=dict|default={}: Environment variables
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    in_files:
+    # type=inputmultiobject|default=[]: filenames of 3D+time input datasets. More than one filename can be given and the datasets will be auto-catenated in time. You can input a 1D time series file here, but the time axis should run along the ROW direction, not the COLUMN direction as in the 'input1D' option.
+    out_file: '"output.nii"'
+    # type=file: output statistics file
+    # type=file|default=<undefined>: output statistics file
+    x1D:
+    # type=file: save out X matrix
+    # type=file|default=<undefined>: specify name for saved X matrix
+    stim_times: stim_times
+    # type=list|default=[]: generate a response model from a set of stimulus times given in file.
+    stim_label: '[(1, "Houses")]'
+    # type=list|default=[]: label for kth input stimulus (e.g., Label1)
+    gltsym: '["SYM: +Houses"]'
+    # type=list|default=[]: general linear tests (i.e., contrasts) using symbolic conventions (e.g., '+Label1 -Label2')
+    glt_label: '[(1, "Houses")]'
+    # type=list|default=[]: general linear test (i.e., contrast) labels
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+doctests:
+- cmdline: '3dDeconvolve -input functional.nii functional2.nii -bucket output.nii -x1D output.1D -num_stimts 1 -stim_times 1 timeseries.txt "SPMG1(4)" -stim_label 1 Houses -num_glt 1 -gltsym "SYM: +Houses" -glt_label 1 Houses'
+  # str - the expected cmdline output
+  inputs:
+  # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
+  # If the field is of file-format type and the value is None, then the
+  # '.mock()' method of the corresponding class is used instead.
+    in_files:
+    # type=inputmultiobject|default=[]: filenames of 3D+time input datasets. More than one filename can be given and the datasets will be auto-catenated in time. You can input a 1D time series file here, but the time axis should run along the ROW direction, not the COLUMN direction as in the 'input1D' option.
+    out_file: '"output.nii"'
+    # type=file: output statistics file
+    # type=file|default=<undefined>: output statistics file
+    x1D:
+    # type=file: save out X matrix
+    # type=file|default=<undefined>: specify name for saved X matrix
+    stim_times: stim_times
+    # type=list|default=[]: generate a response model from a set of stimulus times given in file.
+    stim_label: '[(1, "Houses")]'
+    # type=list|default=[]: label for kth input stimulus (e.g., Label1)
+    gltsym: '["SYM: +Houses"]'
+    # type=list|default=[]: general linear tests (i.e., contrasts) using symbolic conventions (e.g., '+Label1 -Label2')
+    glt_label: '[(1, "Houses")]'
+    # type=list|default=[]: general linear test (i.e., contrast) labels
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  directive:
+  # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

@@ -1,0 +1,170 @@
+# This file is used to manually specify the semi-automatic conversion of
+# 'nipype.interfaces.afni.utils.Undump' from Nipype to Pydra.
+#
+# Please fill-in/edit the fields below where appropriate
+#
+# Docs
+# ----
+# 3dUndump - Assembles a 3D dataset from an ASCII list of coordinates and
+#     (optionally) values.
+# 
+#      The input file(s) are ASCII files, with one voxel specification per
+#      line.  A voxel specification is 3 numbers (-ijk or -xyz coordinates),
+#      with an optional 4th number giving the voxel value.  For example:
+# 
+#      1 2 3
+#      3 2 1 5
+#      5.3 6.2 3.7
+#      // this line illustrates a comment
+# 
+#      The first line puts a voxel (with value given by '-dval') at point
+#      (1,2,3).  The second line puts a voxel (with value 5) at point (3,2,1).
+#      The third line puts a voxel (with value given by '-dval') at point
+#      (5.3,6.2,3.7).  If -ijk is in effect, and fractional coordinates
+#      are given, they will be rounded to the nearest integers; for example,
+#      the third line would be equivalent to (i,j,k) = (5,6,4).
+# 
+# 
+#     For complete details, see the `3dUndump Documentation.
+#     <https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dUndump.html>`_
+# 
+#     Examples
+#     --------
+#     >>> from nipype.interfaces import afni
+#     >>> unndump = afni.Undump()
+#     >>> unndump.inputs.in_file = 'structural.nii'
+#     >>> unndump.inputs.out_file = 'structural_undumped.nii'
+#     >>> unndump.cmdline
+#     '3dUndump -prefix structural_undumped.nii -master structural.nii'
+#     >>> res = unndump.run()  # doctest: +SKIP
+# 
+#     
+task_name: Undump
+nipype_name: Undump
+nipype_module: nipype.interfaces.afni.utils
+inputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    in_file: medimage/nifti1
+    # type=file|default=<undefined>: input file to 3dUndump, whose geometry will determinethe geometry of the output
+    mask_file: generic/file
+    # type=file|default=<undefined>: mask image file name. Only voxels that are nonzero in the mask can be set.
+  metadata:
+  # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
+outputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    out_file: medimage/nifti1
+    # type=file: assembled file
+    # type=file|default=<undefined>: output image file name
+  callables:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set to the `callable` attribute of output fields
+  templates:
+  # dict[str, str] - `output_file_template` values to be provided to output fields
+  requirements:
+  # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
+tests:
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    in_file:
+    # type=file|default=<undefined>: input file to 3dUndump, whose geometry will determinethe geometry of the output
+    out_file:
+    # type=file: assembled file
+    # type=file|default=<undefined>: output image file name
+    mask_file:
+    # type=file|default=<undefined>: mask image file name. Only voxels that are nonzero in the mask can be set.
+    datatype:
+    # type=enum|default='short'|allowed['byte','float','short']: set output file datatype
+    default_value:
+    # type=float|default=0.0: default value stored in each input voxel that does not have a value supplied in the input file
+    fill_value:
+    # type=float|default=0.0: value, used for each voxel in the output dataset that is NOT listed in the input file
+    coordinates_specification:
+    # type=enum|default='ijk'|allowed['ijk','xyz']: Coordinates in the input file as index triples (i, j, k) or spatial coordinates (x, y, z) in mm
+    srad:
+    # type=float|default=0.0: radius in mm of the sphere that will be filled about each input (x,y,z) or (i,j,k) voxel. If the radius is not given, or is 0, then each input data line sets the value in only one voxel.
+    orient:
+    # type=tuple|default=('R', 'A', 'I'): Specifies the coordinate order used by -xyz. The code must be 3 letters, one each from the pairs {R,L} {A,P} {I,S}.  The first letter gives the orientation of the x-axis, the second the orientation of the y-axis, the third the z-axis: R = right-to-left         L = left-to-right A = anterior-to-posterior P = posterior-to-anterior I = inferior-to-superior  S = superior-to-inferior If -orient isn't used, then the coordinate order of the -master (in_file) dataset is used to interpret (x,y,z) inputs.
+    head_only:
+    # type=bool|default=False: create only the .HEAD file which gets exploited by the AFNI matlab library function New_HEAD.m
+    num_threads:
+    # type=int|default=1: set number of threads
+    outputtype:
+    # type=enum|default='AFNI'|allowed['AFNI','NIFTI','NIFTI_GZ']: AFNI output filetype
+    args:
+    # type=str|default='': Additional parameters to the command
+    environ:
+    # type=dict|default={}: Environment variables
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    in_file:
+    # type=file|default=<undefined>: input file to 3dUndump, whose geometry will determinethe geometry of the output
+    out_file: '"structural_undumped.nii"'
+    # type=file: assembled file
+    # type=file|default=<undefined>: output image file name
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+doctests:
+- cmdline: 3dUndump -prefix structural_undumped.nii -master structural.nii
+  # str - the expected cmdline output
+  inputs:
+  # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
+  # If the field is of file-format type and the value is None, then the
+  # '.mock()' method of the corresponding class is used instead.
+    in_file:
+    # type=file|default=<undefined>: input file to 3dUndump, whose geometry will determinethe geometry of the output
+    out_file: '"structural_undumped.nii"'
+    # type=file: assembled file
+    # type=file|default=<undefined>: output image file name
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  directive:
+  # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

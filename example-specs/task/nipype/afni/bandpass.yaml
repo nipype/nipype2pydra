@@ -1,0 +1,176 @@
+# This file is used to manually specify the semi-automatic conversion of
+# 'nipype.interfaces.afni.preprocess.Bandpass' from Nipype to Pydra.
+#
+# Please fill-in/edit the fields below where appropriate
+#
+# Docs
+# ----
+# Program to lowpass and/or highpass each voxel time series in a
+#     dataset, offering more/different options than Fourier
+# 
+#     For complete details, see the `3dBandpass Documentation.
+#     <https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dBandpass.html>`_
+# 
+#     Examples
+#     --------
+#     >>> from nipype.interfaces import afni
+#     >>> from nipype.testing import  example_data
+#     >>> bandpass = afni.Bandpass()
+#     >>> bandpass.inputs.in_file = 'functional.nii'
+#     >>> bandpass.inputs.highpass = 0.005
+#     >>> bandpass.inputs.lowpass = 0.1
+#     >>> bandpass.cmdline
+#     '3dBandpass -prefix functional_bp 0.005000 0.100000 functional.nii'
+#     >>> res = bandpass.run()  # doctest: +SKIP
+# 
+#     
+task_name: Bandpass
+nipype_name: Bandpass
+nipype_module: nipype.interfaces.afni.preprocess
+inputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    in_file: medimage/nifti1
+    # type=file|default=<undefined>: input file to 3dBandpass
+    mask: generic/file
+    # type=file|default=<undefined>: mask file
+    orthogonalize_file: generic/file+list-of
+    # type=inputmultiobject|default=[]: Also orthogonalize input to columns in f.1D. Multiple '-ort' options are allowed.
+    orthogonalize_dset: generic/file
+    # type=file|default=<undefined>: Orthogonalize each voxel to the corresponding voxel time series in dataset 'fset', which must have the same spatial and temporal grid structure as the main input dataset. At present, only one '-dsort' option is allowed.
+  metadata:
+  # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
+outputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    out_file: generic/file
+    # type=file: output file
+    # type=file|default=<undefined>: output file from 3dBandpass
+  callables:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set to the `callable` attribute of output fields
+  templates:
+  # dict[str, str] - `output_file_template` values to be provided to output fields
+  requirements:
+  # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
+tests:
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    in_file:
+    # type=file|default=<undefined>: input file to 3dBandpass
+    out_file:
+    # type=file: output file
+    # type=file|default=<undefined>: output file from 3dBandpass
+    lowpass:
+    # type=float|default=0.0: lowpass
+    highpass:
+    # type=float|default=0.0: highpass
+    mask:
+    # type=file|default=<undefined>: mask file
+    despike:
+    # type=bool|default=False: Despike each time series before other processing. Hopefully, you don't actually need to do this, which is why it is optional.
+    orthogonalize_file:
+    # type=inputmultiobject|default=[]: Also orthogonalize input to columns in f.1D. Multiple '-ort' options are allowed.
+    orthogonalize_dset:
+    # type=file|default=<undefined>: Orthogonalize each voxel to the corresponding voxel time series in dataset 'fset', which must have the same spatial and temporal grid structure as the main input dataset. At present, only one '-dsort' option is allowed.
+    no_detrend:
+    # type=bool|default=False: Skip the quadratic detrending of the input that occurs before the FFT-based bandpassing. You would only want to do this if the dataset had been detrended already in some other program.
+    tr:
+    # type=float|default=0.0: Set time step (TR) in sec [default=from dataset header].
+    nfft:
+    # type=int|default=0: Set the FFT length [must be a legal value].
+    normalize:
+    # type=bool|default=False: Make all output time series have L2 norm = 1 (i.e., sum of squares = 1).
+    automask:
+    # type=bool|default=False: Create a mask from the input dataset.
+    blur:
+    # type=float|default=0.0: Blur (inside the mask only) with a filter width (FWHM) of 'fff' millimeters.
+    localPV:
+    # type=float|default=0.0: Replace each vector by the local Principal Vector (AKA first singular vector) from a neighborhood of radius 'rrr' millimeters. Note that the PV time series is L2 normalized. This option is mostly for Bob Cox to have fun with.
+    notrans:
+    # type=bool|default=False: Don't check for initial positive transients in the data. The test is a little slow, so skipping it is OK, if you KNOW the data time series are transient-free.
+    num_threads:
+    # type=int|default=1: set number of threads
+    outputtype:
+    # type=enum|default='AFNI'|allowed['AFNI','NIFTI','NIFTI_GZ']: AFNI output filetype
+    args:
+    # type=str|default='': Additional parameters to the command
+    environ:
+    # type=dict|default={}: Environment variables
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    in_file:
+    # type=file|default=<undefined>: input file to 3dBandpass
+    highpass: '0.005'
+    # type=float|default=0.0: highpass
+    lowpass: '0.1'
+    # type=float|default=0.0: lowpass
+  imports: &id001
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  - module: nipype.testing
+    name: ' example_data'
+    alias:
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+doctests:
+- cmdline: 3dBandpass -prefix functional_bp 0.005000 0.100000 functional.nii
+  # str - the expected cmdline output
+  inputs:
+  # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
+  # If the field is of file-format type and the value is None, then the
+  # '.mock()' method of the corresponding class is used instead.
+    in_file:
+    # type=file|default=<undefined>: input file to 3dBandpass
+    highpass: '0.005'
+    # type=float|default=0.0: highpass
+    lowpass: '0.1'
+    # type=float|default=0.0: lowpass
+  imports: *id001
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  directive:
+  # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

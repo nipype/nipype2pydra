@@ -150,14 +150,18 @@ class FunctionTaskConverter(BaseTaskConverter):
         method_body = self.process_method_body(method_body, input_names, output_names)
         if self.method_returns.get(method.__name__):
             return_args = self.method_returns[method.__name__]
-            method_body = ("    " + " = ".join(return_args) + " = attrs.NOTHING\n" + method_body)
+            method_body = (
+                "    " + " = ".join(return_args) + " = attrs.NOTHING\n" + method_body
+            )
             method_lines = method_body.splitlines()
             method_body = "\n".join(method_lines[:-1])
             last_line = method_lines[-1]
             if "return" in last_line:
                 method_body += "," + ",".join(return_args)
             else:
-                method_body += "\n" + last_line + "\n    return " + ",".join(return_args)
+                method_body += (
+                    "\n" + last_line + "\n    return " + ",".join(return_args)
+                )
         return f"{pre.strip()}{', '.join(args)}{return_types}:\n{method_body}"
 
     def process_method_body(
@@ -194,11 +198,15 @@ class FunctionTaskConverter(BaseTaskConverter):
         new_body = splits[0]
         for name, args in zip(splits[1::2], splits[2::2]):
             if self.method_returns[name]:
-                match = re.match(r".*\n *([a-zA-Z0-9\,\. ]+ *=)? *$", new_body, flags=re.MULTILINE | re.DOTALL)
+                match = re.match(
+                    r".*\n *([a-zA-Z0-9\,\. ]+ *=)? *$",
+                    new_body,
+                    flags=re.MULTILINE | re.DOTALL,
+                )
                 if match:
                     if match.group(1):
                         new_body_lines = new_body.splitlines()
-                        new_body = '\n'.join(new_body_lines[:-1])
+                        new_body = "\n".join(new_body_lines[:-1])
                         last_line = new_body_lines[-1]
                         new_body += "\n" + re.sub(
                             r"^ *([a-zA-Z0-9\,\. ]+) *= *$",
@@ -474,7 +482,7 @@ class FunctionTaskConverter(BaseTaskConverter):
             where the dictionary key is the names of the methods
         """
         method_body = inspect.getsource(method)
-        method_body = re.sub(r"\s*#.*", "", method_body)
+        method_body = re.sub(r"\s*#.*", "", method_body)  # Strip out comments
         ref_local_func_names = re.findall(r"(?<!self\.)(\w+)\(", method_body)
         ref_local_funcs = set(
             f
@@ -497,7 +505,9 @@ class FunctionTaskConverter(BaseTaskConverter):
                 )
             )
         for func in ref_local_funcs:
-            rf_inputs, rf_outputs = self._get_referenced(func, referenced_funcs, referenced_methods)
+            rf_inputs, rf_outputs = self._get_referenced(
+                func, referenced_funcs, referenced_methods
+            )
             referenced_inputs.update(rf_inputs)
             referenced_outputs.update(rf_outputs)
         for meth in ref_methods:
@@ -596,12 +606,12 @@ def split_parens_contents(snippet, brackets: bool = False):
         the text after the closing parenthesis
     """
     if brackets:
-        open = '['
-        close = ']'
+        open = "["
+        close = "]"
         pattern = r"(\[|\])"
     else:
-        open = '('
-        close = ')'
+        open = "("
+        close = ")"
         pattern = r"(\(|\))"
     splits = re.split(pattern, snippet, flags=re.MULTILINE | re.DOTALL)
     depth = 1
