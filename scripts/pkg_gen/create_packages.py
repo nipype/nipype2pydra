@@ -15,6 +15,7 @@ from warnings import warn
 import requests
 import click
 import yaml
+import black.parsing
 import fileformats.core.utils
 import fileformats.core.mixin
 from fileformats.generic import File, Directory
@@ -29,7 +30,13 @@ from nipype2pydra.task import (
     TestGenerator,
     DocTestGenerator,
 )
-from nipype2pydra.utils import to_snake_case
+from nipype2pydra.utils import (
+    to_snake_case,
+    UsedSymbols,
+    split_parens_contents,
+    cleanup_function_body,
+    insert_args_in_signature,
+)
 
 
 RESOURCES_DIR = Path(__file__).parent / "resources"
@@ -450,21 +457,31 @@ def generate_packages(
 
                 with open(spec_dir / (spec_name + ".yaml"), "w") as f:
                     f.write(preamble + yaml_str)
-                with open(callables_fspath, "w") as f:
-                    f.write(
-                        f'"""Module to put any functions that are referred to in {interface}.yaml"""\n'
-                    )
-                    if callables:
-                        f.write(
-                            "\n"
-                            + convert_gen_filename_to_func(nipype_interface)
-                            + "\n\n"
+                callables_str = (
+                    f'"""Module to put any functions that are referred to in '
+                    f'{interface}.yaml"""\n\n'
+                )
+                if callables:
+                    funcs, imports, consts = get_gen_filename_to_funcs(nipype_interface)
+                    callables_str += "\n".join(imports) + "\n\n"
+                    for const in consts:
+                        callables_str += f"{const[0]} = {const[1]}\n" + "\n\n"
+                    callables_str += "\n\n".join(funcs) + "\n\n"
+                    for name in callables:
+                        callables_str += (
+                            f"def {name}_callable(output_dir, inputs, stdout, stderr):\n"
+                            f'    return _gen_filename("{name}", output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr)\n\n'
                         )
-                        for name, val in callables.items():
-                            f.write(
-                                f"def {name}_callable(output_dir, inputs, stdout, stderr):\n"
-                                f'return _gen_filename("{name}", inputs)\n\n'
-                            )
+                    try:
+                        callables_str = black.format_file_contents(
+                            callables_str, fast=False, mode=black.FileMode()
+                        )
+                    except black.parsing.InvalidInput as e:
+                        raise RuntimeError(
+                            f"Black could not parse generated code: {e}\n\n{callables_str}"
+                        )
+                with open(callables_fspath, "w") as f:
+                    f.write(callables_str)
 
         with open(
             pkg_dir
@@ -859,12 +876,102 @@ def gen_sample_{frmt.lower()}_data({frmt.lower()}: {frmt}, dest_dir: Path, seed:
     return code_str
 
 
-def convert_gen_filename_to_func(nipype_interface) -> ty.Tuple[str, str]:
-    src = inspect.getsource(nipype_interface._gen_filename)
-    body = "\n" + src.split("\n", 1)[1]
-    body = body.replace("self.inputs", "inputs")
-    body = body.replace("\n        ", "\n    ")
-    return "def _gen_filename(name, inputs):" + body
+def get_gen_filename_to_funcs(
+    nipype_interface,
+) -> ty.Tuple[ty.List[str], ty.Set[str], ty.Set[ty.Tuple[str, str]]]:
+    """
+    Convert the _gen_filename method of a nipype interface into a function that can be
+    imported and used by the auto-convert scripts
+
+    Parameters
+    ----------
+    nipype_interface : type
+        the nipype interface to convert
+
+    Returns
+    -------
+    list[str]
+        the source code of functions to be added to the callables
+    set[str]
+        the imports required for the function
+    set[tuple[str, str]]
+        the external constants required by the function, as (name, value) tuples
+    """
+
+    IMPLICIT_ARGS = ["inputs", "stdout", "stderr", "output_dir"]
+
+    def find_nested_methods(method: ty.Callable) -> ty.List[str]:
+        all_nested = set()
+        for match in re.findall(r"self\.(\w+)\(", inspect.getsource(method)):
+            nested = getattr(nipype_interface, match)
+            all_nested.add(nested)
+            all_nested.update(find_nested_methods(nested))
+        return all_nested
+
+    def process_method(method: ty.Callable) -> str:
+        src = inspect.getsource(method)
+        prefix, args_str, body = split_parens_contents(src)
+        body = insert_args_in_method_calls(body, [f"{a}={a}" for a in IMPLICIT_ARGS])
+        body = body.replace("self.cmd", f'"{nipype_interface._cmd}"')
+        body = body.replace("self.", "")
+        body = re.sub(r"\w+runtime\.(stdout|stderr)", r"\1", body)
+        body = body.replace("os.getcwd()", "output_dir")
+        # drop 'self' from the args and add the implicit callable args
+        args = args_str.split(",")[1:]
+        arg_names = [a.split("=")[0].split(":")[0] for a in args]
+        for implicit in IMPLICIT_ARGS:
+            if implicit not in arg_names:
+                args.append(f"{implicit}=None")
+        src = prefix + ", ".join(args) + body
+        src = cleanup_function_body(src, with_signature=True)
+        return src
+
+    def insert_args_in_method_calls(src: str, args: ty.List[ty.Tuple[str, str]]) -> str:
+        """Insert additional arguments into the method calls
+
+        Parameters
+        ----------
+        body : str
+            the body of th
+        args : list[tuple[str, str]]
+            the arguments to insert into the method calls
+        """
+        # Split the src code into chunks delimited by calls to methods (i.e. 'self.<method>(.*)')
+        method_re = re.compile(r"self\.(\w+)(?=\()", flags=re.MULTILINE | re.DOTALL)
+        splits = method_re.split(src)
+        new_src = splits[0]
+        # Iterate through these chunks and add the additional args to the method calls
+        # using insert_args_in_signature function
+        for name, sig in zip(splits[1::2], splits[2::2]):
+            new_src += name + insert_args_in_signature(sig, args)
+        return new_src
+
+    func_srcs = [
+        process_method(m)
+        for m in (
+            [nipype_interface._gen_filename]
+            + list(find_nested_methods(nipype_interface._gen_filename))
+        )
+    ]
+
+    mod = import_module(nipype_interface.__module__)
+    used = UsedSymbols.find(mod, func_srcs)
+    for func in used.local_functions:
+        func_srcs.append(cleanup_function_body(inspect.getsource(func), with_signature=True))
+    for new_func_name, func in used.funcs_to_include:
+        func_src = inspect.getsource(func)
+        match = re.match(
+            r" *(def|class) *" + func.__name__ + r"(?=\()(.*)$",
+            func_src,
+            re.DOTALL | re.MULTILINE,
+        )
+        func_src = match.group(1) + " " + new_func_name + match.group(2)
+        func_srcs.append(cleanup_function_body(func_src, with_signature=True))
+    return (
+        func_srcs,
+        used.imports,
+        used.constants,
+    )
 
 
 if __name__ == "__main__":

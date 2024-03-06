@@ -4,9 +4,16 @@ import inspect
 from operator import attrgetter, itemgetter
 from functools import cached_property
 import itertools
-from importlib import import_module
 import attrs
 from .base import BaseTaskConverter
+from ..utils import (
+    split_parens_contents,
+    UsedSymbols,
+    get_local_functions,
+    get_local_constants,
+    cleanup_function_body,
+    insert_args_in_signature,
+)
 
 
 @attrs.define(slots=False)
@@ -50,19 +57,18 @@ class FunctionTaskConverter(BaseTaskConverter):
         method_body += lo_src
         method_body = self.process_method_body(method_body, input_names, output_names)
 
-        (other_imports, funcs_to_include, used_local_functions, used_constants) = (
-            self.get_imports_and_functions_to_include(
-                [method_body]
-                + [
-                    inspect.getsource(f)
-                    for f in itertools.chain(
-                        self.referenced_local_functions, self.referenced_methods
-                    )
-                ]
-            )
+        used = UsedSymbols.find(
+            self.nipype_module,
+            [method_body]
+            + [
+                inspect.getsource(f)
+                for f in itertools.chain(
+                    self.referenced_local_functions, self.referenced_methods
+                )
+            ],
         )
 
-        spec_str = "\n".join(f"{n} = {d}" for n, d in used_constants)
+        spec_str = "\n".join(f"{n} = {d}" for n, d in used.constants)
 
         # Create the spec string
         spec_str += "\n\n" + self.function_callables()
@@ -101,14 +107,14 @@ class FunctionTaskConverter(BaseTaskConverter):
 
         spec_str += "\n\n# Functions defined locally in the original module\n\n"
 
-        for func in sorted(used_local_functions, key=attrgetter("__name__")):
-            spec_str += "\n\n" + self.process_function_body(
-                inspect.getsource(func), input_names
+        for func in sorted(used.local_functions, key=attrgetter("__name__")):
+            spec_str += "\n\n" + cleanup_function_body(
+                inspect.getsource(func)
             )
 
         spec_str += "\n\n# Functions defined in neighbouring modules that have been included inline instead of imported\n\n"
 
-        for func_name, func in sorted(funcs_to_include, key=itemgetter(0)):
+        for func_name, func in sorted(used.funcs_to_include, key=itemgetter(0)):
             func_src = inspect.getsource(func)
             func_src = re.sub(
                 r"^(def|class) (\w+)(?=\()",
@@ -116,13 +122,13 @@ class FunctionTaskConverter(BaseTaskConverter):
                 func_src,
                 flags=re.MULTILINE,
             )
-            spec_str += "\n\n" + self.process_function_body(func_src, input_names)
+            spec_str += "\n\n" + cleanup_function_body(func_src)
 
         imports = self.construct_imports(
             nonstd_types,
             spec_str,
             include_task=False,
-            base=base_imports + list(other_imports) + list(additional_imports),
+            base=base_imports + list(used.imports) + list(additional_imports),
         )
         spec_str = "\n".join(imports) + "\n\n" + spec_str
 
@@ -197,6 +203,8 @@ class FunctionTaskConverter(BaseTaskConverter):
         splits = method_re.split(method_body)
         new_body = splits[0]
         for name, args in zip(splits[1::2], splits[2::2]):
+            # Assign additional return values (which were previously saved to member
+            # attributes) to new variables from the method call
             if self.method_returns[name]:
                 match = re.match(
                     r".*\n *([a-zA-Z0-9\,\. ]+ *=)? *$",
@@ -223,7 +231,9 @@ class FunctionTaskConverter(BaseTaskConverter):
                         "directly. Need to replace the method call with a variable and "
                         "assign the return value to it on a previous line"
                     )
-            new_body += name + self.insert_args_in_signature(
+            # Insert additional arguments to the method call (which were previously
+            # accessed via member attributes)
+            new_body += name + insert_args_in_signature(
                 args, [f"{a}={a}" for a in self.method_args[name]]
             )
         method_body = new_body
@@ -232,186 +242,7 @@ class FunctionTaskConverter(BaseTaskConverter):
         method_body = re.sub(
             r"self\.(\w+ *)(?==)", r"\1", method_body, flags=re.MULTILINE | re.DOTALL
         )
-        return self.process_function_body(method_body, input_names=input_names)
-
-    def process_function_body(
-        self, function_body: str, input_names: ty.List[str]
-    ) -> str:
-        """Replace self.inputs.<name> with <name> in the function body and add args to the
-        function signature
-
-        Parameters
-        ----------
-        function_body: str
-            The source code of the function to process
-        input_names: list[str]
-            The names of the inputs to the function
-
-        Returns
-        -------
-        function_body: str
-            The processed source code
-        """
-        # Detect the indentation of the source code in src and reduce it to 4 spaces
-        indents = re.findall(r"^\s+", function_body, flags=re.MULTILINE)
-        min_indent = min(len(i) for i in indents if i)
-        indent_reduction = min_indent - 4
-        function_body = re.sub(
-            r"^" + " " * indent_reduction, "", function_body, flags=re.MULTILINE
-        )
-        # Other misc replacements
-        function_body = function_body.replace("LOGGER.", "logger.")
-        function_body = re.sub(
-            r"not isdefined\((\w+)\)", r"\1 is attrs.NOTHING", function_body
-        )
-        function_body = re.sub(
-            r"isdefined\((\w+)\)", r"\1 is not attrs.NOTHING", function_body
-        )
-        return function_body
-
-    def get_imports_and_functions_to_include(
-        self,
-        function_bodies: ty.List[str],
-        source_code: str = None,
-        local_functions: ty.List[ty.Callable] = None,
-        local_constants: ty.List[ty.Tuple[str, str]] = None,
-    ) -> ty.Tuple[ty.List[str], ty.List[ty.Tuple[str, ty.Any]]]:
-        """Get the imports required for the function body
-
-        Parameters
-        ----------
-        function_bodies: list[str]
-            the source of all functions that need to be checked for used imports
-        source_code: str, optional
-            the source code containing the relevant import statements, by default the
-            source file containing the interface to be converted
-        local_functions: list[callable], optional
-            local functions defined in the source code, by default the functions in the
-            same file as the interface
-        local_constants: list[tuple[str, str]], optional
-            local constants defined in the source code with their definitions,
-            by default the functions in the same file as the interface
-
-        Returns
-        -------
-        used_imports : list[str]
-            the import statements that need to be included in the converted file
-        external_functions: list[tuple[str, Any]]
-            list of objects (e.g. classes, functions and variables) that are defined
-            in neighbouring modules that need to be included in the converted file
-            (as opposed of just imported from independent packages) along with the name
-            that they were imported as and therefore should be named as in the converted
-            module
-        """
-        if source_code is None:
-            source_code = self.source_code
-        if local_functions is None:
-            local_functions = self.local_functions
-        if local_constants is None:
-            local_constants = self.local_constants
-        imports = []
-        block = ""
-        for line in source_code.split("\n"):
-            if line.startswith("from") or line.startswith("import"):
-                if "(" in line:
-                    block = line
-                else:
-                    imports.append(line)
-            if ")" in line and block:
-                imports.append(block + line)
-                block = ""
-        # extract imported symbols from import statements
-        used_symbols = set()
-        for function_body in function_bodies:
-            # Strip comments from function body
-            function_body = re.sub(r"\s*#.*", "", function_body)
-            used_symbols.update(re.findall(r"(\w+)", function_body))
-        used_imports = set()
-        used_local_functions = set()
-        used_constants = set()
-        # Keep looping through local function source until all local functions and constants
-        # are added to the used symbols
-        new_symbols = True
-        while new_symbols:
-            new_symbols = False
-            for local_func in local_functions:
-                if (
-                    local_func.__name__ in used_symbols
-                    and local_func not in used_local_functions
-                ):
-                    used_local_functions.add(local_func)
-                    func_body = inspect.getsource(local_func)
-                    func_body = re.sub(r"\s*#.*", "", func_body)
-                    local_func_symbols = re.findall(r"(\w+)", func_body)
-                    used_symbols.update(local_func_symbols)
-                    new_symbols = True
-            for const_name, const_def in local_constants:
-                if (
-                    const_name in used_symbols
-                    and (const_name, const_def) not in used_constants
-                ):
-                    if const_name == "LOGGER":
-                        continue
-                    used_constants.add((const_name, const_def))
-                    const_def_symbols = re.findall(r"(\w+)", const_def)
-                    used_symbols.update(const_def_symbols)
-                    new_symbols = True
-        # functions to copy from a relative or nipype module into the output module
-        external_functions = set()
-        for stmt in imports:
-            stmt = stmt.replace("\n", "")
-            stmt = stmt.replace("(", "")
-            stmt = stmt.replace(")", "")
-            base_stmt, symbol_str = stmt.split("import ")
-            symbol_parts = re.split(r" *, *", symbol_str)
-            split_parts = [re.split(r" +as +", p) for p in symbol_parts]
-            used_parts = [p for p in split_parts if p[-1] in used_symbols]
-            if used_parts:
-                required_stmt = (
-                    base_stmt
-                    + "import "
-                    + ", ".join(" as ".join(p) for p in used_parts)
-                )
-                match = re.match(r"from ([\w\.]+)", base_stmt)
-                import_mod = match.group(1) if match else ""
-                if import_mod.startswith(".") or import_mod.startswith("nipype."):
-                    if import_mod.startswith("."):
-                        match = re.match(r"(\.*)(.*)", import_mod)
-                        mod_parts = self.nipype_module.__name__.split(".")
-                        nparents = len(match.group(1))
-                        if nparents:
-                            mod_parts = mod_parts[:-nparents]
-                        mod_name = ".".join(mod_parts) + "." + match.group(2)
-                    elif import_mod.startswith("nipype."):
-                        mod_name = import_mod
-                    else:
-                        assert False
-                    mod = import_module(mod_name)
-                    mod_func_bodies = []
-                    for used_part in used_parts:
-                        func = getattr(mod, used_part[0])
-                        external_functions.add((used_part[-1], func))
-                        mod_func_bodies.append(inspect.getsource(func))
-                    # Recursively include neighbouring objects imported in the module
-                    (
-                        mod_used_imports,
-                        mod_external_funcs,
-                        mod_local_funcs,
-                        mod_constants,
-                    ) = self.get_imports_and_functions_to_include(
-                        function_bodies=mod_func_bodies,
-                        source_code=inspect.getsource(mod),
-                        local_functions=get_local_functions(mod),
-                        local_constants=get_local_constants(mod),
-                    )
-                    used_imports.update(mod_used_imports)
-                    external_functions.update(mod_external_funcs)
-                    external_functions.update((f.__name__, f) for f in mod_local_funcs)
-                    used_constants.update(mod_constants)
-                else:
-                    used_imports.add(required_stmt)
-
-        return used_imports, external_functions, used_local_functions, used_constants
+        return cleanup_function_body(method_body)
 
     @property
     def referenced_local_functions(self):
@@ -570,86 +401,3 @@ class FunctionTaskConverter(BaseTaskConverter):
         ("hostname", "platform.node()", "import platform"),
         ("platform", "platform.platform()", "import platform"),
     )
-
-    @classmethod
-    def insert_args_in_signature(cls, snippet: str, new_args: ty.Iterable[str]) -> str:
-        """Insert the arguments into the function signature"""
-        # Split out the argstring from the rest of the code snippet
-        pre, argstr, post = split_parens_contents(snippet)
-        if argstr:
-            args = re.split(r" *, *", argstr)
-            if "runtime" in args:
-                args.remove("runtime")
-        else:
-            args = []
-        return pre + ", ".join(args + new_args) + post
-
-
-def split_parens_contents(snippet, brackets: bool = False):
-    """Splits the code snippet at the first opening parenthesis into a 3-tuple
-    consisting of the pre-paren text, the contents of the parens and the post-paren
-
-    Parameters
-    ----------
-    snippet: str
-        the code snippet to split
-    brackets: bool, optional
-        whether to split at brackets instead of parens, by default False
-
-    Returns
-    -------
-    pre: str
-        the text before the opening parenthesis
-    contents: str
-        the contents of the parens
-    post: str
-        the text after the closing parenthesis
-    """
-    if brackets:
-        open = "["
-        close = "]"
-        pattern = r"(\[|\])"
-    else:
-        open = "("
-        close = ")"
-        pattern = r"(\(|\))"
-    splits = re.split(pattern, snippet, flags=re.MULTILINE | re.DOTALL)
-    depth = 1
-    pre = "".join(splits[:2])
-    contents = ""
-    for i, s in enumerate(splits[2:], start=2):
-        if s == open:
-            depth += 1
-        else:
-            if s == close:
-                depth -= 1
-                if depth == 0:
-                    return pre, contents, "".join(splits[i:])
-            contents += s
-    raise ValueError(f"No matching parenthesis found in '{snippet}'")
-
-
-def get_local_functions(mod):
-    """Get the functions defined in the same file as the interface"""
-    functions = []
-    for attr_name in dir(mod):
-        attr = getattr(mod, attr_name)
-        if inspect.isfunction(attr) and attr.__module__ == mod.__name__:
-            functions.append(attr)
-    return functions
-
-
-def get_local_constants(mod):
-    source_code = inspect.getsource(mod)
-    parts = re.split(r"^(\w+) *= *", source_code, flags=re.MULTILINE)
-    local_vars = []
-    for attr_name, following in zip(parts[1::2], parts[2::2]):
-        if "(" in following.splitlines()[0]:
-            pre, args, _ = split_parens_contents(following)
-            local_vars.append((attr_name, pre + re.sub(r"\n *", "", args) + ")"))
-        elif "[" in following.splitlines()[0]:
-            pre, args, _ = split_parens_contents(following, brackets=True)
-            local_vars.append((attr_name, pre + re.sub(r"\n *", "", args) + "]"))
-        else:
-            local_vars.append((attr_name, following.splitlines()[0]))
-    return local_vars

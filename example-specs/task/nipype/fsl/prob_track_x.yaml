@@ -78,6 +78,8 @@ outputs:
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
+    mode: mode_callable
+    # type=enum|default='simple'|allowed['seedmask','simple','two_mask_symm']: options: simple (single seed voxel), seedmask (mask of seed voxels), twomask_symm (two bet binary masks)
   templates:
   # dict[str, str] - `output_file_template` values to be provided to output fields
   requirements:

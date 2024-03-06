@@ -74,6 +74,10 @@ outputs:
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
+    vsm: vsm_callable
+    # type=string|default='': voxel shift map
+    tmpdir: tmpdir_callable
+    # type=string|default='': tmpdir
   templates:
   # dict[str, str] - `output_file_template` values to be provided to output fields
     exfdw: exfdw
