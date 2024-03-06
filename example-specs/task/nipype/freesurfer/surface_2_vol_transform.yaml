@@ -38,14 +38,14 @@ inputs:
   # passed to the field in the automatically generated unittests.
     source_file: medimage/mgh-gz
     # type=file|default=<undefined>: This is the source of the surface values
-    transformed_file: generic/file
-    # type=file: Path to output file if used normally
-    # type=file|default=<undefined>: Output volume
     reg_file: datascience/text-matrix
     # type=file|default=<undefined>: tkRAS-to-tkRAS matrix   (tkregister2 format)
     template_file: medimage/nifti-gz
     # type=file|default=<undefined>: Output template volume
-    vertexvol_file: generic/file
+    transformed_file: Path
+    # type=file: Path to output file if used normally
+    # type=file|default=<undefined>: Output volume
+    vertexvol_file: Path
     # type=file: vertex map volume path id. Optional
     # type=file|default=<undefined>: Path name of the vertex output volume, which is the same as output volume except that the value of each voxel is the vertex-id that is mapped to that voxel.
   metadata:

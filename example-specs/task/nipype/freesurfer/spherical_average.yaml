@@ -43,6 +43,8 @@ inputs:
     # type=file|default=<undefined>: Input surface file
     in_orig: generic/file
     # type=file|default=<undefined>: Original surface filename
+    in_average: generic/directory
+    # type=directory|default=<undefined>: Average subject
     subjects_dir: generic/directory
     # type=directory|default=<undefined>: subjects directory
   metadata:
@@ -69,8 +71,6 @@ outputs:
     out_file: '"test.out"'
     # type=file: Output label
     # type=file|default=<undefined>: Output filename
-    in_average: '"."'
-    # type=directory|default=<undefined>: Average subject
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:

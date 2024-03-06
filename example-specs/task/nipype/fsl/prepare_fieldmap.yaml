@@ -45,6 +45,9 @@ inputs:
     # type=file|default=<undefined>: Phase difference map, in SIEMENS format range from 0-4096 or 0-8192)
     in_magnitude: medimage/nifti1
     # type=file|default=<undefined>: Magnitude difference map, brain extracted
+    out_fieldmap: Path
+    # type=file: output name for prepared fieldmap
+    # type=file|default=<undefined>: output name for prepared fieldmap
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

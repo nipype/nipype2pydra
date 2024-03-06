@@ -47,6 +47,9 @@ inputs:
   # passed to the field in the automatically generated unittests.
     in_file: '[datascience/text-matrix,datascience/hdf5]+list-of'
     # type=inputmultiobject|default=[]: Input transform file(s)
+    out_file: Path
+    # type=file: Compound transformation file
+    # type=file|default=<undefined>: Output file path (only used for disassembly).
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:
@@ -60,13 +63,13 @@ outputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    out_file: datascience/hdf5
-    # type=file: Compound transformation file
-    # type=file|default=<undefined>: Output file path (only used for disassembly).
     affine_transform: generic/file
     # type=file: Affine transform component
     displacement_field: generic/file
     # type=file: Displacement field component
+    out_file: datascience/hdf5
+    # type=file: Compound transformation file
+    # type=file|default=<undefined>: Output file path (only used for disassembly).
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields

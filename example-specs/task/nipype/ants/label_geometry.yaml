@@ -38,6 +38,8 @@ inputs:
   # passed to the field in the automatically generated unittests.
     label_image: medimage/nifti-gz
     # type=file|default=<undefined>: label image to use for extracting geometry measures
+    intensity_image: medimage/nifti-gz
+    # type=file|default='[]': Intensity image to extract values from. This is an optional input
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:
@@ -51,8 +53,6 @@ outputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    intensity_image: medimage/nifti-gz
-    # type=file|default='[]': Intensity image to extract values from. This is an optional input
     output_file: generic/file
     # type=file: CSV file of geometry measures
     # type=str|default='': name of output file
@@ -122,7 +122,7 @@ tests:
 - inputs:
   # dict[str, str] - values to provide to inputs fields in the task initialisation
   # (if not specified, will try to choose a sensible value)
-    intensity_image: '"ants_Warp.nii.gz"'
+    intensity_image:
     # type=file|default='[]': Intensity image to extract values from. This is an optional input
   imports:
   # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
@@ -161,7 +161,7 @@ doctests:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
   # If the field is of file-format type and the value is None, then the
   # '.mock()' method of the corresponding class is used instead.
-    intensity_image: '"ants_Warp.nii.gz"'
+    intensity_image:
     # type=file|default='[]': Intensity image to extract values from. This is an optional input
   imports:
   # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item

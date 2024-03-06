@@ -91,7 +91,7 @@ inputs:
     # type=file|default=<undefined>: image to specify region to perform final bias correction in
     weight_image: generic/file
     # type=file|default=<undefined>: image for relative weighting (e.g. probability map of the white matter) of voxels during the B-spline fitting. 
-    bias_image: generic/file
+    bias_image: Path
     # type=file: Estimated bias
     # type=file|default=<undefined>: Filename for the estimated bias.
   metadata:

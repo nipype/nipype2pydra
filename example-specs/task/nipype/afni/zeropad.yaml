@@ -45,6 +45,9 @@ inputs:
     # type=file|default=<undefined>: input dataset
     master: generic/file
     # type=file|default=<undefined>: match the volume described in dataset 'mset', where mset must have the same orientation and grid spacing as dataset to be padded. the goal of -master is to make the output dataset from 3dZeropad match the spatial 'extents' of mset by adding or subtracting slices as needed. You can't use -I,-S,..., or -mm with -master
+    out_file: Path
+    # type=file: output file
+    # type=file|default=<undefined>: output dataset prefix name (default 'zeropad')
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

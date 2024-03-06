@@ -42,6 +42,9 @@ inputs:
     # type=file|default=<undefined>: input volume
     subjects_dir: generic/directory
     # type=directory|default=<undefined>: subjects directory
+    out_file: Path
+    # type=file: The output transform for TalairachAVI
+    # type=file|default=<undefined>: output xfm file
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

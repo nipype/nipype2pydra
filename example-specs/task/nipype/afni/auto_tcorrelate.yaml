@@ -45,6 +45,9 @@ inputs:
     # type=file|default=<undefined>: mask of voxels
     mask_source: generic/file
     # type=file|default=<undefined>: mask for source voxels
+    out_file: Path
+    # type=file: output file
+    # type=file|default=<undefined>: output image file name
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

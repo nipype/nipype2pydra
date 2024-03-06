@@ -33,7 +33,7 @@ inputs:
   # passed to the field in the automatically generated unittests.
     first_input: medimage/nifti1
     # type=file|default=<undefined>: image 1
-    output_product_image: medimage/nifti1
+    output_product_image: Path
     # type=file: average image file
     # type=file|default=<undefined>: Outputfname.nii.gz: the name of the resulting image.
   metadata:
@@ -102,7 +102,7 @@ tests:
     # type=file|default=<undefined>: image 1
     second_input: '0.25'
     # type=traitcompound|default=None: image 2 or multiplication weight
-    output_product_image:
+    output_product_image: '"out.nii"'
     # type=file: average image file
     # type=file|default=<undefined>: Outputfname.nii.gz: the name of the resulting image.
   imports:
@@ -133,7 +133,7 @@ doctests:
     # type=file|default=<undefined>: image 1
     second_input: '0.25'
     # type=traitcompound|default=None: image 2 or multiplication weight
-    output_product_image:
+    output_product_image: '"out.nii"'
     # type=file: average image file
     # type=file|default=<undefined>: Outputfname.nii.gz: the name of the resulting image.
   imports:

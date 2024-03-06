@@ -51,6 +51,9 @@ inputs:
     # type=file|default=<undefined>: topup file containing the field coefficients
     in_topup_movpar: text/text-file
     # type=file|default=<undefined>: topup movpar.txt file
+    out_corrected: Path
+    # type=file: name of 4D image file with unwarped images
+    # type=file|default=<undefined>: output (warped) image
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

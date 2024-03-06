@@ -38,6 +38,9 @@ inputs:
     # type=file|default=<undefined>: Input file for SegmentWM
     subjects_dir: generic/directory
     # type=directory|default=<undefined>: subjects directory
+    out_file: Path
+    # type=file: Output white matter segmentation
+    # type=file|default=<undefined>: File to be written as output for SegmentWM
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

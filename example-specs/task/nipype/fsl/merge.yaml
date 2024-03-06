@@ -46,7 +46,7 @@ inputs:
   # passed to the field in the automatically generated unittests.
     in_files: medimage/nifti1+list-of
     # type=list|default=[]: 
-    merged_file: generic/file
+    merged_file: Path
     # type=file: 
     # type=file|default=<undefined>: 
   metadata:

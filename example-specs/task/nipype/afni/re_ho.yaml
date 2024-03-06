@@ -43,6 +43,9 @@ inputs:
     # type=file|default=<undefined>: Mask within which ReHo should be calculated voxelwise
     label_set: generic/file
     # type=file|default=<undefined>: a set of ROIs, each labelled with distinct integers. ReHo will then be calculated per ROI.
+    out_file: Path
+    # type=file: Voxelwise regional homogeneity map
+    # type=file|default=<undefined>: Output dataset.
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

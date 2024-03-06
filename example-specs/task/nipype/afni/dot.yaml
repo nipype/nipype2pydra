@@ -44,6 +44,9 @@ inputs:
     # type=list|default=[]: list of input files, possibly with subbrick selectors
     mask: generic/file
     # type=file|default=<undefined>: Use this dataset as a mask
+    out_file: Path
+    # type=file: output file
+    # type=file|default=<undefined>: collect output to a file
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:
@@ -79,7 +82,7 @@ tests:
     mask:
     # type=file|default=<undefined>: Use this dataset as a mask
     mrange:
-    # type=tuple|default=(<traits.trait_types.Float object at 0x10bec5dd0>, <traits.trait_types.Float object at 0x10bec5cd0>): Means to further restrict the voxels from 'mset' so thatonly those mask values within this range (inclusive) willbe used.
+    # type=tuple|default=(<traits.trait_types.Float object at 0x10f1c6d10>, <traits.trait_types.Float object at 0x10f1c6c10>): Means to further restrict the voxels from 'mset' so thatonly those mask values within this range (inclusive) willbe used.
     demean:
     # type=bool|default=False: Remove the mean from each volume prior to computing the correlation
     docor:

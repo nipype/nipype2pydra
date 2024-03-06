@@ -44,11 +44,11 @@ inputs:
   # passed to the field in the automatically generated unittests.
     in_file: medimage/nifti1
     # type=file|default=<undefined>: input file to 3dCM
-    cm_file: text/text-file
-    # type=file: file with the center of mass coordinates
-    # type=file|default=<undefined>: File to write center of mass to
     mask_file: generic/file
     # type=file|default=<undefined>: Only voxels with nonzero values in the provided mask will be averaged.
+    cm_file: Path
+    # type=file: file with the center of mass coordinates
+    # type=file|default=<undefined>: File to write center of mass to
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:
@@ -88,7 +88,7 @@ tests:
     automask:
     # type=bool|default=False: Generate the mask automatically
     set_cm:
-    # type=tuple|default=(<traits.trait_types.Float object at 0x10beb75d0>, <traits.trait_types.Float object at 0x10beb76d0>, <traits.trait_types.Float object at 0x10beb7750>): After computing the center of mass, set the origin fields in the header so that the center of mass will be at (x,y,z) in DICOM coords.
+    # type=tuple|default=(<traits.trait_types.Float object at 0x10f1c4450>, <traits.trait_types.Float object at 0x10f1c4550>, <traits.trait_types.Float object at 0x10f1c45d0>): After computing the center of mass, set the origin fields in the header so that the center of mass will be at (x,y,z) in DICOM coords.
     local_ijk:
     # type=bool|default=False: Output values as (i,j,k) in local orientation
     roi_vals:
@@ -119,7 +119,7 @@ tests:
   # (if not specified, will try to choose a sensible value)
     in_file:
     # type=file|default=<undefined>: input file to 3dCM
-    cm_file:
+    cm_file: '"cm.txt"'
     # type=file: file with the center of mass coordinates
     # type=file|default=<undefined>: File to write center of mass to
     roi_vals: '[2, 10]'
@@ -148,7 +148,7 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     in_file:
     # type=file|default=<undefined>: input file to 3dCM
-    cm_file:
+    cm_file: '"cm.txt"'
     # type=file: file with the center of mass coordinates
     # type=file|default=<undefined>: File to write center of mass to
     roi_vals: '[2, 10]'

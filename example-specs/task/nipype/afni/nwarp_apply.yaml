@@ -40,6 +40,9 @@ inputs:
   # passed to the field in the automatically generated unittests.
     master: generic/file
     # type=file|default=<undefined>: the name of the master dataset, which defines the output grid
+    out_file: Path
+    # type=file: output file
+    # type=file|default=<undefined>: output image file name
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

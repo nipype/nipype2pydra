@@ -43,6 +43,8 @@ inputs:
   # passed to the field in the automatically generated unittests.
     input_image: medimage/nifti1
     # type=file|default=<undefined>: image to apply transformation to (generally a coregistered functional)
+    out_postfix: generic/file
+    # type=file|default='_wimt': Postfix that is prepended to all output files (default = _wimt)
     reference_image: medimage/nifti1,medimage/nifti-gz
     # type=file|default=<undefined>: reference image space that you wish to warp INTO
     transformation_series: '[text/text-file,medimage/nifti-gz]+list-of'
@@ -60,8 +62,6 @@ outputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    out_postfix: generic/file
-    # type=file|default='_wimt': Postfix that is prepended to all output files (default = _wimt)
     output_image: generic/file
     # type=file: Warped image
     # type=file|default=<undefined>: name of the output warped image

@@ -55,11 +55,11 @@ inputs:
     # type=file|default=<undefined>: fieldmap magnitude image - wholehead
     fmapmagbrain: medimage/nifti1
     # type=file|default=<undefined>: fieldmap magnitude image - brain extracted
-    wmseg: generic/file
-    # type=file: white matter segmentation used in flirt bbr
-    # type=file|default=<undefined>: white matter segmentation of T1 image, has to be named                  like the t1brain and end on _wmseg
     weight_image: generic/file
     # type=file|default=<undefined>: weighting image (in T1 space)
+    wmseg: Path
+    # type=file: white matter segmentation used in flirt bbr
+    # type=file|default=<undefined>: white matter segmentation of T1 image, has to be named                  like the t1brain and end on _wmseg
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

@@ -35,6 +35,8 @@ inputs:
   # passed to the field in the automatically generated unittests.
     in_file: generic/file
     # type=file|default=<undefined>: input data file
+    out_file: generic/file
+    # type=file|default='segmented': output data file
     affine_file: generic/file
     # type=file|default=<undefined>: Affine matrix to use (e.g. img2std.mat) (does not re-run registration)
   metadata:
@@ -50,8 +52,6 @@ outputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    out_file: generic/file
-    # type=file|default='segmented': output data file
     original_segmentations: generic/file
     # type=file: 3D image file containing the segmented regions as integer values. Uses CMA labelling
     segmentation_file: generic/file

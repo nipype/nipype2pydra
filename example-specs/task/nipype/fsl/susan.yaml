@@ -39,6 +39,8 @@ inputs:
   # passed to the field in the automatically generated unittests.
     in_file: generic/file
     # type=file|default=<undefined>: filename of input timeseries
+    out_file: generic/file
+    # type=file|default=<undefined>: output file name
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:
@@ -59,8 +61,6 @@ outputs:
   # to set to the `callable` attribute of output fields
   templates:
   # dict[str, str] - `output_file_template` values to be provided to output fields
-    out_file: out_file
-    # type=file|default=<undefined>: output file name
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:

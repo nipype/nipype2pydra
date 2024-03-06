@@ -22,7 +22,7 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    mel_ica: generic/directory
+    mel_ica: Path
     # type=directory: Melodic output directory or directories
     # type=directory|default=<undefined>: Melodic output directory or directories
   metadata:

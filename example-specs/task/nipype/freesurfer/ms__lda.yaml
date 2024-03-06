@@ -31,12 +31,6 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    weight_file: text/text-file
-    # type=file: 
-    # type=file|default=<undefined>: filename for the LDA weights (input or output)
-    vol_synth_file: medimage/mgh-gz
-    # type=file: 
-    # type=file|default=<undefined>: filename for the synthesized output volume
     label_file: medimage/mgh-gz
     # type=file|default=<undefined>: filename of the label volume
     mask_file: generic/file
@@ -45,6 +39,12 @@ inputs:
     # type=inputmultiobject|default=[]: list of input FLASH images
     subjects_dir: generic/directory
     # type=directory|default=<undefined>: subjects directory
+    weight_file: Path
+    # type=file: 
+    # type=file|default=<undefined>: filename for the LDA weights (input or output)
+    vol_synth_file: Path
+    # type=file: 
+    # type=file|default=<undefined>: filename for the synthesized output volume
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:
@@ -123,12 +123,12 @@ tests:
     # type=list|default=[]: pair of class labels to optimize
     label_file:
     # type=file|default=<undefined>: filename of the label volume
-    weight_file:
+    weight_file: '"weights.txt"'
     # type=file: 
     # type=file|default=<undefined>: filename for the LDA weights (input or output)
     shift: zero_value
     # type=int|default=0: shift all values equal to the given value to zero
-    vol_synth_file:
+    vol_synth_file: '"synth_out.mgz"'
     # type=file: 
     # type=file|default=<undefined>: filename for the synthesized output volume
     conform: 'True'
@@ -163,12 +163,12 @@ doctests:
     # type=list|default=[]: pair of class labels to optimize
     label_file:
     # type=file|default=<undefined>: filename of the label volume
-    weight_file:
+    weight_file: '"weights.txt"'
     # type=file: 
     # type=file|default=<undefined>: filename for the LDA weights (input or output)
     shift: zero_value
     # type=int|default=0: shift all values equal to the given value to zero
-    vol_synth_file:
+    vol_synth_file: '"synth_out.mgz"'
     # type=file: 
     # type=file|default=<undefined>: filename for the synthesized output volume
     conform: 'True'

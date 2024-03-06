@@ -38,11 +38,14 @@ inputs:
     # type=file|default=<undefined>: Input segmentation file for MRIFill
     transform: generic/file
     # type=file|default=<undefined>: Input transform file for MRIFill
-    log_file: generic/file
-    # type=file: Output log file from MRIFill
-    # type=file|default=<undefined>: Output log file for MRIFill
     subjects_dir: generic/directory
     # type=directory|default=<undefined>: subjects directory
+    out_file: Path
+    # type=file: Output file from MRIFill
+    # type=file|default=<undefined>: Output filled volume file name for MRIFill
+    log_file: Path
+    # type=file: Output log file from MRIFill
+    # type=file|default=<undefined>: Output log file for MRIFill
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

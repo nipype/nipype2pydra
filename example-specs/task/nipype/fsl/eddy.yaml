@@ -80,6 +80,10 @@ inputs:
     # type=file|default=<undefined>: Non-topup derived fieldmap scaled in Hz
     field_mat: generic/file
     # type=file|default=<undefined>: Matrix specifying the relative positions of the fieldmap, --field, and the first volume of the input file, --imain
+    slice_order: text/text-file
+    # type=file|default='': Name of text file completely specifying slice/group acquisition
+    json: generic/file
+    # type=file|default='': Name of .json text file with information about slice timing
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:
@@ -93,10 +97,6 @@ outputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    slice_order: text/text-file
-    # type=file|default='': Name of text file completely specifying slice/group acquisition
-    json: generic/file
-    # type=file|default='': Name of .json text file with information about slice timing
     out_corrected: generic/file
     # type=file: 4D image file containing all the corrected volumes
     out_parameter: generic/file
@@ -306,7 +306,7 @@ tests:
     # type=int|default=0: Regularisation weight for slice-to-vol movement (reasonable range 1-10)
     slice2vol_interp: '"trilinear"'
     # type=enum|default='trilinear'|allowed['spline','trilinear']: Slice-to-vol interpolation model for estimation step
-    slice_order: '"epi_slspec.txt"'
+    slice_order:
     # type=file|default='': Name of text file completely specifying slice/group acquisition
   imports:
   # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
@@ -366,7 +366,7 @@ doctests:
     # type=int|default=0: Regularisation weight for slice-to-vol movement (reasonable range 1-10)
     slice2vol_interp: '"trilinear"'
     # type=enum|default='trilinear'|allowed['spline','trilinear']: Slice-to-vol interpolation model for estimation step
-    slice_order: '"epi_slspec.txt"'
+    slice_order:
     # type=file|default='': Name of text file completely specifying slice/group acquisition
   imports:
   # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item

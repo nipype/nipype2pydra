@@ -57,6 +57,9 @@ inputs:
     # type=file|default=<undefined>: Source label
     subjects_dir: generic/directory
     # type=directory|default=<undefined>: subjects directory
+    out_file: Path
+    # type=file: Output label
+    # type=file|default=<undefined>: Target label
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

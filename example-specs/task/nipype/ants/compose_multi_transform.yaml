@@ -33,13 +33,13 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    output_transform: generic/file
-    # type=file: Composed transform file
-    # type=file|default=<undefined>: the name of the resulting transform.
     reference_image: generic/file
     # type=file|default=<undefined>: Reference image (only necessary when output is warpfield)
     transforms: datascience/text-matrix+list-of
     # type=inputmultiobject|default=[]: transforms to average
+    output_transform: Path
+    # type=file: Composed transform file
+    # type=file|default=<undefined>: the name of the resulting transform.
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

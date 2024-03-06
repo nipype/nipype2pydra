@@ -41,12 +41,16 @@ inputs:
   # passed to the field in the automatically generated unittests.
     source_file: generic/file
     # type=file|default=<undefined>: Source image (opposite phase encoding direction than base image)
+    out_file: generic/file
+    # type=file|default='Qwarp.nii.gz': Output file
     in_file: medimage/nifti-gz
     # type=file|default=<undefined>: Source image (opposite phase encoding direction than base image).
     base_file: medimage/nifti-gz
     # type=file|default=<undefined>: Base image (opposite phase encoding direction than source image).
     weight: generic/file
     # type=file|default=<undefined>: Instead of computing the weight from the base dataset,directly input the weight volume from dataset 'www'.Useful if you know what over parts of the base image youwant to emphasize or de-emphasize the matching functional.
+    out_weight_file: generic/file
+    # type=file|default=<undefined>: Write the weight volume to disk as a dataset
     emask: generic/file
     # type=file|default=<undefined>: Here, 'ee' is a dataset to specify a mask of voxelsto EXCLUDE from the analysis -- all voxels in 'ee'that are NONZERO will not be used in the alignment.The base image always automasked -- the emask isextra, to indicate voxels you definitely DON'T wantincluded in the matching process, even if they areinside the brain.
     iniwarp: generic/file+list-of
@@ -66,10 +70,6 @@ outputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    out_file: generic/file
-    # type=file|default='Qwarp.nii.gz': Output file
-    out_weight_file: generic/file
-    # type=file|default=<undefined>: Write the weight volume to disk as a dataset
     warped_source: generic/file
     # type=file: Warped source file. If plusminus is used, this is the undistortedsource file.
     warped_base: generic/file
@@ -126,7 +126,7 @@ tests:
     wball:
     # type=list|default=[]: "``-wball x y z r f`` Enhance automatic weight from '-useweight' by a factor of 1+f\*Gaussian(FWHM=r) centered in the base image at DICOM coordinates (x,y,z) and with radius 'r'. The goal of this option is to try and make the alignment better in a specific part of the brain. Example:  -wball 0 14 6 30 40 to emphasize the thalamic area (in MNI/Talairach space).  * The 'r' parameter must be positive! * The 'f' parameter must be between 1 and 100 (inclusive). * '-wball' does nothing if you input your own weight   with the '-weight' option. * '-wball' does change the binary weight created by   the '-noweight' option. * You can only use '-wball' once in a run of 3dQwarp.  **The effect of '-wball' is not dramatic.** The example above makes the average brain image across a collection of subjects a little sharper in the thalamic area, which might have some small value.  If you care enough about alignment to use '-wball', then you should examine the results from 3dQwarp for each subject, to see if the alignments are good enough for your purposes.
     wmask:
-    # type=tuple|default=(<nipype.interfaces.base.traits_extension.File object at 0x10bdedfd0>, <traits.trait_types.Float object at 0x10bdee010>): Similar to '-wball', but here, you provide a dataset 'ws' that indicates where to increase the weight.  * The 'ws' dataset must be on the same 3D grid as the base dataset. * 'ws' is treated as a mask -- it only matters where it   is nonzero -- otherwise, the values inside are not used. * After 'ws' comes the factor 'f' by which to increase the   automatically computed weight.  Where 'ws' is nonzero,   the weighting will be multiplied by (1+f). * As with '-wball', the factor 'f' should be between 1 and 100.  
+    # type=tuple|default=(<nipype.interfaces.base.traits_extension.File object at 0x10f0eed50>, <traits.trait_types.Float object at 0x10f0eeb10>): Similar to '-wball', but here, you provide a dataset 'ws' that indicates where to increase the weight.  * The 'ws' dataset must be on the same 3D grid as the base dataset. * 'ws' is treated as a mask -- it only matters where it   is nonzero -- otherwise, the values inside are not used. * After 'ws' comes the factor 'f' by which to increase the   automatically computed weight.  Where 'ws' is nonzero,   the weighting will be multiplied by (1+f). * As with '-wball', the factor 'f' should be between 1 and 100.  
     out_weight_file:
     # type=file|default=<undefined>: Write the weight volume to disk as a dataset
     blur:

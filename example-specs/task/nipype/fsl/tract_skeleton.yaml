@@ -54,7 +54,7 @@ inputs:
     # type=file|default=<undefined>: 4D non-FA data to project onto skeleton
     alt_skeleton: generic/file
     # type=file|default=<undefined>: alternate skeleton to use
-    projected_data: generic/file
+    projected_data: Path
     # type=file: input data projected onto skeleton
     # type=file|default=<undefined>: input data projected onto skeleton
   metadata:

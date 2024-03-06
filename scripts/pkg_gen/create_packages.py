@@ -2,6 +2,7 @@ import os
 import typing as ty
 import tempfile
 import re
+import inspect
 from importlib import import_module
 from copy import copy
 import subprocess as sp
@@ -94,7 +95,12 @@ def download_tasks_template(output_path: Path):
 @click.option("--work-dir", type=click.Path(path_type=Path), default=None)
 @click.option("--task-template", type=click.Path(path_type=Path), default=None)
 @click.option("--packages-to-import", type=click.Path(path_type=Path), default=None)
-@click.option("--example-packages", type=click.Path(path_type=Path), default=None, help="Packages to save into the example-spec directory")
+@click.option(
+    "--example-packages",
+    type=click.Path(path_type=Path),
+    default=None,
+    help="Packages to save into the example-spec directory",
+)
 @click.option(
     "--base-package",
     type=str,
@@ -171,11 +177,13 @@ def generate_packages(
                     input_helps,
                     output_helps,
                     file_inputs,
+                    path_inputs,
                     file_outputs,
-                    genfile_outputs,
+                    template_outputs,
                     multi_inputs,
                     dir_inputs,
                     dir_outputs,
+                    callables,
                 ) = parse_nipype_interface(nipype_interface)
 
                 # Create "stubs" for each of the available fields
@@ -204,6 +212,7 @@ def generate_packages(
 
                 input_types = {i: File for i in file_inputs}
                 input_types.update({i: Directory for i in dir_inputs})
+                input_types.update({i: Path for i in path_inputs})
                 output_types = {o: File for o in file_outputs}
                 output_types.update({o: Directory for o in dir_outputs})
                 output_templates = {}
@@ -268,7 +277,9 @@ def generate_packages(
                                     mode=File.ExtensionDecomposition.single,
                                 )[2]
                                 if any(c in format_ext for c in EXT_SPECIAL_CHARS):
-                                    return File  # Skip any extensions with special chars
+                                    return (
+                                        File  # Skip any extensions with special chars
+                                    )
                                 unmatched_formats.append(
                                     f"{module}.{interface}: {fspath}"
                                 )
@@ -325,7 +336,7 @@ def generate_packages(
                                 output_types[name] = combine_types(
                                     guessed_type, output_types[name]
                                 )
-                            if name in genfile_outputs:
+                            if name in template_outputs:
                                 output_templates[name] = val
 
                         tests.append(
@@ -350,7 +361,7 @@ def generate_packages(
                         has_doctests.add(f"{module.replace('/', '.')}.{interface}")
 
                 # Add default template names for fields not explicitly listed in doctests
-                for outpt in genfile_outputs:
+                for outpt in template_outputs:
                     if outpt not in output_templates:
                         try:
                             frmt = output_types[outpt]
@@ -369,6 +380,13 @@ def generate_packages(
                     for n, t in input_types.items()
                 }
 
+                non_mime = [Path]
+
+                def type2str(tp):
+                    if tp in non_mime:
+                        return tp.__name__
+                    return fileformats.core.utils.to_mime(tp, official=False)
+
                 spec_stub = {
                     "task_name": interface,
                     "nipype_name": interface,
@@ -376,22 +394,15 @@ def generate_packages(
                     "inputs": fields_stub(
                         "inputs",
                         InputsConverter,
-                        {
-                            "types": {
-                                n: fileformats.core.utils.to_mime(t, official=False)
-                                for n, t in input_types.items()
-                            }
-                        },
+                        {"types": {n: type2str(t) for n, t in input_types.items()}},
                     ),
                     "outputs": fields_stub(
                         "outputs",
                         OutputsConverter,
                         {
-                            "types": {
-                                n: fileformats.core.utils.to_mime(t, official=False)
-                                for n, t in output_types.items()
-                            },
+                            "types": {n: type2str(t) for n, t in output_types.items()},
                             "templates": output_templates,
+                            "callables": {n: f"{n}_callable" for n in callables},
                         },
                     ),
                     "tests": tests,
@@ -443,6 +454,17 @@ def generate_packages(
                     f.write(
                         f'"""Module to put any functions that are referred to in {interface}.yaml"""\n'
                     )
+                    if callables:
+                        f.write(
+                            "\n"
+                            + convert_gen_filename_to_func(nipype_interface)
+                            + "\n\n"
+                        )
+                        for name, val in callables.items():
+                            f.write(
+                                f"def {name}_callable(output_dir, inputs, stdout, stderr):\n"
+                                f'return _gen_filename("{name}", inputs)\n\n'
+                            )
 
         with open(
             pkg_dir
@@ -480,14 +502,21 @@ def generate_packages(
 
         basepkg = base_package
         if base_package.endswith(".interfaces"):
-            basepkg = basepkg[:-len(".interfaces")]
+            basepkg = basepkg[: -len(".interfaces")]
 
-        examples_dir = Path(__file__).parent.parent.parent / "example-specs" / "task" / basepkg
+        examples_dir = (
+            Path(__file__).parent.parent.parent / "example-specs" / "task" / basepkg
+        )
         if examples_dir.exists():
             shutil.rmtree(examples_dir)
         examples_dir.mkdir()
         for example_pkg_name in example_pkg_names:
-            specs_dir = output_dir / ("pydra-" + example_pkg_name) / "nipype-auto-conv" / "specs"
+            specs_dir = (
+                output_dir
+                / ("pydra-" + example_pkg_name)
+                / "nipype-auto-conv"
+                / "specs"
+            )
             shutil.copytree(specs_dir, examples_dir / example_pkg_name)
 
     unmatched_extensions = set(
@@ -543,7 +572,9 @@ def initialise_task_repo(output_dir, task_template: Path, pkg: str) -> Path:
     with open(pkg_dir / "pyproject.toml") as f:
         pyproject_toml = f.read()
     pyproject_toml = pyproject_toml.replace("README.md", "README.rst")
-    pyproject_toml = pyproject_toml.replace("test = [\n", "test = [\n    \"nipype2pydra\",\n")
+    pyproject_toml = pyproject_toml.replace(
+        "test = [\n", 'test = [\n    "nipype2pydra",\n'
+    )
     with open(pkg_dir / "pyproject.toml", "w") as f:
         f.write(pyproject_toml)
 
@@ -606,14 +637,32 @@ def parse_nipype_interface(
     ty.List[str],
     ty.List[str],
     ty.List[str],
+    ty.List[str],
+    ty.List[str],
 ]:
     """Generate preamble comments at start of file with args and doc strings"""
     input_helps = {}
     file_inputs = []
     file_outputs = []
     dir_inputs = []
-    genfile_outputs = []
+    path_inputs = []
+    template_outputs = []
     multi_inputs = []
+    dir_outputs = []
+    output_helps = {}
+    callables = []
+    if nipype_interface.output_spec:
+        for outpt_name, outpt in nipype_interface.output_spec().traits().items():
+            if outpt_name in ("trait_added", "trait_modified"):
+                continue
+            outpt_desc = outpt.desc.replace("\n", " ") if outpt.desc else ""
+            output_helps[outpt_name] = (
+                f"type={type(outpt.trait_type).__name__.lower()}: {outpt_desc}"
+            )
+            if type(outpt.trait_type).__name__ == "File":
+                file_outputs.append(outpt_name)
+            elif type(outpt.trait_type).__name__ == "Directory":
+                dir_outputs.append(outpt_name)
     if nipype_interface.input_spec:
         for inpt_name, inpt in nipype_interface.input_spec().traits().items():
             if inpt_name in ("trait_added", "trait_modified"):
@@ -624,46 +673,36 @@ def parse_nipype_interface(
                 inpt_mdata += f"|allowed[{','.join(sorted(repr(v) for v in inpt.trait_type.values))}]"
             input_helps[inpt_name] = f"{inpt_mdata}: {inpt_desc}"
             trait_type_name = type(inpt.trait_type).__name__
-            if inpt.genfile:
-                genfile_outputs.append(inpt_name)
-            elif trait_type_name == "File":
-                if isinstance(inpt.default, str) or "out_" in inpt_name:
-                    file_outputs.append(inpt_name)
-                else:
-                    file_inputs.append(inpt_name)
-            elif trait_type_name == "Directory":
+            if inpt.genfile and inpt_name in (file_outputs + dir_outputs):
+                template_outputs.append(inpt_name)
+            elif trait_type_name == "File" and inpt_name not in file_outputs:
+                file_inputs.append(inpt_name)
+            elif trait_type_name == "Directory" and inpt_name not in dir_outputs:
                 dir_inputs.append(inpt_name)
             elif trait_type_name == "InputMultiObject":
-                inner_trait_type_name = type(inpt.trait_type.item_trait.trait_type).__name__
+                inner_trait_type_name = type(
+                    inpt.trait_type.item_trait.trait_type
+                ).__name__
                 if inner_trait_type_name == "Directory":
                     dir_inputs.append(inpt_name)
                 elif inner_trait_type_name == "File":
                     file_inputs.append(inpt_name)
                 multi_inputs.append(inpt_name)
-            elif (
-                type(inpt.trait_type).__name__ == "List"
-                and type(inpt.trait_type.inner_traits()[0].handler).__name__ in ("File", "Directory")
-            ):
-                item_type_name = type(inpt.trait_type.inner_traits()[0].handler).__name__
+            elif type(inpt.trait_type).__name__ == "List" and type(
+                inpt.trait_type.inner_traits()[0].handler
+            ).__name__ in ("File", "Directory"):
+                item_type_name = type(
+                    inpt.trait_type.inner_traits()[0].handler
+                ).__name__
                 if item_type_name == "File":
                     file_inputs.append(inpt_name)
                 else:
                     dir_inputs.append(inpt_name)
                 multi_inputs.append(inpt_name)
-    dir_outputs = []
-    output_helps = {}
-    if nipype_interface.output_spec:
-        for outpt_name, outpt in nipype_interface.output_spec().traits().items():
-            if outpt_name in ("trait_added", "trait_modified"):
-                continue
-            outpt_desc = outpt.desc.replace("\n", " ") if outpt.desc else ""
-            output_helps[
-                outpt_name
-            ] = f"type={type(outpt.trait_type).__name__.lower()}: {outpt_desc}"
-            if type(outpt.trait_type).__name__ == "File":
-                file_outputs.append(outpt_name)
-            elif type(outpt.trait_type).__name__ == "Directory":
-                dir_outputs.append(outpt_name)
+            elif trait_type_name in ("File", "Directory"):
+                path_inputs.append(inpt_name)
+            elif inpt.genfile:
+                callables.append(inpt_name)
     doc_string = nipype_interface.__doc__ if nipype_interface.__doc__ else ""
     doc_string = doc_string.replace("\n", "\n# ")
     # Create a preamble at the top of the specificaiton explaining what to do
@@ -682,11 +721,13 @@ def parse_nipype_interface(
         input_helps,
         output_helps,
         file_inputs,
+        path_inputs,
         file_outputs,
-        genfile_outputs,
+        template_outputs,
         multi_inputs,
         dir_inputs,
         dir_outputs,
+        callables,
     )
 
 
@@ -816,6 +857,14 @@ def gen_sample_{frmt.lower()}_data({frmt.lower()}: {frmt}, dest_dir: Path, seed:
     raise NotImplementedError
 """
     return code_str
+
+
+def convert_gen_filename_to_func(nipype_interface) -> ty.Tuple[str, str]:
+    src = inspect.getsource(nipype_interface._gen_filename)
+    body = "\n" + src.split("\n", 1)[1]
+    body = body.replace("self.inputs", "inputs")
+    body = body.replace("\n        ", "\n    ")
+    return "def _gen_filename(name, inputs):" + body
 
 
 if __name__ == "__main__":

@@ -41,6 +41,9 @@ inputs:
     # type=file|default=<undefined>: only count voxels within the given mask
     outliers_file: generic/file
     # type=file|default=<undefined>: output image file name
+    out_file: Path
+    # type=file: capture standard output
+    # type=file|default=<undefined>: capture standard output
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:
@@ -54,11 +57,11 @@ outputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
+    out_outliers: generic/file
+    # type=file: output image file name
     out_file: generic/file
     # type=file: capture standard output
     # type=file|default=<undefined>: capture standard output
-    out_outliers: generic/file
-    # type=file: output image file name
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields

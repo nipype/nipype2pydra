@@ -29,11 +29,11 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    log_file: text/text-file
-    # type=file: The output log
-    # type=file|default=<undefined>: The log file for TalairachQC
     subjects_dir: generic/directory
     # type=directory|default=<undefined>: subjects directory
+    log_file: Path
+    # type=file: The output log
+    # type=file|default=<undefined>: The log file for TalairachQC
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:
@@ -88,7 +88,7 @@ tests:
 - inputs:
   # dict[str, str] - values to provide to inputs fields in the task initialisation
   # (if not specified, will try to choose a sensible value)
-    log_file:
+    log_file: '"dirs.txt"'
     # type=file: The output log
     # type=file|default=<undefined>: The log file for TalairachQC
   imports:
@@ -113,7 +113,7 @@ doctests:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
   # If the field is of file-format type and the value is None, then the
   # '.mock()' method of the corresponding class is used instead.
-    log_file:
+    log_file: '"dirs.txt"'
     # type=file: The output log
     # type=file|default=<undefined>: The log file for TalairachQC
   imports:

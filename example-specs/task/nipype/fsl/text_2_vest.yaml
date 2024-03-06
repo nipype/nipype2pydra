@@ -35,6 +35,9 @@ inputs:
   # passed to the field in the automatically generated unittests.
     in_file: text/text-file
     # type=file|default=<undefined>: plain text file representing your design, contrast, or f-test matrix
+    out_file: Path
+    # type=file: matrix data in the format used by FSL tools
+    # type=file|default=<undefined>: file name to store matrix data in the format used by FSL tools (e.g., design.mat, design.con design.fts)
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

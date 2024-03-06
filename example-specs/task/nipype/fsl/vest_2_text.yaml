@@ -34,6 +34,9 @@ inputs:
   # passed to the field in the automatically generated unittests.
     in_file: datascience/text-matrix
     # type=file|default=<undefined>: matrix data stored in the format used by FSL tools
+    out_file: Path
+    # type=file: plain text representation of FSL matrix
+    # type=file|default='design.txt': file name to store text output from matrix
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

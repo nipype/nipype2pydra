@@ -33,6 +33,9 @@ inputs:
   # passed to the field in the automatically generated unittests.
     images: medimage/nifti1+list-of
     # type=inputmultiobject|default=[]: image to apply transformation to (generally a coregistered functional)
+    output_average_image: Path
+    # type=file: average image file
+    # type=file|default='average.nii': the name of the resulting image.
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

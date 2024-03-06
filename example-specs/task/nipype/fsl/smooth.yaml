@@ -57,7 +57,7 @@ inputs:
   # passed to the field in the automatically generated unittests.
     in_file: medimage/nifti1
     # type=file|default=<undefined>: 
-    smoothed_file: generic/file
+    smoothed_file: Path
     # type=file: 
     # type=file|default=<undefined>: 
   metadata:

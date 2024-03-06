@@ -62,6 +62,9 @@ inputs:
     # type=file|default=<undefined>: Filename for 1D cardiac phase output
     respphase: generic/file
     # type=file|default=<undefined>: Filename for 1D resp phase output
+    out_file: Path
+    # type=file: output file
+    # type=file|default=<undefined>: output image file name
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

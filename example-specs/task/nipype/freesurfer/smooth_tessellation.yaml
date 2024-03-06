@@ -37,6 +37,12 @@ inputs:
   # passed to the field in the automatically generated unittests.
     in_file: generic/file
     # type=file|default=<undefined>: Input volume to tessellate voxels from.
+    out_file: generic/file
+    # type=file|default=<undefined>: output filename or True to generate one
+    out_curvature_file: generic/file
+    # type=file|default=<undefined>: Write curvature to ``?h.curvname`` (default "curv")
+    out_area_file: generic/file
+    # type=file|default=<undefined>: Write area to ``?h.areaname`` (default "area")
     subjects_dir: generic/directory
     # type=directory|default=<undefined>: subjects directory
   metadata:
@@ -52,10 +58,6 @@ outputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    out_curvature_file: generic/file
-    # type=file|default=<undefined>: Write curvature to ``?h.curvname`` (default "curv")
-    out_area_file: generic/file
-    # type=file|default=<undefined>: Write area to ``?h.areaname`` (default "area")
     surface: generic/file
     # type=file: Smoothed surface file.
   callables:
@@ -63,8 +65,6 @@ outputs:
   # to set to the `callable` attribute of output fields
   templates:
   # dict[str, str] - `output_file_template` values to be provided to output fields
-    out_file: out_file
-    # type=file|default=<undefined>: output filename or True to generate one
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:

@@ -57,40 +57,43 @@ inputs:
     # type=inputmultiobject|default=[]: similar to 'slibase', BUT each file much be in slice major order (i.e. all slice0 columns come first, then all slice1 columns, etc).
     dsort: generic/file
     # type=file|default=<undefined>: 4D dataset to be used as voxelwise baseline regressor
-    var_file: generic/file
+    out_file: Path
+    # type=file: dataset for beta + statistics from the REML estimation (if generated
+    # type=file|default=<undefined>: output dataset for beta + statistics from the REML estimation; also contains the results of any GLT analysis requested in the Deconvolve setup, similar to the 'bucket' output from Deconvolve. This dataset does NOT get the betas (or statistics) of those regressors marked as 'baseline' in the matrix file.
+    var_file: Path
     # type=file: dataset for REML variance parameters (if generated)
     # type=file|default=<undefined>: output dataset for REML variance parameters
-    rbeta_file: generic/file
+    rbeta_file: Path
     # type=file: output dataset for beta weights from the REML estimation (if generated
     # type=file|default=<undefined>: output dataset for beta weights from the REML estimation, similar to the 'cbucket' output from Deconvolve. This dataset will contain all the beta weights, for baseline and stimulus regressors alike, unless the '-nobout' option is given -- in that case, this dataset will only get the betas for the stimulus regressors.
-    glt_file: generic/file
+    glt_file: Path
     # type=file: output dataset for beta + statistics from the REML estimation, but ONLY for the GLTs added on the REMLfit command line itself via 'gltsym' (if generated)
     # type=file|default=<undefined>: output dataset for beta + statistics from the REML estimation, but ONLY for the GLTs added on the REMLfit command line itself via 'gltsym'; GLTs from Deconvolve's command line will NOT be included.
-    fitts_file: generic/file
+    fitts_file: Path
     # type=file: output dataset for REML fitted model (if generated)
     # type=file|default=<undefined>: output dataset for REML fitted model
-    errts_file: generic/file
+    errts_file: Path
     # type=file: output dataset for REML residuals = data - fitted model (if generated
     # type=file|default=<undefined>: output dataset for REML residuals = data - fitted model
-    wherr_file: generic/file
+    wherr_file: Path
     # type=file: dataset for REML residual, whitened using the estimated ARMA(1,1) correlation matrix of the noise (if generated)
     # type=file|default=<undefined>: dataset for REML residual, whitened using the estimated ARMA(1,1) correlation matrix of the noise
-    ovar: generic/file
+    ovar: Path
     # type=file: dataset for OLSQ st.dev. parameter (if generated)
     # type=file|default=<undefined>: dataset for OLSQ st.dev. parameter (kind of boring)
-    obeta: generic/file
+    obeta: Path
     # type=file: dataset for beta weights from the OLSQ estimation (if generated)
     # type=file|default=<undefined>: dataset for beta weights from the OLSQ estimation
-    obuck: generic/file
+    obuck: Path
     # type=file: dataset for beta + statistics from the OLSQ estimation (if generated)
     # type=file|default=<undefined>: dataset for beta + statistics from the OLSQ estimation
-    oglt: generic/file
+    oglt: Path
     # type=file: dataset for beta + statistics from 'gltsym' options (if generated
     # type=file|default=<undefined>: dataset for beta + statistics from 'gltsym' options
-    ofitts: generic/file
+    ofitts: Path
     # type=file: dataset for OLSQ fitted model (if generated)
     # type=file|default=<undefined>: dataset for OLSQ fitted model
-    oerrts: generic/file
+    oerrts: Path
     # type=file: dataset for OLSQ residuals = data - fitted model (if generated
     # type=file|default=<undefined>: dataset for OLSQ residuals (data - fitted model)
   metadata:

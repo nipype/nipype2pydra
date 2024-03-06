@@ -44,6 +44,9 @@ inputs:
     # type=file|default=<undefined>: input dataset
     mask_file: medimage/nifti-gz
     # type=file|default=<undefined>: Mask image file name. Voxels NOT in the mask will not be used in the neighborhood of any voxel. Also, a voxel NOT in the mask will have its statistic(s) computed as zero (0) unless the parameter 'nonmask' is set to true.
+    out_file: Path
+    # type=file: output file
+    # type=file|default=<undefined>: Output dataset.
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

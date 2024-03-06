@@ -32,6 +32,9 @@ inputs:
   # passed to the field in the automatically generated unittests.
     in_file: medimage-freesurfer/pial
     # type=file|default=<undefined>: input surface file
+    out_file: Path
+    # type=file: surface containing main component
+    # type=file|default=<undefined>: surface containing main component
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

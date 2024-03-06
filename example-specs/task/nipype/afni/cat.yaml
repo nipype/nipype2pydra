@@ -40,6 +40,9 @@ inputs:
   # passed to the field in the automatically generated unittests.
     in_files: medimage-afni/oned+list-of
     # type=list|default=[]: 
+    out_file: Path
+    # type=file: output file
+    # type=file|default='catout.1d': output (concatenated) file name
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

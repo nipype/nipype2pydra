@@ -42,6 +42,9 @@ inputs:
     # type=file|default=<undefined>: The dataset whose smoothness controls the process.
     mask: generic/file
     # type=file|default=<undefined>: Mask dataset, if desired. Voxels NOT in mask will be set to zero in output.
+    out_file: Path
+    # type=file: output file
+    # type=file|default=<undefined>: output image file name
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

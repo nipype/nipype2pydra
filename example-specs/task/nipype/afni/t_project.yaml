@@ -60,6 +60,9 @@ inputs:
     # type=inputmultiobject|default=[]: Remove the 3D+time time series in dataset fset.  * That is, 'fset' contains a different nuisance time   series for each voxel (e.g., from AnatICOR). * Multiple -dsort options are allowed.  
     mask: generic/file
     # type=file|default=<undefined>: Only operate on voxels nonzero in the mset dataset.  * Voxels outside the mask will be filled with zeros. * If no masking option is given, then all voxels   will be processed.  
+    out_file: Path
+    # type=file: output file
+    # type=file|default=<undefined>: output image file name
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

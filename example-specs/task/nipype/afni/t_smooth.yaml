@@ -41,6 +41,9 @@ inputs:
     # type=file|default=<undefined>: input file to 3dTSmooth
     custom: generic/file
     # type=file|default=<undefined>: odd # of coefficients must be in a single column in ASCII file
+    out_file: Path
+    # type=file: output file
+    # type=file|default=<undefined>: output file from 3dTSmooth
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

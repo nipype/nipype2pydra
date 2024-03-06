@@ -46,6 +46,12 @@ inputs:
     # type=file|default=<undefined>: Required undocumented input {subject}/mri/norm.mgz
     subjects_dir: generic/directory
     # type=directory|default=<undefined>: subjects directory
+    out_file: Path
+    # type=file: Output segmentation uncluding corpus collosum
+    # type=file|default=<undefined>: Filename to write aseg including CC
+    out_rotation: Path
+    # type=file: Output lta rotation file
+    # type=file|default=<undefined>: Global filepath for writing rotation lta
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

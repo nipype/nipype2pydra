@@ -43,6 +43,9 @@ inputs:
     # type=inputmultiobject|default=[]: List of input 3D warp datasets
     in_files: generic/file+list-of
     # type=inputmultiobject|default=[]: List of input 3D datasets to be warped by the adjusted warp datasets.  There must be exactly as many of these datasets as there are input warps.
+    out_file: Path
+    # type=file: output file
+    # type=file|default=<undefined>: Output mean dataset, only needed if in_files are also given. The output dataset will be on the common grid shared by the source datasets.
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

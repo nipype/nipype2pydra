@@ -281,13 +281,13 @@ inputs:
     # type=inputmultiobject|default=[]: Image that will be registered to the space of fixed_image. This is theimage on which the transformations will be applied to
     moving_image_mask: generic/file
     # type=file|default=<undefined>: mask used to limit metric sampling region of the moving imagein all stages
-    save_state: datascience/text-matrix
-    # type=file: The saved registration state to be restored
-    # type=file|default=<undefined>: Filename for saving the internal restorable state of the registration
     restore_state: datascience/text-matrix
     # type=file|default=<undefined>: Filename for restoring the internal restorable state of the registration
     initial_moving_transform: datascience/text-matrix+list-of
     # type=inputmultiobject|default=[]: A transform or a list of transforms that should be applied before the registration begins. Note that, when a list is given, the transformations are applied in reverse order.
+    save_state: Path
+    # type=file: The saved registration state to be restored
+    # type=file|default=<undefined>: Filename for saving the internal restorable state of the registration
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:
@@ -622,7 +622,7 @@ tests:
 - inputs:
   # dict[str, str] - values to provide to inputs fields in the task initialisation
   # (if not specified, will try to choose a sensible value)
-    save_state:
+    save_state: '"trans.mat"'
     # type=file: The saved registration state to be restored
     # type=file|default=<undefined>: Filename for saving the internal restorable state of the registration
     restore_state:
@@ -963,7 +963,7 @@ doctests:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
   # If the field is of file-format type and the value is None, then the
   # '.mock()' method of the corresponding class is used instead.
-    save_state:
+    save_state: '"trans.mat"'
     # type=file: The saved registration state to be restored
     # type=file|default=<undefined>: Filename for saving the internal restorable state of the registration
     restore_state:

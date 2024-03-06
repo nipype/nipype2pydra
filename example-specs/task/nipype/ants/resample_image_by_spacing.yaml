@@ -52,7 +52,7 @@ inputs:
   # passed to the field in the automatically generated unittests.
     input_image: medimage/nifti1
     # type=file|default=<undefined>: input image file
-    output_image: medimage/nifti-gz
+    output_image: Path
     # type=file: resampled file
     # type=file|default=<undefined>: output image file
   metadata:
@@ -123,7 +123,7 @@ tests:
   # (if not specified, will try to choose a sensible value)
     input_image:
     # type=file|default=<undefined>: input image file
-    output_image:
+    output_image: '"output.nii.gz"'
     # type=file: resampled file
     # type=file|default=<undefined>: output image file
     out_spacing: (4, 4, 4)
@@ -150,7 +150,7 @@ tests:
   # (if not specified, will try to choose a sensible value)
     input_image:
     # type=file|default=<undefined>: input image file
-    output_image:
+    output_image: '"output.nii.gz"'
     # type=file: resampled file
     # type=file|default=<undefined>: output image file
     out_spacing: (4, 4, 4)
@@ -179,7 +179,7 @@ tests:
   # (if not specified, will try to choose a sensible value)
     input_image:
     # type=file|default=<undefined>: input image file
-    output_image:
+    output_image: '"output.nii.gz"'
     # type=file: resampled file
     # type=file|default=<undefined>: output image file
     out_spacing: (0.4, 0.4, 0.4)
@@ -216,7 +216,7 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     input_image:
     # type=file|default=<undefined>: input image file
-    output_image:
+    output_image: '"output.nii.gz"'
     # type=file: resampled file
     # type=file|default=<undefined>: output image file
     out_spacing: (4, 4, 4)
@@ -236,7 +236,7 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     input_image:
     # type=file|default=<undefined>: input image file
-    output_image:
+    output_image: '"output.nii.gz"'
     # type=file: resampled file
     # type=file|default=<undefined>: output image file
     out_spacing: (4, 4, 4)
@@ -258,7 +258,7 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     input_image:
     # type=file|default=<undefined>: input image file
-    output_image:
+    output_image: '"output.nii.gz"'
     # type=file: resampled file
     # type=file|default=<undefined>: output image file
     out_spacing: (0.4, 0.4, 0.4)

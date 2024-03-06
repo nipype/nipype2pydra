@@ -55,6 +55,9 @@ inputs:
     # type=file|default=<undefined>: filename of affine transform (e.g. source2dest.mat)
     warp_file: medimage/nifti1
     # type=file|default=<undefined>: filename of warpfield (e.g. intermediate2dest_warp.nii.gz)
+    out_file: Path
+    # type=file: Name of output file, containing the warp as field or coefficients.
+    # type=file|default=<undefined>: output file name
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

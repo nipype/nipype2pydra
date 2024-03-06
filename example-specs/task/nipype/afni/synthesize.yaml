@@ -42,6 +42,9 @@ inputs:
     # type=file|default=<undefined>: Read the dataset output from 3dDeconvolve via the '-cbucket' option.
     matrix: medimage-afni/oned
     # type=file|default=<undefined>: Read the matrix output from 3dDeconvolve via the '-x1D' option.
+    out_file: Path
+    # type=file: output file
+    # type=file|default=<undefined>: output dataset prefix name (default 'syn')
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

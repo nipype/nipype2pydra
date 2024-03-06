@@ -38,22 +38,6 @@ inputs:
     # type=file|default=<undefined>: matrix of t-statics contrasts
     mask: generic/file
     # type=file|default=<undefined>: mask image file name if input is image
-  metadata:
-  # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
-outputs:
-  omit:
-  # list[str] - fields to omit from the Pydra interface
-  rename:
-  # dict[str, str] - fields to rename in the Pydra interface
-  types:
-  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
-  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
-  # from the nipype interface, but you may want to be more specific, particularly
-  # for file types, where specifying the format also specifies the file that will be
-  # passed to the field in the automatically generated unittests.
-    out_file: generic/file
-    # type=file: file name of GLM parameters (if generated)
-    # type=file|default=<undefined>: filename for GLM parameter estimates (GLM betas)
     out_cope: generic/file
     # type=outputmultiobject: output file name for COPEs (either as text file or image)
     # type=file|default=<undefined>: output file name for COPE (either as txt or image
@@ -77,6 +61,25 @@ outputs:
     # type=file|default=<undefined>: output file name for pre-processed data
     out_vnscales_name: generic/file
     # type=file|default=<undefined>: output file name for scaling factors for variance normalisation
+    out_file: Path
+    # type=file: file name of GLM parameters (if generated)
+    # type=file|default=<undefined>: filename for GLM parameter estimates (GLM betas)
+  metadata:
+  # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
+outputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    out_file: generic/file
+    # type=file: file name of GLM parameters (if generated)
+    # type=file|default=<undefined>: filename for GLM parameter estimates (GLM betas)
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields

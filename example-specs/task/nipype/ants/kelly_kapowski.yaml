@@ -51,10 +51,10 @@ inputs:
     # type=file|default=<undefined>: In addition to the segmentation image, a white matter probability image can be used. If no such image is supplied, one is created using the segmentation image and a variance of 1.0 mm.
     thickness_prior_image: generic/file
     # type=file|default=<undefined>: An image containing spatially varying prior thickness values.
-    cortical_thickness: generic/file
+    cortical_thickness: Path
     # type=file: A thickness map defined in the segmented gray matter.
     # type=file|default=<undefined>: Filename for the cortical thickness.
-    warped_white_matter: generic/file
+    warped_white_matter: Path
     # type=file: A warped white matter image.
     # type=file|default=<undefined>: Filename for the warped white matter file.
   metadata:

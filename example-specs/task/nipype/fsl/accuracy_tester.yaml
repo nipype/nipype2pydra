@@ -27,7 +27,7 @@ inputs:
     # type=file|default=<undefined>: trained-weights file
     mel_icas: generic/directory+list-of
     # type=inputmultiobject|default=[]: Melodic output directories
-    output_directory: generic/directory
+    output_directory: Path
     # type=directory: Path to folder in which to store the results of the accuracy test.
     # type=directory|default=<undefined>: Path to folder in which to store the results of the accuracy test.
   metadata:

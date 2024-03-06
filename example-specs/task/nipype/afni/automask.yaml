@@ -38,7 +38,10 @@ inputs:
   # passed to the field in the automatically generated unittests.
     in_file: medimage/nifti1
     # type=file|default=<undefined>: input file to 3dAutomask
-    brain_file: generic/file
+    out_file: Path
+    # type=file: mask file
+    # type=file|default=<undefined>: output image file name
+    brain_file: Path
     # type=file: brain file (skull stripped)
     # type=file|default=<undefined>: output file from 3dAutomask
   metadata:

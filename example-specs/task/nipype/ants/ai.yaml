@@ -49,6 +49,9 @@ inputs:
     # type=file|default=<undefined>: fixed mage mask
     moving_image_mask: generic/file
     # type=file|default=<undefined>: moving mage mask
+    output_transform: Path
+    # type=file: output file name
+    # type=file|default='initialization.mat': output file name
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

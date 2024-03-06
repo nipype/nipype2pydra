@@ -65,6 +65,9 @@ inputs:
     # type=inputmultiobject|default=[]: use initial intensity scales
     subjects_dir: generic/directory
     # type=directory|default=<undefined>: subjects directory
+    out_file: Path
+    # type=file: output template volume (final mean/median image)
+    # type=file|default='mri_robust_template_out.mgz': output template volume (final mean/median image)
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

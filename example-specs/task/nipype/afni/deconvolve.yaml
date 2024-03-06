@@ -51,9 +51,12 @@ inputs:
     # type=file|default=<undefined>: build a mask from provided file, and use this mask for the purpose of reporting truncation-to float issues AND for computing the FDR curves. The actual results ARE not masked with this option (only with 'mask' or 'automask' options).
     censor: generic/file
     # type=file|default=<undefined>: filename of censor .1D time series. This is a file of 1s and 0s, indicating which time points are to be included (1) and which are to be excluded (0).
-    x1D: medimage-afni/oned
+    x1D: Path
     # type=file: save out X matrix
     # type=file|default=<undefined>: specify name for saved X matrix
+    out_file: Path
+    # type=file: output statistics file
+    # type=file|default=<undefined>: output statistics file
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:
@@ -209,7 +212,7 @@ tests:
     out_file: '"output.nii"'
     # type=file: output statistics file
     # type=file|default=<undefined>: output statistics file
-    x1D:
+    x1D: '"output.1D"'
     # type=file: save out X matrix
     # type=file|default=<undefined>: specify name for saved X matrix
     stim_times: stim_times
@@ -247,7 +250,7 @@ doctests:
     out_file: '"output.nii"'
     # type=file: output statistics file
     # type=file|default=<undefined>: output statistics file
-    x1D:
+    x1D: '"output.1D"'
     # type=file: save out X matrix
     # type=file|default=<undefined>: specify name for saved X matrix
     stim_times: stim_times

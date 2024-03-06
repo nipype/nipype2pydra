@@ -54,6 +54,9 @@ inputs:
     # type=file|default=<undefined>: Undocumented flag. Autorecon3 uses ../mri/aseg.presurf.mgz as input file
     subjects_dir: generic/directory
     # type=directory|default=<undefined>: subjects directory
+    out_file: Path
+    # type=file: Output volume from CALabel
+    # type=file|default=<undefined>: Output file for CALabel
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

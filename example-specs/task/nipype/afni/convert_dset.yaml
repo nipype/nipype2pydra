@@ -38,6 +38,9 @@ inputs:
   # passed to the field in the automatically generated unittests.
     in_file: medimage/gifti
     # type=file|default=<undefined>: input file to ConvertDset
+    out_file: Path
+    # type=file: output file
+    # type=file|default=<undefined>: output file for ConvertDset
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

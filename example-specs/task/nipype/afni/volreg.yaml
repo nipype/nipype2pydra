@@ -55,13 +55,16 @@ inputs:
     # type=file|default=<undefined>: input file to 3dvolreg
     basefile: medimage/nifti1
     # type=file|default=<undefined>: base file for registration
-    md1d_file: generic/file
+    out_file: Path
+    # type=file: registered file
+    # type=file|default=<undefined>: output image file name
+    md1d_file: Path
     # type=file: max displacement info file
     # type=file|default=<undefined>: max displacement output file
-    oned_file: medimage-afni/oned
+    oned_file: Path
     # type=file: movement parameters info file
     # type=file|default=<undefined>: 1D movement parameters output file
-    oned_matrix_save: medimage-afni/oned
+    oned_matrix_save: Path
     # type=file: matrix transformation from base to input
     # type=file|default=<undefined>: Save the matrix transformation
   metadata:
@@ -193,10 +196,10 @@ tests:
     out_file: '"rm.epi.volreg.r1"'
     # type=file: registered file
     # type=file|default=<undefined>: output image file name
-    oned_file:
+    oned_file: '"dfile.r1.1D"'
     # type=file: movement parameters info file
     # type=file|default=<undefined>: 1D movement parameters output file
-    oned_matrix_save:
+    oned_matrix_save: '"mat.r1.tshift+orig.1D"'
     # type=file: matrix transformation from base to input
     # type=file|default=<undefined>: Save the matrix transformation
   imports:
@@ -253,10 +256,10 @@ doctests:
     out_file: '"rm.epi.volreg.r1"'
     # type=file: registered file
     # type=file|default=<undefined>: output image file name
-    oned_file:
+    oned_file: '"dfile.r1.1D"'
     # type=file: movement parameters info file
     # type=file|default=<undefined>: 1D movement parameters output file
-    oned_matrix_save:
+    oned_matrix_save: '"mat.r1.tshift+orig.1D"'
     # type=file: matrix transformation from base to input
     # type=file|default=<undefined>: Save the matrix transformation
   imports:

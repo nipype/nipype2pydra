@@ -76,13 +76,9 @@ outputs:
   # to set to the `callable` attribute of output fields
   templates:
   # dict[str, str] - `output_file_template` values to be provided to output fields
-    vsm: vsm
-    # type=string|default='': voxel shift map
     exfdw: exfdw
     # type=file: dewarped functional volume example
     # type=string|default='': dewarped example func volume
-    tmpdir: tmpdir
-    # type=string|default='': tmpdir
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:

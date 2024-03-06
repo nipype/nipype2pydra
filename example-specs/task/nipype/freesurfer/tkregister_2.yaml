@@ -61,6 +61,9 @@ inputs:
     # type=file|default=<undefined>: use a matrix in MNI coordinates as initial registration
     subjects_dir: generic/directory
     # type=directory|default=<undefined>: subjects directory
+    reg_file: Path
+    # type=file: freesurfer-style registration file
+    # type=file|default='register.dat': freesurfer-style registration file
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

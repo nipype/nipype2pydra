@@ -54,6 +54,9 @@ inputs:
     # type=file|default=<undefined>: Read in the oblique transformation matrix from an oblique dataset and make cardinal dataset oblique to match
     gridset: generic/file
     # type=file|default=<undefined>: copy grid of specified dataset
+    out_file: Path
+    # type=file: Warped file.
+    # type=file|default=<undefined>: output image file name
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

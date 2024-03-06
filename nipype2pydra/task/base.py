@@ -459,6 +459,9 @@ class BaseTaskConverter(metaclass=ABCMeta):
         for f in input_fields:
             add_nonstd_types(f[1])
 
+        for f in output_fields:
+            add_nonstd_types(f[1])
+
         output_file = (
             Path(package_root)
             .joinpath(*self.output_module.split("."))

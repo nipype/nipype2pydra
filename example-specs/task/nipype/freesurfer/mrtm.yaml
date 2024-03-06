@@ -46,15 +46,15 @@ inputs:
     # type=file|default=<undefined>: text file with dof for fixed effects analysis
     weight_file: generic/file
     # type=file|default=<undefined>: weight for each input at each voxel
-    mask_file: generic/file
-    # type=file: map of the mask used in the analysis
-    # type=file|default=<undefined>: binary mask
     label_file: generic/file
     # type=file|default=<undefined>: use label as mask, surfaces only
     sim_done_file: generic/file
     # type=file|default=<undefined>: create file when simulation finished
     subjects_dir: generic/directory
     # type=directory|default=<undefined>: subjects directory
+    mask_file: Path
+    # type=file: map of the mask used in the analysis
+    # type=file|default=<undefined>: binary mask
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

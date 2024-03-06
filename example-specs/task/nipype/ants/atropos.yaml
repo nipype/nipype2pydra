@@ -100,6 +100,8 @@ inputs:
     # type=inputmultiobject|default=[]: 
     mask_image: medimage/nifti1
     # type=file|default=<undefined>: 
+    out_classified_image_name: generic/file
+    # type=file|default=<undefined>: 
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:
@@ -120,8 +122,6 @@ outputs:
   # to set to the `callable` attribute of output fields
   templates:
   # dict[str, str] - `output_file_template` values to be provided to output fields
-    out_classified_image_name: out_classified_image_name
-    # type=file|default=<undefined>: 
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:

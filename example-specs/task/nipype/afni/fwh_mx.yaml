@@ -117,6 +117,15 @@ inputs:
     # type=file|default=<undefined>: input dataset
     mask: generic/file
     # type=file|default=<undefined>: use only voxels that are nonzero in mask
+    out_file: Path
+    # type=file: output file
+    # type=file|default=<undefined>: output file
+    out_subbricks: Path
+    # type=file: output file (subbricks)
+    # type=file|default=<undefined>: output file listing the subbricks FWHM
+    out_detrend: Path
+    # type=file: output file, detrended
+    # type=file|default=<undefined>: Save the detrended file into a dataset
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

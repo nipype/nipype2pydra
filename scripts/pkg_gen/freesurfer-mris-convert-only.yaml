@@ -1,0 +1,5 @@
+packages:
+- freesurfer
+interfaces:
+  freesurfer:
+  - MRIsConvert

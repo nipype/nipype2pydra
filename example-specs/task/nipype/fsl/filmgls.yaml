@@ -55,7 +55,7 @@ inputs:
     # type=file|default=<undefined>: input data file
     design_file: generic/file
     # type=file|default=<undefined>: design matrix file
-    results_dir: generic/directory
+    results_dir: Path
     # type=directory: directory storing model estimation output
     # type=directory|default='results': directory to store results in
   metadata:

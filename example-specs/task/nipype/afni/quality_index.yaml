@@ -42,6 +42,9 @@ inputs:
     # type=file|default=<undefined>: input dataset
     mask: generic/file
     # type=file|default=<undefined>: compute correlation only across masked voxels
+    out_file: Path
+    # type=file: file containing the captured standard output
+    # type=file|default=<undefined>: capture standard output
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

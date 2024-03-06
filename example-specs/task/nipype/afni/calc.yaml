@@ -56,6 +56,9 @@ inputs:
     # type=file|default=<undefined>: operand file to 3dcalc
     other: generic/file
     # type=file|default=<undefined>: other options
+    out_file: Path
+    # type=file: output file
+    # type=file|default=<undefined>: output image file name
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

@@ -49,6 +49,8 @@ inputs:
     # type=file|default=<undefined>: can include a whole brain mask within which to calculate correlation. Otherwise, data should be masked already
     weight_ts: generic/file
     # type=file|default=<undefined>: input a 1D file WTS of weights that will be applied multiplicatively to each ROI's average time series. WTS can be a column- or row-file of values, but it must have the same length as the input time series volume. If the initial average time series was A[n] for n=0,..,(N-1) time points, then applying a set of weights W[n] of the same length from WTS would produce a new time series:  B[n] = A[n] * W[n]
+    out_file: medimage-afni/ncorr
+    # type=file|default=<undefined>: output file name part
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:
@@ -62,8 +64,6 @@ outputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    out_file: medimage-afni/ncorr
-    # type=file|default=<undefined>: output file name part
     out_corr_matrix: generic/file
     # type=file: output correlation matrix between ROIs written to a text file with .netcc suffix
   callables:
@@ -149,7 +149,7 @@ tests:
     # type=bool|default=False: same as above in '-ts_wb_corr', except that the maps have been Fisher transformed to Z-scores the relation: Z=atanh(r). To avoid infinities in the transform, Pearson values are effectively capped at |r| = 0.999329 (where |Z| = 4.0). Files are labelled WB_Z_ROI_001+orig, etc
     fish_z: 'True'
     # type=bool|default=False: switch to also output a matrix of Fisher Z-transform values for the corr coefs (r): Z = atanh(r) , (with Z=4 being output along matrix diagonals where r=1, as the r-to-Z conversion is ceilinged at Z = atanh(r=0.999329) = 4, which is still *quite* a high Pearson-r value
-    out_file: '"sub0.tp1.ncorr"'
+    out_file:
     # type=file|default=<undefined>: output file name part
   imports:
   # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
@@ -185,7 +185,7 @@ doctests:
     # type=bool|default=False: same as above in '-ts_wb_corr', except that the maps have been Fisher transformed to Z-scores the relation: Z=atanh(r). To avoid infinities in the transform, Pearson values are effectively capped at |r| = 0.999329 (where |Z| = 4.0). Files are labelled WB_Z_ROI_001+orig, etc
     fish_z: 'True'
     # type=bool|default=False: switch to also output a matrix of Fisher Z-transform values for the corr coefs (r): Z = atanh(r) , (with Z=4 being output along matrix diagonals where r=1, as the r-to-Z conversion is ceilinged at Z = atanh(r=0.999329) = 4, which is still *quite* a high Pearson-r value
-    out_file: '"sub0.tp1.ncorr"'
+    out_file:
     # type=file|default=<undefined>: output file name part
   imports:
   # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item

@@ -25,15 +25,14 @@ XFAIL_PACKAGES = ["camino", "cat12", "cmtk", "dcmsstack", "dipy", "spm"]
 
 @pytest.fixture(
     params=[
-        str(p.relative_to(EXAMPLE_TASKS_DIR)).replace("/", "__")[:-5]
+        str(p.relative_to(EXAMPLE_TASKS_DIR)).replace("/", "-")[:-5]
         for p in (EXAMPLE_TASKS_DIR).glob("**/*.yaml")
     ]
 )
 def task_spec_file(request):
-    return EXAMPLE_TASKS_DIR.joinpath(*request.param.split("__")).with_suffix(".yaml")
+    return EXAMPLE_TASKS_DIR.joinpath(*request.param.split("-")).with_suffix(".yaml")
 
 
-@pytest.mark.xfail(condition="any(str(task_spec_file).startswith(str(EXAMPLE_TASKS_DIR / ('pydra-' + p))) for p in XFAIL_PACKAGES)")
 def test_task_conversion(task_spec_file, cli_runner, work_dir, gen_test_conftest):
 
     with open(task_spec_file) as f:

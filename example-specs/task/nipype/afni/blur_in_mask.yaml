@@ -42,6 +42,9 @@ inputs:
     # type=file|default=<undefined>: Mask dataset, if desired.  Blurring will occur only within the mask. Voxels NOT in the mask will be set to zero in the output.
     multimask: generic/file
     # type=file|default=<undefined>: Multi-mask dataset -- each distinct nonzero value in dataset will be treated as a separate mask for blurring purposes.
+    out_file: Path
+    # type=file: output file
+    # type=file|default=<undefined>: output to the file
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:
