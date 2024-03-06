@@ -42,6 +42,9 @@ inputs:
     # type=file|default=<undefined>: Mask input with a volume
     subjects_dir: generic/directory
     # type=directory|default=<undefined>: subjects directory
+    concatenated_file: Path
+    # type=file: Path/name of the output volume
+    # type=file|default=<undefined>: Output volume
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

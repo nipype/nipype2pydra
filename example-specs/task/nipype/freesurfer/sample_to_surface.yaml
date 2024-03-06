@@ -58,6 +58,9 @@ inputs:
     # type=file|default=<undefined>: label file to mask output with
     subjects_dir: generic/directory
     # type=directory|default=<undefined>: subjects directory
+    out_file: Path
+    # type=file: surface file
+    # type=file|default=<undefined>: surface file to write
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

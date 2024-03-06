@@ -44,6 +44,9 @@ inputs:
     # type=file|default=<undefined>: Undocumented input file ${SUBJECTS_DIR}/surf/{hemisphere}.smoothwm 
     subjects_dir: generic/directory
     # type=directory|default=<undefined>: subjects directory
+    out_file: Path
+    # type=file: Output surface file to capture registration
+    # type=file|default=<undefined>: Output surface file to capture registration
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

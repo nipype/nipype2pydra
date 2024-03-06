@@ -24,6 +24,9 @@ inputs:
     # type=file|default=<undefined>: binary image defining mask space
     in_file: generic/file
     # type=file|default=<undefined>: image to operate on
+    out_file: Path
+    # type=file: image written after calculations
+    # type=file|default=<undefined>: image to write
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

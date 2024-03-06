@@ -71,7 +71,7 @@ inputs:
     # type=file|default=<undefined>: transformation matrix taking seed space to DTI space (either FLIRT matrix or FNIRT warp_field) - default is identity
     inv_xfm: generic/file
     # type=file|default=<undefined>: transformation matrix taking DTI space to seed space (compulsory when using a warp_field for seeds_to_dti)
-    out_dir: generic/directory
+    out_dir: Path
     # type=directory|default=<undefined>: directory to put the final volumes in
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
@@ -103,6 +103,8 @@ outputs:
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
+    out_dir: out_dir_callable
+    # type=directory|default=<undefined>: directory to put the final volumes in
   templates:
   # dict[str, str] - `output_file_template` values to be provided to output fields
   requirements:

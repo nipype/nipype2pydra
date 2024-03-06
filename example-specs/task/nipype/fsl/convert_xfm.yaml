@@ -38,6 +38,9 @@ inputs:
     # type=file|default=<undefined>: input transformation matrix
     in_file2: generic/file
     # type=file|default=<undefined>: second input matrix (for use with fix_scale_skew or concat_xfm)
+    out_file: Path
+    # type=file: output transformation matrix
+    # type=file|default=<undefined>: final transformation matrix
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

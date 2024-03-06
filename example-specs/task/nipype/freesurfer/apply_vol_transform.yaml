@@ -52,6 +52,9 @@ inputs:
     # type=file|default=<undefined>: This is the morph to be applied to the volume. Unless the morph is in mri/transforms (eg.: for talairach.m3z computed by reconall), you will need to specify the full path to this morph and use the --noDefM3zPath flag.
     subjects_dir: generic/directory
     # type=directory|default=<undefined>: subjects directory
+    transformed_file: Path
+    # type=file: Path to output file if used normally
+    # type=file|default=<undefined>: Output volume
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

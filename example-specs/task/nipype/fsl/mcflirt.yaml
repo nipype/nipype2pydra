@@ -42,6 +42,9 @@ inputs:
     # type=file|default=<undefined>: initial transformation matrix
     ref_file: generic/file
     # type=file|default=<undefined>: target image for motion correction
+    out_file: Path
+    # type=file: motion-corrected timeseries
+    # type=file|default=<undefined>: file to write
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

@@ -100,7 +100,7 @@ inputs:
     # type=inputmultiobject|default=[]: 
     mask_image: medimage/nifti1
     # type=file|default=<undefined>: 
-    out_classified_image_name: generic/file
+    out_classified_image_name: Path
     # type=file|default=<undefined>: 
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
@@ -120,6 +120,8 @@ outputs:
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
+    out_classified_image_name: out_classified_image_name_callable
+    # type=file|default=<undefined>: 
   templates:
   # dict[str, str] - `output_file_template` values to be provided to output fields
   requirements:

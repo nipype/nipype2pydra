@@ -29,6 +29,9 @@ inputs:
     # type=file|default=<undefined>: name of the matrix with time courses (e.g. GLM design or MELODIC mixing matrix)
     mask: generic/file
     # type=file|default=<undefined>: mask image file name
+    out_file: Path
+    # type=file: output file name for the filtered data
+    # type=file|default=<undefined>: output file name for the filtered data
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

@@ -63,6 +63,12 @@ inputs:
     # type=file|default=<undefined>: name of file with mask in reference space
     inmask_file: generic/file
     # type=file|default=<undefined>: name of file with mask in input image space
+    warped_file: Path
+    # type=file: warped image
+    # type=file|default=<undefined>: name of output image
+    log_file: Path
+    # type=file: Name of log-file
+    # type=file|default=<undefined>: Name of log-file
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

@@ -80,6 +80,9 @@ inputs:
     # type=file|default=<undefined>: Convert FLAIR image to orig directory
     expert: generic/file
     # type=file|default=<undefined>: Set parameters using expert file
+    subjects_dir: Path
+    # type=directory: Freesurfer subjects directory.
+    # type=directory|default=<undefined>: path to subjects directory
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

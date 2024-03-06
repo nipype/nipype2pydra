@@ -35,10 +35,10 @@ inputs:
     # type=list|default=[]: list of FLASH images (must be in mgh format)
     xfm_list: generic/file+list-of
     # type=list|default=[]: list of transform files to apply to each FLASH image
-    out_dir: generic/directory
-    # type=directory|default=<undefined>: directory to store output in
     subjects_dir: generic/directory
     # type=directory|default=<undefined>: subjects directory
+    out_dir: Path
+    # type=directory|default=<undefined>: directory to store output in
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:
@@ -61,6 +61,8 @@ outputs:
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
+    out_dir: out_dir_callable
+    # type=directory|default=<undefined>: directory to store output in
   templates:
   # dict[str, str] - `output_file_template` values to be provided to output fields
   requirements:

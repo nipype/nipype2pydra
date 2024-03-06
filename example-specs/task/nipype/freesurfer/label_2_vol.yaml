@@ -46,6 +46,9 @@ inputs:
     # type=file|default=<undefined>: map the label stats field into the vol
     subjects_dir: generic/directory
     # type=directory|default=<undefined>: subjects directory
+    vol_label_file: Path
+    # type=file: output volume
+    # type=file|default=<undefined>: output volume
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

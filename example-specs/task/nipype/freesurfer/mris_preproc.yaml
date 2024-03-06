@@ -41,6 +41,9 @@ inputs:
     # type=inputmultiobject|default=[]: file alternative to surfmeas, still requires list of subjects
     subjects_dir: generic/directory
     # type=directory|default=<undefined>: subjects directory
+    out_file: Path
+    # type=file: preprocessed output file
+    # type=file|default=<undefined>: output filename
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

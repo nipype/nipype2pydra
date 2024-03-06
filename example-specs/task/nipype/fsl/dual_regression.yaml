@@ -44,6 +44,9 @@ inputs:
     # type=file|default=<undefined>: Design matrix for final cross-subject modelling with randomise
     con_file: generic/file
     # type=file|default=<undefined>: Design contrasts for final cross-subject modelling with randomise
+    out_dir: Path
+    # type=directory: 
+    # type=directory|default='output': This directory will be created to hold all output and logfiles
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

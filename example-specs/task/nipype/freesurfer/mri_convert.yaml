@@ -43,9 +43,6 @@ inputs:
     # type=file|default=<undefined>: apply inverse transformation xfm file
     in_file: medimage/nifti1
     # type=file|default=<undefined>: File to read/convert
-    out_file: medimage/mgh-gz
-    # type=outputmultiobject: converted output file
-    # type=file|default=<undefined>: output filename or True to generate one
     reslice_like: generic/file
     # type=file|default=<undefined>: reslice output to match file
     in_like: generic/file
@@ -58,6 +55,9 @@ inputs:
     # type=file|default=<undefined>: list of DICOM files for conversion
     subjects_dir: generic/directory
     # type=directory|default=<undefined>: subjects directory
+    out_file: Path
+    # type=outputmultiobject: converted output file
+    # type=file|default=<undefined>: output filename or True to generate one
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:
@@ -74,6 +74,9 @@ outputs:
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
+    out_file: out_file_callable
+    # type=outputmultiobject: converted output file
+    # type=file|default=<undefined>: output filename or True to generate one
   templates:
   # dict[str, str] - `output_file_template` values to be provided to output fields
   requirements:
@@ -275,7 +278,7 @@ tests:
   # (if not specified, will try to choose a sensible value)
     in_file:
     # type=file|default=<undefined>: File to read/convert
-    out_file:
+    out_file: '"outfile.mgz"'
     # type=outputmultiobject: converted output file
     # type=file|default=<undefined>: output filename or True to generate one
     out_type: '"mgz"'
@@ -304,7 +307,7 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     in_file:
     # type=file|default=<undefined>: File to read/convert
-    out_file:
+    out_file: '"outfile.mgz"'
     # type=outputmultiobject: converted output file
     # type=file|default=<undefined>: output filename or True to generate one
     out_type: '"mgz"'

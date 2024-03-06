@@ -33,6 +33,9 @@ inputs:
   # passed to the field in the automatically generated unittests.
     in_file: generic/file
     # type=file|default=<undefined>: input 4D file to estimate the power spectrum
+    out_file: Path
+    # type=file: path/name of the output 4D power spectrum file
+    # type=file|default=<undefined>: name of output 4D file for power spectrum
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

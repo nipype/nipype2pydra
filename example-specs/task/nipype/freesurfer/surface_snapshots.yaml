@@ -56,10 +56,10 @@ inputs:
     # type=file|default=<undefined>: load colortable file
     patch_file: generic/file
     # type=file|default=<undefined>: load a patch
-    tcl_script: generic/file
-    # type=file|default=<undefined>: override default screenshot script
     subjects_dir: generic/directory
     # type=directory|default=<undefined>: subjects directory
+    tcl_script: Path
+    # type=file|default=<undefined>: override default screenshot script
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:
@@ -76,6 +76,8 @@ outputs:
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
+    tcl_script: tcl_script_callable
+    # type=file|default=<undefined>: override default screenshot script
   templates:
   # dict[str, str] - `output_file_template` values to be provided to output fields
   requirements:

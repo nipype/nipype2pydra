@@ -40,6 +40,9 @@ inputs:
     # type=file|default=<undefined>: input file to skull strip
     t2_guided: generic/file
     # type=file|default=<undefined>: as with creating surfaces, when also feeding in non-brain-extracted T2 (includes registrations)
+    out_file: Path
+    # type=file: path/name of skullstripped file (if generated)
+    # type=file|default=<undefined>: name of output skull stripped image
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

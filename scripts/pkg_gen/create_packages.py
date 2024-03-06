@@ -102,6 +102,7 @@ def download_tasks_template(output_path: Path):
 @click.option("--work-dir", type=click.Path(path_type=Path), default=None)
 @click.option("--task-template", type=click.Path(path_type=Path), default=None)
 @click.option("--packages-to-import", type=click.Path(path_type=Path), default=None)
+@click.option("--single-interface", type=str, nargs=2, default=None)
 @click.option(
     "--example-packages",
     type=click.Path(path_type=Path),
@@ -119,9 +120,11 @@ def generate_packages(
     work_dir: ty.Optional[Path],
     task_template: ty.Optional[Path],
     packages_to_import: ty.Optional[Path],
+    single_interface: ty.Optional[ty.Tuple[str]],
     base_package: str,
     example_packages: ty.Optional[Path],
 ):
+
     if work_dir is None:
         work_dir = Path(tempfile.mkdtemp())
 
@@ -133,13 +136,25 @@ def generate_packages(
             tar.extractall(path=extract_dir)
         task_template = extract_dir / next(extract_dir.iterdir())
 
-    if packages_to_import is None:
-        packages_to_import = (
-            Path(__file__).parent.parent.parent / "nipype-interfaces-to-import.yaml"
-        )
+    if single_interface:
+        to_import = {
+            "packages": [single_interface[0]],
+            "interfaces": {
+                single_interface[0]: [single_interface[1]],
+            }
+        }
+        if packages_to_import:
+            raise ValueError(
+                "Cannot specify both --single-package and --packages-to-import"
+            )
+    else:
+        if packages_to_import is None:
+            packages_to_import = (
+                Path(__file__).parent.parent.parent / "nipype-interfaces-to-import.yaml"
+            )
 
-    with open(packages_to_import) as f:
-        to_import = yaml.load(f, Loader=yaml.SafeLoader)
+        with open(packages_to_import) as f:
+            to_import = yaml.load(f, Loader=yaml.SafeLoader)
 
     # Wipe output dir
     if output_dir.exists():
@@ -458,28 +473,33 @@ def generate_packages(
                 with open(spec_dir / (spec_name + ".yaml"), "w") as f:
                     f.write(preamble + yaml_str)
                 callables_str = (
-                    f'"""Module to put any functions that are referred to in '
-                    f'{interface}.yaml"""\n\n'
+                    f'"""Module to put any functions that are referred to in the "callables"'
+                    f' section of {interface}.yaml"""\n\n'
                 )
                 if callables:
+                    # Convert the "_gen_filename" method into a function with any referenced
+                    # methods, functions and constants included in the module
                     funcs, imports, consts = get_gen_filename_to_funcs(nipype_interface)
                     callables_str += "\n".join(imports) + "\n\n"
-                    for const in consts:
-                        callables_str += f"{const[0]} = {const[1]}\n" + "\n\n"
-                    callables_str += "\n\n".join(funcs) + "\n\n"
+                    # Create separate callable function for each callable field, which
+                    # reference the magic "_gen_filename" method
                     for name in callables:
                         callables_str += (
                             f"def {name}_callable(output_dir, inputs, stdout, stderr):\n"
                             f'    return _gen_filename("{name}", output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr)\n\n'
                         )
-                    try:
-                        callables_str = black.format_file_contents(
-                            callables_str, fast=False, mode=black.FileMode()
-                        )
-                    except black.parsing.InvalidInput as e:
-                        raise RuntimeError(
-                            f"Black could not parse generated code: {e}\n\n{callables_str}"
-                        )
+                    for const in consts:
+                        callables_str += f"{const[0]} = {const[1]}\n" + "\n\n"
+                    callables_str += "\n\n".join(funcs) + "\n\n"
+                # Format the generated code with black
+                try:
+                    callables_str = black.format_file_contents(
+                        callables_str, fast=False, mode=black.FileMode()
+                    )
+                except black.parsing.InvalidInput as e:
+                    raise RuntimeError(
+                        f"Black could not parse generated code: {e}\n\n{callables_str}"
+                    )
                 with open(callables_fspath, "w") as f:
                     f.write(callables_str)
 
@@ -690,8 +710,13 @@ def parse_nipype_interface(
                 inpt_mdata += f"|allowed[{','.join(sorted(repr(v) for v in inpt.trait_type.values))}]"
             input_helps[inpt_name] = f"{inpt_mdata}: {inpt_desc}"
             trait_type_name = type(inpt.trait_type).__name__
-            if inpt.genfile and inpt_name in (file_outputs + dir_outputs):
-                template_outputs.append(inpt_name)
+            if inpt.genfile:
+                if trait_type_name in ("File", "Directory"):
+                    path_inputs.append(inpt_name)
+                if inpt_name in (file_outputs + dir_outputs):
+                    template_outputs.append(inpt_name)
+                else:
+                    callables.append(inpt_name)
             elif trait_type_name == "File" and inpt_name not in file_outputs:
                 file_inputs.append(inpt_name)
             elif trait_type_name == "Directory" and inpt_name not in dir_outputs:
@@ -718,8 +743,6 @@ def parse_nipype_interface(
                 multi_inputs.append(inpt_name)
             elif trait_type_name in ("File", "Directory"):
                 path_inputs.append(inpt_name)
-            elif inpt.genfile:
-                callables.append(inpt_name)
     doc_string = nipype_interface.__doc__ if nipype_interface.__doc__ else ""
     doc_string = doc_string.replace("\n", "\n# ")
     # Create a preamble at the top of the specificaiton explaining what to do
@@ -898,6 +921,16 @@ def get_gen_filename_to_funcs(
         the external constants required by the function, as (name, value) tuples
     """
 
+    if not hasattr(nipype_interface, "_gen_filename"):
+        func_src = f"""
+def _gen_filename(field, inputs, output_dir, stdout, stderr):
+    raise NotImplementedError(
+        "Could not find '_gen_filename' method in {nipype_interface.__module__}.{nipype_interface.__name__}"
+    )
+"""
+        warn(f"Could not find '_gen_filename' method in {nipype_interface}")
+        return [func_src], set(), set()
+
     IMPLICIT_ARGS = ["inputs", "stdout", "stderr", "output_dir"]
 
     def find_nested_methods(method: ty.Callable) -> ty.List[str]:
@@ -957,7 +990,9 @@ def get_gen_filename_to_funcs(
     mod = import_module(nipype_interface.__module__)
     used = UsedSymbols.find(mod, func_srcs)
     for func in used.local_functions:
-        func_srcs.append(cleanup_function_body(inspect.getsource(func), with_signature=True))
+        func_srcs.append(
+            cleanup_function_body(inspect.getsource(func), with_signature=True)
+        )
     for new_func_name, func in used.funcs_to_include:
         func_src = inspect.getsource(func)
         match = re.match(

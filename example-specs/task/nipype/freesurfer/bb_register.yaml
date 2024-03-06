@@ -42,6 +42,9 @@ inputs:
     # type=file|default=<undefined>: Intermediate image, e.g. in case of partial FOV
     subjects_dir: generic/directory
     # type=directory|default=<undefined>: subjects directory
+    out_reg_file: Path
+    # type=file: Output registration file
+    # type=file|default=<undefined>: output registration file
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

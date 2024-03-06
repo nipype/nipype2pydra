@@ -1,8 +1,21 @@
 """Module to put any functions that are referred to in EPIDeWarp.yaml"""
+
 import os.path as op
 import os
 from pathlib import Path
 import attrs
+
+
+def vsm_callable(output_dir, inputs, stdout, stderr):
+    return _gen_filename(
+        "vsm", output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+
+
+def tmpdir_callable(output_dir, inputs, stdout, stderr):
+    return _gen_filename(
+        "tmpdir", output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
 
 
 def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
@@ -98,48 +111,6 @@ def _gen_fname(
     return fname
 
 
-def fname_presuffix(fname, prefix="", suffix="", newpath=None, use_ext=True):
-    """Manipulates path and name of input filename
-
-    Parameters
-    ----------
-    fname : string
-        A filename (may or may not include path)
-    prefix : string
-        Characters to prepend to the filename
-    suffix : string
-        Characters to append to the filename
-    newpath : string
-        Path to replace the path of the input fname
-    use_ext : boolean
-        If True (default), appends the extension of the original file
-        to the output name.
-
-    Returns
-    -------
-    Absolute path of the modified filename
-
-    >>> from nipype.utils.filemanip import fname_presuffix
-    >>> fname = 'foo.nii.gz'
-    >>> fname_presuffix(fname,'pre','post','/tmp')
-    '/tmp/prefoopost.nii.gz'
-
-    >>> from nipype.interfaces.base import Undefined
-    >>> fname_presuffix(fname, 'pre', 'post', Undefined) == \
-            fname_presuffix(fname, 'pre', 'post')
-    True
-
-    """
-    pth, fname, ext = split_filename(fname)
-    if not use_ext:
-        ext = ""
-
-    # No need for isdefined: bool(Undefined) evaluates to False
-    if newpath:
-        pth = op.abspath(newpath)
-    return op.join(pth, prefix + fname + suffix + ext)
-
-
 def split_filename(fname):
     """Split a filename into parts: path, base filename and extension.
 
@@ -190,13 +161,43 @@ def split_filename(fname):
     return pth, fname, ext
 
 
-def vsm_callable(output_dir, inputs, stdout, stderr):
-    return _gen_filename(
-        "vsm", output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
+def fname_presuffix(fname, prefix="", suffix="", newpath=None, use_ext=True):
+    """Manipulates path and name of input filename
 
+    Parameters
+    ----------
+    fname : string
+        A filename (may or may not include path)
+    prefix : string
+        Characters to prepend to the filename
+    suffix : string
+        Characters to append to the filename
+    newpath : string
+        Path to replace the path of the input fname
+    use_ext : boolean
+        If True (default), appends the extension of the original file
+        to the output name.
 
-def tmpdir_callable(output_dir, inputs, stdout, stderr):
-    return _gen_filename(
-        "tmpdir", output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
+    Returns
+    -------
+    Absolute path of the modified filename
+
+    >>> from nipype.utils.filemanip import fname_presuffix
+    >>> fname = 'foo.nii.gz'
+    >>> fname_presuffix(fname,'pre','post','/tmp')
+    '/tmp/prefoopost.nii.gz'
+
+    >>> from nipype.interfaces.base import Undefined
+    >>> fname_presuffix(fname, 'pre', 'post', Undefined) == \
+            fname_presuffix(fname, 'pre', 'post')
+    True
+
+    """
+    pth, fname, ext = split_filename(fname)
+    if not use_ext:
+        ext = ""
+
+    # No need for isdefined: bool(Undefined) evaluates to False
+    if newpath:
+        pth = op.abspath(newpath)
+    return op.join(pth, prefix + fname + suffix + ext)

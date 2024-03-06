@@ -75,6 +75,12 @@ inputs:
     # type=file|default=<undefined>: limit calculations to specified label
     subjects_dir: generic/directory
     # type=directory|default=<undefined>: subjects directory
+    out_table: Path
+    # type=file: Table output to tablefile
+    # type=file|default=<undefined>: Table output to tablefile
+    out_color: Path
+    # type=file: Output annotation files's colortable to text file
+    # type=file|default=<undefined>: Output annotation files's colortable to text file
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

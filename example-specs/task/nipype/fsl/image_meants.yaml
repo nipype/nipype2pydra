@@ -28,6 +28,9 @@ inputs:
     # type=file|default=<undefined>: input file for computing the average timeseries
     mask: generic/file
     # type=file|default=<undefined>: input 3D mask
+    out_file: Path
+    # type=file: path/name of output text matrix
+    # type=file|default=<undefined>: name of output text matrix
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

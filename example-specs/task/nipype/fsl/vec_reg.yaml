@@ -48,6 +48,9 @@ inputs:
     # type=file|default=<undefined>: brain mask in input space
     ref_mask: generic/file
     # type=file|default=<undefined>: brain mask in output space (useful for speed up of nonlinear reg)
+    out_file: Path
+    # type=file: path/name of filename for the registered vector or tensor field
+    # type=file|default=<undefined>: filename for output registered vector or tensor field
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:
