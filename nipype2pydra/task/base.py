@@ -396,7 +396,7 @@ class BaseTaskConverter(metaclass=ABCMeta):
         converter=from_dict_to_outputs,
     )
     callables_module: ModuleType = attrs.field(
-        converter=import_module_from_path, default=None
+        converter=import_module_from_path, default=None,
     )
     tests: ty.List[TestGenerator] = attrs.field(  # type: ignore
         factory=list, converter=from_list_to_tests
@@ -632,12 +632,9 @@ class BaseTaskConverter(metaclass=ABCMeta):
     def function_callables(self):
         if not self.outputs.callables:
             return ""
-        python_functions_spec = (
-            Path(os.path.dirname(__file__)) / "../specs/callables.py"
-        )
-        if not python_functions_spec.exists():
+        if not self.callables_module:
             raise Exception(
-                "specs/callables.py file is needed if output_callables in the spec files"
+                "callables module must be provided if output_callables are set in the spec file"
             )
         fun_str = ""
         fun_names = list(set(self.outputs.callables.values()))

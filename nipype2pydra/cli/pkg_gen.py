@@ -37,9 +37,10 @@ from nipype2pydra.utils import (
     cleanup_function_body,
     insert_args_in_signature,
 )
+from nipype2pydra.cli.base import cli
 
 
-RESOURCES_DIR = Path(__file__).parent / "resources"
+TEMPLATES_DIR = Path(__file__).parent / "pkg-gen-resources" / "templates"
 
 EXPECTED_FORMATS = [Nifti1, NiftiGz, TextFile, TextMatrix, DatFile, Xml]
 
@@ -97,7 +98,7 @@ def download_tasks_template(output_path: Path):
         )
 
 
-@click.command(help="Generates stub pydra packages for all nipype interfaces to import")
+@cli.command("pkg-gen", help="Generates stub pydra packages for all nipype interfaces to import")
 @click.argument("output_dir", type=click.Path(path_type=Path))
 @click.option("--work-dir", type=click.Path(path_type=Path), default=None)
 @click.option("--task-template", type=click.Path(path_type=Path), default=None)
@@ -115,7 +116,7 @@ def download_tasks_template(output_path: Path):
     default="nipype.interfaces",
     help=("the base package which the sub-packages are relative to"),
 )
-def generate_packages(
+def pkg_gen(
     output_dir: Path,
     work_dir: ty.Optional[Path],
     task_template: ty.Optional[Path],
@@ -588,10 +589,10 @@ def initialise_task_repo(output_dir, task_template: Path, pkg: str) -> Path:
     auto_conv_dir = pkg_dir / "nipype-auto-conv"
     specs_dir = auto_conv_dir / "specs"
     specs_dir.mkdir(parents=True)
-    shutil.copy(RESOURCES_DIR / "nipype-auto-convert.py", auto_conv_dir / "generate")
+    shutil.copy(TEMPLATES_DIR / "nipype-auto-convert.py", auto_conv_dir / "generate")
     os.chmod(auto_conv_dir / "generate", 0o755)  # make executable
     shutil.copy(
-        RESOURCES_DIR / "nipype-auto-convert-requirements.txt",
+        TEMPLATES_DIR / "nipype-auto-convert-requirements.txt",
         auto_conv_dir / "requirements.txt",
     )
 
@@ -599,13 +600,13 @@ def initialise_task_repo(output_dir, task_template: Path, pkg: str) -> Path:
     gh_workflows_dir = pkg_dir / ".github" / "workflows"
     gh_workflows_dir.mkdir(parents=True, exist_ok=True)
     shutil.copy(
-        RESOURCES_DIR / "gh_workflows" / "ci-cd.yaml",
+        TEMPLATES_DIR / "gh_workflows" / "ci-cd.yaml",
         gh_workflows_dir / "ci-cd.yaml",
     )
 
     # Add modified README
     os.unlink(pkg_dir / "README.md")
-    shutil.copy(RESOURCES_DIR / "README.rst", pkg_dir / "README.rst")
+    shutil.copy(TEMPLATES_DIR / "README.rst", pkg_dir / "README.rst")
     with open(pkg_dir / "pyproject.toml") as f:
         pyproject_toml = f.read()
     pyproject_toml = pyproject_toml.replace("README.md", "README.rst")
@@ -648,7 +649,7 @@ def initialise_task_repo(output_dir, task_template: Path, pkg: str) -> Path:
 
     # Add in modified __init__.py
     shutil.copy(
-        RESOURCES_DIR / "pkg_init.py", pkg_dir / "pydra" / "tasks" / pkg / "__init__.py"
+        TEMPLATES_DIR / "pkg_init.py", pkg_dir / "pydra" / "tasks" / pkg / "__init__.py"
     )
 
     # Replace "CHANGEME" string with pkg name
@@ -1012,4 +1013,4 @@ def _gen_filename(field, inputs, output_dir, stdout, stderr):
 if __name__ == "__main__":
     import sys
 
-    generate_packages(sys.argv[1:])
+    pkg_gen(sys.argv[1:])

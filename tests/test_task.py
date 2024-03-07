@@ -50,6 +50,8 @@ def test_task_conversion(task_spec_file, cli_runner, work_dir, gen_test_conftest
             str(pkg_root),
             "--output-module",
             output_module_path,
+            "--callables",
+            str(task_spec_file.parent / (task_spec_file.stem + "_callables.py")),
         ],
     )
 

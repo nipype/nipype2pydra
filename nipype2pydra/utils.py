@@ -231,7 +231,7 @@ class UsedSymbols:
             a class containing the used symbols in the module
         """
         used = cls()
-        imports = ["import attrs"]  # attrs is included in imports in case we reference attrs.NOTHING
+        imports = ["import attrs", "from fileformats.generic import File, Directory"]  # attrs is included in imports in case we reference attrs.NOTHING
         block = ""
         source_code = inspect.getsource(module)
         local_functions = get_local_functions(module)
