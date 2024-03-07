@@ -10,6 +10,7 @@ from pathlib import Path
 import attrs
 from warnings import warn
 import requests
+from operator import itemgetter
 import yaml
 import black.parsing
 import fileformats.core.utils
@@ -80,6 +81,7 @@ class NipypeInterface:
     output_helps: ty.Dict[str, str] = attrs.field()
     file_inputs: ty.Dict[str, str] = attrs.field()
     path_inputs: ty.List[str] = attrs.field()
+    str_inputs: ty.List[str] = attrs.field()
     file_outputs: ty.List[str] = attrs.field()
     template_outputs: ty.List[str] = attrs.field()
     multi_inputs: ty.List[str] = attrs.field()
@@ -102,66 +104,79 @@ class NipypeInterface:
         file_outputs = []
         dir_inputs = []
         path_inputs = []
+        str_inputs = []
         template_outputs = []
         multi_inputs = []
         dir_outputs = []
         output_helps = {}
         callables = []
-        if nipype_interface.output_spec:
-            for outpt_name, outpt in nipype_interface.output_spec().traits().items():
-                if outpt_name in ("trait_added", "trait_modified"):
-                    continue
-                outpt_desc = outpt.desc.replace("\n", " ") if outpt.desc else ""
-                output_helps[outpt_name] = (
-                    f"type={type(outpt.trait_type).__name__.lower()}: {outpt_desc}"
-                )
-                if type(outpt.trait_type).__name__ == "File":
-                    file_outputs.append(outpt_name)
-                elif type(outpt.trait_type).__name__ == "Directory":
-                    dir_outputs.append(outpt_name)
-        if nipype_interface.input_spec:
-            for inpt_name, inpt in nipype_interface.input_spec().traits().items():
-                if inpt_name in ("trait_added", "trait_modified"):
-                    continue
-                inpt_desc = inpt.desc.replace("\n", " ") if inpt.desc else ""
-                inpt_mdata = f"type={type(inpt.trait_type).__name__.lower()}|default={inpt.default!r}"
-                if isinstance(inpt.trait_type, nipype.interfaces.base.core.traits.Enum):
-                    inpt_mdata += f"|allowed[{','.join(sorted(repr(v) for v in inpt.trait_type.values))}]"
-                input_helps[inpt_name] = f"{inpt_mdata}: {inpt_desc}"
-                trait_type_name = type(inpt.trait_type).__name__
-                if inpt.genfile:
-                    if trait_type_name in ("File", "Directory"):
-                        path_inputs.append(inpt_name)
-                    if inpt_name in (file_outputs + dir_outputs):
-                        template_outputs.append(inpt_name)
-                    else:
-                        callables.append(inpt_name)
-                elif trait_type_name == "File" and inpt_name not in file_outputs:
-                    file_inputs.append(inpt_name)
-                elif trait_type_name == "Directory" and inpt_name not in dir_outputs:
-                    dir_inputs.append(inpt_name)
-                elif trait_type_name == "InputMultiObject":
-                    inner_trait_type_name = type(
-                        inpt.trait_type.item_trait.trait_type
-                    ).__name__
-                    if inner_trait_type_name == "Directory":
-                        dir_inputs.append(inpt_name)
-                    elif inner_trait_type_name == "File":
-                        file_inputs.append(inpt_name)
-                    multi_inputs.append(inpt_name)
-                elif type(inpt.trait_type).__name__ == "List" and type(
-                    inpt.trait_type.inner_traits()[0].handler
-                ).__name__ in ("File", "Directory"):
-                    item_type_name = type(
-                        inpt.trait_type.inner_traits()[0].handler
-                    ).__name__
-                    if item_type_name == "File":
-                        file_inputs.append(inpt_name)
-                    else:
-                        dir_inputs.append(inpt_name)
-                    multi_inputs.append(inpt_name)
-                elif trait_type_name in ("File", "Directory"):
+        # Parse output types and descriptions
+        for outpt_name, outpt in nipype_interface.output_spec().traits().items():
+            if outpt_name in ("trait_added", "trait_modified"):
+                continue
+            outpt_desc = outpt.desc.replace("\n", " ") if outpt.desc else ""
+            output_helps[outpt_name] = (
+                f"type={type(outpt.trait_type).__name__.lower()}: {outpt_desc}"
+            )
+            if type(outpt.trait_type).__name__ == "File":
+                file_outputs.append(outpt_name)
+            elif type(outpt.trait_type).__name__ == "Directory":
+                dir_outputs.append(outpt_name)
+        # Parse input types, descriptions and metadata
+        for inpt_name, inpt in nipype_interface.input_spec().traits().items():
+            if inpt_name in ("trait_added", "trait_modified"):
+                continue
+            inpt_desc = inpt.desc.replace("\n", " ") if inpt.desc else ""
+            inpt_mdata = f"type={type(inpt.trait_type).__name__.lower()}|default={inpt.default!r}"
+            if isinstance(inpt.trait_type, nipype.interfaces.base.core.traits.Enum):
+                inpt_mdata += f"|allowed[{','.join(sorted(repr(v) for v in inpt.trait_type.values))}]"
+            input_helps[inpt_name] = f"{inpt_mdata}: {inpt_desc}"
+            trait_type_name = type(inpt.trait_type).__name__
+            if inpt.genfile:
+                if trait_type_name in ("File", "Directory"):
                     path_inputs.append(inpt_name)
+                if inpt_name in (file_outputs + dir_outputs):
+                    template_outputs.append(inpt_name)
+                else:
+                    callables.append(inpt_name)
+            elif trait_type_name == "File" and inpt_name not in file_outputs:
+                # override logic if it is named as an output
+                if (
+                    inpt_name.startswith("out_")
+                    or inpt_name.startswith("output_")
+                    or inpt_name.endswith("_out")
+                    or inpt_name.endswith("_output")
+                ):
+                    if "fix" in inpt_name:
+                        str_inputs.append(inpt_name)
+                    else:
+                        path_inputs.append(inpt_name)
+                else:
+                    file_inputs.append(inpt_name)
+            elif trait_type_name == "Directory" and inpt_name not in dir_outputs:
+                dir_inputs.append(inpt_name)
+            elif trait_type_name == "InputMultiObject":
+                inner_trait_type_name = type(
+                    inpt.trait_type.item_trait.trait_type
+                ).__name__
+                if inner_trait_type_name == "Directory":
+                    dir_inputs.append(inpt_name)
+                elif inner_trait_type_name == "File":
+                    file_inputs.append(inpt_name)
+                multi_inputs.append(inpt_name)
+            elif type(inpt.trait_type).__name__ == "List" and type(
+                inpt.trait_type.inner_traits()[0].handler
+            ).__name__ in ("File", "Directory"):
+                item_type_name = type(
+                    inpt.trait_type.inner_traits()[0].handler
+                ).__name__
+                if item_type_name == "File":
+                    file_inputs.append(inpt_name)
+                else:
+                    dir_inputs.append(inpt_name)
+                multi_inputs.append(inpt_name)
+            elif trait_type_name in ("File", "Directory"):
+                path_inputs.append(inpt_name)
         doc_string = nipype_interface.__doc__ if nipype_interface.__doc__ else ""
         doc_string = doc_string.replace("\n", "\n# ")
         # Create a preamble at the top of the specificaiton explaining what to do
@@ -186,6 +201,7 @@ class NipypeInterface:
             output_helps=output_helps,
             file_inputs=file_inputs,
             path_inputs=path_inputs,
+            str_inputs=str_inputs,
             file_outputs=file_outputs,
             template_outputs=template_outputs,
             multi_inputs=multi_inputs,
@@ -200,6 +216,7 @@ class NipypeInterface:
         input_types = {i: File for i in self.file_inputs}
         input_types.update({i: Directory for i in self.dir_inputs})
         input_types.update({i: Path for i in self.path_inputs})
+        input_types.update({i: str for i in self.str_inputs})
         output_types = {o: File for o in self.file_outputs}
         output_types.update({o: Directory for o in self.dir_outputs})
         output_templates = {}
@@ -236,7 +253,7 @@ class NipypeInterface:
             for n, t in input_types.items()
         }
 
-        non_mime = [Path]
+        non_mime = [Path, str]
 
         def type2str(tp):
             if tp in non_mime:
@@ -246,6 +263,11 @@ class NipypeInterface:
         tests, doctests = self._gen_tests(
             doctest_blocks, input_types, output_types, output_templates
         )
+
+        # sort dictionaries by key
+        input_types = dict(sorted(input_types.items(), key=itemgetter(0)))
+        output_types = dict(sorted(output_types.items(), key=itemgetter(0)))
+        output_templates = dict(sorted(output_templates.items(), key=itemgetter(0)))
 
         spec_stub = {
             "task_name": self.name,
@@ -262,7 +284,7 @@ class NipypeInterface:
                 {
                     "types": {n: type2str(t) for n, t in output_types.items()},
                     "templates": output_templates,
-                    "callables": {n: f"{n}_callable" for n in self.callables},
+                    "callables": {n: f"{n}_callable" for n in sorted(self.callables)},
                 },
             ),
             "tests": tests,
@@ -417,15 +439,26 @@ class NipypeInterface:
                     return possible_formats[0]
 
                 def combine_types(type_, prev_type):
-                    if type_ is File:
-                        return prev_type
-                    if prev_type is not File:
+                    as_list = False
+                    if ty.get_origin(prev_type) is list:
+                        as_list = True
+                        prev_type = ty.get_args(prev_type)[0]
+                    if ty.get_origin(type_) is list:
+                        as_list = True
+                        type_ = ty.get_args(type_)[0]
+                    if issubclass(type_, prev_type):
+                        combined = type_
+                    elif issubclass(prev_type, type_):
+                        combined = prev_type
+                    else:
                         if ty.get_origin(prev_type) is ty.Union:
                             prev_types = ty.get_args(prev_type)
                         else:
                             prev_types = [prev_type]
-                        return ty.Union.__getitem__((type_,) + tuple(prev_types))
-                    return type_
+                        combined = ty.Union.__getitem__((type_,) + tuple(prev_types))
+                    if as_list:
+                        combined = ty.List.__getitem__(combined)
+                    return combined
 
                 test_inpts: ty.Dict[str, ty.Optional[ty.Type]] = {}
                 for name, val in inpts.items():
