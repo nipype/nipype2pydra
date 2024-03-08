@@ -33,22 +33,22 @@ inputs:
   # passed to the field in the automatically generated unittests.
     annot_file: generic/file
     # type=file|default=<undefined>: input is annotation or gifti label data
-    parcstats_file: generic/file
-    # type=file|default=<undefined>: infile is name of text file containing label/val pairs
-    label_file: generic/file
-    # type=file|default=<undefined>: infile is .label file, label is name of this label
-    scalarcurv_file: generic/file
-    # type=file|default=<undefined>: input is scalar curv overlay file (must still specify surface)
     functional_file: generic/file
     # type=file|default=<undefined>: input is functional time-series or other multi-frame data (must specify surface)
-    labelstats_outfile: generic/file
-    # type=file|default=<undefined>: outfile is name of gifti file to which label stats will be written
     in_file: generic/file
     # type=file|default=<undefined>: File to read/convert
-    subjects_dir: generic/directory
-    # type=directory|default=<undefined>: subjects directory
+    label_file: generic/file
+    # type=file|default=<undefined>: infile is .label file, label is name of this label
+    labelstats_outfile: generic/file
+    # type=file|default=<undefined>: outfile is name of gifti file to which label stats will be written
     out_file: Path
     # type=file|default=<undefined>: output filename or True to generate one
+    parcstats_file: generic/file
+    # type=file|default=<undefined>: infile is name of text file containing label/val pairs
+    scalarcurv_file: generic/file
+    # type=file|default=<undefined>: input is scalar curv overlay file (must still specify surface)
+    subjects_dir: generic/directory
+    # type=directory|default=<undefined>: subjects directory
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

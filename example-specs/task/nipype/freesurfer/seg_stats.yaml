@@ -34,22 +34,22 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    segmentation_file: generic/file
-    # type=file|default=<undefined>: segmentation volume path
-    partial_volume_file: generic/file
-    # type=file|default=<undefined>: Compensate for partial voluming
-    in_file: medimage/nifti1
-    # type=file|default=<undefined>: Use the segmentation to report stats on this volume
+    brainmask_file: generic/file
+    # type=file|default=<undefined>: Load brain mask and compute the volume of the brain as the non-zero voxels in this volume
     color_table_file: generic/file
     # type=file|default=<undefined>: color table file with seg id names
     gca_color_table: generic/file
     # type=file|default=<undefined>: get color table from GCA (CMA)
-    mask_file: generic/file
-    # type=file|default=<undefined>: Mask volume (same size as seg
-    brainmask_file: generic/file
-    # type=file|default=<undefined>: Load brain mask and compute the volume of the brain as the non-zero voxels in this volume
+    in_file: medimage/nifti1
+    # type=file|default=<undefined>: Use the segmentation to report stats on this volume
     in_intensity: generic/file
     # type=file|default=<undefined>: Undocumented input norm.mgz file
+    mask_file: generic/file
+    # type=file|default=<undefined>: Mask volume (same size as seg
+    partial_volume_file: generic/file
+    # type=file|default=<undefined>: Compensate for partial voluming
+    segmentation_file: generic/file
+    # type=file|default=<undefined>: segmentation volume path
     subjects_dir: generic/directory
     # type=directory|default=<undefined>: subjects directory
     summary_file: Path
@@ -68,18 +68,18 @@ outputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    summary_file: medimage-freesurfer/stats
-    # type=file: Segmentation summary statistics table
-    # type=file|default=<undefined>: Segmentation stats summary table file
-    avgwf_txt_file: text/text-file
-    # type=file: Text file with functional statistics averaged over segs
-    # type=traitcompound|default=None: Save average waveform into file (bool or filename)
     avgwf_file: generic/file
     # type=file: Volume with functional statistics averaged over segs
     # type=traitcompound|default=None: Save as binary volume (bool or filename)
+    avgwf_txt_file: text/text-file
+    # type=file: Text file with functional statistics averaged over segs
+    # type=traitcompound|default=None: Save average waveform into file (bool or filename)
     sf_avg_file: generic/file
     # type=file: Text file with func statistics averaged over segs and framss
     # type=traitcompound|default=None: Save mean across space and time
+    summary_file: medimage-freesurfer/stats
+    # type=file: Segmentation summary statistics table
+    # type=file|default=<undefined>: Segmentation stats summary table file
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields

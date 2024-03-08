@@ -1,1 +1,1 @@
-"""Module to put any functions that are referred to in EulerNumber.yaml"""
+"""Module to put any functions that are referred to in the "callables" section of EulerNumber.yaml"""

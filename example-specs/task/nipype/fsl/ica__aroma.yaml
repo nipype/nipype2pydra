@@ -46,20 +46,20 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
+    feat_dir: generic/directory
+    # type=directory|default=<undefined>: If a feat directory exists and temporal filtering has not been run yet, ICA_AROMA can use the files in this directory.
+    fnirt_warp_file: medimage/nifti1
+    # type=file|default=<undefined>: File name of the warp-file describing the non-linear registration (e.g. FSL FNIRT) of the structural data to MNI152 space (.nii.gz)
     in_file: medimage/nifti1
     # type=file|default=<undefined>: volume to be denoised
     mask: medimage/nifti-gz
     # type=file|default=<undefined>: path/name volume mask
     mat_file: datascience/text-matrix
     # type=file|default=<undefined>: path/name of the mat-file describing the affine registration (e.g. FSL FLIRT) of the functional data to structural space (.mat file)
-    fnirt_warp_file: medimage/nifti1
-    # type=file|default=<undefined>: File name of the warp-file describing the non-linear registration (e.g. FSL FNIRT) of the structural data to MNI152 space (.nii.gz)
-    motion_parameters: text/text-file
-    # type=file|default=<undefined>: motion parameters file
-    feat_dir: generic/directory
-    # type=directory|default=<undefined>: If a feat directory exists and temporal filtering has not been run yet, ICA_AROMA can use the files in this directory.
     melodic_dir: generic/directory
     # type=directory|default=<undefined>: path to MELODIC directory if MELODIC has already been run
+    motion_parameters: text/text-file
+    # type=file|default=<undefined>: motion parameters file
     out_dir: Path
     # type=directory: directory contains (in addition to the denoised files): melodic.ica + classified_motion_components + classification_overview + feature_scores + melodic_ic_mni)
     # type=directory|default='out': output directory

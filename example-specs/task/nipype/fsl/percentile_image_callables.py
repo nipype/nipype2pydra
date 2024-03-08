@@ -1,1 +1,1 @@
-"""Module to put any functions that are referred to in PercentileImage.yaml"""
+"""Module to put any functions that are referred to in the "callables" section of PercentileImage.yaml"""

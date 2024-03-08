@@ -34,10 +34,10 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    orig: medimage-freesurfer/pial
-    # type=file|default=<undefined>: implicit {hemisphere}.orig
     color_table: generic/file
     # type=file|default=<undefined>: File that defines the structure names, their indices, and their color
+    orig: medimage-freesurfer/pial
+    # type=file|default=<undefined>: implicit {hemisphere}.orig
     subjects_dir: generic/directory
     # type=directory|default=<undefined>: subjects directory
   metadata:

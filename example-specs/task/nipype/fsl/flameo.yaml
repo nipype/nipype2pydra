@@ -41,22 +41,22 @@ inputs:
   # passed to the field in the automatically generated unittests.
     cope_file: medimage/nifti-gz
     # type=file|default=<undefined>: cope regressor data file
-    var_cope_file: medimage/nifti-gz
-    # type=file|default=<undefined>: varcope weightings data file
-    dof_var_cope_file: generic/file
-    # type=file|default=<undefined>: dof data file for varcope data
-    mask_file: medimage/nifti1
-    # type=file|default=<undefined>: mask file
-    design_file: datascience/text-matrix
-    # type=file|default=<undefined>: design matrix file
-    t_con_file: medimage-fsl/con
-    # type=file|default=<undefined>: ascii matrix specifying t-contrasts
-    f_con_file: generic/file
-    # type=file|default=<undefined>: ascii matrix specifying f-contrasts
     cov_split_file: datascience/text-matrix
     # type=file|default=<undefined>: ascii matrix specifying the groups the covariance is split into
+    design_file: datascience/text-matrix
+    # type=file|default=<undefined>: design matrix file
+    dof_var_cope_file: generic/file
+    # type=file|default=<undefined>: dof data file for varcope data
+    f_con_file: generic/file
+    # type=file|default=<undefined>: ascii matrix specifying f-contrasts
     log_dir: generic/directory
     # type=directory|default='stats': 
+    mask_file: medimage/nifti1
+    # type=file|default=<undefined>: mask file
+    t_con_file: medimage-fsl/con
+    # type=file|default=<undefined>: ascii matrix specifying t-contrasts
+    var_cope_file: medimage/nifti-gz
+    # type=file|default=<undefined>: varcope weightings data file
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

@@ -717,11 +717,11 @@ class BaseTaskConverter(metaclass=ABCMeta):
             spec_str, fast=False, mode=black.FileMode()
         )
 
-        # FIXME: bit of a hack, should make sure that multi-input/output objects
-        #        are referenced properly without this substitution
-        spec_str = re.sub(
-            r"(?<!specs\.|mport )Multi(Input|Output)", r"specs.Multi\1", spec_str
-        )
+        # # FIXME: bit of a hack, should make sure that multi-input/output objects
+        # #        are referenced properly without this substitution
+        # spec_str = re.sub(
+        #     r"(?<!specs\.|mport )Multi(Input|Output)", r"specs.Multi\1", spec_str
+        # )
 
         with open(filename, "w") as f:
             f.write(spec_str)

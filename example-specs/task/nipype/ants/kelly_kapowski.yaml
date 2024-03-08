@@ -43,20 +43,20 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    segmentation_image: medimage/nifti-gz
-    # type=file|default=<undefined>: A segmentation image must be supplied labeling the gray and white matters. Default values = 2 and 3, respectively.
-    gray_matter_prob_image: generic/file
-    # type=file|default=<undefined>: In addition to the segmentation image, a gray matter probability image can be used. If no such image is supplied, one is created using the segmentation image and a variance of 1.0 mm.
-    white_matter_prob_image: generic/file
-    # type=file|default=<undefined>: In addition to the segmentation image, a white matter probability image can be used. If no such image is supplied, one is created using the segmentation image and a variance of 1.0 mm.
-    thickness_prior_image: generic/file
-    # type=file|default=<undefined>: An image containing spatially varying prior thickness values.
     cortical_thickness: Path
     # type=file: A thickness map defined in the segmented gray matter.
     # type=file|default=<undefined>: Filename for the cortical thickness.
+    gray_matter_prob_image: generic/file
+    # type=file|default=<undefined>: In addition to the segmentation image, a gray matter probability image can be used. If no such image is supplied, one is created using the segmentation image and a variance of 1.0 mm.
+    segmentation_image: medimage/nifti-gz
+    # type=file|default=<undefined>: A segmentation image must be supplied labeling the gray and white matters. Default values = 2 and 3, respectively.
+    thickness_prior_image: generic/file
+    # type=file|default=<undefined>: An image containing spatially varying prior thickness values.
     warped_white_matter: Path
     # type=file: A warped white matter image.
     # type=file|default=<undefined>: Filename for the warped white matter file.
+    white_matter_prob_image: generic/file
+    # type=file|default=<undefined>: In addition to the segmentation image, a white matter probability image can be used. If no such image is supplied, one is created using the segmentation image and a variance of 1.0 mm.
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

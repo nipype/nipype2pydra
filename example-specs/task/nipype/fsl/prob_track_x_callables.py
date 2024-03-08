@@ -1,4 +1,4 @@
-"""Module to put any functions that are referred to in ProbTrackX.yaml"""
+"""Module to put any functions that are referred to in the "callables" section of ProbTrackX.yaml"""
 
 
 def mode_callable(output_dir, inputs, stdout, stderr):

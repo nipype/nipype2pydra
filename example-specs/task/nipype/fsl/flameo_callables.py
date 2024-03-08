@@ -1,1 +1,1 @@
-"""Module to put any functions that are referred to in FLAMEO.yaml"""
+"""Module to put any functions that are referred to in the "callables" section of FLAMEO.yaml"""

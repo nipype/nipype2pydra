@@ -35,29 +35,29 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    autoalign_matrix: generic/file
-    # type=file|default=<undefined>: text file with autoalign matrix
-    apply_transform: generic/file
-    # type=file|default=<undefined>: apply xfm file
     apply_inv_transform: generic/file
     # type=file|default=<undefined>: apply inverse transformation xfm file
-    in_file: medimage/nifti1
-    # type=file|default=<undefined>: File to read/convert
-    reslice_like: generic/file
-    # type=file|default=<undefined>: reslice output to match file
-    in_like: generic/file
-    # type=file|default=<undefined>: input looks like
+    apply_transform: generic/file
+    # type=file|default=<undefined>: apply xfm file
+    autoalign_matrix: generic/file
+    # type=file|default=<undefined>: text file with autoalign matrix
     color_file: generic/file
     # type=file|default=<undefined>: color file
-    status_file: generic/file
-    # type=file|default=<undefined>: status file for DICOM conversion
-    sdcm_list: generic/file
-    # type=file|default=<undefined>: list of DICOM files for conversion
-    subjects_dir: generic/directory
-    # type=directory|default=<undefined>: subjects directory
+    in_file: medimage/nifti1
+    # type=file|default=<undefined>: File to read/convert
+    in_like: generic/file
+    # type=file|default=<undefined>: input looks like
     out_file: Path
     # type=outputmultiobject: converted output file
     # type=file|default=<undefined>: output filename or True to generate one
+    reslice_like: generic/file
+    # type=file|default=<undefined>: reslice output to match file
+    sdcm_list: generic/file
+    # type=file|default=<undefined>: list of DICOM files for conversion
+    status_file: generic/file
+    # type=file|default=<undefined>: status file for DICOM conversion
+    subjects_dir: generic/directory
+    # type=directory|default=<undefined>: subjects directory
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

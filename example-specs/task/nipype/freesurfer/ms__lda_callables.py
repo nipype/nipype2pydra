@@ -1,1 +1,1 @@
-"""Module to put any functions that are referred to in MS_LDA.yaml"""
+"""Module to put any functions that are referred to in the "callables" section of MS_LDA.yaml"""

@@ -32,23 +32,23 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    surf_measure_file: generic/file
-    # type=file|default=<undefined>: file necessary for surfmeas
-    surfreg_files: generic/file+list-of
-    # type=inputmultiobject|default=[]: lh and rh input surface registration files
-    lh_surfreg_target: generic/file
-    # type=file|default=<undefined>: Implicit target surface registration file
-    rh_surfreg_target: generic/file
-    # type=file|default=<undefined>: Implicit target surface registration file
     fsgd_file: generic/file
     # type=file|default=<undefined>: specify subjects using fsgd file
+    lh_surfreg_target: generic/file
+    # type=file|default=<undefined>: Implicit target surface registration file
+    out_file: Path
+    # type=file: preprocessed output file
+    # type=file|default=<undefined>: output filename
+    rh_surfreg_target: generic/file
+    # type=file|default=<undefined>: Implicit target surface registration file
     subject_file: generic/file
     # type=file|default=<undefined>: file specifying subjects separated by white space
     subjects_dir: generic/directory
     # type=directory|default=<undefined>: subjects directory
-    out_file: Path
-    # type=file: preprocessed output file
-    # type=file|default=<undefined>: output filename
+    surf_measure_file: generic/file
+    # type=file|default=<undefined>: file necessary for surfmeas
+    surfreg_files: generic/file+list-of
+    # type=inputmultiobject|default=[]: lh and rh input surface registration files
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

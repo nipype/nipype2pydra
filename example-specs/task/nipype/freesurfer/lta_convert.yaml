@@ -28,14 +28,14 @@ inputs:
   # passed to the field in the automatically generated unittests.
     in_fsl: generic/file
     # type=file|default=<undefined>: input transform of FSL type
-    in_mni: generic/file
-    # type=file|default=<undefined>: input transform of MNI/XFM type
-    in_reg: generic/file
-    # type=file|default=<undefined>: input transform of TK REG type (deprecated format)
-    in_niftyreg: generic/file
-    # type=file|default=<undefined>: input transform of Nifty Reg type (inverse RAS2RAS)
     in_itk: generic/file
     # type=file|default=<undefined>: input transform of ITK type
+    in_mni: generic/file
+    # type=file|default=<undefined>: input transform of MNI/XFM type
+    in_niftyreg: generic/file
+    # type=file|default=<undefined>: input transform of Nifty Reg type (inverse RAS2RAS)
+    in_reg: generic/file
+    # type=file|default=<undefined>: input transform of TK REG type (deprecated format)
     source_file: generic/file
     # type=file|default=<undefined>: 
     target_file: generic/file
@@ -53,21 +53,21 @@ outputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    out_lta: generic/file
-    # type=file: output linear transform (LTA Freesurfer format)
-    # type=traitcompound|default=None: output linear transform (LTA Freesurfer format)
     out_fsl: generic/file
     # type=file: output transform in FSL format
     # type=traitcompound|default=None: output transform in FSL format
+    out_itk: generic/file
+    # type=file: output transform in ITK format
+    # type=traitcompound|default=None: output transform in ITK format
+    out_lta: generic/file
+    # type=file: output linear transform (LTA Freesurfer format)
+    # type=traitcompound|default=None: output linear transform (LTA Freesurfer format)
     out_mni: generic/file
     # type=file: output transform in MNI/XFM format
     # type=traitcompound|default=None: output transform in MNI/XFM format
     out_reg: generic/file
     # type=file: output transform in reg dat format
     # type=traitcompound|default=None: output transform in reg dat format
-    out_itk: generic/file
-    # type=file: output transform in ITK format
-    # type=traitcompound|default=None: output transform in ITK format
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields

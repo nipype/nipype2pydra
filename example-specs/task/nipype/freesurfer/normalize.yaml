@@ -37,15 +37,15 @@ inputs:
     # type=file|default=<undefined>: The input file for Normalize
     mask: generic/file
     # type=file|default=<undefined>: The input mask file for Normalize
-    segmentation: generic/file
-    # type=file|default=<undefined>: The input segmentation for Normalize
-    transform: generic/file
-    # type=file|default=<undefined>: Transform file from the header of the input file
-    subjects_dir: generic/directory
-    # type=directory|default=<undefined>: subjects directory
     out_file: Path
     # type=file: The output file for Normalize
     # type=file|default=<undefined>: The output file for Normalize
+    segmentation: generic/file
+    # type=file|default=<undefined>: The input segmentation for Normalize
+    subjects_dir: generic/directory
+    # type=directory|default=<undefined>: subjects directory
+    transform: generic/file
+    # type=file|default=<undefined>: Transform file from the header of the input file
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

@@ -35,15 +35,15 @@ inputs:
   # passed to the field in the automatically generated unittests.
     in_file: medimage/mgh-gz
     # type=file|default=<undefined>: Input file for RemoveNeck
-    transform: datascience/text-matrix
-    # type=file|default=<undefined>: Input transform file for RemoveNeck
-    template: datascience/text-matrix
-    # type=file|default=<undefined>: Input template file for RemoveNeck
-    subjects_dir: generic/directory
-    # type=directory|default=<undefined>: subjects directory
     out_file: Path
     # type=file: Output file with neck removed
     # type=file|default=<undefined>: Output file for RemoveNeck
+    subjects_dir: generic/directory
+    # type=directory|default=<undefined>: subjects directory
+    template: datascience/text-matrix
+    # type=file|default=<undefined>: Input template file for RemoveNeck
+    transform: datascience/text-matrix
+    # type=file|default=<undefined>: Input transform file for RemoveNeck
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

@@ -3,7 +3,7 @@ import yaml
 import pytest
 import logging
 from conftest import show_cli_trace
-from nipype2pydra.cli import task as task_cli
+from nipype2pydra.cli.task import task as task_cli
 from nipype2pydra.utils import add_to_sys_path, add_exc_note
 from conftest import EXAMPLE_TASKS_DIR
 
@@ -81,18 +81,19 @@ def test_task_conversion(task_spec_file, cli_runner, work_dir, gen_test_conftest
         )
     )
 
-    nipype_output_names = nipype_interface.output_spec().all_trait_names()
-    outputs_omit = task_spec["outputs"]["omit"] if task_spec["outputs"]["omit"] else []
+    if nipype_interface.output_spec:
+        nipype_output_names = nipype_interface.output_spec().all_trait_names()
+        outputs_omit = task_spec["outputs"]["omit"] if task_spec["outputs"]["omit"] else []
 
-    assert sorted(f[0] for f in pydra_task().output_spec.fields if not f[0].startswith("_")) == sorted(
-        n
-        for n in nipype_output_names
-        if not (
-            n in INBUILT_NIPYPE_TRAIT_NAMES
-            or n in outputs_omit
-            or (n.endswith("_items") and n[: -len("_items")] in nipype_output_names)
+        assert sorted(f[0] for f in pydra_task().output_spec.fields if not f[0].startswith("_")) == sorted(
+            n
+            for n in nipype_output_names
+            if not (
+                n in INBUILT_NIPYPE_TRAIT_NAMES
+                or n in outputs_omit
+                or (n.endswith("_items") and n[: -len("_items")] in nipype_output_names)
+            )
         )
-    )
 
     # tests_fspath = pkg_root.joinpath(*output_module_path.split(".")).parent / "tests"
 

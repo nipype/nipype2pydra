@@ -64,16 +64,16 @@ outputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    warped_image: generic/file
-    # type=file: Warped image
-    inverse_warped_image: generic/file
-    # type=file: Inverse warped image
-    out_matrix: generic/file
-    # type=file: Affine matrix
     forward_warp_field: generic/file
     # type=file: Forward warp field
     inverse_warp_field: generic/file
     # type=file: Inverse warp field
+    inverse_warped_image: generic/file
+    # type=file: Inverse warped image
+    out_matrix: generic/file
+    # type=file: Affine matrix
+    warped_image: generic/file
+    # type=file: Warped image
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields

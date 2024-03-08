@@ -39,17 +39,17 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    in_surf: medimage-freesurfer/pial
-    # type=file|default=<undefined>: Input surface file
+    in_average: Path
+    # type=directory|default=<undefined>: Average subject
     in_orig: generic/file
     # type=file|default=<undefined>: Original surface filename
-    subjects_dir: generic/directory
-    # type=directory|default=<undefined>: subjects directory
+    in_surf: medimage-freesurfer/pial
+    # type=file|default=<undefined>: Input surface file
     out_file: Path
     # type=file: Output label
     # type=file|default=<undefined>: Output filename
-    in_average: Path
-    # type=directory|default=<undefined>: Average subject
+    subjects_dir: generic/directory
+    # type=directory|default=<undefined>: subjects directory
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

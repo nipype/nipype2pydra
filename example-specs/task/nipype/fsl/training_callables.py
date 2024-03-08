@@ -1,1 +1,1 @@
-"""Module to put any functions that are referred to in Training.yaml"""
+"""Module to put any functions that are referred to in the "callables" section of Training.yaml"""

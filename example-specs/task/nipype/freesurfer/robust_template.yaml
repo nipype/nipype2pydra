@@ -59,15 +59,15 @@ inputs:
   # passed to the field in the automatically generated unittests.
     in_files: medimage/nifti1+list-of
     # type=inputmultiobject|default=[]: input movable volumes to be aligned to common mean/median template
-    initial_transforms: generic/file+list-of
-    # type=inputmultiobject|default=[]: use initial transforms (lta) on source
     in_intensity_scales: generic/file+list-of
     # type=inputmultiobject|default=[]: use initial intensity scales
-    subjects_dir: generic/directory
-    # type=directory|default=<undefined>: subjects directory
+    initial_transforms: generic/file+list-of
+    # type=inputmultiobject|default=[]: use initial transforms (lta) on source
     out_file: Path
     # type=file: output template volume (final mean/median image)
     # type=file|default='mri_robust_template_out.mgz': output template volume (final mean/median image)
+    subjects_dir: generic/directory
+    # type=directory|default=<undefined>: subjects directory
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

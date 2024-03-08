@@ -47,18 +47,18 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    in_file: medimage/nifti-gz
-    # type=file|default=<undefined>: input volume - source data to pvc
-    segmentation: medimage/mgh-gz
-    # type=file|default=<undefined>: segfile : anatomical segmentation to define regions for GTM
-    reg_file: medimage-freesurfer/lta
-    # type=file|default=<undefined>: LTA registration file that maps PET to anatomical
-    mask_file: generic/file
-    # type=file|default=<undefined>: ignore areas outside of the mask (in input vol space)
-    contrast: generic/file+list-of
-    # type=inputmultiobject|default=[]: contrast file
     color_table_file: generic/file
     # type=file|default=<undefined>: color table file with seg id names
+    contrast: generic/file+list-of
+    # type=inputmultiobject|default=[]: contrast file
+    in_file: medimage/nifti-gz
+    # type=file|default=<undefined>: input volume - source data to pvc
+    mask_file: generic/file
+    # type=file|default=<undefined>: ignore areas outside of the mask (in input vol space)
+    reg_file: medimage-freesurfer/lta
+    # type=file|default=<undefined>: LTA registration file that maps PET to anatomical
+    segmentation: medimage/mgh-gz
+    # type=file|default=<undefined>: segfile : anatomical segmentation to define regions for GTM
     subjects_dir: generic/directory
     # type=directory|default=<undefined>: subjects directory
   metadata:
@@ -74,50 +74,50 @@ outputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    ref_file: generic/file
-    # type=file: Reference TAC in .dat
-    hb_nifti: generic/file
-    # type=file: High-binding TAC in nifti
-    hb_dat: generic/file
-    # type=file: High-binding TAC in .dat
-    nopvc_file: generic/file
-    # type=file: TACs for all regions with no PVC
     gtm_file: generic/file
     # type=file: TACs for all regions with GTM PVC
     gtm_stats: generic/file
     # type=file: Statistics for the GTM PVC
+    hb_dat: generic/file
+    # type=file: High-binding TAC in .dat
+    hb_nifti: generic/file
+    # type=file: High-binding TAC in nifti
     input_file: generic/file
     # type=file: 4D PET file in native volume space
-    reg_pet2anat: generic/file
-    # type=file: Registration file to go from PET to anat
-    reg_anat2pet: generic/file
-    # type=file: Registration file to go from anat to PET
-    reg_rbvpet2anat: generic/file
-    # type=file: Registration file to go from RBV corrected PET to anat
-    reg_anat2rbvpet: generic/file
-    # type=file: Registration file to go from anat to RBV corrected PET
     mgx_ctxgm: generic/file
     # type=file: Cortical GM voxel-wise values corrected using the extended Muller-Gartner method
-    mgx_subctxgm: generic/file
-    # type=file: Subcortical GM voxel-wise values corrected using the extended Muller-Gartner method
     mgx_gm: generic/file
     # type=file: All GM voxel-wise values corrected using the extended Muller-Gartner method
+    mgx_subctxgm: generic/file
+    # type=file: Subcortical GM voxel-wise values corrected using the extended Muller-Gartner method
+    nopvc_file: generic/file
+    # type=file: TACs for all regions with no PVC
+    opt_params: generic/file
+    # type=file: Optimal parameter estimates for the FWHM using adaptive GTM
+    pvc_dir: generic/directory
+    # type=directory: output directory
+    # type=str|default='': save outputs to dir
     rbv: generic/file
     # type=file: All GM voxel-wise values corrected using the RBV method
     # type=bool|default=False: perform Region-based Voxelwise (RBV) PVC
-    opt_params: generic/file
-    # type=file: Optimal parameter estimates for the FWHM using adaptive GTM
-    yhat0: generic/file
-    # type=file: 4D PET file of signal estimate (yhat) after PVC (unsmoothed)
+    ref_file: generic/file
+    # type=file: Reference TAC in .dat
+    reg_anat2pet: generic/file
+    # type=file: Registration file to go from anat to PET
+    reg_anat2rbvpet: generic/file
+    # type=file: Registration file to go from anat to RBV corrected PET
+    reg_pet2anat: generic/file
+    # type=file: Registration file to go from PET to anat
+    reg_rbvpet2anat: generic/file
+    # type=file: Registration file to go from RBV corrected PET to anat
     yhat: generic/file
     # type=file: 4D PET file of signal estimate (yhat) after PVC (smoothed with PSF)
+    yhat0: generic/file
+    # type=file: 4D PET file of signal estimate (yhat) after PVC (unsmoothed)
     yhat_full_fov: generic/file
     # type=file: 4D PET file with full FOV of signal estimate (yhat) after PVC (smoothed with PSF)
     yhat_with_noise: generic/file
     # type=file: 4D PET file with full FOV of signal estimate (yhat) with noise after PVC (smoothed with PSF)
-    pvc_dir: generic/directory
-    # type=directory: output directory
-    # type=str|default='': save outputs to dir
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields

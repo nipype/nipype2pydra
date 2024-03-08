@@ -38,16 +38,16 @@ inputs:
   # passed to the field in the automatically generated unittests.
     config: generic/file
     # type=file|default=<undefined>: specify unpacking rules in file
-    seq_config: generic/file
-    # type=file|default=<undefined>: specify unpacking rules based on sequence
-    scan_only: generic/file
-    # type=file|default=<undefined>: only scan the directory and put result in file
     log_file: generic/file
     # type=file|default=<undefined>: explicitly set log file
-    source_dir: generic/directory
-    # type=directory|default=<undefined>: directory with the DICOM files
     output_dir: generic/directory
     # type=directory|default=<undefined>: top directory into which the files will be unpacked
+    scan_only: generic/file
+    # type=file|default=<undefined>: only scan the directory and put result in file
+    seq_config: generic/file
+    # type=file|default=<undefined>: specify unpacking rules based on sequence
+    source_dir: generic/directory
+    # type=directory|default=<undefined>: directory with the DICOM files
     subjects_dir: generic/directory
     # type=directory|default=<undefined>: subjects directory
   metadata:

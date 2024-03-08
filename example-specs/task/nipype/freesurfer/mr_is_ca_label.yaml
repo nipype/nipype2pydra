@@ -44,25 +44,25 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
+    aseg: generic/file
+    # type=file|default=<undefined>: Undocumented flag. Autorecon3 uses ../mri/aseg.presurf.mgz as input file
     canonsurf: medimage-freesurfer/pial
     # type=file|default=<undefined>: Input canonical surface file
     classifier: medimage/nifti1
     # type=file|default=<undefined>: Classifier array input file
-    smoothwm: medimage-freesurfer/pial
-    # type=file|default=<undefined>: implicit input {hemisphere}.smoothwm
     curv: medimage-freesurfer/pial
     # type=file|default=<undefined>: implicit input {hemisphere}.curv
-    sulc: medimage-freesurfer/pial
-    # type=file|default=<undefined>: implicit input {hemisphere}.sulc
     label: generic/file
     # type=file|default=<undefined>: Undocumented flag. Autorecon3 uses ../label/{hemisphere}.cortex.label as input file
-    aseg: generic/file
-    # type=file|default=<undefined>: Undocumented flag. Autorecon3 uses ../mri/aseg.presurf.mgz as input file
-    subjects_dir: generic/directory
-    # type=directory|default=<undefined>: subjects directory
     out_file: Path
     # type=file: Output volume from MRIsCALabel
     # type=file|default=<undefined>: Annotated surface output file
+    smoothwm: medimage-freesurfer/pial
+    # type=file|default=<undefined>: implicit input {hemisphere}.smoothwm
+    subjects_dir: generic/directory
+    # type=directory|default=<undefined>: subjects directory
+    sulc: medimage-freesurfer/pial
+    # type=file|default=<undefined>: implicit input {hemisphere}.sulc
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

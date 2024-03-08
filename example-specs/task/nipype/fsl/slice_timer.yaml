@@ -31,12 +31,12 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    in_file: generic/file
-    # type=file|default=<undefined>: filename of input timeseries
-    custom_timings: generic/file
-    # type=file|default=<undefined>: slice timings, in fractions of TR, range 0:1 (default is 0.5 = no shift)
     custom_order: generic/file
     # type=file|default=<undefined>: filename of single-column custom interleave order file (first slice is referred to as 1 not 0)
+    custom_timings: generic/file
+    # type=file|default=<undefined>: slice timings, in fractions of TR, range 0:1 (default is 0.5 = no shift)
+    in_file: generic/file
+    # type=file|default=<undefined>: filename of input timeseries
     out_file: Path
     # type=file|default=<undefined>: filename of output timeseries
   metadata:

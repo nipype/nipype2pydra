@@ -36,10 +36,10 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    source_file: medimage/mgh-gz
-    # type=file|default=<undefined>: This is the source of the surface values
     reg_file: datascience/text-matrix
     # type=file|default=<undefined>: tkRAS-to-tkRAS matrix   (tkregister2 format)
+    source_file: medimage/mgh-gz
+    # type=file|default=<undefined>: This is the source of the surface values
     template_file: medimage/nifti-gz
     # type=file|default=<undefined>: Output template volume
     transformed_file: Path

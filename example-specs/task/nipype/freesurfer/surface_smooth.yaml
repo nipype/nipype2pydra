@@ -47,11 +47,11 @@ inputs:
   # passed to the field in the automatically generated unittests.
     in_file: medimage/mgh-gz
     # type=file|default=<undefined>: source surface file
-    subjects_dir: generic/directory
-    # type=directory|default=<undefined>: subjects directory
     out_file: Path
     # type=file: smoothed surface file
     # type=file|default=<undefined>: surface file to write
+    subjects_dir: generic/directory
+    # type=directory|default=<undefined>: subjects directory
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

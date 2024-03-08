@@ -1,1 +1,1 @@
-"""Module to put any functions that are referred to in Binarize.yaml"""
+"""Module to put any functions that are referred to in the "callables" section of Binarize.yaml"""

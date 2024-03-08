@@ -31,20 +31,20 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
+    images: medimage/mgh-gz+list-of
+    # type=inputmultiobject|default=[]: list of input FLASH images
     label_file: medimage/mgh-gz
     # type=file|default=<undefined>: filename of the label volume
     mask_file: generic/file
     # type=file|default=<undefined>: filename of the brain mask volume
-    images: medimage/mgh-gz+list-of
-    # type=inputmultiobject|default=[]: list of input FLASH images
     subjects_dir: generic/directory
     # type=directory|default=<undefined>: subjects directory
-    weight_file: Path
-    # type=file: 
-    # type=file|default=<undefined>: filename for the LDA weights (input or output)
     vol_synth_file: Path
     # type=file: 
     # type=file|default=<undefined>: filename for the synthesized output volume
+    weight_file: Path
+    # type=file: 
+    # type=file|default=<undefined>: filename for the LDA weights (input or output)
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:
@@ -58,12 +58,12 @@ outputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    weight_file: text/text-file
-    # type=file: 
-    # type=file|default=<undefined>: filename for the LDA weights (input or output)
     vol_synth_file: medimage/mgh-gz
     # type=file: 
     # type=file|default=<undefined>: filename for the synthesized output volume
+    weight_file: text/text-file
+    # type=file: 
+    # type=file|default=<undefined>: filename for the LDA weights (input or output)
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields

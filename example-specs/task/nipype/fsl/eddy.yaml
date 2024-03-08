@@ -58,32 +58,32 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    in_file: medimage/nifti1
-    # type=file|default=<undefined>: File containing all the images to estimate distortions for
-    in_mask: generic/file
-    # type=file|default=<undefined>: Mask to indicate brain
-    in_index: text/text-file
-    # type=file|default=<undefined>: File containing indices for all volumes in --imain into --acqp and --topup
-    in_acqp: generic/file
-    # type=file|default=<undefined>: File containing acquisition parameters
-    in_bvec: generic/file
-    # type=file|default=<undefined>: File containing the b-vectors for all volumes in --imain
-    in_bval: generic/file
-    # type=file|default=<undefined>: File containing the b-values for all volumes in --imain
-    session: generic/file
-    # type=file|default=<undefined>: File containing session indices for all volumes in --imain
-    in_topup_fieldcoef: generic/file
-    # type=file|default=<undefined>: Topup results file containing the field coefficients
-    in_topup_movpar: generic/file
-    # type=file|default=<undefined>: Topup results file containing the movement parameters (movpar.txt)
     field: generic/file
     # type=file|default=<undefined>: Non-topup derived fieldmap scaled in Hz
     field_mat: generic/file
     # type=file|default=<undefined>: Matrix specifying the relative positions of the fieldmap, --field, and the first volume of the input file, --imain
-    slice_order: text/text-file
-    # type=file|default='': Name of text file completely specifying slice/group acquisition
+    in_acqp: generic/file
+    # type=file|default=<undefined>: File containing acquisition parameters
+    in_bval: generic/file
+    # type=file|default=<undefined>: File containing the b-values for all volumes in --imain
+    in_bvec: generic/file
+    # type=file|default=<undefined>: File containing the b-vectors for all volumes in --imain
+    in_file: medimage/nifti1
+    # type=file|default=<undefined>: File containing all the images to estimate distortions for
+    in_index: text/text-file
+    # type=file|default=<undefined>: File containing indices for all volumes in --imain into --acqp and --topup
+    in_mask: generic/file
+    # type=file|default=<undefined>: Mask to indicate brain
+    in_topup_fieldcoef: generic/file
+    # type=file|default=<undefined>: Topup results file containing the field coefficients
+    in_topup_movpar: generic/file
+    # type=file|default=<undefined>: Topup results file containing the movement parameters (movpar.txt)
     json: generic/file
     # type=file|default='': Name of .json text file with information about slice timing
+    session: generic/file
+    # type=file|default=<undefined>: File containing session indices for all volumes in --imain
+    slice_order: text/text-file
+    # type=file|default='': Name of text file completely specifying slice/group acquisition
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:
@@ -97,36 +97,36 @@ outputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
+    out_cnr_maps: generic/file
+    # type=file: path/name of file with the cnr_maps
     out_corrected: generic/file
     # type=file: 4D image file containing all the corrected volumes
-    out_parameter: generic/file
-    # type=file: Text file with parameters defining the field and movement for each scan
-    out_rotated_bvecs: generic/file
-    # type=file: File containing rotated b-values for all volumes
+    out_movement_over_time: generic/file
+    # type=file: Text file containing translations (mm) and rotations (radians) for each excitation
     out_movement_rms: generic/file
     # type=file: Summary of the 'total movement' in each volume
+    out_outlier_free: generic/file
+    # type=file: 4D image file not corrected for susceptibility or eddy-current distortions or subject movement but with outlier slices replaced
+    out_outlier_map: generic/file
+    # type=file: Matrix where rows represent volumes and columns represent slices. "0" indicates that scan-slice is not an outlier and "1" indicates that it is
+    out_outlier_n_sqr_stdev_map: generic/file
+    # type=file: Matrix where rows represent volumes and columns represent slices. Values indicate number of standard deivations off the square root of the mean squared difference between observation and prediction is
+    out_outlier_n_stdev_map: generic/file
+    # type=file: Matrix where rows represent volumes and columns represent slices. Values indicate number of standard deviations off the mean difference between observation and prediction is
+    out_outlier_report: generic/file
+    # type=file: Text file with a plain language report on what outlier slices eddy has found
+    out_parameter: generic/file
+    # type=file: Text file with parameters defining the field and movement for each scan
+    out_residuals: generic/file
+    # type=file: path/name of file with the residuals
     out_restricted_movement_rms: generic/file
     # type=file: Summary of the 'total movement' in each volume disregarding translation in the PE direction
+    out_rotated_bvecs: generic/file
+    # type=file: File containing rotated b-values for all volumes
     out_shell_alignment_parameters: generic/file
     # type=file: Text file containing rigid body movement parameters between the different shells as estimated by a post-hoc mutual information based registration
     out_shell_pe_translation_parameters: generic/file
     # type=file: Text file containing translation along the PE-direction between the different shells as estimated by a post-hoc mutual information based registration
-    out_outlier_map: generic/file
-    # type=file: Matrix where rows represent volumes and columns represent slices. "0" indicates that scan-slice is not an outlier and "1" indicates that it is
-    out_outlier_n_stdev_map: generic/file
-    # type=file: Matrix where rows represent volumes and columns represent slices. Values indicate number of standard deviations off the mean difference between observation and prediction is
-    out_outlier_n_sqr_stdev_map: generic/file
-    # type=file: Matrix where rows represent volumes and columns represent slices. Values indicate number of standard deivations off the square root of the mean squared difference between observation and prediction is
-    out_outlier_report: generic/file
-    # type=file: Text file with a plain language report on what outlier slices eddy has found
-    out_outlier_free: generic/file
-    # type=file: 4D image file not corrected for susceptibility or eddy-current distortions or subject movement but with outlier slices replaced
-    out_movement_over_time: generic/file
-    # type=file: Text file containing translations (mm) and rotations (radians) for each excitation
-    out_cnr_maps: generic/file
-    # type=file: path/name of file with the cnr_maps
-    out_residuals: generic/file
-    # type=file: path/name of file with the residuals
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields

@@ -51,13 +51,10 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    in_file: medimage/nifti1
-    # type=file|default=<undefined>: input file to 3dvolreg
     basefile: medimage/nifti1
     # type=file|default=<undefined>: base file for registration
-    out_file: Path
-    # type=file: registered file
-    # type=file|default=<undefined>: output image file name
+    in_file: medimage/nifti1
+    # type=file|default=<undefined>: input file to 3dvolreg
     md1d_file: Path
     # type=file: max displacement info file
     # type=file|default=<undefined>: max displacement output file
@@ -67,6 +64,9 @@ inputs:
     oned_matrix_save: Path
     # type=file: matrix transformation from base to input
     # type=file|default=<undefined>: Save the matrix transformation
+    out_file: Path
+    # type=file: registered file
+    # type=file|default=<undefined>: output image file name
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:
@@ -80,9 +80,6 @@ outputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    out_file: medimage-afni/r1
-    # type=file: registered file
-    # type=file|default=<undefined>: output image file name
     md1d_file: generic/file
     # type=file: max displacement info file
     # type=file|default=<undefined>: max displacement output file
@@ -92,6 +89,9 @@ outputs:
     oned_matrix_save: medimage-afni/oned
     # type=file: matrix transformation from base to input
     # type=file|default=<undefined>: Save the matrix transformation
+    out_file: medimage-afni/r1
+    # type=file: registered file
+    # type=file|default=<undefined>: output image file name
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields

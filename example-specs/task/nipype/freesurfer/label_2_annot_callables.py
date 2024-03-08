@@ -1,1 +1,1 @@
-"""Module to put any functions that are referred to in Label2Annot.yaml"""
+"""Module to put any functions that are referred to in the "callables" section of Label2Annot.yaml"""

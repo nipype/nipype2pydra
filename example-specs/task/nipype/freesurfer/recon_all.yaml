@@ -72,12 +72,12 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
+    FLAIR_file: generic/file
+    # type=file|default=<undefined>: Convert FLAIR image to orig directory
     T1_files: medimage/nifti1+list-of
     # type=inputmultiobject|default=[]: name of T1 file to process
     T2_file: generic/file
     # type=file|default=<undefined>: Convert T2 image to orig directory
-    FLAIR_file: generic/file
-    # type=file|default=<undefined>: Convert FLAIR image to orig directory
     expert: generic/file
     # type=file|default=<undefined>: Set parameters using expert file
     subjects_dir: Path
@@ -114,13 +114,13 @@ outputs:
     # type=file: Base image conformed to Freesurfer space
     rawavg: generic/file
     # type=file: Volume formed by averaging input images
+    subjects_dir: generic/directory
+    # type=directory: Freesurfer subjects directory.
+    # type=directory|default=<undefined>: path to subjects directory
     wm: generic/file
     # type=file: Segmented white-matter volume
     wmparc: generic/file
     # type=file: Aparc parcellation projected into subcortical white matter
-    subjects_dir: generic/directory
-    # type=directory: Freesurfer subjects directory.
-    # type=directory|default=<undefined>: path to subjects directory
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields

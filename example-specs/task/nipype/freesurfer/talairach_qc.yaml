@@ -29,11 +29,11 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    subjects_dir: generic/directory
-    # type=directory|default=<undefined>: subjects directory
     log_file: Path
     # type=file: The output log
     # type=file|default=<undefined>: The log file for TalairachQC
+    subjects_dir: generic/directory
+    # type=directory|default=<undefined>: subjects directory
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

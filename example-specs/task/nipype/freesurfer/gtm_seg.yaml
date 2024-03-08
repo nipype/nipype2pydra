@@ -30,11 +30,11 @@ inputs:
   # passed to the field in the automatically generated unittests.
     colortable: generic/file
     # type=file|default=<undefined>: colortable
-    subjects_dir: generic/directory
-    # type=directory|default=<undefined>: subjects directory
     out_file: Path
     # type=file: GTM segmentation
     # type=file|default='gtmseg.mgz': output volume relative to subject/mri
+    subjects_dir: generic/directory
+    # type=directory|default=<undefined>: subjects directory
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

@@ -125,11 +125,11 @@ outputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    timing_file: generic/file
-    # type=file: AFNI formatted timing file, if ``slice_timing`` is a list
     out_file: generic/file
     # type=file: output file
     # type=file|default=<undefined>: output image file name
+    timing_file: generic/file
+    # type=file: AFNI formatted timing file, if ``slice_timing`` is a list
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields

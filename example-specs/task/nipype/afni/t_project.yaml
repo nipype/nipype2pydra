@@ -48,18 +48,18 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    in_file: medimage/nifti1
-    # type=file|default=<undefined>: input file to 3dTproject
     censor: generic/file
     # type=file|default=<undefined>: Filename of censor .1D time series. This is a file of 1s and 0s, indicating which time points are to be included (1) and which are to be excluded (0).
     concat: generic/file
     # type=file|default=<undefined>: The catenation file, as in 3dDeconvolve, containing the TR indexes of the start points for each contiguous run within the input dataset (the first entry should be 0).  * Also as in 3dDeconvolve, if the input dataset is   automatically catenated from a collection of datasets,   then the run start indexes are determined directly,   and '-concat' is not needed (and will be ignored). * Each run must have at least 9 time points AFTER   censoring, or the program will not work! * The only use made of this input is in setting up   the bandpass/stopband regressors. * '-ort' and '-dsort' regressors run through all time   points, as read in.  If you want separate projections   in each run, then you must either break these ort files   into appropriate components, OR you must run 3dTproject   for each run separately, using the appropriate pieces   from the ort files via the ``{...}`` selector for the   1D files and the ``[...]`` selector for the datasets.  
-    ort: generic/file
-    # type=file|default=<undefined>: Remove each column in file. Each column will have its mean removed.
     dsort: generic/file+list-of
     # type=inputmultiobject|default=[]: Remove the 3D+time time series in dataset fset.  * That is, 'fset' contains a different nuisance time   series for each voxel (e.g., from AnatICOR). * Multiple -dsort options are allowed.  
+    in_file: medimage/nifti1
+    # type=file|default=<undefined>: input file to 3dTproject
     mask: generic/file
     # type=file|default=<undefined>: Only operate on voxels nonzero in the mset dataset.  * Voxels outside the mask will be filled with zeros. * If no masking option is given, then all voxels   will be processed.  
+    ort: generic/file
+    # type=file|default=<undefined>: Remove each column in file. Each column will have its mean removed.
     out_file: Path
     # type=file: output file
     # type=file|default=<undefined>: output image file name

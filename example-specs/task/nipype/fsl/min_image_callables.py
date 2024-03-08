@@ -1,1 +1,1 @@
-"""Module to put any functions that are referred to in MinImage.yaml"""
+"""Module to put any functions that are referred to in the "callables" section of MinImage.yaml"""

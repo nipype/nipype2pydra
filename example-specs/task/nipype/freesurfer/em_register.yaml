@@ -35,17 +35,17 @@ inputs:
   # passed to the field in the automatically generated unittests.
     in_file: medimage/mgh-gz
     # type=file|default=<undefined>: in brain volume
-    template: medimage/mgh-gz
-    # type=file|default=<undefined>: template gca
     mask: generic/file
     # type=file|default=<undefined>: use volume as a mask
-    transform: generic/file
-    # type=file|default=<undefined>: Previously computed transform
-    subjects_dir: generic/directory
-    # type=directory|default=<undefined>: subjects directory
     out_file: Path
     # type=file: output transform
     # type=file|default=<undefined>: output transform
+    subjects_dir: generic/directory
+    # type=directory|default=<undefined>: subjects directory
+    template: medimage/mgh-gz
+    # type=file|default=<undefined>: template gca
+    transform: generic/file
+    # type=file|default=<undefined>: Previously computed transform
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

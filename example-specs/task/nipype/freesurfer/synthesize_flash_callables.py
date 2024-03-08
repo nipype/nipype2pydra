@@ -1,1 +1,1 @@
-"""Module to put any functions that are referred to in SynthesizeFLASH.yaml"""
+"""Module to put any functions that are referred to in the "callables" section of SynthesizeFLASH.yaml"""

@@ -21,14 +21,14 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    theta_vol: generic/file
-    # type=file|default=<undefined>: 
-    phi_vol: generic/file
-    # type=file|default=<undefined>: 
     mask: generic/file
     # type=file|default=<undefined>: 
     output: generic/file
     # type=file|default='dyads': 
+    phi_vol: generic/file
+    # type=file|default=<undefined>: 
+    theta_vol: generic/file
+    # type=file|default=<undefined>: 
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:
@@ -42,9 +42,9 @@ outputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    dyads: generic/file
-    # type=file: 
     dispersion: generic/file
+    # type=file: 
+    dyads: generic/file
     # type=file: 
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`

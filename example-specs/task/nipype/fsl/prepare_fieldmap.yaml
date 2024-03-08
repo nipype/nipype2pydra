@@ -41,10 +41,10 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    in_phase: medimage/nifti1
-    # type=file|default=<undefined>: Phase difference map, in SIEMENS format range from 0-4096 or 0-8192)
     in_magnitude: medimage/nifti1
     # type=file|default=<undefined>: Magnitude difference map, brain extracted
+    in_phase: medimage/nifti1
+    # type=file|default=<undefined>: Phase difference map, in SIEMENS format range from 0-4096 or 0-8192)
     out_fieldmap: Path
     # type=file: output name for prepared fieldmap
     # type=file|default=<undefined>: output name for prepared fieldmap

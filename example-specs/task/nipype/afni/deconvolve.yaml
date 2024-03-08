@@ -41,22 +41,22 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
+    STATmask: generic/file
+    # type=file|default=<undefined>: build a mask from provided file, and use this mask for the purpose of reporting truncation-to float issues AND for computing the FDR curves. The actual results ARE not masked with this option (only with 'mask' or 'automask' options).
+    censor: generic/file
+    # type=file|default=<undefined>: filename of censor .1D time series. This is a file of 1s and 0s, indicating which time points are to be included (1) and which are to be excluded (0).
     in_files: medimage/nifti1+list-of
     # type=inputmultiobject|default=[]: filenames of 3D+time input datasets. More than one filename can be given and the datasets will be auto-catenated in time. You can input a 1D time series file here, but the time axis should run along the ROW direction, not the COLUMN direction as in the 'input1D' option.
     input1D: generic/file
     # type=file|default=<undefined>: filename of single (fMRI) .1D time series where time runs down the column.
     mask: generic/file
     # type=file|default=<undefined>: filename of 3D mask dataset; only data time series from within the mask will be analyzed; results for voxels outside the mask will be set to zero.
-    STATmask: generic/file
-    # type=file|default=<undefined>: build a mask from provided file, and use this mask for the purpose of reporting truncation-to float issues AND for computing the FDR curves. The actual results ARE not masked with this option (only with 'mask' or 'automask' options).
-    censor: generic/file
-    # type=file|default=<undefined>: filename of censor .1D time series. This is a file of 1s and 0s, indicating which time points are to be included (1) and which are to be excluded (0).
-    x1D: Path
-    # type=file: save out X matrix
-    # type=file|default=<undefined>: specify name for saved X matrix
     out_file: Path
     # type=file: output statistics file
     # type=file|default=<undefined>: output statistics file
+    x1D: Path
+    # type=file: save out X matrix
+    # type=file|default=<undefined>: specify name for saved X matrix
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:
@@ -70,6 +70,9 @@ outputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
+    cbucket: generic/file
+    # type=file: output regression coefficients file (if generated)
+    # type=str|default='': Name for dataset in which to save the regression coefficients (no statistics). This dataset will be used in a -xrestore run [not yet implemented] instead of the bucket dataset, if possible.
     out_file: medimage/nifti1
     # type=file: output statistics file
     # type=file|default=<undefined>: output statistics file
@@ -78,9 +81,6 @@ outputs:
     x1D: medimage-afni/oned
     # type=file: save out X matrix
     # type=file|default=<undefined>: specify name for saved X matrix
-    cbucket: generic/file
-    # type=file: output regression coefficients file (if generated)
-    # type=str|default='': Name for dataset in which to save the regression coefficients (no statistics). This dataset will be used in a -xrestore run [not yet implemented] instead of the bucket dataset, if possible.
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields

@@ -30,34 +30,34 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
+    avoid_mp: generic/file
+    # type=file|default=<undefined>: reject pathways passing through locations given by this mask
+    fsamples: medimage/nifti1+list-of
+    # type=inputmultiobject|default=[]: 
+    inv_xfm: generic/file
+    # type=file|default=<undefined>: transformation matrix taking DTI space to seed space (compulsory when using a warp_field for seeds_to_dti)
+    mask: medimage/nifti1
+    # type=file|default=<undefined>: bet binary mask file in diffusion space
     mask2: generic/file
     # type=file|default=<undefined>: second bet binary mask (in diffusion space) in twomask_symm mode
     mesh: generic/file
     # type=file|default=<undefined>: Freesurfer-type surface descriptor (in ascii format)
-    thsamples: medimage/nifti1+list-of
-    # type=inputmultiobject|default=[]: 
-    phsamples: medimage/nifti1+list-of
-    # type=inputmultiobject|default=[]: 
-    fsamples: medimage/nifti1+list-of
-    # type=inputmultiobject|default=[]: 
-    mask: medimage/nifti1
-    # type=file|default=<undefined>: bet binary mask file in diffusion space
-    target_masks: medimage/nifti1+list-of
-    # type=inputmultiobject|default=[]: list of target masks - required for seeds_to_targets classification
-    waypoints: generic/file
-    # type=file|default=<undefined>: waypoint mask or ascii list of waypoint masks - only keep paths going through ALL the masks
-    seed_ref: generic/file
-    # type=file|default=<undefined>: reference vol to define seed space in simple mode - diffusion space assumed if absent
-    avoid_mp: generic/file
-    # type=file|default=<undefined>: reject pathways passing through locations given by this mask
-    stop_mask: generic/file
-    # type=file|default=<undefined>: stop tracking at locations given by this mask file
-    xfm: datascience/text-matrix
-    # type=file|default=<undefined>: transformation matrix taking seed space to DTI space (either FLIRT matrix or FNIRT warp_field) - default is identity
-    inv_xfm: generic/file
-    # type=file|default=<undefined>: transformation matrix taking DTI space to seed space (compulsory when using a warp_field for seeds_to_dti)
     out_dir: Path
     # type=directory|default=<undefined>: directory to put the final volumes in
+    phsamples: medimage/nifti1+list-of
+    # type=inputmultiobject|default=[]: 
+    seed_ref: generic/file
+    # type=file|default=<undefined>: reference vol to define seed space in simple mode - diffusion space assumed if absent
+    stop_mask: generic/file
+    # type=file|default=<undefined>: stop tracking at locations given by this mask file
+    target_masks: medimage/nifti1+list-of
+    # type=inputmultiobject|default=[]: list of target masks - required for seeds_to_targets classification
+    thsamples: medimage/nifti1+list-of
+    # type=inputmultiobject|default=[]: 
+    waypoints: generic/file
+    # type=file|default=<undefined>: waypoint mask or ascii list of waypoint masks - only keep paths going through ALL the masks
+    xfm: datascience/text-matrix
+    # type=file|default=<undefined>: transformation matrix taking seed space to DTI space (either FLIRT matrix or FNIRT warp_field) - default is identity
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

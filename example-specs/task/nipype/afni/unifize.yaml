@@ -81,12 +81,12 @@ outputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    scale_file: generic/file
-    # type=file: scale factor file
-    # type=file|default=<undefined>: output file name to save the scale factor used at each voxel 
     out_file: medimage/nifti1
     # type=file: unifized file
     # type=file|default=<undefined>: output image file name
+    scale_file: generic/file
+    # type=file: scale factor file
+    # type=file|default=<undefined>: output file name to save the scale factor used at each voxel 
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields

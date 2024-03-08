@@ -42,10 +42,10 @@ inputs:
     # type=file|default=<undefined>: input file to 3dBandpass
     mask: generic/file
     # type=file|default=<undefined>: mask file
-    orthogonalize_file: generic/file+list-of
-    # type=inputmultiobject|default=[]: Also orthogonalize input to columns in f.1D. Multiple '-ort' options are allowed.
     orthogonalize_dset: generic/file
     # type=file|default=<undefined>: Orthogonalize each voxel to the corresponding voxel time series in dataset 'fset', which must have the same spatial and temporal grid structure as the main input dataset. At present, only one '-dsort' option is allowed.
+    orthogonalize_file: generic/file+list-of
+    # type=inputmultiobject|default=[]: Also orthogonalize input to columns in f.1D. Multiple '-ort' options are allowed.
     out_file: Path
     # type=file: output file
     # type=file|default=<undefined>: output file from 3dBandpass

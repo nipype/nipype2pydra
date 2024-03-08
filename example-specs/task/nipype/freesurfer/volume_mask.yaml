@@ -45,18 +45,18 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    lh_pial: medimage-freesurfer/pial
-    # type=file|default=<undefined>: Implicit input left pial surface
-    rh_pial: medimage-freesurfer/pial
-    # type=file|default=<undefined>: Implicit input right pial surface
-    lh_white: medimage-freesurfer/pial
-    # type=file|default=<undefined>: Implicit input left white matter surface
-    rh_white: medimage-freesurfer/pial
-    # type=file|default=<undefined>: Implicit input right white matter surface
     aseg: generic/file
     # type=file|default=<undefined>: Implicit aseg.mgz segmentation. Specify a different aseg by using the 'in_aseg' input.
     in_aseg: generic/file
     # type=file|default=<undefined>: Input aseg file for VolumeMask
+    lh_pial: medimage-freesurfer/pial
+    # type=file|default=<undefined>: Implicit input left pial surface
+    lh_white: medimage-freesurfer/pial
+    # type=file|default=<undefined>: Implicit input left white matter surface
+    rh_pial: medimage-freesurfer/pial
+    # type=file|default=<undefined>: Implicit input right pial surface
+    rh_white: medimage-freesurfer/pial
+    # type=file|default=<undefined>: Implicit input right white matter surface
     subjects_dir: generic/directory
     # type=directory|default=<undefined>: subjects directory
   metadata:
@@ -72,10 +72,10 @@ outputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    out_ribbon: generic/file
-    # type=file: Output cortical ribbon mask
     lh_ribbon: generic/file
     # type=file: Output left cortical ribbon mask
+    out_ribbon: generic/file
+    # type=file: Output cortical ribbon mask
     rh_ribbon: generic/file
     # type=file: Output right cortical ribbon mask
   callables:

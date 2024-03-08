@@ -277,14 +277,14 @@ inputs:
     # type=inputmultiobject|default=[]: Image to which the moving_image should be transformed(usually a structural image)
     fixed_image_mask: generic/file
     # type=file|default=<undefined>: Mask used to limit metric sampling region of the fixed imagein all stages
+    initial_moving_transform: datascience/text-matrix+list-of
+    # type=inputmultiobject|default=[]: A transform or a list of transforms that should be applied before the registration begins. Note that, when a list is given, the transformations are applied in reverse order.
     moving_image: medimage/nifti1+list-of
     # type=inputmultiobject|default=[]: Image that will be registered to the space of fixed_image. This is theimage on which the transformations will be applied to
     moving_image_mask: generic/file
     # type=file|default=<undefined>: mask used to limit metric sampling region of the moving imagein all stages
     restore_state: datascience/text-matrix
     # type=file|default=<undefined>: Filename for restoring the internal restorable state of the registration
-    initial_moving_transform: datascience/text-matrix+list-of
-    # type=inputmultiobject|default=[]: A transform or a list of transforms that should be applied before the registration begins. Note that, when a list is given, the transformations are applied in reverse order.
     save_state: Path
     # type=file: The saved registration state to be restored
     # type=file|default=<undefined>: Filename for saving the internal restorable state of the registration
@@ -305,13 +305,13 @@ outputs:
     # type=file: Composite transform file
     inverse_composite_transform: generic/file
     # type=file: Inverse composite transform file
-    warped_image: generic/file
-    # type=file: Outputs warped image
     inverse_warped_image: generic/file
     # type=file: Outputs the inverse of the warped image
     save_state: datascience/text-matrix
     # type=file: The saved registration state to be restored
     # type=file|default=<undefined>: Filename for saving the internal restorable state of the registration
+    warped_image: generic/file
+    # type=file: Outputs warped image
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields

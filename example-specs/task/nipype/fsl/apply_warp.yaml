@@ -33,21 +33,21 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    in_file: generic/file
-    # type=file|default=<undefined>: image to be warped
-    ref_file: generic/file
-    # type=file|default=<undefined>: reference image
     field_file: generic/file
     # type=file|default=<undefined>: file containing warp field
-    premat: generic/file
-    # type=file|default=<undefined>: filename for pre-transform (affine matrix)
-    postmat: generic/file
-    # type=file|default=<undefined>: filename for post-transform (affine matrix)
+    in_file: generic/file
+    # type=file|default=<undefined>: image to be warped
     mask_file: generic/file
     # type=file|default=<undefined>: filename for mask image (in reference space)
     out_file: Path
     # type=file: Warped output file
     # type=file|default=<undefined>: output filename
+    postmat: generic/file
+    # type=file|default=<undefined>: filename for post-transform (affine matrix)
+    premat: generic/file
+    # type=file|default=<undefined>: filename for pre-transform (affine matrix)
+    ref_file: generic/file
+    # type=file|default=<undefined>: reference image
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

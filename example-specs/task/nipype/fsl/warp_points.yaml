@@ -41,19 +41,19 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    src_file: medimage/nifti1
-    # type=file|default=<undefined>: filename of source image
     dest_file: medimage/nifti1
     # type=file|default=<undefined>: filename of destination image
     in_coords: text/text-file
     # type=file|default=<undefined>: filename of file containing coordinates
-    xfm_file: generic/file
-    # type=file|default=<undefined>: filename of affine transform (e.g. source2dest.mat)
-    warp_file: medimage/nifti1
-    # type=file|default=<undefined>: filename of warpfield (e.g. intermediate2dest_warp.nii.gz)
     out_file: Path
     # type=file: Name of output file, containing the warp as field or coefficients.
     # type=file|default=<undefined>: output file name
+    src_file: medimage/nifti1
+    # type=file|default=<undefined>: filename of source image
+    warp_file: medimage/nifti1
+    # type=file|default=<undefined>: filename of warpfield (e.g. intermediate2dest_warp.nii.gz)
+    xfm_file: generic/file
+    # type=file|default=<undefined>: filename of affine transform (e.g. source2dest.mat)
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

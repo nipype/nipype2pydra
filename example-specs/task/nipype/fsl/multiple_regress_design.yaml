@@ -51,14 +51,14 @@ outputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    design_mat: generic/file
-    # type=file: design matrix file
     design_con: generic/file
     # type=file: design t-contrast file
     design_fts: generic/file
     # type=file: design f-contrast file
     design_grp: generic/file
     # type=file: design group file
+    design_mat: generic/file
+    # type=file: design matrix file
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields

@@ -32,25 +32,25 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    in_file: medimage/nifti1
-    # type=file|default=<undefined>: filename for input vector or tensor field
-    ref_vol: medimage/nifti1
-    # type=file|default=<undefined>: filename for reference (target) volume
     affine_mat: datascience/text-matrix
     # type=file|default=<undefined>: filename for affine transformation matrix
-    warp_field: generic/file
-    # type=file|default=<undefined>: filename for 4D warp field for nonlinear registration
+    in_file: medimage/nifti1
+    # type=file|default=<undefined>: filename for input vector or tensor field
+    mask: generic/file
+    # type=file|default=<undefined>: brain mask in input space
+    out_file: Path
+    # type=file: path/name of filename for the registered vector or tensor field
+    # type=file|default=<undefined>: filename for output registered vector or tensor field
+    ref_mask: generic/file
+    # type=file|default=<undefined>: brain mask in output space (useful for speed up of nonlinear reg)
+    ref_vol: medimage/nifti1
+    # type=file|default=<undefined>: filename for reference (target) volume
     rotation_mat: generic/file
     # type=file|default=<undefined>: filename for secondary affine matrix if set, this will be used for the rotation of the vector/tensor field
     rotation_warp: generic/file
     # type=file|default=<undefined>: filename for secondary warp field if set, this will be used for the rotation of the vector/tensor field
-    mask: generic/file
-    # type=file|default=<undefined>: brain mask in input space
-    ref_mask: generic/file
-    # type=file|default=<undefined>: brain mask in output space (useful for speed up of nonlinear reg)
-    out_file: Path
-    # type=file: path/name of filename for the registered vector or tensor field
-    # type=file|default=<undefined>: filename for output registered vector or tensor field
+    warp_field: generic/file
+    # type=file|default=<undefined>: filename for 4D warp field for nonlinear registration
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

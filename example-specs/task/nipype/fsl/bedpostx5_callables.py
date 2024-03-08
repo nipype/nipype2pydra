@@ -1,1 +1,1 @@
-"""Module to put any functions that are referred to in BEDPOSTX5.yaml"""
+"""Module to put any functions that are referred to in the "callables" section of BEDPOSTX5.yaml"""

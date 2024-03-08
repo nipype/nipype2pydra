@@ -37,10 +37,10 @@ inputs:
   # passed to the field in the automatically generated unittests.
     anatomical_image: medimage/nifti-gz
     # type=file|default=<undefined>: Structural image, typically T1.  If more than one anatomical image is specified, subsequently specified images are used during the segmentation process.  However, only the first image is used in the registration of priors. Our suggestion would be to specify the T1 as the first image. Anatomical template created using e.g. LPBA40 data set with buildtemplateparallel.sh in ANTs.
-    brain_template: medimage/nifti-gz
-    # type=file|default=<undefined>: Anatomical template created using e.g. LPBA40 data set with buildtemplateparallel.sh in ANTs.
     brain_probability_mask: medimage/nifti-gz
     # type=file|default=<undefined>: Brain probability mask created using e.g. LPBA40 data set which have brain masks defined, and warped to anatomical template and averaged resulting in a probability image.
+    brain_template: medimage/nifti-gz
+    # type=file|default=<undefined>: Anatomical template created using e.g. LPBA40 data set with buildtemplateparallel.sh in ANTs.
     extraction_registration_mask: generic/file
     # type=file|default=<undefined>: Mask (defined in the template space) used during registration for brain extraction. To limit the metric computation to a specific region.
   metadata:
@@ -56,8 +56,6 @@ outputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    BrainExtractionMask: generic/file
-    # type=file: brain extraction mask
     BrainExtractionBrain: generic/file
     # type=file: brain extraction image
     BrainExtractionCSF: generic/file
@@ -72,6 +70,8 @@ outputs:
     # type=file: 
     BrainExtractionLaplacian: generic/file
     # type=file: 
+    BrainExtractionMask: generic/file
+    # type=file: brain extraction mask
     BrainExtractionPrior0GenericAffine: generic/file
     # type=file: 
     BrainExtractionPrior1InverseWarp: generic/file

@@ -34,18 +34,18 @@ inputs:
   # passed to the field in the automatically generated unittests.
     in_file: medimage/mgh-gz
     # type=file|default=<undefined>: Input white matter file
-    segmentation: generic/file
-    # type=file|default=<undefined>: Input segmentation file for MRIFill
-    transform: generic/file
-    # type=file|default=<undefined>: Input transform file for MRIFill
-    subjects_dir: generic/directory
-    # type=directory|default=<undefined>: subjects directory
-    out_file: Path
-    # type=file: Output file from MRIFill
-    # type=file|default=<undefined>: Output filled volume file name for MRIFill
     log_file: Path
     # type=file: Output log file from MRIFill
     # type=file|default=<undefined>: Output log file for MRIFill
+    out_file: Path
+    # type=file: Output file from MRIFill
+    # type=file|default=<undefined>: Output filled volume file name for MRIFill
+    segmentation: generic/file
+    # type=file|default=<undefined>: Input segmentation file for MRIFill
+    subjects_dir: generic/directory
+    # type=directory|default=<undefined>: subjects directory
+    transform: generic/file
+    # type=file|default=<undefined>: Input transform file for MRIFill
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:
@@ -59,12 +59,12 @@ outputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    out_file: medimage/mgh-gz
-    # type=file: Output file from MRIFill
-    # type=file|default=<undefined>: Output filled volume file name for MRIFill
     log_file: generic/file
     # type=file: Output log file from MRIFill
     # type=file|default=<undefined>: Output log file for MRIFill
+    out_file: medimage/mgh-gz
+    # type=file: Output file from MRIFill
+    # type=file|default=<undefined>: Output filled volume file name for MRIFill
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields

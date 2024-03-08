@@ -1,4 +1,4 @@
-"""Module to put any functions that are referred to in FitMSParams.yaml"""
+"""Module to put any functions that are referred to in the "callables" section of FitMSParams.yaml"""
 
 
 def out_dir_callable(output_dir, inputs, stdout, stderr):

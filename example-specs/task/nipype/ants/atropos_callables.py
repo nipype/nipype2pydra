@@ -1,7 +1,7 @@
-"""Module to put any functions that are referred to in Atropos.yaml"""
+"""Module to put any functions that are referred to in the "callables" section of Atropos.yaml"""
 
-import os.path as op
 import attrs
+import os.path as op
 
 
 def out_classified_image_name_callable(output_dir, inputs, stdout, stderr):

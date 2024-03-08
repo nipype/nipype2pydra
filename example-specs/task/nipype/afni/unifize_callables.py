@@ -1,1 +1,1 @@
-"""Module to put any functions that are referred to in Unifize.yaml"""
+"""Module to put any functions that are referred to in the "callables" section of Unifize.yaml"""

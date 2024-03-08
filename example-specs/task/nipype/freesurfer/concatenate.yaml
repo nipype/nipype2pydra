@@ -34,17 +34,17 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    in_files: medimage/nifti1+list-of
-    # type=inputmultiobject|default=[]: Individual volumes to be concatenated
-    multiply_matrix_file: generic/file
-    # type=file|default=<undefined>: Multiply input by an ascii matrix in file
-    mask_file: generic/file
-    # type=file|default=<undefined>: Mask input with a volume
-    subjects_dir: generic/directory
-    # type=directory|default=<undefined>: subjects directory
     concatenated_file: Path
     # type=file: Path/name of the output volume
     # type=file|default=<undefined>: Output volume
+    in_files: medimage/nifti1+list-of
+    # type=inputmultiobject|default=[]: Individual volumes to be concatenated
+    mask_file: generic/file
+    # type=file|default=<undefined>: Mask input with a volume
+    multiply_matrix_file: generic/file
+    # type=file|default=<undefined>: Multiply input by an ascii matrix in file
+    subjects_dir: generic/directory
+    # type=directory|default=<undefined>: subjects directory
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

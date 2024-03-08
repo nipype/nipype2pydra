@@ -55,35 +55,35 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    lh_white: medimage-freesurfer/pial
-    # type=file|default=<undefined>: Input file must be <subject_id>/surf/lh.white
-    rh_white: medimage-freesurfer/pial
-    # type=file|default=<undefined>: Input file must be <subject_id>/surf/rh.white
-    lh_pial: medimage-freesurfer/pial
-    # type=file|default=<undefined>: Input file must be <subject_id>/surf/lh.pial
-    rh_pial: medimage-freesurfer/pial
-    # type=file|default=<undefined>: Input file must be <subject_id>/surf/rh.pial
-    lh_ribbon: medimage/mgh-gz
-    # type=file|default=<undefined>: Input file must be <subject_id>/mri/lh.ribbon.mgz
-    rh_ribbon: medimage/mgh-gz
-    # type=file|default=<undefined>: Input file must be <subject_id>/mri/rh.ribbon.mgz
-    ribbon: medimage/mgh-gz
-    # type=file|default=<undefined>: Input file must be <subject_id>/mri/ribbon.mgz
-    lh_annotation: medimage-freesurfer/pial
-    # type=file|default=<undefined>: Input file must be <subject_id>/label/lh.aparc.annot
-    rh_annotation: medimage-freesurfer/pial
-    # type=file|default=<undefined>: Input file must be <subject_id>/label/rh.aparc.annot
-    filled: generic/file
-    # type=file|default=<undefined>: Implicit input filled file. Only required with FS v5.3.
     aseg: generic/file
     # type=file|default=<undefined>: Input aseg file
     ctxseg: generic/file
     # type=file|default=<undefined>: 
-    subjects_dir: generic/directory
-    # type=directory|default=<undefined>: subjects directory
+    filled: generic/file
+    # type=file|default=<undefined>: Implicit input filled file. Only required with FS v5.3.
+    lh_annotation: medimage-freesurfer/pial
+    # type=file|default=<undefined>: Input file must be <subject_id>/label/lh.aparc.annot
+    lh_pial: medimage-freesurfer/pial
+    # type=file|default=<undefined>: Input file must be <subject_id>/surf/lh.pial
+    lh_ribbon: medimage/mgh-gz
+    # type=file|default=<undefined>: Input file must be <subject_id>/mri/lh.ribbon.mgz
+    lh_white: medimage-freesurfer/pial
+    # type=file|default=<undefined>: Input file must be <subject_id>/surf/lh.white
     out_file: Path
     # type=file: Output aseg file
     # type=file|default=<undefined>: Full path of file to save the output segmentation in
+    rh_annotation: medimage-freesurfer/pial
+    # type=file|default=<undefined>: Input file must be <subject_id>/label/rh.aparc.annot
+    rh_pial: medimage-freesurfer/pial
+    # type=file|default=<undefined>: Input file must be <subject_id>/surf/rh.pial
+    rh_ribbon: medimage/mgh-gz
+    # type=file|default=<undefined>: Input file must be <subject_id>/mri/rh.ribbon.mgz
+    rh_white: medimage-freesurfer/pial
+    # type=file|default=<undefined>: Input file must be <subject_id>/surf/rh.white
+    ribbon: medimage/mgh-gz
+    # type=file|default=<undefined>: Input file must be <subject_id>/mri/ribbon.mgz
+    subjects_dir: generic/directory
+    # type=directory|default=<undefined>: subjects directory
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

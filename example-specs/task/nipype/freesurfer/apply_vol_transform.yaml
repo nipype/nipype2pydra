@@ -34,27 +34,27 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    source_file: medimage/nifti1
-    # type=file|default=<undefined>: Input volume you wish to transform
-    target_file: generic/file
-    # type=file|default=<undefined>: Output template volume
-    reg_file: datascience/dat-file
-    # type=file|default=<undefined>: tkRAS-to-tkRAS matrix   (tkregister2 format)
+    fsl_reg_file: generic/file
+    # type=file|default=<undefined>: fslRAS-to-fslRAS matrix (FSL format)
     lta_file: generic/file
     # type=file|default=<undefined>: Linear Transform Array file
     lta_inv_file: generic/file
     # type=file|default=<undefined>: LTA, invert
-    fsl_reg_file: generic/file
-    # type=file|default=<undefined>: fslRAS-to-fslRAS matrix (FSL format)
-    xfm_reg_file: generic/file
-    # type=file|default=<undefined>: ScannerRAS-to-ScannerRAS matrix (MNI format)
     m3z_file: generic/file
     # type=file|default=<undefined>: This is the morph to be applied to the volume. Unless the morph is in mri/transforms (eg.: for talairach.m3z computed by reconall), you will need to specify the full path to this morph and use the --noDefM3zPath flag.
+    reg_file: datascience/dat-file
+    # type=file|default=<undefined>: tkRAS-to-tkRAS matrix   (tkregister2 format)
+    source_file: medimage/nifti1
+    # type=file|default=<undefined>: Input volume you wish to transform
     subjects_dir: generic/directory
     # type=directory|default=<undefined>: subjects directory
+    target_file: generic/file
+    # type=file|default=<undefined>: Output template volume
     transformed_file: Path
     # type=file: Path to output file if used normally
     # type=file|default=<undefined>: Output volume
+    xfm_reg_file: generic/file
+    # type=file|default=<undefined>: ScannerRAS-to-ScannerRAS matrix (MNI format)
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

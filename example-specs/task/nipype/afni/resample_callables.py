@@ -1,1 +1,1 @@
-"""Module to put any functions that are referred to in Resample.yaml"""
+"""Module to put any functions that are referred to in the "callables" section of Resample.yaml"""

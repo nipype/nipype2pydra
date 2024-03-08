@@ -46,14 +46,14 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
+    gridset: generic/file
+    # type=file|default=<undefined>: copy grid of specified dataset
     in_file: medimage/nifti1
     # type=file|default=<undefined>: input file to 3dWarp
     matparent: generic/file
     # type=file|default=<undefined>: apply transformation from 3dWarpDrive
     oblique_parent: generic/file
     # type=file|default=<undefined>: Read in the oblique transformation matrix from an oblique dataset and make cardinal dataset oblique to match
-    gridset: generic/file
-    # type=file|default=<undefined>: copy grid of specified dataset
     out_file: Path
     # type=file: Warped file.
     # type=file|default=<undefined>: output image file name

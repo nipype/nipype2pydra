@@ -22,13 +22,18 @@ from nipype2pydra.pkg_gen import (
 from nipype2pydra.cli.base import cli
 
 
+DEFAULT_INTERFACE_SPEC = (
+    Path(__file__).parent.parent / "pkg_gen" / "resources" / "specs" / "nipype-interfaces-to-import.yaml"
+)
+
+
 @cli.command(
     "pkg-gen", help="Generates stub pydra packages for all nipype interfaces to import"
 )
 @click.argument("output_dir", type=click.Path(path_type=Path))
 @click.option("--work-dir", type=click.Path(path_type=Path), default=None)
 @click.option("--task-template", type=click.Path(path_type=Path), default=None)
-@click.option("--packages-to-import", type=click.Path(path_type=Path), default=None)
+@click.option("--packages-to-import", type=click.Path(path_type=Path), default=DEFAULT_INTERFACE_SPEC)
 @click.option("--single-interface", type=str, nargs=2, default=None)
 @click.option(
     "--example-packages",
@@ -70,16 +75,7 @@ def pkg_gen(
                 single_interface[0]: [single_interface[1]],
             },
         }
-        if packages_to_import:
-            raise ValueError(
-                "Cannot specify both --single-package and --packages-to-import"
-            )
     else:
-        if packages_to_import is None:
-            packages_to_import = (
-                Path(__file__).parent.parent.parent / "nipype-interfaces-to-import.yaml"
-            )
-
         with open(packages_to_import) as f:
             to_import = yaml.load(f, Loader=yaml.SafeLoader)
 
@@ -168,7 +164,7 @@ def pkg_gen(
         )
         sp.check_call("git tag 0.1.0", shell=True, cwd=pkg_dir)
 
-    if example_packages:
+    if example_packages and not single_interface:
         with open(example_packages) as f:
             example_pkg_names = yaml.load(f, Loader=yaml.SafeLoader)
 
@@ -189,7 +185,8 @@ def pkg_gen(
                 / "nipype-auto-conv"
                 / "specs"
             )
-            shutil.copytree(specs_dir, examples_dir / example_pkg_name)
+            dest_dir = examples_dir / example_pkg_name
+            shutil.copytree(specs_dir, dest_dir)
 
     unmatched_extensions = set(
         File.decompose_fspath(

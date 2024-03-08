@@ -33,19 +33,19 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    lh_white: medimage-freesurfer/pial
-    # type=file|default=<undefined>: Implicit input file must be lh.white
-    rh_white: medimage-freesurfer/pial
-    # type=file|default=<undefined>: Implicit input file must be rh.white
     aseg: medimage/mgh-gz
     # type=file|default=<undefined>: Input aseg file
-    surf_directory: generic/directory
-    # type=directory|default='.': Directory containing lh.white and rh.white
-    subjects_dir: generic/directory
-    # type=directory|default=<undefined>: subjects directory
+    lh_white: medimage-freesurfer/pial
+    # type=file|default=<undefined>: Implicit input file must be lh.white
     out_file: Path
     # type=file: Output aseg file
     # type=file|default=<undefined>: Output aseg file
+    rh_white: medimage-freesurfer/pial
+    # type=file|default=<undefined>: Implicit input file must be rh.white
+    subjects_dir: generic/directory
+    # type=directory|default=<undefined>: subjects directory
+    surf_directory: generic/directory
+    # type=directory|default='.': Directory containing lh.white and rh.white
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

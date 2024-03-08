@@ -39,13 +39,13 @@ inputs:
   # passed to the field in the automatically generated unittests.
     background_image: generic/file
     # type=file|default=<undefined>: image to use as background
+    out_file: Path
+    # type=file: combined image volume
+    # type=file|default=<undefined>: combined image volume
     stat_image: generic/file
     # type=file|default=<undefined>: statistical image to overlay in color
     stat_image2: generic/file
     # type=file|default=<undefined>: second statistical image to overlay in color
-    out_file: Path
-    # type=file: combined image volume
-    # type=file|default=<undefined>: combined image volume
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

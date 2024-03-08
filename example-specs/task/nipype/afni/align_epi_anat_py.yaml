@@ -70,10 +70,10 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    in_file: medimage/nifti1
-    # type=file|default=<undefined>: EPI dataset to align
     anat: medimage/nifti1
     # type=file|default=<undefined>: name of structural dataset
+    in_file: medimage/nifti1
+    # type=file|default=<undefined>: EPI dataset to align
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:
@@ -87,22 +87,22 @@ outputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    anat_al_orig: generic/file
-    # type=file: A version of the anatomy that is aligned to the EPI
-    epi_al_orig: generic/file
-    # type=file: A version of the EPI dataset aligned to the anatomy
-    epi_tlrc_al: generic/file
-    # type=file: A version of the EPI dataset aligned to a standard template
     anat_al_mat: generic/file
     # type=file: matrix to align anatomy to the EPI
+    anat_al_orig: generic/file
+    # type=file: A version of the anatomy that is aligned to the EPI
     epi_al_mat: generic/file
     # type=file: matrix to align EPI to anatomy
-    epi_vr_al_mat: generic/file
-    # type=file: matrix to volume register EPI
-    epi_reg_al_mat: generic/file
-    # type=file: matrix to volume register and align epi to anatomy
+    epi_al_orig: generic/file
+    # type=file: A version of the EPI dataset aligned to the anatomy
     epi_al_tlrc_mat: generic/file
     # type=file: matrix to volume register and align epito anatomy and put into standard space
+    epi_reg_al_mat: generic/file
+    # type=file: matrix to volume register and align epi to anatomy
+    epi_tlrc_al: generic/file
+    # type=file: A version of the EPI dataset aligned to a standard template
+    epi_vr_al_mat: generic/file
+    # type=file: matrix to volume register EPI
     epi_vr_motion: generic/file
     # type=file: motion parameters from EPI time-seriesregistration (tsh included in name if slicetiming correction is also included).
     skullstrip: generic/file

@@ -1,7 +1,8 @@
-"""Module to put any functions that are referred to in SUSAN.yaml"""
+"""Module to put any functions that are referred to in the "callables" section of SUSAN.yaml"""
 
-import os
 import attrs
+from fileformats.generic import File
+import os
 
 
 def out_file_callable(output_dir, inputs, stdout, stderr):
@@ -45,10 +46,6 @@ def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
         )
     outputs["smoothed_file"] = os.path.abspath(out_file)
     return outputs
-
-
-class SUSANOutputSpec(inputs=None, stdout=None, stderr=None, output_dir=None):
-    smoothed_file = File(exists=True, desc="smoothed output file")
 
 
 def _gen_fname(
@@ -104,3 +101,7 @@ def _gen_fname(
         suffix = ""
     fname = fname_presuffix(basename, suffix=suffix, use_ext=False, newpath=cwd)
     return fname
+
+
+class SUSANOutputSpec(inputs=None, stdout=None, stderr=None, output_dir=None):
+    smoothed_file = File(exists=True, desc="smoothed output file")

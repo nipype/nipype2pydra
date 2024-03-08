@@ -39,13 +39,13 @@ inputs:
   # passed to the field in the automatically generated unittests.
     in_surf: medimage-freesurfer/pial
     # type=file|default=<undefined>: Surface file with grid (vertices) onto which the template data is to be sampled or 'painted'
-    template: medimage/mgh-gz
-    # type=file|default=<undefined>: Template file
-    subjects_dir: generic/directory
-    # type=directory|default=<undefined>: subjects directory
     out_file: Path
     # type=file: File containing a surface-worth of per-vertex values, saved in 'curvature' format.
     # type=file|default=<undefined>: File containing a surface-worth of per-vertex values, saved in 'curvature' format.
+    subjects_dir: generic/directory
+    # type=directory|default=<undefined>: subjects directory
+    template: medimage/mgh-gz
+    # type=file|default=<undefined>: Template file
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

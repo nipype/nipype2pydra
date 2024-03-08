@@ -45,11 +45,11 @@ inputs:
   # passed to the field in the automatically generated unittests.
     in_files: medimage-freesurfer/pial+list-of
     # type=list|default=[]: Two surfaces to be combined.
-    subjects_dir: generic/directory
-    # type=directory|default=<undefined>: subjects directory
     out_file: Path
     # type=file: Output filename. Combined surfaces from in_files.
     # type=file|default=<undefined>: Output filename. Combined surfaces from in_files.
+    subjects_dir: generic/directory
+    # type=directory|default=<undefined>: subjects directory
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

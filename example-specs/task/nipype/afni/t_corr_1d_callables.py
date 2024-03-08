@@ -1,1 +1,1 @@
-"""Module to put any functions that are referred to in TCorr1D.yaml"""
+"""Module to put any functions that are referred to in the "callables" section of TCorr1D.yaml"""

@@ -42,13 +42,13 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
+    cm_file: Path
+    # type=file: file with the center of mass coordinates
+    # type=file|default=<undefined>: File to write center of mass to
     in_file: medimage/nifti1
     # type=file|default=<undefined>: input file to 3dCM
     mask_file: generic/file
     # type=file|default=<undefined>: Only voxels with nonzero values in the provided mask will be averaged.
-    cm_file: Path
-    # type=file: file with the center of mass coordinates
-    # type=file|default=<undefined>: File to write center of mass to
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:
@@ -62,11 +62,11 @@ outputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    out_file: generic/file
-    # type=file: output file
     cm_file: text/text-file
     # type=file: file with the center of mass coordinates
     # type=file|default=<undefined>: File to write center of mass to
+    out_file: generic/file
+    # type=file: output file
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
@@ -88,7 +88,7 @@ tests:
     automask:
     # type=bool|default=False: Generate the mask automatically
     set_cm:
-    # type=tuple|default=(<traits.trait_types.Float object at 0x1080a8c90>, <traits.trait_types.Float object at 0x1080a8d90>, <traits.trait_types.Float object at 0x1080a8e10>): After computing the center of mass, set the origin fields in the header so that the center of mass will be at (x,y,z) in DICOM coords.
+    # type=tuple|default=(<traits.trait_types.Float object at 0x10ffdfcd0>, <traits.trait_types.Float object at 0x10ffdfdd0>, <traits.trait_types.Float object at 0x10ffdfe50>): After computing the center of mass, set the origin fields in the header so that the center of mass will be at (x,y,z) in DICOM coords.
     local_ijk:
     # type=bool|default=False: Output values as (i,j,k) in local orientation
     roi_vals:

@@ -41,18 +41,18 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    in_file: medimage/nifti1
-    # type=file|default=<undefined>: name of 4D file with images
     encoding_file: text/text-file
     # type=file|default=<undefined>: name of text file with PE directions/times
-    out_base: generic/file
+    in_file: medimage/nifti1
+    # type=file|default=<undefined>: name of 4D file with images
+    out_base: Path
     # type=file|default=<undefined>: base-name of output files (spline coefficients (Hz) and movement parameters)
-    out_field: Path
-    # type=file: name of image file with field (Hz)
-    # type=file|default=<undefined>: name of image file with field (Hz)
     out_corrected: Path
     # type=file: name of 4D image file with unwarped images
     # type=file|default=<undefined>: name of 4D image file with unwarped images
+    out_field: Path
+    # type=file: name of image file with field (Hz)
+    # type=file|default=<undefined>: name of image file with field (Hz)
     out_logfile: Path
     # type=file: name of log-file
     # type=file|default=<undefined>: name of log-file
@@ -69,21 +69,21 @@ outputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    out_fieldcoef: generic/file
-    # type=file: file containing the field coefficients
-    out_movpar: generic/file
-    # type=file: movpar.txt output file
+    out_corrected: generic/file
+    # type=file: name of 4D image file with unwarped images
+    # type=file|default=<undefined>: name of 4D image file with unwarped images
     out_enc_file: generic/file
     # type=file: encoding directions file output for applytopup
     out_field: generic/file
     # type=file: name of image file with field (Hz)
     # type=file|default=<undefined>: name of image file with field (Hz)
-    out_corrected: generic/file
-    # type=file: name of 4D image file with unwarped images
-    # type=file|default=<undefined>: name of 4D image file with unwarped images
+    out_fieldcoef: generic/file
+    # type=file: file containing the field coefficients
     out_logfile: generic/file
     # type=file: name of log-file
     # type=file|default=<undefined>: name of log-file
+    out_movpar: generic/file
+    # type=file: movpar.txt output file
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields

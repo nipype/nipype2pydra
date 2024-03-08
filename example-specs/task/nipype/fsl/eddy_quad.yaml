@@ -43,18 +43,18 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    idx_file: generic/file
-    # type=file|default=<undefined>: File containing indices for all volumes into acquisition parameters
-    param_file: text/text-file
-    # type=file|default=<undefined>: File containing acquisition parameters
-    mask_file: generic/file
-    # type=file|default=<undefined>: Binary mask file
     bval_file: generic/file
     # type=file|default=<undefined>: b-values file
     bvec_file: generic/file
     # type=file|default=<undefined>: b-vectors file - only used when <base_name>.eddy_residuals file is present
     field: generic/file
     # type=file|default=<undefined>: TOPUP estimated field (in Hz)
+    idx_file: generic/file
+    # type=file|default=<undefined>: File containing indices for all volumes into acquisition parameters
+    mask_file: generic/file
+    # type=file|default=<undefined>: Binary mask file
+    param_file: text/text-file
+    # type=file|default=<undefined>: File containing acquisition parameters
     slice_spec: generic/file
     # type=file|default=<undefined>: Text file specifying slice/group acquisition
   metadata:
@@ -70,16 +70,16 @@ outputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
+    clean_volumes: generic/file
+    # type=file: Text file containing a list of clean volumes, based on the eddy squared residuals. To generate a version of the pre-processed dataset without outlier volumes, use: `fslselectvols -i <eddy_corrected_data> -o eddy_corrected_data_clean --vols=vols_no_outliers.txt`
     qc_json: generic/file
     # type=file: Single subject database containing quality metrics and data info.
     qc_pdf: generic/file
     # type=file: Single subject QC report.
-    vdm_png: generic/file
-    # type=file: Image showing mid-sagittal, -coronal and -axial slices of the voxel displacement map. Generated when using the -f option.
     residuals: generic/file
     # type=file: Text file containing the volume-wise mask-averaged squared residuals. Generated when residual maps are available.
-    clean_volumes: generic/file
-    # type=file: Text file containing a list of clean volumes, based on the eddy squared residuals. To generate a version of the pre-processed dataset without outlier volumes, use: `fslselectvols -i <eddy_corrected_data> -o eddy_corrected_data_clean --vols=vols_no_outliers.txt`
+    vdm_png: generic/file
+    # type=file: Image showing mid-sagittal, -coronal and -axial slices of the voxel displacement map. Generated when using the -f option.
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields

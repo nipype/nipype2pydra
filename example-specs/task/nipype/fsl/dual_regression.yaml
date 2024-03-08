@@ -36,14 +36,14 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    in_files: medimage/nifti1+list-of
-    # type=inputmultiobject|default=[]: List all subjects' preprocessed, standard-space 4D datasets
-    group_IC_maps_4D: medimage/nifti1
-    # type=file|default=<undefined>: 4D image containing spatial IC maps (melodic_IC) from the whole-group ICA analysis
-    design_file: generic/file
-    # type=file|default=<undefined>: Design matrix for final cross-subject modelling with randomise
     con_file: generic/file
     # type=file|default=<undefined>: Design contrasts for final cross-subject modelling with randomise
+    design_file: generic/file
+    # type=file|default=<undefined>: Design matrix for final cross-subject modelling with randomise
+    group_IC_maps_4D: medimage/nifti1
+    # type=file|default=<undefined>: 4D image containing spatial IC maps (melodic_IC) from the whole-group ICA analysis
+    in_files: medimage/nifti1+list-of
+    # type=inputmultiobject|default=[]: List all subjects' preprocessed, standard-space 4D datasets
     out_dir: Path
     # type=directory: 
     # type=directory|default='output': This directory will be created to hold all output and logfiles

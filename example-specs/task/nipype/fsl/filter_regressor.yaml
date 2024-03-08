@@ -23,10 +23,10 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    in_file: generic/file
-    # type=file|default=<undefined>: input file name (4D image)
     design_file: generic/file
     # type=file|default=<undefined>: name of the matrix with time courses (e.g. GLM design or MELODIC mixing matrix)
+    in_file: generic/file
+    # type=file|default=<undefined>: input file name (4D image)
     mask: generic/file
     # type=file|default=<undefined>: mask image file name
     out_file: Path

@@ -45,11 +45,11 @@ inputs:
     # type=file|default=<undefined>: Filename of the second image
     mask_file: generic/file
     # type=file|default=<undefined>: mask image file name. Voxels NOT in the mask will not be used in the neighborhood of any voxel. Also, a voxel NOT in the mask will have its statistic(s) computed as zero (0).
-    weight_file: generic/file
-    # type=file|default=<undefined>: File name of an image to use as a weight.  Only applies to 'pearson' statistics.
     out_file: Path
     # type=file: output file
     # type=file|default=<undefined>: Output dataset.
+    weight_file: generic/file
+    # type=file|default=<undefined>: File name of an image to use as a weight.  Only applies to 'pearson' statistics.
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

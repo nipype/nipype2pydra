@@ -357,9 +357,7 @@ def get_local_constants(mod):
     return local_vars
 
 
-def cleanup_function_body(
-    function_body: str, with_signature: bool = False
-) -> str:
+def cleanup_function_body(function_body: str) -> str:
     """Ensure 4-space indentation, replace LOGGER with logger, and replace isdefined
     with the attrs.NOTHING constant
 
@@ -375,8 +373,12 @@ def cleanup_function_body(
     function_body: str
         The processed source code
     """
+    if re.match(r"\s*(def|class)\s+", function_body):
+        with_signature = True
+    else:
+        with_signature = False
     # Detect the indentation of the source code in src and reduce it to 4 spaces
-    indents = re.findall(r"^ *(?=[^\n])", function_body, flags=re.MULTILINE)
+    indents = re.findall(r"^( *)[^\s].*\n", function_body, flags=re.MULTILINE)
     min_indent = min(len(i) for i in indents) if indents else 0
     indent_reduction = min_indent - (0 if with_signature else 4)
     assert indent_reduction >= 0, (

@@ -38,24 +38,24 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    in_file: medimage/mgh-gz
-    # type=file|default=<undefined>: The input file for CANormalize
     atlas: medimage/nifti-gz
     # type=file|default=<undefined>: The atlas file in gca format
-    transform: datascience/text-matrix
-    # type=file|default=<undefined>: The transform file in lta format
-    mask: generic/file
-    # type=file|default=<undefined>: Specifies volume to use as mask
-    long_file: generic/file
-    # type=file|default=<undefined>: undocumented flag used in longitudinal processing
-    subjects_dir: generic/directory
-    # type=directory|default=<undefined>: subjects directory
-    out_file: Path
-    # type=file: The output file for Normalize
-    # type=file|default=<undefined>: The output file for CANormalize
     control_points: Path
     # type=file: The output control points for Normalize
     # type=file|default=<undefined>: File name for the output control points
+    in_file: medimage/mgh-gz
+    # type=file|default=<undefined>: The input file for CANormalize
+    long_file: generic/file
+    # type=file|default=<undefined>: undocumented flag used in longitudinal processing
+    mask: generic/file
+    # type=file|default=<undefined>: Specifies volume to use as mask
+    out_file: Path
+    # type=file: The output file for Normalize
+    # type=file|default=<undefined>: The output file for CANormalize
+    subjects_dir: generic/directory
+    # type=directory|default=<undefined>: subjects directory
+    transform: datascience/text-matrix
+    # type=file|default=<undefined>: The transform file in lta format
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:
@@ -69,12 +69,12 @@ outputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    out_file: generic/file
-    # type=file: The output file for Normalize
-    # type=file|default=<undefined>: The output file for CANormalize
     control_points: generic/file
     # type=file: The output control points for Normalize
     # type=file|default=<undefined>: File name for the output control points
+    out_file: generic/file
+    # type=file: The output file for Normalize
+    # type=file|default=<undefined>: The output file for CANormalize
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields

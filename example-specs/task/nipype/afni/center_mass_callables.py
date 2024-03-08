@@ -1,1 +1,1 @@
-"""Module to put any functions that are referred to in CenterMass.yaml"""
+"""Module to put any functions that are referred to in the "callables" section of CenterMass.yaml"""

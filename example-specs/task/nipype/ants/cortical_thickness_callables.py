@@ -1,1 +1,1 @@
-"""Module to put any functions that are referred to in CorticalThickness.yaml"""
+"""Module to put any functions that are referred to in the "callables" section of CorticalThickness.yaml"""

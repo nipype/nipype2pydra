@@ -42,11 +42,11 @@ inputs:
     # type=file|default=<undefined>: filled volume, usually wm.mgz
     in_norm: medimage/mgh-gz
     # type=file|default=<undefined>: the normalized, brain-extracted T1w image. Usually norm.mgz
-    subjects_dir: generic/directory
-    # type=directory|default=<undefined>: subjects directory
     out_file: Path
     # type=file: output file after mri_pretess
     # type=file|default=<undefined>: the output file after mri_pretess.
+    subjects_dir: generic/directory
+    # type=directory|default=<undefined>: subjects directory
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

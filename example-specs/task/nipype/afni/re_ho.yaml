@@ -39,10 +39,10 @@ inputs:
   # passed to the field in the automatically generated unittests.
     in_file: medimage/nifti1
     # type=file|default=<undefined>: input dataset
-    mask_file: generic/file
-    # type=file|default=<undefined>: Mask within which ReHo should be calculated voxelwise
     label_set: generic/file
     # type=file|default=<undefined>: a set of ROIs, each labelled with distinct integers. ReHo will then be calculated per ROI.
+    mask_file: generic/file
+    # type=file|default=<undefined>: Mask within which ReHo should be calculated voxelwise
     out_file: Path
     # type=file: Voxelwise regional homogeneity map
     # type=file|default=<undefined>: Output dataset.

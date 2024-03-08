@@ -53,10 +53,10 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    source_file: medimage/nifti1
-    # type=file|default=<undefined>: source file to be registered
     reference_file: medimage/nifti1
     # type=file|default=<undefined>: reference (target) file
+    source_file: medimage/nifti1
+    # type=file|default=<undefined>: source file to be registered
     subjects_dir: generic/directory
     # type=directory|default=<undefined>: FreeSurfer SUBJECTS_DIR
   metadata:
@@ -72,15 +72,15 @@ outputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    out_reg_file: generic/file
-    # type=file: output registration file
-    # type=traitcompound|default=None: output registration file (REG format)
     out_lta_file: generic/file
     # type=file: output LTA-style registration file
     # type=traitcompound|default=True: output registration file (LTA format)
     out_params_file: generic/file
     # type=file: output parameters file
     # type=traitcompound|default=None: output parameters file
+    out_reg_file: generic/file
+    # type=file: output registration file
+    # type=traitcompound|default=None: output registration file (REG format)
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields

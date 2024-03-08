@@ -43,11 +43,11 @@ inputs:
     # type=file|default=<undefined>: source volume
     reg_file: datascience/dat-file
     # type=file|default=<undefined>: registers volume to surface anatomical 
-    subjects_dir: generic/directory
-    # type=directory|default=<undefined>: subjects directory
     smoothed_file: Path
     # type=file: smoothed input volume
     # type=file|default=<undefined>: output volume
+    subjects_dir: generic/directory
+    # type=directory|default=<undefined>: subjects directory
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

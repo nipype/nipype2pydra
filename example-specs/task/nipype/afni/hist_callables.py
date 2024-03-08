@@ -1,1 +1,1 @@
-"""Module to put any functions that are referred to in Hist.yaml"""
+"""Module to put any functions that are referred to in the "callables" section of Hist.yaml"""

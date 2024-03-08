@@ -38,19 +38,19 @@ inputs:
   # passed to the field in the automatically generated unittests.
     in_file: medimage/mgh-gz
     # type=file|default=<undefined>: The input volume for CARegister
-    template: generic/file
-    # type=file|default=<undefined>: The template file in gca format
-    mask: generic/file
-    # type=file|default=<undefined>: Specifies volume to use as mask
-    transform: generic/file
-    # type=file|default=<undefined>: Specifies transform in lta format
     l_files: generic/file+list-of
     # type=inputmultiobject|default=[]: undocumented flag used in longitudinal processing
-    subjects_dir: generic/directory
-    # type=directory|default=<undefined>: subjects directory
+    mask: generic/file
+    # type=file|default=<undefined>: Specifies volume to use as mask
     out_file: Path
     # type=file: The output file for CARegister
     # type=file|default=<undefined>: The output volume for CARegister
+    subjects_dir: generic/directory
+    # type=directory|default=<undefined>: subjects directory
+    template: generic/file
+    # type=file|default=<undefined>: The template file in gca format
+    transform: generic/file
+    # type=file|default=<undefined>: Specifies transform in lta format
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

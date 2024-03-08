@@ -33,16 +33,16 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    in_file: medimage/nifti-gz
-    # type=file|default=<undefined>: input volume
     cope_file: generic/file
     # type=file|default=<undefined>: cope volume
-    xfm_file: generic/file
-    # type=file|default=<undefined>: filename for Linear: input->standard-space transform. Non-linear: input->highres transform
+    in_file: medimage/nifti-gz
+    # type=file|default=<undefined>: input volume
     std_space_file: generic/file
     # type=file|default=<undefined>: filename for standard-space volume
     warpfield_file: generic/file
     # type=file|default=<undefined>: file contining warpfield
+    xfm_file: generic/file
+    # type=file|default=<undefined>: filename for Linear: input->standard-space transform. Non-linear: input->highres transform
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:
@@ -58,20 +58,20 @@ outputs:
   # passed to the field in the automatically generated unittests.
     index_file: generic/file
     # type=file: output of cluster index (in size order)
-    threshold_file: generic/file
-    # type=file: thresholded image
     localmax_txt_file: generic/file
     # type=file: local maxima text file
     localmax_vol_file: generic/file
     # type=file: output of local maxima volume
-    size_file: generic/file
-    # type=file: filename for output of size image
     max_file: generic/file
     # type=file: filename for output of max image
     mean_file: generic/file
     # type=file: filename for output of mean image
     pval_file: generic/file
     # type=file: filename for image output of log pvals
+    size_file: generic/file
+    # type=file: filename for output of size image
+    threshold_file: generic/file
+    # type=file: thresholded image
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields

@@ -41,24 +41,24 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    in_orig: medimage-freesurfer/pial
-    # type=file|default=<undefined>: Implicit input file <hemisphere>.orig
-    in_wm: medimage/mgh-gz
-    # type=file|default=<undefined>: Implicit input file wm.mgz
-    in_filled: medimage/mgh-gz
-    # type=file|default=<undefined>: Implicit input file filled.mgz
-    in_white: generic/file
-    # type=file|default=<undefined>: Implicit input that is sometimes used
-    in_label: medimage/nifti1
-    # type=file|default=<undefined>: Implicit input label/<hemisphere>.aparc.annot
-    orig_white: generic/file
-    # type=file|default=<undefined>: Specify a white surface to start with
-    orig_pial: medimage-freesurfer/pial
-    # type=file|default=<undefined>: Specify a pial surface to start with
-    in_aseg: generic/file
-    # type=file|default=<undefined>: Input segmentation file
     in_T1: medimage/mgh-gz
     # type=file|default=<undefined>: Input brain or T1 file
+    in_aseg: generic/file
+    # type=file|default=<undefined>: Input segmentation file
+    in_filled: medimage/mgh-gz
+    # type=file|default=<undefined>: Implicit input file filled.mgz
+    in_label: medimage/nifti1
+    # type=file|default=<undefined>: Implicit input label/<hemisphere>.aparc.annot
+    in_orig: medimage-freesurfer/pial
+    # type=file|default=<undefined>: Implicit input file <hemisphere>.orig
+    in_white: generic/file
+    # type=file|default=<undefined>: Implicit input that is sometimes used
+    in_wm: medimage/mgh-gz
+    # type=file|default=<undefined>: Implicit input file wm.mgz
+    orig_pial: medimage-freesurfer/pial
+    # type=file|default=<undefined>: Specify a pial surface to start with
+    orig_white: generic/file
+    # type=file|default=<undefined>: Specify a white surface to start with
     subjects_dir: generic/directory
     # type=directory|default=<undefined>: subjects directory
   metadata:
@@ -74,18 +74,18 @@ outputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    out_white: generic/file
-    # type=file: Output white matter hemisphere surface
-    out_curv: generic/file
-    # type=file: Output curv file for MakeSurfaces
     out_area: generic/file
     # type=file: Output area file for MakeSurfaces
     out_cortex: generic/file
     # type=file: Output cortex file for MakeSurfaces
+    out_curv: generic/file
+    # type=file: Output curv file for MakeSurfaces
     out_pial: generic/file
     # type=file: Output pial surface for MakeSurfaces
     out_thickness: generic/file
     # type=file: Output thickness file for MakeSurfaces
+    out_white: generic/file
+    # type=file: Output white matter hemisphere surface
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields

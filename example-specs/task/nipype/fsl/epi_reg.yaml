@@ -45,16 +45,16 @@ inputs:
   # passed to the field in the automatically generated unittests.
     epi: medimage/nifti1
     # type=file|default=<undefined>: EPI image
-    t1_head: medimage/nifti1
-    # type=file|default=<undefined>: wholehead T1 image
-    t1_brain: medimage/nifti1
-    # type=file|default=<undefined>: brain extracted T1 image
     fmap: medimage/nifti1
     # type=file|default=<undefined>: fieldmap image (in rad/s)
     fmapmag: medimage/nifti1
     # type=file|default=<undefined>: fieldmap magnitude image - wholehead
     fmapmagbrain: medimage/nifti1
     # type=file|default=<undefined>: fieldmap magnitude image - brain extracted
+    t1_brain: medimage/nifti1
+    # type=file|default=<undefined>: brain extracted T1 image
+    t1_head: medimage/nifti1
+    # type=file|default=<undefined>: wholehead T1 image
     weight_image: generic/file
     # type=file|default=<undefined>: weighting image (in T1 space)
     wmseg: Path
@@ -73,35 +73,35 @@ outputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    out_file: generic/file
-    # type=file: unwarped and coregistered epi input
-    out_1vol: generic/file
-    # type=file: unwarped and coregistered single volume
-    fmap2str_mat: generic/file
-    # type=file: rigid fieldmap-to-structural transform
+    epi2str_inv: generic/file
+    # type=file: rigid structural-to-epi transform
+    epi2str_mat: generic/file
+    # type=file: rigid epi-to-structural transform
     fmap2epi_mat: generic/file
     # type=file: rigid fieldmap-to-epi transform
+    fmap2str_mat: generic/file
+    # type=file: rigid fieldmap-to-structural transform
     fmap_epi: generic/file
     # type=file: fieldmap in epi space
     fmap_str: generic/file
     # type=file: fieldmap in structural space
     fmapmag_str: generic/file
     # type=file: fieldmap magnitude image in structural space
-    epi2str_inv: generic/file
-    # type=file: rigid structural-to-epi transform
-    epi2str_mat: generic/file
-    # type=file: rigid epi-to-structural transform
-    shiftmap: generic/file
-    # type=file: shiftmap in epi space
     fullwarp: generic/file
     # type=file: warpfield to unwarp epi and transform into                     structural space
+    out_1vol: generic/file
+    # type=file: unwarped and coregistered single volume
+    out_file: generic/file
+    # type=file: unwarped and coregistered epi input
+    seg: generic/file
+    # type=file: white matter, gray matter, csf segmentation
+    shiftmap: generic/file
+    # type=file: shiftmap in epi space
+    wmedge: generic/file
+    # type=file: white matter edges for visualization
     wmseg: generic/file
     # type=file: white matter segmentation used in flirt bbr
     # type=file|default=<undefined>: white matter segmentation of T1 image, has to be named                  like the t1brain and end on _wmseg
-    seg: generic/file
-    # type=file: white matter, gray matter, csf segmentation
-    wmedge: generic/file
-    # type=file: white matter edges for visualization
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields

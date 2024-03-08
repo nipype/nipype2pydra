@@ -41,14 +41,14 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    mag_file: medimage/nifti1
-    # type=file|default=<undefined>: Magnitude file
     dph_file: medimage/nifti1
     # type=file|default=<undefined>: Phase file assumed to be scaled from 0 to 4095
-    exf_file: generic/file
-    # type=file|default=<undefined>: example func volume (or use epi)
     epi_file: medimage/nifti1
     # type=file|default=<undefined>: EPI volume to unwarp
+    exf_file: generic/file
+    # type=file|default=<undefined>: example func volume (or use epi)
+    mag_file: medimage/nifti1
+    # type=file|default=<undefined>: Magnitude file
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:
@@ -62,22 +62,22 @@ outputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
+    exf_mask: generic/file
+    # type=file: Mask from example functional volume
+    exfdw: generic/file
+    # type=file: dewarped functional volume example
+    # type=string|default='': dewarped example func volume
     unwarped_file: generic/file
     # type=file: unwarped epi file
     vsm_file: generic/file
     # type=file: voxel shift map
-    exfdw: generic/file
-    # type=file: dewarped functional volume example
-    # type=string|default='': dewarped example func volume
-    exf_mask: generic/file
-    # type=file: Mask from example functional volume
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
-    vsm: vsm_callable
-    # type=string|default='': voxel shift map
     tmpdir: tmpdir_callable
     # type=string|default='': tmpdir
+    vsm: vsm_callable
+    # type=string|default='': voxel shift map
   templates:
   # dict[str, str] - `output_file_template` values to be provided to output fields
     exfdw: exfdw

@@ -38,12 +38,12 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    in_orig: medimage-freesurfer/orig
-    # type=file|default=<undefined>: Undocumented input file <hemisphere>.orig
-    in_inflated: medimage-freesurfer/inflated
-    # type=file|default=<undefined>: Undocumented input file <hemisphere>.inflated
     in_brain: generic/file
     # type=file|default=<undefined>: Implicit input brain.mgz
+    in_inflated: medimage-freesurfer/inflated
+    # type=file|default=<undefined>: Undocumented input file <hemisphere>.inflated
+    in_orig: medimage-freesurfer/orig
+    # type=file|default=<undefined>: Undocumented input file <hemisphere>.orig
     in_wm: generic/file
     # type=file|default=<undefined>: Implicit input wm.mgz
     sphere: medimage-freesurfer/nofix

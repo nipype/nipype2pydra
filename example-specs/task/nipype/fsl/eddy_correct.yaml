@@ -36,7 +36,7 @@ inputs:
   # passed to the field in the automatically generated unittests.
     in_file: medimage/nifti1
     # type=file|default=<undefined>: 4D input file
-    out_file: medimage/nifti1
+    out_file: Path
     # type=file|default=<undefined>: 4D output file
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
@@ -96,7 +96,7 @@ tests:
   # (if not specified, will try to choose a sensible value)
     in_file:
     # type=file|default=<undefined>: 4D input file
-    out_file:
+    out_file: '"diffusion_edc.nii"'
     # type=file|default=<undefined>: 4D output file
     ref_num: '0'
     # type=int|default=0: reference number
@@ -124,7 +124,7 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     in_file:
     # type=file|default=<undefined>: 4D input file
-    out_file:
+    out_file: '"diffusion_edc.nii"'
     # type=file|default=<undefined>: 4D output file
     ref_num: '0'
     # type=int|default=0: reference number

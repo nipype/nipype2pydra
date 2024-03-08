@@ -34,17 +34,17 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    in_file: medimage/mgh-gz
-    # type=file|default=<undefined>: Input white matter segmentation file
     brain_file: medimage/mgh-gz
     # type=file|default=<undefined>: Input brain/T1 file
+    in_file: medimage/mgh-gz
+    # type=file|default=<undefined>: Input white matter segmentation file
+    out_file: Path
+    # type=file: Output edited WM file
+    # type=file|default=<undefined>: File to be written as output
     seg_file: medimage/mgh-gz
     # type=file|default=<undefined>: Input presurf segmentation file
     subjects_dir: generic/directory
     # type=directory|default=<undefined>: subjects directory
-    out_file: Path
-    # type=file: Output edited WM file
-    # type=file|default=<undefined>: File to be written as output
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

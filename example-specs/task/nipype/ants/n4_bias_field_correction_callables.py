@@ -1,1 +1,1 @@
-"""Module to put any functions that are referred to in N4BiasFieldCorrection.yaml"""
+"""Module to put any functions that are referred to in the "callables" section of N4BiasFieldCorrection.yaml"""

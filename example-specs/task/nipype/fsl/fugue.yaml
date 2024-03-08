@@ -82,28 +82,28 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    in_file: medimage/nifti1
-    # type=file|default=<undefined>: filename of input volume
-    shift_in_file: medimage/nifti1
-    # type=file|default=<undefined>: filename for reading pixel shift volume
-    phasemap_in_file: medimage/nifti1
-    # type=file|default=<undefined>: filename for input phase image
     fmap_in_file: generic/file
     # type=file|default=<undefined>: filename for loading fieldmap (rad/s)
+    fmap_out_file: Path
+    # type=file: fieldmap file
+    # type=file|default=<undefined>: filename for saving fieldmap (rad/s)
+    in_file: medimage/nifti1
+    # type=file|default=<undefined>: filename of input volume
     mask_file: medimage/nifti1
     # type=file|default=<undefined>: filename for loading valid mask
+    phasemap_in_file: medimage/nifti1
+    # type=file|default=<undefined>: filename for input phase image
+    shift_in_file: medimage/nifti1
+    # type=file|default=<undefined>: filename for reading pixel shift volume
+    shift_out_file: Path
+    # type=file: voxel shift map file
+    # type=file|default=<undefined>: filename for saving pixel shift volume
     unwarped_file: Path
     # type=file: unwarped file
     # type=file|default=<undefined>: apply unwarping and save as filename
     warped_file: Path
     # type=file: forward warped file
     # type=file|default=<undefined>: apply forward warping and save as filename
-    shift_out_file: Path
-    # type=file: voxel shift map file
-    # type=file|default=<undefined>: filename for saving pixel shift volume
-    fmap_out_file: Path
-    # type=file: fieldmap file
-    # type=file|default=<undefined>: filename for saving fieldmap (rad/s)
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:
@@ -117,18 +117,18 @@ outputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
+    fmap_out_file: generic/file
+    # type=file: fieldmap file
+    # type=file|default=<undefined>: filename for saving fieldmap (rad/s)
+    shift_out_file: generic/file
+    # type=file: voxel shift map file
+    # type=file|default=<undefined>: filename for saving pixel shift volume
     unwarped_file: generic/file
     # type=file: unwarped file
     # type=file|default=<undefined>: apply unwarping and save as filename
     warped_file: generic/file
     # type=file: forward warped file
     # type=file|default=<undefined>: apply forward warping and save as filename
-    shift_out_file: generic/file
-    # type=file: voxel shift map file
-    # type=file|default=<undefined>: filename for saving pixel shift volume
-    fmap_out_file: generic/file
-    # type=file: fieldmap file
-    # type=file|default=<undefined>: filename for saving fieldmap (rad/s)
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields

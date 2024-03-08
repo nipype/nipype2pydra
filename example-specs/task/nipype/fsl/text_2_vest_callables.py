@@ -1,1 +1,1 @@
-"""Module to put any functions that are referred to in Text2Vest.yaml"""
+"""Module to put any functions that are referred to in the "callables" section of Text2Vest.yaml"""

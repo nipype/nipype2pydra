@@ -36,14 +36,14 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
+    brain_file: Path
+    # type=file: brain file (skull stripped)
+    # type=file|default=<undefined>: output file from 3dAutomask
     in_file: medimage/nifti1
     # type=file|default=<undefined>: input file to 3dAutomask
     out_file: Path
     # type=file: mask file
     # type=file|default=<undefined>: output image file name
-    brain_file: Path
-    # type=file: brain file (skull stripped)
-    # type=file|default=<undefined>: output file from 3dAutomask
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:
@@ -57,12 +57,12 @@ outputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    out_file: generic/file
-    # type=file: mask file
-    # type=file|default=<undefined>: output image file name
     brain_file: generic/file
     # type=file: brain file (skull stripped)
     # type=file|default=<undefined>: output file from 3dAutomask
+    out_file: generic/file
+    # type=file: mask file
+    # type=file|default=<undefined>: output image file name
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields

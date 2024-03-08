@@ -49,15 +49,15 @@ inputs:
   # passed to the field in the automatically generated unittests.
     in_lta1: medimage-freesurfer/lta
     # type=file|default=<undefined>: maps some src1 to dst1
+    out_file: Path
+    # type=file: the combined LTA maps: src1 to dst2 = LTA2*LTA1
+    # type=file|default=<undefined>: the combined LTA maps: src1 to dst2 = LTA2*LTA1
+    subjects_dir: generic/directory
+    # type=directory|default=<undefined>: subjects directory
     tal_source_file: generic/file
     # type=file|default=<undefined>: if in_lta2 is talairach.xfm, specify source for talairach
     tal_template_file: generic/file
     # type=file|default=<undefined>: if in_lta2 is talairach.xfm, specify template for talairach
-    subjects_dir: generic/directory
-    # type=directory|default=<undefined>: subjects directory
-    out_file: Path
-    # type=file: the combined LTA maps: src1 to dst2 = LTA2*LTA1
-    # type=file|default=<undefined>: the combined LTA maps: src1 to dst2 = LTA2*LTA1
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

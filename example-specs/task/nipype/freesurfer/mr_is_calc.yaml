@@ -46,11 +46,11 @@ inputs:
     # type=file|default=<undefined>: Input file 1
     in_file2: medimage-freesurfer/pial
     # type=file|default=<undefined>: Input file 2
-    subjects_dir: generic/directory
-    # type=directory|default=<undefined>: subjects directory
     out_file: Path
     # type=file: Output file after calculation
     # type=file|default=<undefined>: Output file after calculation
+    subjects_dir: generic/directory
+    # type=directory|default=<undefined>: subjects directory
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

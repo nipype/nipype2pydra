@@ -39,18 +39,18 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    source_file: medimage/nifti1
-    # type=file|default=<undefined>: volume to be registered
-    target_file: medimage/nifti1
-    # type=file|default=<undefined>: target volume for the registration
     in_xfm_file: generic/file
     # type=file|default=<undefined>: use initial transform on source
     mask_source: generic/file
     # type=file|default=<undefined>: image to mask source volume with
     mask_target: generic/file
     # type=file|default=<undefined>: image to mask target volume with
+    source_file: medimage/nifti1
+    # type=file|default=<undefined>: volume to be registered
     subjects_dir: generic/directory
     # type=directory|default=<undefined>: subjects directory
+    target_file: medimage/nifti1
+    # type=file|default=<undefined>: target volume for the registration
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:
@@ -64,6 +64,21 @@ outputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
+    half_source: generic/file
+    # type=file: source image mapped to halfway space
+    # type=traitcompound|default=None: write source volume mapped to halfway space
+    half_source_xfm: generic/file
+    # type=file: transform file to map source image to halfway space
+    # type=traitcompound|default=None: write transform from source to halfway space
+    half_targ: generic/file
+    # type=file: target image mapped to halfway space
+    # type=traitcompound|default=None: write target volume mapped to halfway space
+    half_targ_xfm: generic/file
+    # type=file: transform file to map target image to halfway space
+    # type=traitcompound|default=None: write transform from target to halfway space
+    half_weights: generic/file
+    # type=file: weights image mapped to halfway space
+    # type=traitcompound|default=None: write weights volume mapped to halfway space
     out_reg_file: generic/file
     # type=file: output registration file
     # type=traitcompound|default=True: registration file; either True or filename
@@ -73,21 +88,6 @@ outputs:
     weights_file: generic/file
     # type=file: image of weights used
     # type=traitcompound|default=None: weights image to write; either True or filename
-    half_source: generic/file
-    # type=file: source image mapped to halfway space
-    # type=traitcompound|default=None: write source volume mapped to halfway space
-    half_targ: generic/file
-    # type=file: target image mapped to halfway space
-    # type=traitcompound|default=None: write target volume mapped to halfway space
-    half_weights: generic/file
-    # type=file: weights image mapped to halfway space
-    # type=traitcompound|default=None: write weights volume mapped to halfway space
-    half_source_xfm: generic/file
-    # type=file: transform file to map source image to halfway space
-    # type=traitcompound|default=None: write transform from source to halfway space
-    half_targ_xfm: generic/file
-    # type=file: transform file to map target image to halfway space
-    # type=traitcompound|default=None: write transform from target to halfway space
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields

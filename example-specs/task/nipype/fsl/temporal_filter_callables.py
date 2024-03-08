@@ -1,1 +1,1 @@
-"""Module to put any functions that are referred to in TemporalFilter.yaml"""
+"""Module to put any functions that are referred to in the "callables" section of TemporalFilter.yaml"""

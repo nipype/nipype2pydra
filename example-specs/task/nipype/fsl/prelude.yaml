@@ -29,18 +29,18 @@ inputs:
   # passed to the field in the automatically generated unittests.
     complex_phase_file: generic/file
     # type=file|default=<undefined>: complex phase input volume
-    magnitude_file: generic/file
-    # type=file|default=<undefined>: file containing magnitude image
-    phase_file: generic/file
-    # type=file|default=<undefined>: raw phase file
-    mask_file: generic/file
-    # type=file|default=<undefined>: filename of mask input volume
-    savemask_file: generic/file
-    # type=file|default=<undefined>: saving the mask volume
-    rawphase_file: generic/file
-    # type=file|default=<undefined>: saving the raw phase output
     label_file: generic/file
     # type=file|default=<undefined>: saving the area labels output
+    magnitude_file: generic/file
+    # type=file|default=<undefined>: file containing magnitude image
+    mask_file: generic/file
+    # type=file|default=<undefined>: filename of mask input volume
+    phase_file: generic/file
+    # type=file|default=<undefined>: raw phase file
+    rawphase_file: generic/file
+    # type=file|default=<undefined>: saving the raw phase output
+    savemask_file: generic/file
+    # type=file|default=<undefined>: saving the mask volume
     unwrapped_phase_file: Path
     # type=file: unwrapped phase file
     # type=file|default=<undefined>: file containing unwrapepd phase

@@ -1,7 +1,8 @@
-"""Module to put any functions that are referred to in SphericalAverage.yaml"""
+"""Module to put any functions that are referred to in the "callables" section of SphericalAverage.yaml"""
 
-import os
 import attrs
+from fileformats.generic import File
+import os
 
 
 def in_average_callable(output_dir, inputs, stdout, stderr):
@@ -25,12 +26,6 @@ def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
         return None
 
 
-class SphericalAverageOutputSpec(
-    inputs=None, stdout=None, stderr=None, output_dir=None
-):
-    out_file = File(exists=False, desc="Output label")
-
-
 def _outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
     """Returns a bunch containing output fields for the class"""
     outputs = None
@@ -40,6 +35,12 @@ def _outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
         )
 
     return outputs
+
+
+class SphericalAverageOutputSpec(
+    inputs=None, stdout=None, stderr=None, output_dir=None
+):
+    out_file = File(exists=False, desc="Output label")
 
 
 def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):

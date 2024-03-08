@@ -77,17 +77,17 @@ class NipypeInterface:
     pkg: str
     base_package: str
     preamble: str = attrs.field()
-    input_helps: ty.Dict[str, str] = attrs.field()
-    output_helps: ty.Dict[str, str] = attrs.field()
-    file_inputs: ty.Dict[str, str] = attrs.field()
-    path_inputs: ty.List[str] = attrs.field()
-    str_inputs: ty.List[str] = attrs.field()
-    file_outputs: ty.List[str] = attrs.field()
-    template_outputs: ty.List[str] = attrs.field()
-    multi_inputs: ty.List[str] = attrs.field()
-    dir_inputs: ty.List[str] = attrs.field()
-    dir_outputs: ty.List[str] = attrs.field()
-    callables: ty.List[str] = attrs.field()
+    input_helps: ty.Dict[str, str] = attrs.field(factory=dict)
+    output_helps: ty.Dict[str, str] = attrs.field(factory=dict)
+    file_inputs: ty.List[str] = attrs.field(factory=list)
+    path_inputs: ty.List[str] = attrs.field(factory=list)
+    str_inputs: ty.List[str] = attrs.field(factory=list)
+    file_outputs: ty.List[str] = attrs.field(factory=list)
+    template_outputs: ty.List[str] = attrs.field(factory=list)
+    multi_inputs: ty.List[str] = attrs.field(factory=list)
+    dir_inputs: ty.List[str] = attrs.field(factory=list)
+    dir_outputs: ty.List[str] = attrs.field(factory=list)
+    callables: ty.List[str] = attrs.field(factory=list)
 
     unmatched_formats: ty.List[str] = attrs.field(factory=list)
     ambiguous_formats: ty.List[str] = attrs.field(factory=list)
@@ -99,29 +99,42 @@ class NipypeInterface:
         cls, nipype_interface: type, pkg: str, base_package: str
     ) -> "NipypeInterface":
         """Generate preamble comments at start of file with args and doc strings"""
-        input_helps = {}
-        file_inputs = []
-        file_outputs = []
-        dir_inputs = []
-        path_inputs = []
-        str_inputs = []
-        template_outputs = []
-        multi_inputs = []
-        dir_outputs = []
-        output_helps = {}
-        callables = []
+
+        doc_string = nipype_interface.__doc__ if nipype_interface.__doc__ else ""
+        doc_string = doc_string.replace("\n", "\n# ")
+        # Create a preamble at the top of the specificaiton explaining what to do
+        preamble = (
+            f"""# This file is used to manually specify the semi-automatic conversion of
+# '{nipype_interface.__module__.replace('/', '.')}.{nipype_interface.__name__}' from Nipype to Pydra.
+#
+# Please fill-in/edit the fields below where appropriate
+#
+# Docs
+# ----
+# {doc_string}\n"""
+        ).replace("        #", "#")
+        
+        parsed = cls(
+            name=nipype_interface.__name__,
+            doc_str=nipype_interface.__doc__ if nipype_interface.__doc__ else "",
+            module=nipype_interface.__module__[len(base_package) + 1 :],
+            pkg=pkg,
+            base_package=base_package,
+            preamble=preamble,
+        )
         # Parse output types and descriptions
-        for outpt_name, outpt in nipype_interface.output_spec().traits().items():
-            if outpt_name in ("trait_added", "trait_modified"):
-                continue
-            outpt_desc = outpt.desc.replace("\n", " ") if outpt.desc else ""
-            output_helps[outpt_name] = (
-                f"type={type(outpt.trait_type).__name__.lower()}: {outpt_desc}"
-            )
-            if type(outpt.trait_type).__name__ == "File":
-                file_outputs.append(outpt_name)
-            elif type(outpt.trait_type).__name__ == "Directory":
-                dir_outputs.append(outpt_name)
+        if nipype_interface.output_spec:
+            for outpt_name, outpt in nipype_interface.output_spec().traits().items():
+                if outpt_name in ("trait_added", "trait_modified"):
+                    continue
+                outpt_desc = outpt.desc.replace("\n", " ") if outpt.desc else ""
+                parsed.output_helps[outpt_name] = (
+                    f"type={type(outpt.trait_type).__name__.lower()}: {outpt_desc}"
+                )
+                if type(outpt.trait_type).__name__ == "File":
+                    parsed.file_outputs.append(outpt_name)
+                elif type(outpt.trait_type).__name__ == "Directory":
+                    parsed.dir_outputs.append(outpt_name)
         # Parse input types, descriptions and metadata
         for inpt_name, inpt in nipype_interface.input_spec().traits().items():
             if inpt_name in ("trait_added", "trait_modified"):
@@ -130,16 +143,16 @@ class NipypeInterface:
             inpt_mdata = f"type={type(inpt.trait_type).__name__.lower()}|default={inpt.default!r}"
             if isinstance(inpt.trait_type, nipype.interfaces.base.core.traits.Enum):
                 inpt_mdata += f"|allowed[{','.join(sorted(repr(v) for v in inpt.trait_type.values))}]"
-            input_helps[inpt_name] = f"{inpt_mdata}: {inpt_desc}"
+            parsed.input_helps[inpt_name] = f"{inpt_mdata}: {inpt_desc}"
             trait_type_name = type(inpt.trait_type).__name__
             if inpt.genfile:
                 if trait_type_name in ("File", "Directory"):
-                    path_inputs.append(inpt_name)
-                if inpt_name in (file_outputs + dir_outputs):
-                    template_outputs.append(inpt_name)
+                    parsed.path_inputs.append(inpt_name)
+                if inpt_name in (parsed.file_outputs + parsed.dir_outputs):
+                    parsed.template_outputs.append(inpt_name)
                 else:
-                    callables.append(inpt_name)
-            elif trait_type_name == "File" and inpt_name not in file_outputs:
+                    parsed.callables.append(inpt_name)
+            elif trait_type_name == "File" and inpt_name not in parsed.file_outputs:
                 # override logic if it is named as an output
                 if (
                     inpt_name.startswith("out_")
@@ -148,22 +161,22 @@ class NipypeInterface:
                     or inpt_name.endswith("_output")
                 ):
                     if "fix" in inpt_name:
-                        str_inputs.append(inpt_name)
+                        parsed.str_inputs.append(inpt_name)
                     else:
-                        path_inputs.append(inpt_name)
+                        parsed.path_inputs.append(inpt_name)
                 else:
-                    file_inputs.append(inpt_name)
-            elif trait_type_name == "Directory" and inpt_name not in dir_outputs:
-                dir_inputs.append(inpt_name)
+                    parsed.file_inputs.append(inpt_name)
+            elif trait_type_name == "Directory" and inpt_name not in parsed.dir_outputs:
+                parsed.dir_inputs.append(inpt_name)
             elif trait_type_name == "InputMultiObject":
                 inner_trait_type_name = type(
                     inpt.trait_type.item_trait.trait_type
                 ).__name__
                 if inner_trait_type_name == "Directory":
-                    dir_inputs.append(inpt_name)
+                    parsed.dir_inputs.append(inpt_name)
                 elif inner_trait_type_name == "File":
-                    file_inputs.append(inpt_name)
-                multi_inputs.append(inpt_name)
+                    parsed.file_inputs.append(inpt_name)
+                parsed.multi_inputs.append(inpt_name)
             elif type(inpt.trait_type).__name__ == "List" and type(
                 inpt.trait_type.inner_traits()[0].handler
             ).__name__ in ("File", "Directory"):
@@ -171,44 +184,13 @@ class NipypeInterface:
                     inpt.trait_type.inner_traits()[0].handler
                 ).__name__
                 if item_type_name == "File":
-                    file_inputs.append(inpt_name)
+                    parsed.file_inputs.append(inpt_name)
                 else:
-                    dir_inputs.append(inpt_name)
-                multi_inputs.append(inpt_name)
+                    parsed.dir_inputs.append(inpt_name)
+                parsed.multi_inputs.append(inpt_name)
             elif trait_type_name in ("File", "Directory"):
-                path_inputs.append(inpt_name)
-        doc_string = nipype_interface.__doc__ if nipype_interface.__doc__ else ""
-        doc_string = doc_string.replace("\n", "\n# ")
-        # Create a preamble at the top of the specificaiton explaining what to do
-        preamble = (
-            f"""# This file is used to manually specify the semi-automatic conversion of
-            # '{nipype_interface.__module__.replace('/', '.')}.{nipype_interface.__name__}' from Nipype to Pydra.
-            #
-            # Please fill-in/edit the fields below where appropriate
-            #
-            # Docs
-            # ----
-            # {doc_string}\n"""
-        ).replace("        #", "#")
-        return cls(
-            name=nipype_interface.__name__,
-            doc_str=nipype_interface.__doc__ if nipype_interface.__doc__ else "",
-            module=nipype_interface.__module__[len(base_package) + 1 :],
-            pkg=pkg,
-            base_package=base_package,
-            preamble=preamble,
-            input_helps=input_helps,
-            output_helps=output_helps,
-            file_inputs=file_inputs,
-            path_inputs=path_inputs,
-            str_inputs=str_inputs,
-            file_outputs=file_outputs,
-            template_outputs=template_outputs,
-            multi_inputs=multi_inputs,
-            dir_inputs=dir_inputs,
-            dir_outputs=dir_outputs,
-            callables=callables,
-        )
+                parsed.path_inputs.append(inpt_name)
+        return parsed
 
     def generate_yaml_spec(self) -> str:
         """Convert the NipypeInterface to a YAML string"""
@@ -292,7 +274,7 @@ class NipypeInterface:
         }
         yaml_str = yaml.dump(spec_stub, indent=2, sort_keys=False, width=4096)
         # Strip explicit nulls from dumped YAML
-        yaml_str = yaml_str.replace(" null", "")
+        yaml_str = re.sub(r": null$", ":", yaml_str, flags=re.MULTILINE)
         # Inject comments into dumped YAML
         for category_name, category_class in [
             ("inputs", InputsConverter),
@@ -828,7 +810,7 @@ def _gen_filename(field, inputs, output_dir, stdout, stderr):
             if implicit not in arg_names:
                 args.append(f"{implicit}=None")
         src = prefix + ", ".join(args) + body
-        src = cleanup_function_body(src, with_signature=True)
+        src = cleanup_function_body(src)
         return src
 
     def insert_args_in_method_calls(src: str, args: ty.List[ty.Tuple[str, str]]) -> str:
@@ -863,7 +845,7 @@ def _gen_filename(field, inputs, output_dir, stdout, stderr):
     used = UsedSymbols.find(mod, func_srcs)
     for func in used.local_functions:
         func_srcs.append(
-            cleanup_function_body(inspect.getsource(func), with_signature=True)
+            cleanup_function_body(inspect.getsource(func))
         )
     for new_func_name, func in used.funcs_to_include:
         func_src = inspect.getsource(func)
@@ -873,7 +855,7 @@ def _gen_filename(field, inputs, output_dir, stdout, stderr):
             re.DOTALL | re.MULTILINE,
         )
         func_src = match.group(1) + " " + new_func_name + match.group(2)
-        func_srcs.append(cleanup_function_body(func_src, with_signature=True))
+        func_srcs.append(cleanup_function_body(func_src))
     return (
         func_srcs,
         used.imports,

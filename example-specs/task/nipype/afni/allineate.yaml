@@ -51,35 +51,35 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
+    allcostx: Path
+    # type=file: Compute and print ALL available cost functionals for the un-warped inputs
+    # type=file|default=<undefined>: Compute and print ALL available cost functionals for the un-warped inputsAND THEN QUIT. If you use this option none of the other expected outputs will be produced
     in_file: medimage/nifti1
     # type=file|default=<undefined>: input file to 3dAllineate
-    reference: medimage/nifti1
-    # type=file|default=<undefined>: file to be used as reference, the first volume will be used if not given the reference will be the first volume of in_file.
-    in_param_file: generic/file
-    # type=file|default=<undefined>: Read warp parameters from file and apply them to the source dataset, and produce a new dataset
     in_matrix: datascience/text-matrix
     # type=file|default=<undefined>: matrix to align input file
-    weight_file: generic/file
-    # type=file|default=<undefined>: Set the weighting for each voxel in the base dataset; larger weights mean that voxel count more in the cost function. Must be defined on the same grid as the base dataset
-    source_mask: generic/file
-    # type=file|default=<undefined>: mask the input dataset
+    in_param_file: generic/file
+    # type=file|default=<undefined>: Read warp parameters from file and apply them to the source dataset, and produce a new dataset
     master: generic/file
     # type=file|default=<undefined>: Write the output dataset on the same grid as this file.
     out_file: Path
     # type=file: output image file name
     # type=file|default=<undefined>: output file from 3dAllineate
-    out_param_file: Path
-    # type=file: warp parameters
-    # type=file|default=<undefined>: Save the warp parameters in ASCII (.1D) format.
     out_matrix: Path
     # type=file: matrix to align input file
     # type=file|default=<undefined>: Save the transformation matrix for each volume.
-    allcostx: Path
-    # type=file: Compute and print ALL available cost functionals for the un-warped inputs
-    # type=file|default=<undefined>: Compute and print ALL available cost functionals for the un-warped inputsAND THEN QUIT. If you use this option none of the other expected outputs will be produced
+    out_param_file: Path
+    # type=file: warp parameters
+    # type=file|default=<undefined>: Save the warp parameters in ASCII (.1D) format.
     out_weight_file: Path
     # type=file: weight volume
     # type=file|default=<undefined>: Write the weight volume to disk as a dataset
+    reference: medimage/nifti1
+    # type=file|default=<undefined>: file to be used as reference, the first volume will be used if not given the reference will be the first volume of in_file.
+    source_mask: generic/file
+    # type=file|default=<undefined>: mask the input dataset
+    weight_file: generic/file
+    # type=file|default=<undefined>: Set the weighting for each voxel in the base dataset; larger weights mean that voxel count more in the cost function. Must be defined on the same grid as the base dataset
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:
@@ -93,6 +93,9 @@ outputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
+    allcostx: text/text-file
+    # type=file: Compute and print ALL available cost functionals for the un-warped inputs
+    # type=file|default=<undefined>: Compute and print ALL available cost functionals for the un-warped inputsAND THEN QUIT. If you use this option none of the other expected outputs will be produced
     out_file: medimage/nifti1
     # type=file: output image file name
     # type=file|default=<undefined>: output file from 3dAllineate
@@ -105,9 +108,6 @@ outputs:
     out_weight_file: generic/file
     # type=file: weight volume
     # type=file|default=<undefined>: Write the weight volume to disk as a dataset
-    allcostx: text/text-file
-    # type=file: Compute and print ALL available cost functionals for the un-warped inputs
-    # type=file|default=<undefined>: Compute and print ALL available cost functionals for the un-warped inputsAND THEN QUIT. If you use this option none of the other expected outputs will be produced
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields

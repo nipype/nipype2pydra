@@ -25,10 +25,10 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    spatial_data_file: generic/file
-    # type=file|default=<undefined>: statistics spatial map
     mask: generic/file
     # type=file|default=<undefined>: mask file
+    spatial_data_file: generic/file
+    # type=file|default=<undefined>: statistics spatial map
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:
@@ -42,10 +42,11 @@ outputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-   _p_map: generic/file
     activation_p_map: generic/file
     # type=file: 
     deactivation_p_map: generic/file
+    # type=file: 
+    null_p_map: generic/file
     # type=file: 
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`

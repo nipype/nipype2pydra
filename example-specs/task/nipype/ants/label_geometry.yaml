@@ -36,10 +36,10 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    label_image: medimage/nifti-gz
-    # type=file|default=<undefined>: label image to use for extracting geometry measures
     intensity_image: medimage/nifti-gz
     # type=file|default='[]': Intensity image to extract values from. This is an optional input
+    label_image: medimage/nifti-gz
+    # type=file|default=<undefined>: label image to use for extracting geometry measures
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

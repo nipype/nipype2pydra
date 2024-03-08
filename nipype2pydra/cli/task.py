@@ -6,6 +6,7 @@ from .base import cli
 
 
 @cli.command(
+    name="task",
     help="""Port Nipype task interface code to Pydra
 
 YAML_SPEC is a YAML file which defines interfaces to be imported along with an

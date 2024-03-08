@@ -65,14 +65,14 @@ outputs:
   # passed to the field in the automatically generated unittests.
     affine_transform: generic/file
     # type=file: Affine transform file
-    warp_transform: generic/file
-    # type=file: Warping deformation field
     inverse_warp_transform: generic/file
     # type=file: Inverse warping deformation field
     metaheader: generic/file
     # type=file: VTK metaheader .mhd file
     metaheader_raw: generic/file
     # type=file: VTK metaheader .raw file
+    warp_transform: generic/file
+    # type=file: Warping deformation field
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields

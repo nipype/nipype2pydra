@@ -38,41 +38,7 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    in_file: medimage/nifti1
-    # type=file|default=<undefined>: 
-    seeds: generic/file
-    # type=file|default=<undefined>: 
-    mask: medimage/nifti1
-    # type=file|default=<undefined>: 
-    regress_out_timeseries: generic/file
-    # type=file|default=<undefined>: 
-    out_file: generic/file
-    # type=file|default=<undefined>: output image file name
-    mean_file: Path
-    # type=file: 
-    # type=file|default=<undefined>: 
-    zmean: Path
-    # type=file: 
-    # type=file|default=<undefined>: 
-    qmean: Path
-    # type=file: 
-    # type=file|default=<undefined>: 
-    pmean: Path
-    # type=file: 
-    # type=file|default=<undefined>: 
     absolute_threshold: Path
-    # type=file: 
-    # type=file|default=<undefined>: 
-    var_absolute_threshold: Path
-    # type=file: 
-    # type=file|default=<undefined>: 
-    var_absolute_threshold_normalize: Path
-    # type=file: 
-    # type=file|default=<undefined>: 
-    correlation_maps: Path
-    # type=file: 
-    # type=file|default=<undefined>: 
-    correlation_maps_masked: Path
     # type=file: 
     # type=file|default=<undefined>: 
     average_expr: Path
@@ -81,10 +47,44 @@ inputs:
     average_expr_nonzero: Path
     # type=file: 
     # type=file|default=<undefined>: 
-    sum_expr: Path
+    correlation_maps: Path
+    # type=file: 
+    # type=file|default=<undefined>: 
+    correlation_maps_masked: Path
     # type=file: 
     # type=file|default=<undefined>: 
     histogram: Path
+    # type=file: 
+    # type=file|default=<undefined>: 
+    in_file: medimage/nifti1
+    # type=file|default=<undefined>: 
+    mask: medimage/nifti1
+    # type=file|default=<undefined>: 
+    mean_file: Path
+    # type=file: 
+    # type=file|default=<undefined>: 
+    out_file: Path
+    # type=file|default=<undefined>: output image file name
+    pmean: Path
+    # type=file: 
+    # type=file|default=<undefined>: 
+    qmean: Path
+    # type=file: 
+    # type=file|default=<undefined>: 
+    regress_out_timeseries: generic/file
+    # type=file|default=<undefined>: 
+    seeds: generic/file
+    # type=file|default=<undefined>: 
+    sum_expr: Path
+    # type=file: 
+    # type=file|default=<undefined>: 
+    var_absolute_threshold: Path
+    # type=file: 
+    # type=file|default=<undefined>: 
+    var_absolute_threshold_normalize: Path
+    # type=file: 
+    # type=file|default=<undefined>: 
+    zmean: Path
     # type=file: 
     # type=file|default=<undefined>: 
   metadata:
@@ -100,31 +100,7 @@ outputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    mean_file: generic/file
-    # type=file: 
-    # type=file|default=<undefined>: 
-    zmean: generic/file
-    # type=file: 
-    # type=file|default=<undefined>: 
-    qmean: generic/file
-    # type=file: 
-    # type=file|default=<undefined>: 
-    pmean: generic/file
-    # type=file: 
-    # type=file|default=<undefined>: 
     absolute_threshold: generic/file
-    # type=file: 
-    # type=file|default=<undefined>: 
-    var_absolute_threshold: generic/file
-    # type=file: 
-    # type=file|default=<undefined>: 
-    var_absolute_threshold_normalize: generic/file
-    # type=file: 
-    # type=file|default=<undefined>: 
-    correlation_maps: generic/file
-    # type=file: 
-    # type=file|default=<undefined>: 
-    correlation_maps_masked: generic/file
     # type=file: 
     # type=file|default=<undefined>: 
     average_expr: generic/file
@@ -133,10 +109,34 @@ outputs:
     average_expr_nonzero: generic/file
     # type=file: 
     # type=file|default=<undefined>: 
-    sum_expr: generic/file
+    correlation_maps: generic/file
+    # type=file: 
+    # type=file|default=<undefined>: 
+    correlation_maps_masked: generic/file
     # type=file: 
     # type=file|default=<undefined>: 
     histogram: generic/file
+    # type=file: 
+    # type=file|default=<undefined>: 
+    mean_file: generic/file
+    # type=file: 
+    # type=file|default=<undefined>: 
+    pmean: generic/file
+    # type=file: 
+    # type=file|default=<undefined>: 
+    qmean: generic/file
+    # type=file: 
+    # type=file|default=<undefined>: 
+    sum_expr: generic/file
+    # type=file: 
+    # type=file|default=<undefined>: 
+    var_absolute_threshold: generic/file
+    # type=file: 
+    # type=file|default=<undefined>: 
+    var_absolute_threshold_normalize: generic/file
+    # type=file: 
+    # type=file|default=<undefined>: 
+    zmean: generic/file
     # type=file: 
     # type=file|default=<undefined>: 
   callables:
@@ -161,7 +161,7 @@ tests:
     polort:
     # type=int|default=0: 
     bandpass:
-    # type=tuple|default=(<traits.trait_types.Float object at 0x107f6fc90>, <traits.trait_types.Float object at 0x107f6e810>): 
+    # type=tuple|default=(<traits.trait_types.Float object at 0x10fefcb90>, <traits.trait_types.Float object at 0x10fefcc50>): 
     regress_out_timeseries:
     # type=file|default=<undefined>: 
     blur_fwhm:

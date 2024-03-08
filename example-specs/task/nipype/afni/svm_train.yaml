@@ -38,23 +38,23 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
+    alphas: Path
+    # type=file: output alphas file name
+    # type=file|default=<undefined>: output alphas file name
+    censor: generic/file
+    # type=file|default=<undefined>: .1D censor file that allows the user to ignore certain samples in the training data.
     in_file: generic/file
     # type=file|default=<undefined>: A 3D+t AFNI brik dataset to be used for training.
     mask: generic/file
     # type=file|default=<undefined>: byte-format brik file used to mask voxels in the analysis
-    trainlabels: generic/file
-    # type=file|default=<undefined>: .1D labels corresponding to the stimulus paradigm for the training data.
-    censor: generic/file
-    # type=file|default=<undefined>: .1D censor file that allows the user to ignore certain samples in the training data.
-    out_file: Path
-    # type=file: sum of weighted linear support vectors file name
-    # type=file|default=<undefined>: output sum of weighted linear support vectors file name
     model: Path
     # type=file: brik containing the SVM model file name
     # type=file|default=<undefined>: basename for the brik containing the SVM model
-    alphas: Path
-    # type=file: output alphas file name
-    # type=file|default=<undefined>: output alphas file name
+    out_file: Path
+    # type=file: sum of weighted linear support vectors file name
+    # type=file|default=<undefined>: output sum of weighted linear support vectors file name
+    trainlabels: generic/file
+    # type=file|default=<undefined>: .1D labels corresponding to the stimulus paradigm for the training data.
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:
@@ -68,15 +68,15 @@ outputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    out_file: generic/file
-    # type=file: sum of weighted linear support vectors file name
-    # type=file|default=<undefined>: output sum of weighted linear support vectors file name
-    model: generic/file
-    # type=file: brik containing the SVM model file name
-    # type=file|default=<undefined>: basename for the brik containing the SVM model
     alphas: generic/file
     # type=file: output alphas file name
     # type=file|default=<undefined>: output alphas file name
+    model: generic/file
+    # type=file: brik containing the SVM model file name
+    # type=file|default=<undefined>: basename for the brik containing the SVM model
+    out_file: generic/file
+    # type=file: sum of weighted linear support vectors file name
+    # type=file|default=<undefined>: output sum of weighted linear support vectors file name
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields

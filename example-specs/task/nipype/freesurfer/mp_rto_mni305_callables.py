@@ -1,1 +1,1 @@
-"""Module to put any functions that are referred to in MPRtoMNI305.yaml"""
+"""Module to put any functions that are referred to in the "callables" section of MPRtoMNI305.yaml"""

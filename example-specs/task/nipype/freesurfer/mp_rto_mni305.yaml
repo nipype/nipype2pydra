@@ -59,10 +59,10 @@ outputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    out_file: generic/file
-    # type=file: The output file '<in_file>_to_<target>_t4_vox2vox.txt'
     log_file: generic/file
     # type=file: The output log
+    out_file: generic/file
+    # type=file: The output file '<in_file>_to_<target>_t4_vox2vox.txt'
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields

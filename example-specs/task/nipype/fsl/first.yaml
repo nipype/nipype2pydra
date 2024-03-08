@@ -33,12 +33,12 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    in_file: generic/file
-    # type=file|default=<undefined>: input data file
-    out_file: generic/file
-    # type=file|default='segmented': output data file
     affine_file: generic/file
     # type=file|default=<undefined>: Affine matrix to use (e.g. img2std.mat) (does not re-run registration)
+    in_file: generic/file
+    # type=file|default=<undefined>: input data file
+    out_file: Path
+    # type=file|default='segmented': output data file
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

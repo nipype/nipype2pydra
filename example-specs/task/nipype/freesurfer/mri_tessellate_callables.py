@@ -1,7 +1,7 @@
-"""Module to put any functions that are referred to in MRITessellate.yaml"""
+"""Module to put any functions that are referred to in the "callables" section of MRITessellate.yaml"""
 
-import os.path as op
 import attrs
+import os.path as op
 
 
 def out_file_callable(output_dir, inputs, stdout, stderr):

@@ -31,16 +31,16 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    in_file: medimage/nifti1
-    # type=file|default=<undefined>: 4D input file
     design_mat: datascience/text-matrix
     # type=file|default=<undefined>: design matrix file
-    tcon: medimage-fsl/con
-    # type=file|default=<undefined>: t contrasts file
     fcon: generic/file
     # type=file|default=<undefined>: f contrasts file
+    in_file: medimage/nifti1
+    # type=file|default=<undefined>: 4D input file
     mask: medimage/nifti1
     # type=file|default=<undefined>: mask image
+    tcon: medimage-fsl/con
+    # type=file|default=<undefined>: t contrasts file
     x_block_labels: generic/file
     # type=file|default=<undefined>: exchangeability block labels file
   metadata:

@@ -37,12 +37,12 @@ inputs:
     out_file: Path
     # type=file: 
     # type=file|default=<undefined>: output outlier file name
-    out_metric_values: Path
-    # type=file: 
-    # type=file|default=<undefined>: output metric values (DVARS etc.) file name
     out_metric_plot: Path
     # type=file: 
     # type=file|default=<undefined>: output metric values plot (DVARS etc.) file name
+    out_metric_values: Path
+    # type=file: 
+    # type=file|default=<undefined>: output metric values (DVARS etc.) file name
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:
@@ -59,12 +59,12 @@ outputs:
     out_file: generic/file
     # type=file: 
     # type=file|default=<undefined>: output outlier file name
-    out_metric_values: generic/file
-    # type=file: 
-    # type=file|default=<undefined>: output metric values (DVARS etc.) file name
     out_metric_plot: generic/file
     # type=file: 
     # type=file|default=<undefined>: output metric values plot (DVARS etc.) file name
+    out_metric_values: generic/file
+    # type=file: 
+    # type=file|default=<undefined>: output metric values (DVARS etc.) file name
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields

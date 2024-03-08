@@ -30,17 +30,17 @@ inputs:
     # type=file|default=<undefined>: input image (will be masked)
     mask_file: generic/file
     # type=file|default=<undefined>: image defining mask space
+    out_file: Path
+    # type=file: masked image
+    # type=file|default=<undefined>: final image to write
+    subjects_dir: generic/directory
+    # type=directory|default=<undefined>: subjects directory
     xfm_file: generic/file
     # type=file|default=<undefined>: LTA-format transformation matrix to align mask with input
     xfm_source: generic/file
     # type=file|default=<undefined>: image defining transform source space
     xfm_target: generic/file
     # type=file|default=<undefined>: image defining transform target space
-    subjects_dir: generic/directory
-    # type=directory|default=<undefined>: subjects directory
-    out_file: Path
-    # type=file: masked image
-    # type=file|default=<undefined>: final image to write
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

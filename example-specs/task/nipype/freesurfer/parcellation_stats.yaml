@@ -45,42 +45,42 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    wm: medimage/mgh-gz
-    # type=file|default=<undefined>: Input file must be <subject_id>/mri/wm.mgz
-    lh_white: medimage-freesurfer/white
-    # type=file|default=<undefined>: Input file must be <subject_id>/surf/lh.white
-    rh_white: medimage-freesurfer/white
-    # type=file|default=<undefined>: Input file must be <subject_id>/surf/rh.white
-    lh_pial: medimage-freesurfer/pial
-    # type=file|default=<undefined>: Input file must be <subject_id>/surf/lh.pial
-    rh_pial: medimage-freesurfer/pial
-    # type=file|default=<undefined>: Input file must be <subject_id>/surf/rh.pial
-    transform: medimage-freesurfer/xfm
-    # type=file|default=<undefined>: Input file must be <subject_id>/mri/transforms/talairach.xfm
-    thickness: medimage-freesurfer/thickness
-    # type=file|default=<undefined>: Input file must be <subject_id>/surf/?h.thickness
-    brainmask: medimage/mgh-gz
-    # type=file|default=<undefined>: Input file must be <subject_id>/mri/brainmask.mgz
     aseg: medimage/mgh-gz
     # type=file|default=<undefined>: Input file must be <subject_id>/mri/aseg.presurf.mgz
-    ribbon: medimage/mgh-gz
-    # type=file|default=<undefined>: Input file must be <subject_id>/mri/ribbon.mgz
+    brainmask: medimage/mgh-gz
+    # type=file|default=<undefined>: Input file must be <subject_id>/mri/brainmask.mgz
     cortex_label: generic/file
     # type=file|default=<undefined>: implicit input file {hemi}.cortex.label
-    in_cortex: generic/file
-    # type=file|default=<undefined>: Input cortex label
     in_annotation: generic/file
     # type=file|default=<undefined>: compute properties for each label in the annotation file separately
+    in_cortex: generic/file
+    # type=file|default=<undefined>: Input cortex label
     in_label: generic/file
     # type=file|default=<undefined>: limit calculations to specified label
-    subjects_dir: generic/directory
-    # type=directory|default=<undefined>: subjects directory
-    out_table: Path
-    # type=file: Table output to tablefile
-    # type=file|default=<undefined>: Table output to tablefile
+    lh_pial: medimage-freesurfer/pial
+    # type=file|default=<undefined>: Input file must be <subject_id>/surf/lh.pial
+    lh_white: medimage-freesurfer/white
+    # type=file|default=<undefined>: Input file must be <subject_id>/surf/lh.white
     out_color: Path
     # type=file: Output annotation files's colortable to text file
     # type=file|default=<undefined>: Output annotation files's colortable to text file
+    out_table: Path
+    # type=file: Table output to tablefile
+    # type=file|default=<undefined>: Table output to tablefile
+    rh_pial: medimage-freesurfer/pial
+    # type=file|default=<undefined>: Input file must be <subject_id>/surf/rh.pial
+    rh_white: medimage-freesurfer/white
+    # type=file|default=<undefined>: Input file must be <subject_id>/surf/rh.white
+    ribbon: medimage/mgh-gz
+    # type=file|default=<undefined>: Input file must be <subject_id>/mri/ribbon.mgz
+    subjects_dir: generic/directory
+    # type=directory|default=<undefined>: subjects directory
+    thickness: medimage-freesurfer/thickness
+    # type=file|default=<undefined>: Input file must be <subject_id>/surf/?h.thickness
+    transform: medimage-freesurfer/xfm
+    # type=file|default=<undefined>: Input file must be <subject_id>/mri/transforms/talairach.xfm
+    wm: medimage/mgh-gz
+    # type=file|default=<undefined>: Input file must be <subject_id>/mri/wm.mgz
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:
@@ -94,23 +94,23 @@ outputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    out_table: medimage-freesurfer/stats
-    # type=file: Table output to tablefile
-    # type=file|default=<undefined>: Table output to tablefile
     out_color: medimage-freesurfer/ctab
     # type=file: Output annotation files's colortable to text file
     # type=file|default=<undefined>: Output annotation files's colortable to text file
+    out_table: medimage-freesurfer/stats
+    # type=file: Table output to tablefile
+    # type=file|default=<undefined>: Table output to tablefile
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
   # dict[str, str] - `output_file_template` values to be provided to output fields
-    out_table: '"lh.test.stats"'
-    # type=file: Table output to tablefile
-    # type=file|default=<undefined>: Table output to tablefile
     out_color: '"test.ctab"'
     # type=file: Output annotation files's colortable to text file
     # type=file|default=<undefined>: Output annotation files's colortable to text file
+    out_table: '"lh.test.stats"'
+    # type=file: Table output to tablefile
+    # type=file|default=<undefined>: Table output to tablefile
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:

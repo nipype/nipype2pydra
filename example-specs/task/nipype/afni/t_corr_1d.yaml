@@ -34,13 +34,13 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
+    out_file: Path
+    # type=file: output file containing correlations
+    # type=file|default=<undefined>: output filename prefix
     xset: medimage/nifti1
     # type=file|default=<undefined>: 3d+time dataset input
     y_1d: medimage-afni/oned
     # type=file|default=<undefined>: 1D time series file input
-    out_file: Path
-    # type=file: output file containing correlations
-    # type=file|default=<undefined>: output filename prefix
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

@@ -18,6 +18,7 @@ from ..utils import (
 
 @attrs.define(slots=False)
 class FunctionTaskConverter(BaseTaskConverter):
+
     def generate_task_str(self, filename, input_fields, nonstd_types, output_fields):
         """writing pydra task to the dile based on the input and output spec"""
 
@@ -144,7 +145,7 @@ class FunctionTaskConverter(BaseTaskConverter):
     ):
         src = inspect.getsource(method)
         pre, argstr, post = split_parens_contents(src)
-        args = re.split(r" *, *", argstr)
+        args = re.split(r"\s*,\s*", argstr.strip())
         args.remove("self")
         if "runtime" in args:
             args.remove("runtime")
@@ -191,6 +192,8 @@ class FunctionTaskConverter(BaseTaskConverter):
             not unrecognised_outputs
         ), f"Found the following unrecognised outputs {unrecognised_outputs}"
         method_body = output_re.sub(r"\1", method_body)
+        # Strip initialisation of outputs
+        method_body = re.sub(r"outputs = self.output_spec().*", r"outputs = {}", method_body)
         # Add args to the function signature of method calls
         method_re = re.compile(r"self\.(\w+)(?=\()", flags=re.MULTILINE | re.DOTALL)
         method_names = [m.__name__ for m in self.referenced_methods]

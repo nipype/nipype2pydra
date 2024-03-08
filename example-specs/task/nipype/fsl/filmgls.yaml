@@ -45,19 +45,19 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    tcon_file: generic/file
-    # type=file|default=<undefined>: contrast file containing T-contrasts
-    fcon_file: generic/file
-    # type=file|default=<undefined>: contrast file containing F-contrasts
-    surface: generic/file
-    # type=file|default=<undefined>: input surface for autocorr smoothing in surface-based analyses
-    in_file: generic/file
-    # type=file|default=<undefined>: input data file
     design_file: generic/file
     # type=file|default=<undefined>: design matrix file
+    fcon_file: generic/file
+    # type=file|default=<undefined>: contrast file containing F-contrasts
+    in_file: generic/file
+    # type=file|default=<undefined>: input data file
     results_dir: Path
     # type=directory: directory storing model estimation output
     # type=directory|default='results': directory to store results in
+    surface: generic/file
+    # type=file|default=<undefined>: input surface for autocorr smoothing in surface-based analyses
+    tcon_file: generic/file
+    # type=file|default=<undefined>: contrast file containing T-contrasts
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:
@@ -71,19 +71,19 @@ outputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    residual4d: generic/file
-    # type=file: Model fit residual mean-squared error for each time point
     dof_file: generic/file
     # type=file: degrees of freedom
+    logfile: generic/file
+    # type=file: FILM run logfile
+    residual4d: generic/file
+    # type=file: Model fit residual mean-squared error for each time point
+    results_dir: generic/directory
+    # type=directory: directory storing model estimation output
+    # type=directory|default='results': directory to store results in
     sigmasquareds: generic/file
     # type=file: summary of residuals, See Woolrich, et. al., 2001
     thresholdac: generic/file
     # type=file: The FILM autocorrelation parameters
-    logfile: generic/file
-    # type=file: FILM run logfile
-    results_dir: generic/directory
-    # type=directory: directory storing model estimation output
-    # type=directory|default='results': directory to store results in
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields

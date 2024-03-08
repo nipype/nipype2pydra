@@ -38,23 +38,23 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    reference: medimage/nifti1
-    # type=file|default=<undefined>: Name of a file in target space of the full transform.
-    premat: generic/file
-    # type=file|default=<undefined>: filename for pre-transform (affine matrix)
-    warp1: medimage/nifti1
-    # type=file|default=<undefined>: Name of file containing initial warp-fields/coefficients (follows premat). This could e.g. be a fnirt-transform from a subjects structural scan to an average of a group of subjects.
     midmat: generic/file
     # type=file|default=<undefined>: Name of file containing mid-warp-affine transform
-    warp2: generic/file
-    # type=file|default=<undefined>: Name of file containing secondary warp-fields/coefficients (after warp1/midmat but before postmat). This could e.g. be a fnirt-transform from the average of a group of subjects to some standard space (e.g. MNI152).
-    postmat: generic/file
-    # type=file|default=<undefined>: Name of file containing an affine transform (applied last). It could e.g. be an affine transform that maps the MNI152-space into a better approximation to the Talairach-space (if indeed there is one).
-    shift_in_file: generic/file
-    # type=file|default=<undefined>: Name of file containing a "shiftmap", a non-linear transform with displacements only in one direction (applied first, before premat). This would typically be a fieldmap that has been pre-processed using fugue that maps a subjects functional (EPI) data onto an undistorted space (i.e. a space that corresponds to his/her true anatomy).
     out_file: Path
     # type=file: Name of output file, containing the warp as field or coefficients.
     # type=file|default=<undefined>: Name of output file, containing warps that are the combination of all those given as arguments. The format of this will be a field-file (rather than spline coefficients) with any affine components included.
+    postmat: generic/file
+    # type=file|default=<undefined>: Name of file containing an affine transform (applied last). It could e.g. be an affine transform that maps the MNI152-space into a better approximation to the Talairach-space (if indeed there is one).
+    premat: generic/file
+    # type=file|default=<undefined>: filename for pre-transform (affine matrix)
+    reference: medimage/nifti1
+    # type=file|default=<undefined>: Name of a file in target space of the full transform.
+    shift_in_file: generic/file
+    # type=file|default=<undefined>: Name of file containing a "shiftmap", a non-linear transform with displacements only in one direction (applied first, before premat). This would typically be a fieldmap that has been pre-processed using fugue that maps a subjects functional (EPI) data onto an undistorted space (i.e. a space that corresponds to his/her true anatomy).
+    warp1: medimage/nifti1
+    # type=file|default=<undefined>: Name of file containing initial warp-fields/coefficients (follows premat). This could e.g. be a fnirt-transform from a subjects structural scan to an average of a group of subjects.
+    warp2: generic/file
+    # type=file|default=<undefined>: Name of file containing secondary warp-fields/coefficients (after warp1/midmat but before postmat). This could e.g. be a fnirt-transform from the average of a group of subjects to some standard space (e.g. MNI152).
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

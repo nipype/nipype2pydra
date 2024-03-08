@@ -37,10 +37,10 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    in_file: medimage/nifti1
-    # type=file|default=<undefined>: input file to 3dTSmooth
     custom: generic/file
     # type=file|default=<undefined>: odd # of coefficients must be in a single column in ASCII file
+    in_file: medimage/nifti1
+    # type=file|default=<undefined>: input file to 3dTSmooth
     out_file: Path
     # type=file: output file
     # type=file|default=<undefined>: output file from 3dTSmooth

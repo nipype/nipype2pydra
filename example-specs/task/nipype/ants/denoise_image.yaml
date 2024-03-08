@@ -46,12 +46,12 @@ inputs:
   # passed to the field in the automatically generated unittests.
     input_image: medimage/nifti1
     # type=file|default=<undefined>: A scalar image is expected as input for noise correction.
-    output_image: Path
-    # type=file: 
-    # type=file|default=<undefined>: The output consists of the noise corrected version of the input image.
     noise_image: Path
     # type=file: 
     # type=file|default=<undefined>: Filename for the estimated noise.
+    output_image: Path
+    # type=file: 
+    # type=file|default=<undefined>: The output consists of the noise corrected version of the input image.
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:
@@ -65,12 +65,12 @@ outputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    output_image: medimage/nifti-gz
-    # type=file: 
-    # type=file|default=<undefined>: The output consists of the noise corrected version of the input image.
     noise_image: generic/file
     # type=file: 
     # type=file|default=<undefined>: Filename for the estimated noise.
+    output_image: medimage/nifti-gz
+    # type=file: 
+    # type=file|default=<undefined>: The output consists of the noise corrected version of the input image.
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields

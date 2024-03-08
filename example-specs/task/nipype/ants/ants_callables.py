@@ -1,1 +1,1 @@
-"""Module to put any functions that are referred to in ANTS.yaml"""
+"""Module to put any functions that are referred to in the "callables" section of ANTS.yaml"""

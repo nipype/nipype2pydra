@@ -44,16 +44,16 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
+    annot_file: generic/file
+    # type=file|default=<undefined>: path to annotation file to display
+    colortable: generic/file
+    # type=file|default=<undefined>: load colortable file
+    label_file: generic/file
+    # type=file|default=<undefined>: path to label file to display
     overlay: generic/file
     # type=file|default=<undefined>: load an overlay volume/surface
     overlay_reg: generic/file
     # type=file|default=<undefined>: registration matrix file to register overlay to surface
-    annot_file: generic/file
-    # type=file|default=<undefined>: path to annotation file to display
-    label_file: generic/file
-    # type=file|default=<undefined>: path to label file to display
-    colortable: generic/file
-    # type=file|default=<undefined>: load colortable file
     patch_file: generic/file
     # type=file|default=<undefined>: load a patch
     subjects_dir: generic/directory

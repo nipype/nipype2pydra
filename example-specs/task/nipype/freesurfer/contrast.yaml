@@ -37,10 +37,6 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    thickness: medimage-freesurfer/thickness
-    # type=file|default=<undefined>: Input file must be <subject_id>/surf/?h.thickness
-    white: medimage-freesurfer/white
-    # type=file|default=<undefined>: Input file must be <subject_id>/surf/<hemisphere>.white
     annotation: medimage-freesurfer/annot
     # type=file|default=<undefined>: Input annotation file must be <subject_id>/label/<hemisphere>.aparc.annot
     cortex: medimage-freesurfer/label
@@ -51,6 +47,10 @@ inputs:
     # type=file|default=<undefined>: Implicit input file mri/rawavg.mgz
     subjects_dir: generic/directory
     # type=directory|default=<undefined>: subjects directory
+    thickness: medimage-freesurfer/thickness
+    # type=file|default=<undefined>: Input file must be <subject_id>/surf/?h.thickness
+    white: medimage-freesurfer/white
+    # type=file|default=<undefined>: Input file must be <subject_id>/surf/<hemisphere>.white
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:
@@ -66,10 +66,10 @@ outputs:
   # passed to the field in the automatically generated unittests.
     out_contrast: generic/file
     # type=file: Output contrast file from Contrast
-    out_stats: generic/file
-    # type=file: Output stats file from Contrast
     out_log: generic/file
     # type=file: Output log from Contrast
+    out_stats: generic/file
+    # type=file: Output stats file from Contrast
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields

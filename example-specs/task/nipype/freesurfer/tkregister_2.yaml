@@ -49,21 +49,21 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    target_image: medimage/nifti1
-    # type=file|default=<undefined>: target volume
-    moving_image: medimage/nifti1,medimage/mgh-gz
-    # type=file|default=<undefined>: moving volume
     fsl_in_matrix: datascience/text-matrix
     # type=file|default=<undefined>: fsl-style registration input matrix
-    xfm: generic/file
-    # type=file|default=<undefined>: use a matrix in MNI coordinates as initial registration
     lta_in: generic/file
     # type=file|default=<undefined>: use a matrix in MNI coordinates as initial registration
-    subjects_dir: generic/directory
-    # type=directory|default=<undefined>: subjects directory
+    moving_image: medimage/nifti1,medimage/mgh-gz
+    # type=file|default=<undefined>: moving volume
     reg_file: Path
     # type=file: freesurfer-style registration file
     # type=file|default='register.dat': freesurfer-style registration file
+    subjects_dir: generic/directory
+    # type=directory|default=<undefined>: subjects directory
+    target_image: medimage/nifti1
+    # type=file|default=<undefined>: target volume
+    xfm: generic/file
+    # type=file|default=<undefined>: use a matrix in MNI coordinates as initial registration
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:
@@ -77,13 +77,13 @@ outputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    reg_file: datascience/dat-file
-    # type=file: freesurfer-style registration file
-    # type=file|default='register.dat': freesurfer-style registration file
     fsl_file: generic/file
     # type=file: FSL-style registration file
     lta_file: generic/file
     # type=file: LTA-style registration file
+    reg_file: datascience/dat-file
+    # type=file: freesurfer-style registration file
+    # type=file|default='register.dat': freesurfer-style registration file
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields

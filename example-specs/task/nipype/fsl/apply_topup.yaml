@@ -43,10 +43,10 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    in_files: medimage/nifti1+list-of
-    # type=inputmultiobject|default=[]: name of file with images
     encoding_file: text/text-file
     # type=file|default=<undefined>: name of text file with PE directions/times
+    in_files: medimage/nifti1+list-of
+    # type=inputmultiobject|default=[]: name of file with images
     in_topup_fieldcoef: medimage/nifti-gz
     # type=file|default=<undefined>: topup file containing the field coefficients
     in_topup_movpar: text/text-file

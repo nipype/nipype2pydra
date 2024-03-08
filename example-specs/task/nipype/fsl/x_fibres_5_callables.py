@@ -1,1 +1,1 @@
-"""Module to put any functions that are referred to in XFibres5.yaml"""
+"""Module to put any functions that are referred to in the "callables" section of XFibres5.yaml"""

@@ -85,15 +85,15 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
+    bias_image: Path
+    # type=file: Estimated bias
+    # type=file|default=<undefined>: Filename for the estimated bias.
     input_image: medimage/nifti1
     # type=file|default=<undefined>: input for bias correction. Negative values or values close to zero should be processed prior to correction
     mask_image: generic/file
     # type=file|default=<undefined>: image to specify region to perform final bias correction in
     weight_image: generic/file
     # type=file|default=<undefined>: image for relative weighting (e.g. probability map of the white matter) of voxels during the B-spline fitting. 
-    bias_image: Path
-    # type=file: Estimated bias
-    # type=file|default=<undefined>: Filename for the estimated bias.
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:
@@ -107,12 +107,12 @@ outputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    output_image: generic/file
-    # type=file: Warped image
-    # type=str|default='': output file name
     bias_image: generic/file
     # type=file: Estimated bias
     # type=file|default=<undefined>: Filename for the estimated bias.
+    output_image: generic/file
+    # type=file: Warped image
+    # type=str|default='': output file name
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
