@@ -201,7 +201,9 @@ class UsedSymbols:
 
     imports: ty.Set[str] = attrs.field(factory=set)
     funcs_to_include: ty.Set[ty.Tuple[str, ty.Callable]] = attrs.field(factory=set)
+    classes_to_include: ty.List[ty.Tuple[str, ty.Callable]] = attrs.field(factory=set)
     local_functions: ty.Set[ty.Callable] = attrs.field(factory=set)
+    local_classes: ty.List[type] = attrs.field(factory=list)
     constants: ty.Set[ty.Tuple[str, str]] = attrs.field(factory=set)
 
     def update(self, other: "UsedSymbols"):
@@ -231,11 +233,15 @@ class UsedSymbols:
             a class containing the used symbols in the module
         """
         used = cls()
-        imports = ["import attrs", "from fileformats.generic import File, Directory"]  # attrs is included in imports in case we reference attrs.NOTHING
+        imports = [
+            "import attrs",
+            "from fileformats.generic import File, Directory",
+        ]  # attrs is included in imports in case we reference attrs.NOTHING
         block = ""
         source_code = inspect.getsource(module)
         local_functions = get_local_functions(module)
         local_constants = get_local_constants(module)
+        local_classes = get_local_classes(module)
         for line in source_code.split("\n"):
             if line.startswith("from") or line.startswith("import"):
                 if "(" in line:
@@ -267,6 +273,22 @@ class UsedSymbols:
                     func_body = re.sub(r"\s*#.*", "", func_body)
                     local_func_symbols = re.findall(r"\b(\w+)\b", func_body)
                     used_symbols.update(local_func_symbols)
+                    new_symbols = True
+            for local_class in local_classes:
+                if (
+                    local_class.__name__ in used_symbols
+                    and local_class not in used.local_classes
+                ):
+                    used.local_classes.append(local_class)
+                    class_body = inspect.getsource(local_class)
+                    bases = [
+                        b.strip()
+                        for b in split_parens_contents(class_body)[1].split(",")
+                    ]
+                    used_symbols.update(bases)
+                    class_body = re.sub(r"\s*#.*", "", class_body)
+                    local_class_symbols = re.findall(r"\b(\w+)\b", class_body)
+                    used_symbols.update(local_class_symbols)
                     new_symbols = True
             for const_name, const_def in local_constants:
                 if (
@@ -311,10 +333,14 @@ class UsedSymbols:
                     mod = import_module(mod_name)
                     mod_func_bodies = []
                     for used_part in used_parts:
-                        func = getattr(mod, used_part[0])
-                        if inspect.isfunction(func):
-                            used.funcs_to_include.add((used_part[-1], func))
-                            mod_func_bodies.append(inspect.getsource(func))
+                        atr = getattr(mod, used_part[0])
+                        if inspect.isfunction(atr):
+                            used.funcs_to_include.add((used_part[-1], atr))
+                            mod_func_bodies.append(inspect.getsource(atr))
+                        elif inspect.isclass(atr):
+                            used.classes_to_include.add((used_part[-1], atr))
+                            class_body = split_parens_contents(inspect.getsource(atr))[2].split("\n", 1)[1]
+                            mod_func_bodies.append(class_body)
                     # Recursively include neighbouring objects imported in the module
                     used_in_mod = cls.find(
                         mod,
@@ -336,6 +362,16 @@ def get_local_functions(mod):
         if inspect.isfunction(attr) and attr.__module__ == mod.__name__:
             functions.append(attr)
     return functions
+
+
+def get_local_classes(mod):
+    """Get the functions defined in the module"""
+    classes = []
+    for attr_name in dir(mod):
+        attr = getattr(mod, attr_name)
+        if inspect.isclass(attr) and attr.__module__ == mod.__name__:
+            classes.append(attr)
+    return classes
 
 
 def get_local_constants(mod):
@@ -390,12 +426,18 @@ def cleanup_function_body(function_body: str) -> str:
             r"^" + " " * indent_reduction, "", function_body, flags=re.MULTILINE
         )
     # Other misc replacements
-    function_body = function_body.replace("LOGGER.", "logger.")
+    # function_body = function_body.replace("LOGGER.", "logger.")
     function_body = re.sub(
-        r"not isdefined\(([a-zA-Z0-9\_\.]+)\)", r"\1 is attrs.NOTHING", function_body, flags=re.MULTILINE
+        r"not isdefined\(([a-zA-Z0-9\_\.]+)\)",
+        r"\1 is attrs.NOTHING",
+        function_body,
+        flags=re.MULTILINE,
     )
     function_body = re.sub(
-        r"isdefined\(([a-zA-Z0-9\_\.]+)\)", r"\1 is not attrs.NOTHING", function_body, flags=re.MULTILINE
+        r"isdefined\(([a-zA-Z0-9\_\.]+)\)",
+        r"\1 is not attrs.NOTHING",
+        function_body,
+        flags=re.MULTILINE,
     )
     return function_body
 

@@ -4,6 +4,7 @@ import re
 import inspect
 from importlib import import_module
 from copy import copy
+from collections import defaultdict
 import shutil
 import string
 from pathlib import Path
@@ -321,14 +322,22 @@ class NipypeInterface:
         if self.callables:
             # Convert the "_gen_filename" method into a function with any referenced
             # methods, functions and constants included in the module
-            funcs, imports, consts = get_gen_filename_to_funcs(nipype_interface)
+            funcs, imports, consts = get_callable_sources(nipype_interface)
             callables_str += "\n".join(imports) + "\n\n"
             # Create separate callable function for each callable field, which
             # reference the magic "_gen_filename" method
-            for name in self.callables:
+            for inpt_name, inpt in nipype_interface.input_spec().traits().items():
+                if inpt.genfile:
+                    callables_str += (
+                        f"def {inpt_name}_default(inputs):\n"
+                        f'    return _gen_filename("{inpt_name}", inputs=inputs)\n\n'
+                    )
+            
+            for output_name in self.callables:
                 callables_str += (
-                    f"def {name}_callable(output_dir, inputs, stdout, stderr):\n"
-                    f'    return _gen_filename("{name}", output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr)\n\n'
+                    f"def {output_name}_callable(output_dir, inputs, stdout, stderr):\n"
+                    '    outputs = _list_outputs(output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr)\n'
+                    '    return outputs["' + output_name + '"]\n\n'
                 )
             for const in consts:
                 callables_str += f"{const[0]} = {const[1]}\n" + "\n\n"
@@ -753,7 +762,7 @@ def gen_sample_{frmt.lower()}_data({frmt.lower()}: {frmt}, dest_dir: Path, seed:
     return code_str
 
 
-def get_gen_filename_to_funcs(
+def get_callable_sources(
     nipype_interface,
 ) -> ty.Tuple[ty.List[str], ty.Set[str], ty.Set[ty.Tuple[str, str]]]:
     """
@@ -787,16 +796,22 @@ def _gen_filename(field, inputs, output_dir, stdout, stderr):
 
     IMPLICIT_ARGS = ["inputs", "stdout", "stderr", "output_dir"]
 
-    def find_nested_methods(method: ty.Callable) -> ty.List[str]:
-        all_nested = set()
-        for match in re.findall(r"self\.(\w+)\(", inspect.getsource(method)):
-            nested = getattr(nipype_interface, match)
-            all_nested.add(nested)
-            all_nested.update(find_nested_methods(nested))
+    def find_nested_methods(methods: ty.List[ty.Callable]) -> ty.List[str]:
+        all_nested = set(methods)
+        for method in methods:
+            for match in re.findall(r"self\.(\w+)\(", inspect.getsource(method)):
+                if match in ("output_spec", "_outputs"):
+                    continue
+                nested = getattr(nipype_interface, match)
+                if nested not in all_nested:
+                    all_nested.add(nested)
+                    all_nested.update(find_nested_methods([nested]))
         return all_nested
 
     def process_method(method: ty.Callable) -> str:
         src = inspect.getsource(method)
+        src = src.replace("if self.output_spec:", "if True:")
+        src = re.sub(r"outputs = self\.(output_spec|_outputs)\(\).*$", r"outputs = {}", src, flags=re.MULTILINE)        
         prefix, args_str, body = split_parens_contents(src)
         body = insert_args_in_method_calls(body, [f"{a}={a}" for a in IMPLICIT_ARGS])
         body = body.replace("self.cmd", f'"{nipype_interface._cmd}"')
@@ -833,31 +848,50 @@ def _gen_filename(field, inputs, output_dir, stdout, stderr):
             new_src += name + insert_args_in_signature(sig, args)
         return new_src
 
-    func_srcs = [
-        process_method(m)
-        for m in (
-            [nipype_interface._gen_filename]
-            + list(find_nested_methods(nipype_interface._gen_filename))
-        )
-    ]
-
-    mod = import_module(nipype_interface.__module__)
-    used = UsedSymbols.find(mod, func_srcs)
-    for func in used.local_functions:
-        func_srcs.append(
-            cleanup_function_body(inspect.getsource(func))
-        )
-    for new_func_name, func in used.funcs_to_include:
-        func_src = inspect.getsource(func)
-        match = re.match(
-            r" *(def|class) *" + func.__name__ + r"(?=\()(.*)$",
-            func_src,
-            re.DOTALL | re.MULTILINE,
-        )
-        func_src = match.group(1) + " " + new_func_name + match.group(2)
-        func_srcs.append(cleanup_function_body(func_src))
+    methods_to_process = [nipype_interface._list_outputs]
+    if hasattr(nipype_interface, "_gen_filename"):
+        methods_to_process.append(nipype_interface._gen_filename)
+    
+    func_srcs = defaultdict(list)
+    for method in find_nested_methods(methods_to_process):
+        func_srcs[method.__module__].append(process_method(method))
+    all_funcs = []
+    all_imports = set()
+    all_constants = set()
+    for mod_name, funcs in func_srcs.items():
+        mod = import_module(mod_name)
+        used = UsedSymbols.find(mod, funcs)
+        all_funcs.extend(funcs)
+        for func in used.local_functions:
+            all_funcs.append(
+                cleanup_function_body(inspect.getsource(func))
+            )
+        for klass in used.local_classes:
+            all_funcs.append(
+                cleanup_function_body(inspect.getsource(klass))
+            )            
+        for new_func_name, func in used.funcs_to_include:
+            func_src = inspect.getsource(func)
+            match = re.match(
+                r" *def *" + func.__name__ + r"(?=\()(.*)$",
+                func_src,
+                re.DOTALL | re.MULTILINE,
+            )
+            func_src = "def " + new_func_name + match.group(1)
+            all_funcs.append(cleanup_function_body(func_src))
+        for new_klass_name, klass in used.classes_to_include:
+            klass_src = inspect.getsource(klass)
+            match = re.match(
+                r" *class *" + klass.__name__ + r"(?=\()(.*)$",
+                klass_src,
+                re.DOTALL | re.MULTILINE,
+            )
+            klass_src = "class " + new_klass_name + match.group(1)
+            all_funcs.append(cleanup_function_body(klass_src))            
+        all_imports.update(used.imports)
+        all_constants.update(used.constants)
     return (
-        func_srcs,
-        used.imports,
-        used.constants,
+        reversed(all_funcs),  # Ensure base classes are defined first
+        all_imports,
+        all_constants,
     )

@@ -762,8 +762,10 @@ class BaseTaskConverter(metaclass=ABCMeta):
 
         if re.match(r".*(?<!\w)ty\.", spec_str, flags=re.MULTILINE | re.DOTALL):
             add_import("import typing as ty")
-        if re.match(r".*(?<!\w)Path(?!\w)", spec_str, flags=re.MULTILINE | re.DOTALL):
+        if re.match(r".*\bPath\b", spec_str, flags=re.MULTILINE | re.DOTALL):
             add_import("from pathlib import Path")
+        if re.match(r".*\blogging\b", spec_str, flags=re.MULTILINE | re.DOTALL):
+            add_import("import logging")
         for test in self.tests:
             for stmt in test.imports:
                 if "nipype" in stmt.module:

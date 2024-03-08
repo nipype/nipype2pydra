@@ -118,12 +118,22 @@ class FunctionTaskConverter(BaseTaskConverter):
         for func_name, func in sorted(used.funcs_to_include, key=itemgetter(0)):
             func_src = inspect.getsource(func)
             func_src = re.sub(
-                r"^(def|class) (\w+)(?=\()",
+                r"^(def) (\w+)(?=\()",
                 r"\1 " + func_name,
                 func_src,
                 flags=re.MULTILINE,
             )
             spec_str += "\n\n" + cleanup_function_body(func_src)
+
+        for klass_name, klass in sorted(used.classes_to_include, key=itemgetter(0)):
+            klass_src = inspect.getsource(klass)
+            klass_src = re.sub(
+                r"^(class) (\w+)(?=\()",
+                r"\1 " + klass_name,
+                klass_src,
+                flags=re.MULTILINE,
+            )
+            spec_str += "\n\n" + cleanup_function_body(klass_src)
 
         imports = self.construct_imports(
             nonstd_types,
