@@ -236,6 +236,8 @@ class UsedSymbols:
         imports = [
             "import attrs",
             "from fileformats.generic import File, Directory",
+            "import logging",
+            "from logging import getLogger",
         ]  # attrs is included in imports in case we reference attrs.NOTHING
         block = ""
         source_code = inspect.getsource(module)
@@ -351,7 +353,7 @@ class UsedSymbols:
                     used.imports.add(required_stmt)
         return used
 
-    SYMBOLS_TO_IGNORE = ["isdefined", "LOGGER"]
+    SYMBOLS_TO_IGNORE = ["isdefined"]
 
 
 def get_local_functions(mod):
@@ -394,7 +396,7 @@ def get_local_constants(mod):
 
 
 def cleanup_function_body(function_body: str) -> str:
-    """Ensure 4-space indentation, replace LOGGER with logger, and replace isdefined
+    """Ensure 4-space indentation and replace isdefined
     with the attrs.NOTHING constant
 
     Parameters
