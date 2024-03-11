@@ -24,6 +24,7 @@ class FunctionTaskConverter(BaseTaskConverter):
 
         base_imports = [
             "import pydra.mark",
+            "import logging",
             "from logging import getLogger",
             "import attrs",
         ]
@@ -154,8 +155,7 @@ class FunctionTaskConverter(BaseTaskConverter):
         method_returns: ty.Dict[str, ty.List[str]] = None,
     ):
         src = inspect.getsource(method)
-        pre, argstr, post = split_parens_contents(src)
-        args = re.split(r"\s*,\s*", argstr.strip())
+        pre, args, post = split_parens_contents(src)
         args.remove("self")
         if "runtime" in args:
             args.remove("runtime")

@@ -9,6 +9,7 @@ from contextlib import contextmanager
 import attrs
 from pathlib import Path
 from fileformats.core import FileSet
+from .exceptions import UnmatchedParensException
 
 try:
     from typing import GenericAlias
@@ -133,7 +134,7 @@ def add_exc_note(e, note):
     return e
 
 
-def split_parens_contents(snippet, brackets: bool = False):
+def split_parens_contents(snippet, brackets: bool = False, delimiter=","):
     """Splits the code snippet at the first opening parenthesis into a 3-tuple
     consisting of the pre-paren text, the contents of the parens and the post-paren
 
@@ -143,38 +144,74 @@ def split_parens_contents(snippet, brackets: bool = False):
         the code snippet to split
     brackets: bool, optional
         whether to split at brackets instead of parens, by default False
+    delimiter: str, optional
+        an optional delimiter to split the contents of the parens by, by default None
+        means that they aren't split
 
     Returns
     -------
     pre: str
         the text before the opening parenthesis
-    contents: str
+    contents: str or list[str]
         the contents of the parens
     post: str
         the text after the closing parenthesis
     """
-    if brackets:
-        open = "["
-        close = "]"
-        pattern = r"(\[|\])"
-    else:
-        open = "("
-        close = ")"
-        pattern = r"(\(|\))"
-    splits = re.split(pattern, snippet, flags=re.MULTILINE | re.DOTALL)
-    depth = 1
+    splits = re.split(
+        r"(\(|\)|\[|\]|'|\"|\\\(|\\\)|\\\[|\\\]|\\'|\\\")",
+        snippet,
+        flags=re.MULTILINE | re.DOTALL,
+    )
     pre = "".join(splits[:2])
-    contents = ""
+    contents = []
+    next_item = ""
+    first = splits[1]  # which bracket/parens type was opened initially (and signifies)
+    matching = {")": "(", "]": "["}
+    open = ["(", "["]
+    close = [")", "]"]
+    depth = {p: 0 for p in open}
+    depth[first] += 1  # Open the first bracket/parens type
+    inquote = None
     for i, s in enumerate(splits[2:], start=2):
-        if s == open:
-            depth += 1
+        if not s:
+            continue
+        if s[0] == "\\":
+            next_item += s
+            continue
+        if s in ["'", '"']:
+            if inquote is None:
+                inquote = s
+            elif inquote == s:
+                inquote = None
+            next_item += s
+            continue
+        if inquote:
+            next_item += s
+            continue
+        if s in open:
+            depth[s] += 1
+            next_item += s
         else:
-            if s == close:
-                depth -= 1
-                if depth == 0:
+            if s in close:
+                matching_open = matching[s]
+                depth[matching_open] -= 1
+                if matching_open == first and depth[matching_open] == 0:
+                    if next_item:
+                        contents.append(next_item)
                     return pre, contents, "".join(splits[i:])
-            contents += s
-    raise ValueError(f"No matching parenthesis found in '{snippet}'")
+            if depth[first] == 1 and all(
+                d == 0 for b, d in depth.items() if b != first
+            ):
+                parts = [p.strip() for p in s.split(delimiter)]
+                if parts:
+                    contents.append((next_item + parts[0]).strip())
+                    contents.extend(parts[1:-1])
+                    next_item = parts[-1] if len(parts) > 1 else ""
+                else:
+                    next_item = ""
+            else:
+                next_item += s
+    raise UnmatchedParensException(f"Unmatched parenthesis found in '{snippet}'")
 
 
 @attrs.define
@@ -237,7 +274,6 @@ class UsedSymbols:
             "import attrs",
             "from fileformats.generic import File, Directory",
             "import logging",
-            "from logging import getLogger",
         ]  # attrs is included in imports in case we reference attrs.NOTHING
         block = ""
         source_code = inspect.getsource(module)
@@ -259,7 +295,6 @@ class UsedSymbols:
             # Strip comments from function body
             function_body = re.sub(r"\s*#.*", "", function_body)
             used_symbols.update(re.findall(r"\b(\w+)\b", function_body))
-        used_symbols -= set(cls.SYMBOLS_TO_IGNORE)
         # Keep looping through local function source until all local functions and constants
         # are added to the used symbols
         new_symbols = True
@@ -283,10 +318,7 @@ class UsedSymbols:
                 ):
                     used.local_classes.append(local_class)
                     class_body = inspect.getsource(local_class)
-                    bases = [
-                        b.strip()
-                        for b in split_parens_contents(class_body)[1].split(",")
-                    ]
+                    bases = split_parens_contents(class_body)[1]
                     used_symbols.update(bases)
                     class_body = re.sub(r"\s*#.*", "", class_body)
                     local_class_symbols = re.findall(r"\b(\w+)\b", class_body)
@@ -301,6 +333,7 @@ class UsedSymbols:
                     const_def_symbols = re.findall(r"\b(\w+)\b", const_def)
                     used_symbols.update(const_def_symbols)
                     new_symbols = True
+        used_symbols -= set(cls.SYMBOLS_TO_IGNORE)
         # functions to copy from a relative or nipype module into the output module
         for stmt in imports:
             stmt = stmt.replace("\n", "")
@@ -323,6 +356,8 @@ class UsedSymbols:
                         match = re.match(r"(\.*)(.*)", import_mod)
                         mod_parts = module.__name__.split(".")
                         nparents = len(match.group(1))
+                        if Path(module.__file__).stem == "__init__":
+                            nparents -= 1
                         if nparents:
                             mod_parts = mod_parts[:-nparents]
                         mod_name = ".".join(mod_parts)
@@ -341,7 +376,9 @@ class UsedSymbols:
                             mod_func_bodies.append(inspect.getsource(atr))
                         elif inspect.isclass(atr):
                             used.classes_to_include.add((used_part[-1], atr))
-                            class_body = split_parens_contents(inspect.getsource(atr))[2].split("\n", 1)[1]
+                            class_body = split_parens_contents(inspect.getsource(atr))[
+                                2
+                            ].split("\n", 1)[1]
                             mod_func_bodies.append(class_body)
                     # Recursively include neighbouring objects imported in the module
                     used_in_mod = cls.find(
@@ -384,12 +421,11 @@ def get_local_constants(mod):
     parts = re.split(r"^(\w+) *= *", source_code, flags=re.MULTILINE)
     local_vars = []
     for attr_name, following in zip(parts[1::2], parts[2::2]):
-        if "(" in following.splitlines()[0]:
-            pre, args, _ = split_parens_contents(following)
-            local_vars.append((attr_name, pre + re.sub(r"\n *", "", args) + ")"))
-        elif "[" in following.splitlines()[0]:
-            pre, args, _ = split_parens_contents(following, brackets=True)
-            local_vars.append((attr_name, pre + re.sub(r"\n *", "", args) + "]"))
+        if "(" in following or "[" in following:
+            pre, args, post = split_parens_contents(following)
+            local_vars.append(
+                (attr_name, pre + re.sub(r"\n *", "", ", ".join(args)) + post[0])
+            )
         else:
             local_vars.append((attr_name, following.splitlines()[0]))
     return local_vars
@@ -460,11 +496,7 @@ def insert_args_in_signature(snippet: str, new_args: ty.Iterable[str]) -> str:
         the modified function signature
     """
     # Split out the argstring from the rest of the code snippet
-    pre, argstr, post = split_parens_contents(snippet)
-    if argstr:
-        args = re.split(r" *, *", argstr)
-        if "runtime" in args:
-            args.remove("runtime")
-    else:
-        args = []
+    pre, args, post = split_parens_contents(snippet)
+    if "runtime" in args:
+        args.remove("runtime")
     return pre + ", ".join(args + new_args) + post

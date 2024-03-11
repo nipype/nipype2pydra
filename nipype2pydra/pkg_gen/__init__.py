@@ -812,14 +812,14 @@ def _gen_filename(field, inputs, output_dir, stdout, stderr):
         src = inspect.getsource(method)
         src = src.replace("if self.output_spec:", "if True:")
         src = re.sub(r"outputs = self\.(output_spec|_outputs)\(\).*$", r"outputs = {}", src, flags=re.MULTILINE)        
-        prefix, args_str, body = split_parens_contents(src)
+        prefix, args, body = split_parens_contents(src)
         body = insert_args_in_method_calls(body, [f"{a}={a}" for a in IMPLICIT_ARGS])
         body = body.replace("self.cmd", f'"{nipype_interface._cmd}"')
         body = body.replace("self.", "")
         body = re.sub(r"\w+runtime\.(stdout|stderr)", r"\1", body)
         body = body.replace("os.getcwd()", "output_dir")
         # drop 'self' from the args and add the implicit callable args
-        args = args_str.split(",")[1:]
+        args = args[1:]
         arg_names = [a.split("=")[0].split(":")[0] for a in args]
         for implicit in IMPLICIT_ARGS:
             if implicit not in arg_names:
@@ -844,8 +844,14 @@ def _gen_filename(field, inputs, output_dir, stdout, stderr):
         new_src = splits[0]
         # Iterate through these chunks and add the additional args to the method calls
         # using insert_args_in_signature function
-        for name, sig in zip(splits[1::2], splits[2::2]):
-            new_src += name + insert_args_in_signature(sig, args)
+        sig = ""
+        for name, next_part in zip(splits[1::2], splits[2::2]):
+            if next_part.count("(") > next_part.count(")"):
+                sig += name + next_part
+            else:
+                sig += next_part
+                new_src += name + insert_args_in_signature(sig, args)
+                sig = ""
         return new_src
 
     methods_to_process = [nipype_interface._list_outputs]
