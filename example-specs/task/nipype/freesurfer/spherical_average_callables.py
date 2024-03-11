@@ -1,14 +1,22 @@
 """Module to put any functions that are referred to in the "callables" section of SphericalAverage.yaml"""
 
 import attrs
-from fileformats.generic import File
 import os
 
 
+def out_file_default(inputs):
+    return _gen_filename("out_file", inputs=inputs)
+
+
+def in_average_default(inputs):
+    return _gen_filename("in_average", inputs=inputs)
+
+
 def in_average_callable(output_dir, inputs, stdout, stderr):
-    return _gen_filename(
-        "in_average", output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
     )
+    return outputs["in_average"]
 
 
 def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
@@ -26,27 +34,8 @@ def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
         return None
 
 
-def _outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
-    """Returns a bunch containing output fields for the class"""
-    outputs = None
-    if output_spec:
-        outputs = output_spec(
-            inputs=inputs, stdout=stdout, stderr=stderr, output_dir=output_dir
-        )
-
-    return outputs
-
-
-class SphericalAverageOutputSpec(
-    inputs=None, stdout=None, stderr=None, output_dir=None
-):
-    out_file = File(exists=False, desc="Output label")
-
-
 def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
-    outputs = _outputs(
-        inputs=inputs, stdout=stdout, stderr=stderr, output_dir=output_dir
-    ).get()
+    outputs = {}
     if inputs.out_file is not attrs.NOTHING:
         outputs["out_file"] = os.path.abspath(inputs.out_file)
     else:

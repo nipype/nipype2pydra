@@ -34,6 +34,7 @@ from nipype2pydra.utils import (
     cleanup_function_body,
     insert_args_in_signature,
 )
+from nipype2pydra.exceptions import UnmatchedParensException
 
 
 TEMPLATES_DIR = Path(__file__).parent.parent / "pkg_gen" / "resources" / "templates"
@@ -845,12 +846,24 @@ def _gen_filename(field, inputs, output_dir, stdout, stderr):
         # Iterate through these chunks and add the additional args to the method calls
         # using insert_args_in_signature function
         sig = ""
+        outer_name = None
         for name, next_part in zip(splits[1::2], splits[2::2]):
-            if next_part.count("(") > next_part.count(")"):
+            if outer_name:
                 sig += name + next_part
             else:
                 sig += next_part
-                new_src += name + insert_args_in_signature(sig, args)
+            try:
+                new_sig = insert_args_in_signature(sig, args)
+            except UnmatchedParensException:
+                sig = next_part
+                outer_name = name
+            else:
+                if outer_name:
+                    new_sig = insert_args_in_method_calls(new_sig, args)
+                    new_src += outer_name + new_sig
+                    outer_name = None
+                else:
+                    new_src += name + new_sig
                 sig = ""
         return new_src
 

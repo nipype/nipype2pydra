@@ -162,23 +162,28 @@ def split_parens_contents(snippet, brackets: bool = False, delimiter=","):
         snippet,
         flags=re.MULTILINE | re.DOTALL,
     )
+    quote_types = ["'", '"']
     pre = "".join(splits[:2])
     contents = []
-    next_item = ""
-    first = splits[1]  # which bracket/parens type was opened initially (and signifies)
     matching = {")": "(", "]": "["}
     open = ["(", "["]
     close = [")", "]"]
     depth = {p: 0 for p in open}
-    depth[first] += 1  # Open the first bracket/parens type
-    inquote = None
+    next_item = ""
+    if splits[1] in quote_types:
+        first = None  # which bracket/parens type was opened initially (and signifies)
+        inquote = splits[1]
+    else:
+        first = splits[1]
+        depth[first] += 1  # Open the first bracket/parens type
+        inquote = None
     for i, s in enumerate(splits[2:], start=2):
         if not s:
             continue
         if s[0] == "\\":
             next_item += s
             continue
-        if s in ["'", '"']:
+        if s in quote_types:
             if inquote is None:
                 inquote = s
             elif inquote == s:
@@ -191,6 +196,10 @@ def split_parens_contents(snippet, brackets: bool = False, delimiter=","):
         if s in open:
             depth[s] += 1
             next_item += s
+            if first is None:
+                first = s
+                pre += next_item
+                next_item = ""
         else:
             if s in close:
                 matching_open = matching[s]
@@ -199,12 +208,15 @@ def split_parens_contents(snippet, brackets: bool = False, delimiter=","):
                     if next_item:
                         contents.append(next_item)
                     return pre, contents, "".join(splits[i:])
-            if depth[first] == 1 and all(
+            if first and depth[first] == 1 and delimiter in s and all(
                 d == 0 for b, d in depth.items() if b != first
             ):
                 parts = [p.strip() for p in s.split(delimiter)]
                 if parts:
-                    contents.append((next_item + parts[0]).strip())
+                    next_item += parts[0]
+                    next_item = next_item.strip()
+                    if next_item:
+                        contents.append(next_item)
                     contents.extend(parts[1:-1])
                     next_item = parts[-1] if len(parts) > 1 else ""
                 else:
@@ -418,6 +430,7 @@ def get_local_constants(mod):
     Get the constants defined in the module
     """
     source_code = inspect.getsource(mod)
+    source_code = source_code.replace("\\\n", " ")
     parts = re.split(r"^(\w+) *= *", source_code, flags=re.MULTILINE)
     local_vars = []
     for attr_name, following in zip(parts[1::2], parts[2::2]):

@@ -1,31 +1,19 @@
 """Module to put any functions that are referred to in the "callables" section of SmoothTessellation.yaml"""
 
 import attrs
-import os.path as op
 import os
+import os.path as op
+
+
+def out_file_default(inputs):
+    return _gen_filename("out_file", inputs=inputs)
 
 
 def out_file_callable(output_dir, inputs, stdout, stderr):
-    return _gen_filename(
-        "out_file", output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
     )
-
-
-def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
-    if name == "out_file":
-        return _gen_outfilename(
-            inputs=inputs, stdout=stdout, stderr=stderr, output_dir=output_dir
-        )
-    else:
-        return None
-
-
-def _gen_outfilename(inputs=None, stdout=None, stderr=None, output_dir=None):
-    if inputs.out_file is not attrs.NOTHING:
-        return os.path.abspath(inputs.out_file)
-    else:
-        _, name, ext = split_filename(inputs.in_file)
-        return os.path.abspath(name + "_smoothed" + ext)
+    return outputs["out_file"]
 
 
 def split_filename(fname):
@@ -76,3 +64,28 @@ def split_filename(fname):
         fname, ext = op.splitext(fname)
 
     return pth, fname, ext
+
+
+def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
+    if name == "out_file":
+        return _gen_outfilename(
+            inputs=inputs, stdout=stdout, stderr=stderr, output_dir=output_dir
+        )
+    else:
+        return None
+
+
+def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
+    outputs = {}
+    outputs["surface"] = _gen_outfilename(
+        inputs=inputs, stdout=stdout, stderr=stderr, output_dir=output_dir
+    )
+    return outputs
+
+
+def _gen_outfilename(inputs=None, stdout=None, stderr=None, output_dir=None):
+    if inputs.out_file is not attrs.NOTHING:
+        return os.path.abspath(inputs.out_file)
+    else:
+        _, name, ext = split_filename(inputs.in_file)
+        return os.path.abspath(name + "_smoothed" + ext)
