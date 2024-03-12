@@ -84,6 +84,12 @@ outputs:
     out_file: medimage/nifti1
     # type=file: output template volume (final mean/median image)
     # type=file|default='mri_robust_template_out.mgz': output template volume (final mean/median image)
+    scaled_intensity_outputs: text/text-file+list-of
+    # type=outputmultiobject: output final intensity scales
+    # type=traitcompound|default=[None]: final intensity scales (will activate --iscale)
+    transform_outputs: medimage-freesurfer/lta+list-of
+    # type=outputmultiobject: output xform files from moving to template
+    # type=traitcompound|default=[None]: output xforms to template (for each input)
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields

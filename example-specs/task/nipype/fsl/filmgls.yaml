@@ -71,10 +71,16 @@ outputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
+    copes: generic/file+list-of
+    # type=outputmultiobject: Contrast estimates for each contrast
     dof_file: generic/file
     # type=file: degrees of freedom
+    fstats: generic/file+list-of
+    # type=outputmultiobject: f-stat file for each contrast
     logfile: generic/file
     # type=file: FILM run logfile
+    param_estimates: generic/file+list-of
+    # type=outputmultiobject: Parameter estimates for each column of the design matrix
     residual4d: generic/file
     # type=file: Model fit residual mean-squared error for each time point
     results_dir: generic/directory
@@ -84,6 +90,14 @@ outputs:
     # type=file: summary of residuals, See Woolrich, et. al., 2001
     thresholdac: generic/file
     # type=file: The FILM autocorrelation parameters
+    tstats: generic/file+list-of
+    # type=outputmultiobject: t-stat file for each contrast
+    varcopes: generic/file+list-of
+    # type=outputmultiobject: Variance estimates for each contrast
+    zfstats: generic/file+list-of
+    # type=outputmultiobject: z-stat file for each F contrast
+    zstats: generic/file+list-of
+    # type=outputmultiobject: z-stat file for each contrast
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields

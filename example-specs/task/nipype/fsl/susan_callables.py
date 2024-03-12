@@ -1,86 +1,24 @@
 """Module to put any functions that are referred to in the "callables" section of SUSAN.yaml"""
 
-from glob import glob
-import attrs
 import os
+import attrs
 import os.path as op
-from pathlib import Path
 import logging
+from glob import glob
 
 
 def out_file_default(inputs):
     return _gen_filename("out_file", inputs=inputs)
 
 
-def out_file_callable(output_dir, inputs, stdout, stderr):
+def smoothed_file_callable(output_dir, inputs, stdout, stderr):
     outputs = _list_outputs(
         output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
     )
-    return outputs["out_file"]
+    return outputs["smoothed_file"]
 
 
 IFLOGGER = logging.getLogger("nipype.interface")
-
-
-def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
-    if name == "out_file":
-        return _list_outputs(
-            inputs=inputs, stdout=stdout, stderr=stderr, output_dir=output_dir
-        )["smoothed_file"]
-    return None
-
-
-def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
-    outputs = {}
-    out_file = inputs.out_file
-    if out_file is attrs.NOTHING:
-        out_file = _gen_fname(
-            inputs.in_file,
-            suffix="_smooth",
-            inputs=inputs,
-            stdout=stdout,
-            stderr=stderr,
-            output_dir=output_dir,
-        )
-    outputs["smoothed_file"] = os.path.abspath(out_file)
-    return outputs
-
-
-class PackageInfo(object):
-    _version = None
-    version_cmd = None
-    version_file = None
-
-    @classmethod
-    def version(klass):
-        if klass._version is None:
-            if klass.version_cmd is not None:
-                try:
-                    clout = CommandLine(
-                        command=klass.version_cmd,
-                        resource_monitor=False,
-                        terminal_output="allatonce",
-                    ).run()
-                except IOError:
-                    return None
-
-                raw_info = clout.runtime.stdout
-            elif klass.version_file is not None:
-                try:
-                    with open(klass.version_file, "rt") as fobj:
-                        raw_info = fobj.read()
-                except OSError:
-                    return None
-            else:
-                return None
-
-            klass._version = klass.parse_version(raw_info)
-
-        return klass._version
-
-    @staticmethod
-    def parse_version(raw_info):
-        raise NotImplementedError
 
 
 def fname_presuffix(fname, prefix="", suffix="", newpath=None, use_ext=True):
@@ -109,8 +47,8 @@ def fname_presuffix(fname, prefix="", suffix="", newpath=None, use_ext=True):
     >>> fname_presuffix(fname,'pre','post','/tmp')
     '/tmp/prefoopost.nii.gz'
 
-    >>> from nipype.interfaces.base import Undefined
-    >>> fname_presuffix(fname, 'pre', 'post', Undefined) == \
+    >>> from nipype.interfaces.base import attrs.NOTHING
+    >>> fname_presuffix(fname, 'pre', 'post', attrs.NOTHING) == \
             fname_presuffix(fname, 'pre', 'post')
     True
 
@@ -119,7 +57,7 @@ def fname_presuffix(fname, prefix="", suffix="", newpath=None, use_ext=True):
     if not use_ext:
         ext = ""
 
-    # No need for isdefined: bool(Undefined) evaluates to False
+    # No need for : bool(attrs.NOTHING is not attrs.NOTHING) evaluates to False
     if newpath:
         pth = op.abspath(newpath)
     return op.join(pth, prefix + fname + suffix + ext)
@@ -320,3 +258,27 @@ def _gen_fname(
         suffix = ""
     fname = fname_presuffix(basename, suffix=suffix, use_ext=False, newpath=cwd)
     return fname
+
+
+def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
+    if name == "out_file":
+        return _list_outputs(
+            inputs=inputs, stdout=stdout, stderr=stderr, output_dir=output_dir
+        )["smoothed_file"]
+    return None
+
+
+def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
+    outputs = {}
+    out_file = inputs.out_file
+    if out_file is attrs.NOTHING:
+        out_file = _gen_fname(
+            inputs.in_file,
+            suffix="_smooth",
+            inputs=inputs,
+            stdout=stdout,
+            stderr=stderr,
+            output_dir=output_dir,
+        )
+    outputs["smoothed_file"] = os.path.abspath(out_file)
+    return outputs

@@ -50,6 +50,20 @@ outputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
+    copes: generic/file+list-of
+    # type=outputmultiobject: Contrast estimates for each contrast
+    fstats: generic/file+list-of
+    # type=outputmultiobject: f-stat file for each contrast
+    neffs: generic/file+list-of
+    # type=outputmultiobject: neff file ?? for each contrast
+    tstats: generic/file+list-of
+    # type=outputmultiobject: t-stat file for each contrast
+    varcopes: generic/file+list-of
+    # type=outputmultiobject: Variance estimates for each contrast
+    zfstats: generic/file+list-of
+    # type=outputmultiobject: z-stat file for each F contrast
+    zstats: generic/file+list-of
+    # type=outputmultiobject: z-stat file for each contrast
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields

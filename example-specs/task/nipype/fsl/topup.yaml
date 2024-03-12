@@ -79,11 +79,17 @@ outputs:
     # type=file|default=<undefined>: name of image file with field (Hz)
     out_fieldcoef: generic/file
     # type=file: file containing the field coefficients
+    out_jacs: generic/file+list-of
+    # type=list: Jacobian images
     out_logfile: generic/file
     # type=file: name of log-file
     # type=file|default=<undefined>: name of log-file
+    out_mats: generic/file+list-of
+    # type=list: realignment matrices
     out_movpar: generic/file
     # type=file: movpar.txt output file
+    out_warps: generic/file+list-of
+    # type=list: warpfield images
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields

@@ -58,6 +58,8 @@ outputs:
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
+    out: out_callable
+    # type=float: global correlation value
   templates:
   # dict[str, str] - `output_file_template` values to be provided to output fields
   requirements:

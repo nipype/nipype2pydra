@@ -2,18 +2,17 @@
 
 import attrs
 import os.path as op
-from pathlib import Path
 
 
 def tcl_script_default(inputs):
     return _gen_filename("tcl_script", inputs=inputs)
 
 
-def tcl_script_callable(output_dir, inputs, stdout, stderr):
+def snapshots_callable(output_dir, inputs, stdout, stderr):
     outputs = _list_outputs(
         output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
     )
-    return outputs["tcl_script"]
+    return outputs["snapshots"]
 
 
 def fname_presuffix(fname, prefix="", suffix="", newpath=None, use_ext=True):
@@ -42,8 +41,8 @@ def fname_presuffix(fname, prefix="", suffix="", newpath=None, use_ext=True):
     >>> fname_presuffix(fname,'pre','post','/tmp')
     '/tmp/prefoopost.nii.gz'
 
-    >>> from nipype.interfaces.base import Undefined
-    >>> fname_presuffix(fname, 'pre', 'post', Undefined) == \
+    >>> from nipype.interfaces.base import attrs.NOTHING
+    >>> fname_presuffix(fname, 'pre', 'post', attrs.NOTHING) == \
             fname_presuffix(fname, 'pre', 'post')
     True
 
@@ -52,7 +51,7 @@ def fname_presuffix(fname, prefix="", suffix="", newpath=None, use_ext=True):
     if not use_ext:
         ext = ""
 
-    # No need for isdefined: bool(Undefined) evaluates to False
+    # No need for : bool(attrs.NOTHING is not attrs.NOTHING) evaluates to False
     if newpath:
         pth = op.abspath(newpath)
     return op.join(pth, prefix + fname + suffix + ext)

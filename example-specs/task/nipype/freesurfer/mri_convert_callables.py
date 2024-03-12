@@ -1,10 +1,9 @@
 """Module to put any functions that are referred to in the "callables" section of MRIConvert.yaml"""
 
-import attrs
 import os
-from nibabel import load
+from nibabel.loadsave import load
+import attrs
 import os.path as op
-from pathlib import Path
 
 
 def out_file_default(inputs):
@@ -44,8 +43,8 @@ def fname_presuffix(fname, prefix="", suffix="", newpath=None, use_ext=True):
     >>> fname_presuffix(fname,'pre','post','/tmp')
     '/tmp/prefoopost.nii.gz'
 
-    >>> from nipype.interfaces.base import Undefined
-    >>> fname_presuffix(fname, 'pre', 'post', Undefined) == \
+    >>> from nipype.interfaces.base import attrs.NOTHING
+    >>> fname_presuffix(fname, 'pre', 'post', attrs.NOTHING) == \
             fname_presuffix(fname, 'pre', 'post')
     True
 
@@ -54,7 +53,7 @@ def fname_presuffix(fname, prefix="", suffix="", newpath=None, use_ext=True):
     if not use_ext:
         ext = ""
 
-    # No need for isdefined: bool(Undefined) evaluates to False
+    # No need for : bool(attrs.NOTHING is not attrs.NOTHING) evaluates to False
     if newpath:
         pth = op.abspath(newpath)
     return op.join(pth, prefix + fname + suffix + ext)
@@ -136,7 +135,7 @@ def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
     outfile = _get_outfilename(
         inputs=inputs, stdout=stdout, stderr=stderr, output_dir=output_dir
     )
-    if inputs.split is not attrs.NOTHING and inputs.split:
+    if (inputs.split is not attrs.NOTHING) and inputs.split:
         size = load(inputs.in_file).shape
         if len(size) == 3:
             tp = 1

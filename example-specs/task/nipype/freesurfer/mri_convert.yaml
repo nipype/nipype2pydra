@@ -71,14 +71,17 @@ outputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
+    out_file: medimage/mgh-gz+list-of
+    # type=outputmultiobject: converted output file
+    # type=file|default=<undefined>: output filename or True to generate one
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
-    out_file: out_file_callable
-    # type=outputmultiobject: converted output file
-    # type=file|default=<undefined>: output filename or True to generate one
   templates:
   # dict[str, str] - `output_file_template` values to be provided to output fields
+    out_file: '"outfile.mgz"'
+    # type=outputmultiobject: converted output file
+    # type=file|default=<undefined>: output filename or True to generate one
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:

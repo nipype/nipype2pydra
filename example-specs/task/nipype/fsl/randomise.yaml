@@ -56,6 +56,18 @@ outputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
+    f_corrected_p_files: generic/file+list-of
+    # type=list: f contrast FWE (Family-wise error) corrected p values files
+    f_p_files: generic/file+list-of
+    # type=list: f contrast uncorrected p values files
+    fstat_files: generic/file+list-of
+    # type=list: f contrast raw statistic
+    t_corrected_p_files: generic/file+list-of
+    # type=list: t contrast FWE (Family-wise error) corrected p values files
+    t_p_files: generic/file+list-of
+    # type=list: f contrast uncorrected p values files
+    tstat_files: generic/file+list-of
+    # type=list: t contrast raw statistic
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields

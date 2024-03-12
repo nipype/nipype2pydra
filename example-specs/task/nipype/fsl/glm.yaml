@@ -77,9 +77,32 @@ outputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
+    out_cope: generic/file+list-of
+    # type=outputmultiobject: output file name for COPEs (either as text file or image)
+    # type=file|default=<undefined>: output file name for COPE (either as txt or image
+    out_data: generic/file+list-of
+    # type=outputmultiobject: output file for preprocessed data
+    out_f: generic/file+list-of
+    # type=outputmultiobject: output file name for F-value of full model fit
     out_file: generic/file
     # type=file: file name of GLM parameters (if generated)
     # type=file|default=<undefined>: filename for GLM parameter estimates (GLM betas)
+    out_p: generic/file+list-of
+    # type=outputmultiobject: output file name for p-values of Z-stats (either as text file or image)
+    out_pf: generic/file+list-of
+    # type=outputmultiobject: output file name for p-value for full model fit
+    out_res: generic/file+list-of
+    # type=outputmultiobject: output file name for residuals
+    out_sigsq: generic/file+list-of
+    # type=outputmultiobject: output file name for residual noise variance sigma-square
+    out_t: generic/file+list-of
+    # type=outputmultiobject: output file name for t-stats (either as text file or image)
+    out_varcb: generic/file+list-of
+    # type=outputmultiobject: output file name for variance of COPEs
+    out_vnscales: generic/file+list-of
+    # type=outputmultiobject: output file name for scaling factors for variance normalisation
+    out_z: generic/file+list-of
+    # type=outputmultiobject: output file name for COPEs (either as text file or image)
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields

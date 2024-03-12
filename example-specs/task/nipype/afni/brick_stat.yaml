@@ -57,6 +57,8 @@ outputs:
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
+    min_val: min_val_callable
+    # type=float: output
   templates:
   # dict[str, str] - `output_file_template` values to be provided to output fields
   requirements:

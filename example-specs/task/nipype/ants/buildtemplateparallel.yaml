@@ -53,6 +53,10 @@ outputs:
   # passed to the field in the automatically generated unittests.
     final_template_file: generic/file
     # type=file: final ANTS template
+    subject_outfiles: generic/file+list-of
+    # type=outputmultiobject: Outputs for each input image. Includes warp field, inverse warp, Affine, original image (repaired) and warped image (deformed)
+    template_files: generic/file+list-of
+    # type=outputmultiobject: Templates from different stages of iteration
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields

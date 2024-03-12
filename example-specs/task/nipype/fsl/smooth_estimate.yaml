@@ -53,6 +53,12 @@ outputs:
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
+    dlh: dlh_callable
+    # type=float: smoothness estimate sqrt(det(Lambda))
+    resels: resels_callable
+    # type=float: volume of resel, in voxels, defined as FWHM_x * FWHM_y * FWHM_z
+    volume: volume_callable
+    # type=int: number of voxels in mask
   templates:
   # dict[str, str] - `output_file_template` values to be provided to output fields
   requirements:

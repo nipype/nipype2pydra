@@ -50,6 +50,10 @@ outputs:
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
+    defects: defects_callable
+    # type=int: Number of defects
+    euler: euler_callable
+    # type=int: Euler number of cortical surface. A value of 2 signals a topologically correct surface model with no holes
   templates:
   # dict[str, str] - `output_file_template` values to be provided to output fields
   requirements:

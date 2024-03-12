@@ -50,6 +50,12 @@ outputs:
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
+    average_scaling: average_scaling_callable
+    # type=float: Average Scaling
+    determinant: determinant_callable
+    # type=float: Determinant
+    left_right_orientation_preserved: left_right_orientation_preserved_callable
+    # type=bool: True if LR orientation preserved
   templates:
   # dict[str, str] - `output_file_template` values to be provided to output fields
   requirements:

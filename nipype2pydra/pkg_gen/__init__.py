@@ -33,6 +33,7 @@ from nipype2pydra.utils import (
     split_parens_contents,
     cleanup_function_body,
     insert_args_in_signature,
+    INBUILT_NIPYPE_TRAIT_NAMES,
 )
 from nipype2pydra.exceptions import UnmatchedParensException
 
@@ -90,6 +91,8 @@ class NipypeInterface:
     dir_inputs: ty.List[str] = attrs.field(factory=list)
     dir_outputs: ty.List[str] = attrs.field(factory=list)
     callables: ty.List[str] = attrs.field(factory=list)
+    callable_defaults: ty.List[str] = attrs.field(factory=list)
+    multi_outputs: ty.List[str] = attrs.field(factory=list)
 
     unmatched_formats: ty.List[str] = attrs.field(factory=list)
     ambiguous_formats: ty.List[str] = attrs.field(factory=list)
@@ -115,7 +118,7 @@ class NipypeInterface:
 # ----
 # {doc_string}\n"""
         ).replace("        #", "#")
-        
+
         parsed = cls(
             name=nipype_interface.__name__,
             doc_str=nipype_interface.__doc__ if nipype_interface.__doc__ else "",
@@ -133,10 +136,20 @@ class NipypeInterface:
                 parsed.output_helps[outpt_name] = (
                     f"type={type(outpt.trait_type).__name__.lower()}: {outpt_desc}"
                 )
-                if type(outpt.trait_type).__name__ == "File":
+                output_type_str = type(outpt.trait_type).__name__
+                if output_type_str == "File":
                     parsed.file_outputs.append(outpt_name)
-                elif type(outpt.trait_type).__name__ == "Directory":
+                elif output_type_str == "Directory":
                     parsed.dir_outputs.append(outpt_name)
+                elif output_type_str in ("OutputMultiObject", "List"):
+                    inner_type_str = type(outpt.trait_type.item_trait.trait_type).__name__
+                    if inner_type_str == "Directory":
+                        parsed.dir_outputs.append(outpt_name)
+                    elif inner_type_str == "File":
+                        parsed.file_outputs.append(outpt_name)
+                    parsed.multi_outputs.append(outpt_name)
+                else:
+                    parsed.callables.append(outpt_name)
         # Parse input types, descriptions and metadata
         for inpt_name, inpt in nipype_interface.input_spec().traits().items():
             if inpt_name in ("trait_added", "trait_modified"):
@@ -153,7 +166,7 @@ class NipypeInterface:
                 if inpt_name in (parsed.file_outputs + parsed.dir_outputs):
                     parsed.template_outputs.append(inpt_name)
                 else:
-                    parsed.callables.append(inpt_name)
+                    parsed.callable_defaults.append(inpt_name)
             elif trait_type_name == "File" and inpt_name not in parsed.file_outputs:
                 # override logic if it is named as an output
                 if (
@@ -231,10 +244,14 @@ class NipypeInterface:
                         ext = frmt.strext
                 output_templates[outpt] = outpt + ext
 
-        # convert to multi-input types to lists
+        # convert to multi-in/output types to lists
         input_types = {
             n: ty.List[t] if n in self.multi_inputs else t
             for n, t in input_types.items()
+        }
+        output_types = {
+            n: ty.List[t] if n in self.multi_outputs else t
+            for n, t in output_types.items()
         }
 
         non_mime = [Path, str]
@@ -320,29 +337,31 @@ class NipypeInterface:
             f'"""Module to put any functions that are referred to in the "callables"'
             f' section of {self.name}.yaml"""\n\n'
         )
-        if self.callables:
-            # Convert the "_gen_filename" method into a function with any referenced
-            # methods, functions and constants included in the module
-            funcs, imports, consts = get_callable_sources(nipype_interface)
-            callables_str += "\n".join(imports) + "\n\n"
-            # Create separate callable function for each callable field, which
-            # reference the magic "_gen_filename" method
-            for inpt_name, inpt in nipype_interface.input_spec().traits().items():
-                if inpt.genfile:
-                    callables_str += (
-                        f"def {inpt_name}_default(inputs):\n"
-                        f'    return _gen_filename("{inpt_name}", inputs=inputs)\n\n'
-                    )
-            
-            for output_name in self.callables:
+        # Convert the "_gen_filename" method into a function with any referenced
+        # methods, functions and constants included in the module
+        funcs, imports, consts = get_callable_sources(nipype_interface)
+        callables_str += "\n".join(imports) + "\n\n"
+        # Create separate default function for each input field with genfile, which
+        # reference the magic "_gen_filename" method
+        for inpt_name, inpt in nipype_interface.input_spec().traits().items():
+            if inpt.genfile:
                 callables_str += (
-                    f"def {output_name}_callable(output_dir, inputs, stdout, stderr):\n"
-                    '    outputs = _list_outputs(output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr)\n'
-                    '    return outputs["' + output_name + '"]\n\n'
+                    f"def {inpt_name}_default(inputs):\n"
+                    f'    return _gen_filename("{inpt_name}", inputs=inputs)\n\n'
                 )
-            for const in consts:
-                callables_str += f"{const[0]} = {const[1]}\n" + "\n\n"
-            callables_str += "\n\n".join(funcs) + "\n\n"
+        # Create separate function for each output field in the "callables" section
+        if nipype_interface.output_spec:
+            for output_name in nipype_interface.output_spec().traits().keys():
+                if output_name not in INBUILT_NIPYPE_TRAIT_NAMES:
+                    callables_str += (
+                        f"def {output_name}_callable(output_dir, inputs, stdout, stderr):\n"
+                        "    outputs = _list_outputs(output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr)\n"
+                        '    return outputs["' + output_name + '"]\n\n'
+                    )
+        # Add any constants to the module
+        for const in consts:
+            callables_str += f"{const[0]} = {const[1]}\n" + "\n\n"
+        callables_str += "\n\n".join(funcs) + "\n\n"
         # Format the generated code with black
         try:
             callables_str = black.format_file_contents(
@@ -797,26 +816,76 @@ def _gen_filename(field, inputs, output_dir, stdout, stderr):
 
     IMPLICIT_ARGS = ["inputs", "stdout", "stderr", "output_dir"]
 
-    def find_nested_methods(methods: ty.List[ty.Callable]) -> ty.List[str]:
-        all_nested = set(methods)
+    def common_parent_pkg_prefix(mod_name: str) -> str:
+        """Return the common part of two package names"""
+        ref_parts = nipype_interface.__module__.split(".")
+        mod_parts = mod_name.split(".")
+        common = []
+        for r_part, m_part in zip(ref_parts, mod_parts):
+            if r_part == m_part:
+                common.append(r_part)
+            else:
+                break
+        if not common:
+            return ""
+        return "_".join(common) + "__"
+
+    def find_nested_methods(methods: ty.List[ty.Callable], interface=None) -> ty.Dict[str, ty.Callable]:
+        if interface is None:
+            interface = nipype_interface
+        all_nested = {}
         for method in methods:
-            for match in re.findall(r"self\.(\w+)\(", inspect.getsource(method)):
+            method_src = inspect.getsource(method)
+            for match in re.findall(r"self\.(\w+)\(", method_src):
                 if match in ("output_spec", "_outputs"):
                     continue
                 nested = getattr(nipype_interface, match)
-                if nested not in all_nested:
-                    all_nested.add(nested)
+                func_name = nested.__name__
+                if func_name not in all_nested and func_name != method.__name__:
+                    all_nested[func_name] = nested
                     all_nested.update(find_nested_methods([nested]))
+            for match in re.findall(r"super\([^\)]*\)\.(\w+)\(", method_src):
+                nested = None
+                for base in interface.__bases__:
+                    try:
+                        nested = getattr(base, match)
+                    except AttributeError:
+                        continue
+                    else:
+                        break
+                assert (
+                    nested is not None
+                ), f"Could not find {match} in base classes of {nipype_interface}"
+                func_name = (
+                    common_parent_pkg_prefix(base.__module__)
+                    + base.__name__
+                    + "__"
+                    + nested.__name__
+                )
+                if func_name not in all_nested:
+                    all_nested[func_name] = nested
+                    all_nested.update(find_nested_methods([nested], interface=base))
         return all_nested
 
-    def process_method(method: ty.Callable) -> str:
+    def process_method(
+        method: ty.Callable, new_name: str, name_map: ty.Dict[str, str]
+    ) -> str:
         src = inspect.getsource(method)
         src = src.replace("if self.output_spec:", "if True:")
-        src = re.sub(r"outputs = self\.(output_spec|_outputs)\(\).*$", r"outputs = {}", src, flags=re.MULTILINE)        
+        src = re.sub(
+            r"outputs = self\.(output_spec|_outputs)\(\).*$",
+            r"outputs = {}",
+            src,
+            flags=re.MULTILINE,
+        )
         prefix, args, body = split_parens_contents(src)
-        body = insert_args_in_method_calls(body, [f"{a}={a}" for a in IMPLICIT_ARGS])
-        body = body.replace("self.cmd", f'"{nipype_interface._cmd}"')
+        body = insert_args_in_method_calls(
+            body, [f"{a}={a}" for a in IMPLICIT_ARGS], name_map
+        )
+        if hasattr(nipype_interface, "_cmd"):
+            body = body.replace("self.cmd", f'"{nipype_interface._cmd}"')
         body = body.replace("self.", "")
+        body = re.sub(r"super\([^\)]*\)\.(\w+)\(", lambda m: name_map[m.group(1)] + "(", body)
         body = re.sub(r"\w+runtime\.(stdout|stderr)", r"\1", body)
         body = body.replace("os.getcwd()", "output_dir")
         # drop 'self' from the args and add the implicit callable args
@@ -825,11 +894,14 @@ def _gen_filename(field, inputs, output_dir, stdout, stderr):
         for implicit in IMPLICIT_ARGS:
             if implicit not in arg_names:
                 args.append(f"{implicit}=None")
-        src = prefix + ", ".join(args) + body
+        match = re.match(r"(.*\n?\s*def\s+)", prefix)
+        src = match.group(1) + new_name + "(" + ", ".join(args) + body
         src = cleanup_function_body(src)
         return src
 
-    def insert_args_in_method_calls(src: str, args: ty.List[ty.Tuple[str, str]]) -> str:
+    def insert_args_in_method_calls(
+        src: str, args: ty.List[ty.Tuple[str, str]], name_map: ty.Dict[str, str]
+    ) -> str:
         """Insert additional arguments into the method calls
 
         Parameters
@@ -859,44 +931,48 @@ def _gen_filename(field, inputs, output_dir, stdout, stderr):
                 outer_name = name
             else:
                 if outer_name:
-                    new_sig = insert_args_in_method_calls(new_sig, args)
-                    new_src += outer_name + new_sig
+                    new_sig = insert_args_in_method_calls(new_sig, args, name_map=name_map)
+                    new_src += name_map[outer_name] + new_sig
                     outer_name = None
                 else:
-                    new_src += name + new_sig
+                    new_src += name_map[name] + new_sig
                 sig = ""
         return new_src
 
     methods_to_process = [nipype_interface._list_outputs]
     if hasattr(nipype_interface, "_gen_filename"):
         methods_to_process.append(nipype_interface._gen_filename)
-    
-    func_srcs = defaultdict(list)
-    for method in find_nested_methods(methods_to_process):
-        func_srcs[method.__module__].append(process_method(method))
+
+    # Get all methods to be included in the callables module
+    all_methods = {m.__name__: m for m in methods_to_process}
+    all_methods.update(find_nested_methods(methods_to_process))
+    name_map = {m.__name__: n for n, m in all_methods.items()}
+    # Group the nested methods by their module
+    grouped_methods = defaultdict(list)
+    for method_name, method in all_methods.items():
+        grouped_methods[method.__module__].append(
+            process_method(method, method_name, name_map)
+        )
+    # Initialise the source code, imports and constants
     all_funcs = []
     all_imports = set()
     all_constants = set()
-    for mod_name, funcs in func_srcs.items():
+    for mod_name, methods in grouped_methods.items():
         mod = import_module(mod_name)
-        used = UsedSymbols.find(mod, funcs)
-        all_funcs.extend(funcs)
+        used = UsedSymbols.find(mod, methods)
+        all_funcs.extend(methods)
         for func in used.local_functions:
-            all_funcs.append(
-                cleanup_function_body(inspect.getsource(func))
-            )
+            all_funcs.append(cleanup_function_body(inspect.getsource(func)))
         for klass in used.local_classes:
-            all_funcs.append(
-                cleanup_function_body(inspect.getsource(klass))
-            )            
+            all_funcs.append(cleanup_function_body(inspect.getsource(klass)))
         for new_func_name, func in used.funcs_to_include:
             func_src = inspect.getsource(func)
             match = re.match(
-                r" *def *" + func.__name__ + r"(?=\()(.*)$",
+                r"(.*)\bdef *" + func.__name__ + r"(?=\()(.*)$",
                 func_src,
                 re.DOTALL | re.MULTILINE,
             )
-            func_src = "def " + new_func_name + match.group(1)
+            func_src = match.group(1) + "def " + new_func_name + match.group(2)
             all_funcs.append(cleanup_function_body(func_src))
         for new_klass_name, klass in used.classes_to_include:
             klass_src = inspect.getsource(klass)
@@ -906,7 +982,7 @@ def _gen_filename(field, inputs, output_dir, stdout, stderr):
                 re.DOTALL | re.MULTILINE,
             )
             klass_src = "class " + new_klass_name + match.group(1)
-            all_funcs.append(cleanup_function_body(klass_src))            
+            all_funcs.append(cleanup_function_body(klass_src))
         all_imports.update(used.imports)
         all_constants.update(used.constants)
     return (

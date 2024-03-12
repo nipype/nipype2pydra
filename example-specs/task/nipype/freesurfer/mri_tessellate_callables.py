@@ -1,7 +1,7 @@
 """Module to put any functions that are referred to in the "callables" section of MRITessellate.yaml"""
 
-import attrs
 import os
+import attrs
 import os.path as op
 
 
@@ -9,11 +9,11 @@ def out_file_default(inputs):
     return _gen_filename("out_file", inputs=inputs)
 
 
-def out_file_callable(output_dir, inputs, stdout, stderr):
+def surface_callable(output_dir, inputs, stdout, stderr):
     outputs = _list_outputs(
         output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
     )
-    return outputs["out_file"]
+    return outputs["surface"]
 
 
 def split_filename(fname):

@@ -117,6 +117,8 @@ outputs:
   # passed to the field in the automatically generated unittests.
     classified_image: generic/file
     # type=file: 
+    posteriors: generic/file+list-of
+    # type=outputmultiobject: 
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields

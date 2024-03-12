@@ -1,11 +1,10 @@
 """Module to put any functions that are referred to in the "callables" section of ProbTrackX.yaml"""
 
-from glob import glob
-import attrs
 import os
+import attrs
 import os.path as op
-from pathlib import Path
 import logging
+from glob import glob
 
 
 def mode_default(inputs):
@@ -16,139 +15,42 @@ def out_dir_default(inputs):
     return _gen_filename("out_dir", inputs=inputs)
 
 
-def mode_callable(output_dir, inputs, stdout, stderr):
+def log_callable(output_dir, inputs, stdout, stderr):
     outputs = _list_outputs(
         output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
     )
-    return outputs["mode"]
+    return outputs["log"]
 
 
-def out_dir_callable(output_dir, inputs, stdout, stderr):
+def fdt_paths_callable(output_dir, inputs, stdout, stderr):
     outputs = _list_outputs(
         output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
     )
-    return outputs["out_dir"]
+    return outputs["fdt_paths"]
+
+
+def way_total_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["way_total"]
+
+
+def targets_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["targets"]
+
+
+def particle_files_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["particle_files"]
 
 
 IFLOGGER = logging.getLogger("nipype.interface")
-
-
-def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
-    if name == "out_dir":
-        return output_dir
-    elif name == "mode":
-        if isinstance(inputs.seed, list) and isinstance(inputs.seed[0], list):
-            return "simple"
-        else:
-            return "seedmask"
-
-
-def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
-    outputs = {}
-    if inputs.out_dir is attrs.NOTHING:
-        out_dir = _gen_filename(
-            "out_dir",
-            inputs=inputs,
-            stdout=stdout,
-            stderr=stderr,
-            output_dir=output_dir,
-        )
-    else:
-        out_dir = inputs.out_dir
-
-    outputs["log"] = os.path.abspath(os.path.join(out_dir, "probtrackx.log"))
-    # outputs['way_total'] = os.path.abspath(os.path.join(out_dir,
-    #                                                    'waytotal'))
-    if isdefined(inputs.opd is True):
-        if isinstance(inputs.seed, list) and isinstance(inputs.seed[0], list):
-            outputs["fdt_paths"] = []
-            for seed in inputs.seed:
-                outputs["fdt_paths"].append(
-                    os.path.abspath(
-                        _gen_fname(
-                            ("fdt_paths_%s" % ("_".join([str(s) for s in seed]))),
-                            cwd=out_dir,
-                            suffix="",
-                            inputs=inputs,
-                            stdout=stdout,
-                            stderr=stderr,
-                            output_dir=output_dir,
-                        )
-                    )
-                )
-        else:
-            outputs["fdt_paths"] = os.path.abspath(
-                _gen_fname(
-                    "fdt_paths",
-                    cwd=out_dir,
-                    suffix="",
-                    inputs=inputs,
-                    stdout=stdout,
-                    stderr=stderr,
-                    output_dir=output_dir,
-                )
-            )
-
-    # handle seeds-to-target output files
-    if inputs.target_masks is not attrs.NOTHING:
-        outputs["targets"] = []
-        for target in inputs.target_masks:
-            outputs["targets"].append(
-                os.path.abspath(
-                    _gen_fname(
-                        "seeds_to_" + os.path.split(target)[1],
-                        cwd=out_dir,
-                        suffix="",
-                        inputs=inputs,
-                        stdout=stdout,
-                        stderr=stderr,
-                        output_dir=output_dir,
-                    )
-                )
-            )
-    if inputs.verbose is not attrs.NOTHING and inputs.verbose == 2:
-        outputs["particle_files"] = [
-            os.path.abspath(os.path.join(out_dir, "particle%d" % i))
-            for i in range(inputs.n_samples)
-        ]
-    return outputs
-
-
-class PackageInfo(object):
-    _version = None
-    version_cmd = None
-    version_file = None
-
-    @classmethod
-    def version(klass):
-        if klass._version is None:
-            if klass.version_cmd is not None:
-                try:
-                    clout = CommandLine(
-                        command=klass.version_cmd,
-                        resource_monitor=False,
-                        terminal_output="allatonce",
-                    ).run()
-                except IOError:
-                    return None
-
-                raw_info = clout.runtime.stdout
-            elif klass.version_file is not None:
-                try:
-                    with open(klass.version_file, "rt") as fobj:
-                        raw_info = fobj.read()
-                except OSError:
-                    return None
-            else:
-                return None
-
-            klass._version = klass.parse_version(raw_info)
-
-        return klass._version
-
-    @staticmethod
-    def parse_version(raw_info):
-        raise NotImplementedError
 
 
 def fname_presuffix(fname, prefix="", suffix="", newpath=None, use_ext=True):
@@ -177,8 +79,8 @@ def fname_presuffix(fname, prefix="", suffix="", newpath=None, use_ext=True):
     >>> fname_presuffix(fname,'pre','post','/tmp')
     '/tmp/prefoopost.nii.gz'
 
-    >>> from nipype.interfaces.base import Undefined
-    >>> fname_presuffix(fname, 'pre', 'post', Undefined) == \
+    >>> from nipype.interfaces.base import attrs.NOTHING
+    >>> fname_presuffix(fname, 'pre', 'post', attrs.NOTHING) == \
             fname_presuffix(fname, 'pre', 'post')
     True
 
@@ -187,7 +89,7 @@ def fname_presuffix(fname, prefix="", suffix="", newpath=None, use_ext=True):
     if not use_ext:
         ext = ""
 
-    # No need for isdefined: bool(Undefined) evaluates to False
+    # No need for : bool(attrs.NOTHING is not attrs.NOTHING) evaluates to False
     if newpath:
         pth = op.abspath(newpath)
     return op.join(pth, prefix + fname + suffix + ext)
@@ -388,3 +290,84 @@ def _gen_fname(
         suffix = ""
     fname = fname_presuffix(basename, suffix=suffix, use_ext=False, newpath=cwd)
     return fname
+
+
+def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
+    if name == "out_dir":
+        return output_dir
+    elif name == "mode":
+        if isinstance(inputs.seed, list) and isinstance(inputs.seed[0], list):
+            return "simple"
+        else:
+            return "seedmask"
+
+
+def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
+    outputs = {}
+    if inputs.out_dir is attrs.NOTHING:
+        out_dir = _gen_filename(
+            "out_dir",
+            inputs=inputs,
+            stdout=stdout,
+            stderr=stderr,
+            output_dir=output_dir,
+        )
+    else:
+        out_dir = inputs.out_dir
+
+    outputs["log"] = os.path.abspath(os.path.join(out_dir, "probtrackx.log"))
+    # outputs['way_total'] = os.path.abspath(os.path.join(out_dir,
+    #                                                    'waytotal'))
+    if inputs.opd is True is not attrs.NOTHING:
+        if isinstance(inputs.seed, list) and isinstance(inputs.seed[0], list):
+            outputs["fdt_paths"] = []
+            for seed in inputs.seed:
+                outputs["fdt_paths"].append(
+                    os.path.abspath(
+                        _gen_fname(
+                            ("fdt_paths_%s" % ("_".join([str(s) for s in seed]))),
+                            cwd=out_dir,
+                            suffix="",
+                            inputs=inputs,
+                            stdout=stdout,
+                            stderr=stderr,
+                            output_dir=output_dir,
+                        )
+                    )
+                )
+        else:
+            outputs["fdt_paths"] = os.path.abspath(
+                _gen_fname(
+                    "fdt_paths",
+                    cwd=out_dir,
+                    suffix="",
+                    inputs=inputs,
+                    stdout=stdout,
+                    stderr=stderr,
+                    output_dir=output_dir,
+                )
+            )
+
+    # handle seeds-to-target output files
+    if inputs.target_masks is not attrs.NOTHING:
+        outputs["targets"] = []
+        for target in inputs.target_masks:
+            outputs["targets"].append(
+                os.path.abspath(
+                    _gen_fname(
+                        "seeds_to_" + os.path.split(target)[1],
+                        cwd=out_dir,
+                        suffix="",
+                        inputs=inputs,
+                        stdout=stdout,
+                        stderr=stderr,
+                        output_dir=output_dir,
+                    )
+                )
+            )
+    if (inputs.verbose is not attrs.NOTHING) and inputs.verbose == 2:
+        outputs["particle_files"] = [
+            os.path.abspath(os.path.join(out_dir, "particle%d" % i))
+            for i in range(inputs.n_samples)
+        ]
+    return outputs

@@ -97,6 +97,9 @@ outputs:
     modulatedref_file: generic/file
     # type=file: file containing intensity modulated --ref
     # type=traitcompound|default=None: name of file for writing out intensity modulated --ref (for diagnostic purposes)
+    out_intensitymap_file: generic/file+list-of
+    # type=list: files containing info pertaining to intensity mapping
+    # type=traitcompound|default=None: name of files for writing information pertaining to intensity mapping
     warped_file: generic/file
     # type=file: warped image
     # type=file|default=<undefined>: name of output image

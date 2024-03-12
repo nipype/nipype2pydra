@@ -60,6 +60,18 @@ outputs:
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
+    x_max: x_max_callable
+    # type=int: 
+    x_min: x_min_callable
+    # type=int: 
+    y_max: y_max_callable
+    # type=int: 
+    y_min: y_min_callable
+    # type=int: 
+    z_max: z_max_callable
+    # type=int: 
+    z_min: z_min_callable
+    # type=int: 
   templates:
   # dict[str, str] - `output_file_template` values to be provided to output fields
   requirements:

@@ -71,8 +71,14 @@ outputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
+    fdt_paths: generic/file+list-of
+    # type=outputmultiobject: path/name of a 3D image file containing the output connectivity distribution to the seed mask
     log: generic/file
     # type=file: path/name of a text record of the command that was run
+    particle_files: generic/file+list-of
+    # type=list: Files describing all of the tract samples. Generated only if verbose is set to 2
+    targets: generic/file+list-of
+    # type=list: a list with all generated seeds_to_target files
     way_total: generic/file
     # type=file: path/name of a text file containing a single number corresponding to the total number of generated tracts that have not been rejected by inclusion/exclusion mask criteria
   callables:

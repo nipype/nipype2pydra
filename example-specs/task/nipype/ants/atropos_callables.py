@@ -1,7 +1,7 @@
 """Module to put any functions that are referred to in the "callables" section of Atropos.yaml"""
 
-import attrs
 import os
+import attrs
 import os.path as op
 
 
@@ -9,11 +9,18 @@ def out_classified_image_name_default(inputs):
     return _gen_filename("out_classified_image_name", inputs=inputs)
 
 
-def out_classified_image_name_callable(output_dir, inputs, stdout, stderr):
+def classified_image_callable(output_dir, inputs, stdout, stderr):
     outputs = _list_outputs(
         output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
     )
-    return outputs["out_classified_image_name"]
+    return outputs["classified_image"]
+
+
+def posteriors_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["posteriors"]
 
 
 def split_filename(fname):
@@ -66,6 +73,15 @@ def split_filename(fname):
     return pth, fname, ext
 
 
+def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
+    if name == "out_classified_image_name":
+        output = inputs.out_classified_image_name
+        if output is attrs.NOTHING:
+            _, name, ext = split_filename(inputs.intensity_images[0])
+            output = name + "_labeled" + ext
+        return output
+
+
 def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
     outputs = {}
     outputs["classified_image"] = os.path.abspath(
@@ -77,19 +93,10 @@ def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
             output_dir=output_dir,
         )
     )
-    if inputs.save_posteriors is not attrs.NOTHING and inputs.save_posteriors:
+    if (inputs.save_posteriors is not attrs.NOTHING) and inputs.save_posteriors:
         outputs["posteriors"] = []
         for i in range(inputs.number_of_tissue_classes):
             outputs["posteriors"].append(
                 os.path.abspath(inputs.output_posteriors_name_template % (i + 1))
             )
     return outputs
-
-
-def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
-    if name == "out_classified_image_name":
-        output = inputs.out_classified_image_name
-        if output is attrs.NOTHING:
-            _, name, ext = split_filename(inputs.intensity_images[0])
-            output = name + "_labeled" + ext
-        return output

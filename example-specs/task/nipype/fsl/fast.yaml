@@ -58,10 +58,21 @@ outputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
+    bias_field: generic/file+list-of
+    # type=outputmultiobject: 
     mixeltype: generic/file
     # type=file: path/name of mixeltype volume file _mixeltype
+    partial_volume_files: generic/file+list-of
+    # type=outputmultiobject: 
     partial_volume_map: generic/file
     # type=file: path/name of partial volume file _pveseg
+    probability_maps: generic/file+list-of
+    # type=outputmultiobject: 
+    # type=bool|default=False: outputs individual probability maps
+    restored_image: generic/file+list-of
+    # type=outputmultiobject: 
+    tissue_class_files: generic/file+list-of
+    # type=outputmultiobject: 
     tissue_class_map: generic/file
     # type=file: path/name of binary segmented volume file one val for each class  _seg
   callables:

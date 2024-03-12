@@ -5,11 +5,13 @@ import sys
 import re
 import os
 import inspect
+import builtins
 from contextlib import contextmanager
 import attrs
 from pathlib import Path
 from fileformats.core import FileSet
 from .exceptions import UnmatchedParensException
+from nipype.interfaces.base import BaseInterface, TraitedSpec, isdefined, Undefined
 
 try:
     from typing import GenericAlias
@@ -17,6 +19,20 @@ except ImportError:
     from typing import _GenericAlias as GenericAlias
 
 from importlib import import_module
+from logging import getLogger
+
+
+logger = getLogger("nipype2pydra")
+
+
+INBUILT_NIPYPE_TRAIT_NAMES = [
+    "__all__",
+    "args",
+    "trait_added",
+    "trait_modified",
+    "environ",
+    "output_type",
+]
 
 
 def load_class_or_func(location_str):
@@ -208,8 +224,11 @@ def split_parens_contents(snippet, brackets: bool = False, delimiter=","):
                     if next_item:
                         contents.append(next_item)
                     return pre, contents, "".join(splits[i:])
-            if first and depth[first] == 1 and delimiter in s and all(
-                d == 0 for b, d in depth.items() if b != first
+            if (
+                first
+                and depth[first] == 1
+                and delimiter in s
+                and all(d == 0 for b, d in depth.items() if b != first)
             ):
                 parts = [p.strip() for p in s.split(delimiter)]
                 if parts:
@@ -293,20 +312,26 @@ class UsedSymbols:
         local_constants = get_local_constants(module)
         local_classes = get_local_classes(module)
         for line in source_code.split("\n"):
-            if line.startswith("from") or line.startswith("import"):
-                if "(" in line:
-                    block = line
+            if (line.startswith("from") and " import " in line) or line.startswith(
+                "import"
+            ):
+                if "(" in line and ")" not in line:
+                    block = line.strip()
                 else:
-                    imports.append(line)
-            if ")" in line and block:
-                imports.append(block + line)
+                    imports.append(line.strip())
+            elif ")" in line and block:
+                imports.append(block + line.strip())
                 block = ""
+            elif block:
+                block += line.strip()
         # extract imported symbols from import statements
+        symbols_re = re.compile(r"(?<!\"|')\b(\w+)\b(?!\"|')")
+        comments_re = re.compile(r"\s*#.*")
         used_symbols = set()
         for function_body in function_bodies:
             # Strip comments from function body
-            function_body = re.sub(r"\s*#.*", "", function_body)
-            used_symbols.update(re.findall(r"\b(\w+)\b", function_body))
+            function_body = comments_re.sub("", function_body)
+            used_symbols.update(symbols_re.findall(function_body))
         # Keep looping through local function source until all local functions and constants
         # are added to the used symbols
         new_symbols = True
@@ -319,8 +344,8 @@ class UsedSymbols:
                 ):
                     used.local_functions.add(local_func)
                     func_body = inspect.getsource(local_func)
-                    func_body = re.sub(r"\s*#.*", "", func_body)
-                    local_func_symbols = re.findall(r"\b(\w+)\b", func_body)
+                    func_body = comments_re.sub("", func_body)
+                    local_func_symbols = symbols_re.findall(func_body)
                     used_symbols.update(local_func_symbols)
                     new_symbols = True
             for local_class in local_classes:
@@ -332,8 +357,8 @@ class UsedSymbols:
                     class_body = inspect.getsource(local_class)
                     bases = split_parens_contents(class_body)[1]
                     used_symbols.update(bases)
-                    class_body = re.sub(r"\s*#.*", "", class_body)
-                    local_class_symbols = re.findall(r"\b(\w+)\b", class_body)
+                    class_body = comments_re.sub("", class_body)
+                    local_class_symbols = symbols_re.findall(class_body)
                     used_symbols.update(local_class_symbols)
                     new_symbols = True
             for const_name, const_def in local_constants:
@@ -342,7 +367,7 @@ class UsedSymbols:
                     and (const_name, const_def) not in used.constants
                 ):
                     used.constants.add((const_name, const_def))
-                    const_def_symbols = re.findall(r"\b(\w+)\b", const_def)
+                    const_def_symbols = symbols_re.findall(const_def)
                     used_symbols.update(const_def_symbols)
                     new_symbols = True
         used_symbols -= set(cls.SYMBOLS_TO_IGNORE)
@@ -363,41 +388,79 @@ class UsedSymbols:
                 )
                 match = re.match(r"from ([\w\.]+)", base_stmt)
                 import_mod = match.group(1) if match else ""
-                if import_mod.startswith(".") or import_mod.startswith("nipype."):
-                    if import_mod.startswith("."):
-                        match = re.match(r"(\.*)(.*)", import_mod)
-                        mod_parts = module.__name__.split(".")
-                        nparents = len(match.group(1))
-                        if Path(module.__file__).stem == "__init__":
-                            nparents -= 1
-                        if nparents:
-                            mod_parts = mod_parts[:-nparents]
-                        mod_name = ".".join(mod_parts)
-                        if match.group(2):
-                            mod_name += "." + match.group(2)
-                    elif import_mod.startswith("nipype."):
-                        mod_name = import_mod
+                if import_mod:
+                    if import_mod.startswith(".") or import_mod.startswith("nipype."):
+                        to_include = True
+                        if import_mod.startswith("."):
+                            match = re.match(r"(\.*)(.*)", import_mod)
+                            mod_parts = module.__name__.split(".")
+                            nparents = len(match.group(1))
+                            if Path(module.__file__).stem == "__init__":
+                                nparents -= 1
+                            if nparents:
+                                mod_parts = mod_parts[:-nparents]
+                            mod_name = ".".join(mod_parts)
+                            if match.group(2):
+                                mod_name += "." + match.group(2)
+                        elif import_mod.startswith("nipype."):
+                            mod_name = import_mod
+                        else:
+                            assert False
                     else:
-                        assert False
+                        to_include = True
+                        mod_name = import_mod
                     mod = import_module(mod_name)
-                    mod_func_bodies = []
-                    for used_part in used_parts:
-                        atr = getattr(mod, used_part[0])
-                        if inspect.isfunction(atr):
-                            used.funcs_to_include.add((used_part[-1], atr))
-                            mod_func_bodies.append(inspect.getsource(atr))
-                        elif inspect.isclass(atr):
-                            used.classes_to_include.add((used_part[-1], atr))
-                            class_body = split_parens_contents(inspect.getsource(atr))[
-                                2
-                            ].split("\n", 1)[1]
-                            mod_func_bodies.append(class_body)
-                    # Recursively include neighbouring objects imported in the module
-                    used_in_mod = cls.find(
-                        mod,
-                        function_bodies=mod_func_bodies,
-                    )
-                    used.update(used_in_mod)
+                    # Filter out any interfaces that have been dragged in
+                    used_parts = [
+                        p
+                        for p in used_parts
+                        if not (
+                            (
+                                inspect.isclass(getattr(mod, p[0]))
+                                and not (
+                                    issubclass(getattr(mod, p[0]), BaseInterface)
+                                    or issubclass(getattr(mod, p[0]), TraitedSpec)
+                                )
+                            )
+                            or getattr(mod, p[0]) in (Undefined, isdefined)
+                        )
+                    ]
+                    if not used_parts:
+                        continue
+                    if to_include:
+                        mod_func_bodies = []
+                        for used_part in used_parts:
+                            atr = getattr(mod, used_part[0])
+                            if (
+                                inspect.isfunction(atr) or inspect.isclass(atr)
+                            ) and not atr.__module__.startswith(
+                                "nipype."
+                            ):  # Check that it is actually a local import
+                                used.imports.add(
+                                    f"from {atr.__module__} import "
+                                    + " as ".join(used_part)
+                                )
+                            elif inspect.isfunction(atr):
+                                used.funcs_to_include.add((used_part[-1], atr))
+                                mod_func_bodies.append(inspect.getsource(atr))
+                            elif inspect.isclass(atr):
+                                if issubclass(atr, BaseInterface):
+                                    # TODO: add warning here
+                                    continue  # Don't include nipype interfaces as it gets silly
+                                used.classes_to_include.add((used_part[-1], atr))
+                                class_body = split_parens_contents(
+                                    inspect.getsource(atr)
+                                )[2].split("\n", 1)[1]
+                                mod_func_bodies.append(class_body)
+                        # Recursively include neighbouring objects imported in the module
+                        if mod is not builtins:
+                            used_in_mod = cls.find(
+                                mod,
+                                function_bodies=mod_func_bodies,
+                            )
+                            used.update(used_in_mod)
+                    else:
+                        used.imports.add(required_stmt)
                 else:
                     used.imports.add(required_stmt)
         return used
@@ -434,13 +497,16 @@ def get_local_constants(mod):
     parts = re.split(r"^(\w+) *= *", source_code, flags=re.MULTILINE)
     local_vars = []
     for attr_name, following in zip(parts[1::2], parts[2::2]):
-        if "(" in following or "[" in following:
+        first_line = following.splitlines()[0]
+        if ("(" in first_line and ")" not in first_line) or (
+            "[" in first_line and "]" not in first_line
+        ):
             pre, args, post = split_parens_contents(following)
             local_vars.append(
                 (attr_name, pre + re.sub(r"\n *", "", ", ".join(args)) + post[0])
             )
         else:
-            local_vars.append((attr_name, following.splitlines()[0]))
+            local_vars.append((attr_name, first_line))
     return local_vars
 
 
@@ -460,7 +526,7 @@ def cleanup_function_body(function_body: str) -> str:
     function_body: str
         The processed source code
     """
-    if re.match(r"\s*(def|class)\s+", function_body):
+    if re.match(r".*\n?\s*(def|class)\s+", function_body):
         with_signature = True
     else:
         with_signature = False
@@ -469,8 +535,8 @@ def cleanup_function_body(function_body: str) -> str:
     min_indent = min(len(i) for i in indents) if indents else 0
     indent_reduction = min_indent - (0 if with_signature else 4)
     assert indent_reduction >= 0, (
-        "Indentation reduction cannot be negative, probably need to set "
-        "'with_signature' to True"
+        "Indentation reduction cannot be negative, probably didn't detect signature of "
+        f"method correctly:\n{function_body}"
     )
     if indent_reduction:
         function_body = re.sub(
@@ -478,18 +544,21 @@ def cleanup_function_body(function_body: str) -> str:
         )
     # Other misc replacements
     # function_body = function_body.replace("LOGGER.", "logger.")
-    function_body = re.sub(
-        r"not isdefined\(([a-zA-Z0-9\_\.]+)\)",
-        r"\1 is attrs.NOTHING",
-        function_body,
-        flags=re.MULTILINE,
-    )
-    function_body = re.sub(
-        r"isdefined\(([a-zA-Z0-9\_\.]+)\)",
-        r"\1 is not attrs.NOTHING",
-        function_body,
-        flags=re.MULTILINE,
-    )
+    parts = re.split(r"not isdefined\b", function_body, flags=re.MULTILINE)
+    new_function_body = parts[0]
+    for part in parts[1:]:
+        pre, args, post = split_parens_contents(part)
+        new_function_body += pre + f"{args[0]} is attrs.NOTHING" + post
+    function_body = new_function_body
+    parts = re.split(r"isdefined\b", function_body, flags=re.MULTILINE)
+    new_function_body = parts[0]
+    for part in parts[1:]:
+        pre, args, post = split_parens_contents(part)
+        assert len(args) == 1, f"Unexpected number of arguments in isdefined: {args}"
+        new_function_body += pre + f"{args[0]} is not attrs.NOTHING" + post
+    function_body = new_function_body
+    function_body = function_body.replace("_Undefined", "attrs.NOTHING")
+    function_body = function_body.replace("Undefined", "attrs.NOTHING")
     return function_body
 
 

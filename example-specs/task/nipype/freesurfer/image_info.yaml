@@ -42,6 +42,26 @@ outputs:
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
+    TE: TE_callable
+    # type=string: echo time (msec)
+    TI: TI_callable
+    # type=string: inversion time (msec)
+    TR: TR_callable
+    # type=string: repetition time(msec)
+    data_type: data_type_callable
+    # type=string: image data type
+    dimensions: dimensions_callable
+    # type=tuple: image dimensions (voxels)
+    file_format: file_format_callable
+    # type=string: file format
+    info: info_callable
+    # type=any: output of mri_info
+    orientation: orientation_callable
+    # type=string: image orientation
+    ph_enc_dir: ph_enc_dir_callable
+    # type=string: phase encode direction
+    vox_sizes: vox_sizes_callable
+    # type=tuple: voxel sizes (mm)
   templates:
   # dict[str, str] - `output_file_template` values to be provided to output fields
   requirements:

@@ -58,6 +58,8 @@ outputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
+    mat_file: generic/file+list-of
+    # type=outputmultiobject: transformation matrices
     mean_img: generic/file
     # type=file: mean timeseries image (if mean_vol=True)
     out_file: medimage/nifti1
@@ -65,6 +67,8 @@ outputs:
     # type=file|default=<undefined>: file to write
     par_file: generic/file
     # type=file: text-file with motion parameters
+    rms_files: generic/file+list-of
+    # type=outputmultiobject: absolute and relative displacement parameters
     std_img: generic/file
     # type=file: standard deviation image
     variance_img: generic/file

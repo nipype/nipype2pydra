@@ -64,6 +64,8 @@ outputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
+    out_corr_maps: generic/file+list-of
+    # type=list: output correlation maps in Pearson and/or Z-scores
     out_corr_matrix: generic/file
     # type=file: output correlation matrix between ROIs written to a text file with .netcc suffix
   callables:

@@ -157,7 +157,14 @@ class InputsConverter(SpecConverter):
     metadata: dict[str, dict[str, Any]], optional
         additional metadata to set on any of the input fields (e.g. out_file: position: 1)
     """
-
+    callable_defaults: ty.Dict[str, str] = attrs.field(
+        factory=dict,
+        converter=default_if_none(factory=dict),  # type: ignore
+        metadata={
+            "help": """names of methods/callable classes defined in the adjacent `*_callables.py`
+                to set as the `default` method of input fields"""
+        },
+    )
     metadata: ty.Dict[str, ty.Dict[str, ty.Any]] = attrs.field(
         factory=dict,
         converter=default_if_none(factory=dict),  # type: ignore

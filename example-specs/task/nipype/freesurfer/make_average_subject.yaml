@@ -50,6 +50,8 @@ outputs:
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
+    average_subject_name: average_subject_name_callable
+    # type=str: Output registration file
   templates:
   # dict[str, str] - `output_file_template` values to be provided to output fields
   requirements:

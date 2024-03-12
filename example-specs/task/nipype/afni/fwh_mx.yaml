@@ -153,6 +153,10 @@ outputs:
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
+    acf_param: acf_param_callable
+    # type=traitcompound: fitted ACF model parameters
+    fwhm: fwhm_callable
+    # type=traitcompound: FWHM along each axis
   templates:
   # dict[str, str] - `output_file_template` values to be provided to output fields
   requirements:

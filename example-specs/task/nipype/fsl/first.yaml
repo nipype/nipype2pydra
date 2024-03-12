@@ -52,10 +52,14 @@ outputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
+    bvars: generic/file+list-of
+    # type=outputmultiobject: bvars for each subcortical region
     original_segmentations: generic/file
     # type=file: 3D image file containing the segmented regions as integer values. Uses CMA labelling
     segmentation_file: generic/file
     # type=file: 4D image file containing a single volume per segmented region
+    vtk_surfaces: generic/file+list-of
+    # type=outputmultiobject: VTK format meshes for each subcortical region
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields

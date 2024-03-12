@@ -48,12 +48,22 @@ outputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
+    dyads: generic/file+list-of
+    # type=outputmultiobject: Mean of PDD distribution in vector form.
+    fsamples: generic/file+list-of
+    # type=outputmultiobject: Samples from the distribution on f anisotropy
     mean_S0samples: generic/file
     # type=file: Mean of distribution on T2wbaseline signal intensity S0
     mean_dsamples: generic/file
     # type=file: Mean of distribution on diffusivity d
+    mean_fsamples: generic/file+list-of
+    # type=outputmultiobject: Mean of distribution on f anisotropy
     mean_tausamples: generic/file
     # type=file: Mean of distribution on tau samples (only with rician noise)
+    phsamples: generic/file+list-of
+    # type=outputmultiobject: phi samples, per fiber
+    thsamples: generic/file+list-of
+    # type=outputmultiobject: theta samples, per fiber
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields

@@ -72,6 +72,8 @@ outputs:
     # type=file: brain segmentation image
     BrainSegmentationN4: generic/file
     # type=file: N4 corrected image
+    BrainSegmentationPosteriors: generic/file+list-of
+    # type=outputmultiobject: Posterior probability images
     BrainVolumes: generic/file
     # type=file: Brain volumes as text
     CorticalThickness: generic/file

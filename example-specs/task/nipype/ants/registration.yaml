@@ -303,10 +303,16 @@ outputs:
   # passed to the field in the automatically generated unittests.
     composite_transform: generic/file
     # type=file: Composite transform file
+    forward_transforms: generic/file+list-of
+    # type=list: List of output transforms for forward registration
     inverse_composite_transform: generic/file
     # type=file: Inverse composite transform file
     inverse_warped_image: generic/file
     # type=file: Outputs the inverse of the warped image
+    reverse_forward_transforms: generic/file+list-of
+    # type=list: List of output transforms for forward registration reversed for antsApplyTransform
+    reverse_transforms: generic/file+list-of
+    # type=list: List of output transforms for reverse registration
     save_state: datascience/text-matrix
     # type=file: The saved registration state to be restored
     # type=file|default=<undefined>: Filename for saving the internal restorable state of the registration
@@ -315,6 +321,10 @@ outputs:
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
+    elapsed_time: elapsed_time_callable
+    # type=float: the total elapsed time as reported by ANTs
+    metric_value: metric_value_callable
+    # type=float: the final value of metric
   templates:
   # dict[str, str] - `output_file_template` values to be provided to output fields
   requirements:
