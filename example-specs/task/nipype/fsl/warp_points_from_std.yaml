@@ -51,6 +51,9 @@ inputs:
     # type=file|default=<undefined>: filename of warpfield (e.g. intermediate2dest_warp.nii.gz)
     xfm_file: generic/file
     # type=file|default=<undefined>: filename of affine transform (e.g. source2dest.mat)
+  callable_defaults:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set as the `default` method of input fields
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

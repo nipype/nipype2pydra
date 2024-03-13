@@ -40,6 +40,9 @@ inputs:
     # type=file|default='[]': Intensity image to extract values from. This is an optional input
     label_image: medimage/nifti-gz
     # type=file|default=<undefined>: label image to use for extracting geometry measures
+  callable_defaults:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set as the `default` method of input fields
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

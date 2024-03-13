@@ -1,11 +1,13 @@
 """Module to put any functions that are referred to in the "callables" section of MCFLIRT.yaml"""
 
-import os
+import logging
+from pathlib import Path
+from looseversion import LooseVersion
+from glob import glob
+import os.path as op
 from nibabel.loadsave import load
 import attrs
-import os.path as op
-import logging
-from glob import glob
+import os
 
 
 def out_file_default(inputs):
@@ -62,6 +64,43 @@ def rms_files_callable(output_dir, inputs, stdout, stderr):
 
 
 IFLOGGER = logging.getLogger("nipype.interface")
+
+
+class PackageInfo(object):
+    _version = None
+    version_cmd = None
+    version_file = None
+
+    @classmethod
+    def version(klass):
+        if klass._version is None:
+            if klass.version_cmd is not None:
+                try:
+                    clout = CommandLine(
+                        command=klass.version_cmd,
+                        resource_monitor=False,
+                        terminal_output="allatonce",
+                    ).run()
+                except IOError:
+                    return None
+
+                raw_info = clout.runtime.stdout
+            elif klass.version_file is not None:
+                try:
+                    with open(klass.version_file, "rt") as fobj:
+                        raw_info = fobj.read()
+                except OSError:
+                    return None
+            else:
+                return None
+
+            klass._version = klass.parse_version(raw_info)
+
+        return klass._version
+
+    @staticmethod
+    def parse_version(raw_info):
+        raise NotImplementedError
 
 
 def fname_presuffix(fname, prefix="", suffix="", newpath=None, use_ext=True):
@@ -301,6 +340,135 @@ def _gen_fname(
         suffix = ""
     fname = fname_presuffix(basename, suffix=suffix, use_ext=False, newpath=cwd)
     return fname
+
+
+class PackageInfo(object):
+    _version = None
+    version_cmd = None
+    version_file = None
+
+    @classmethod
+    def version(klass):
+        if klass._version is None:
+            if klass.version_cmd is not None:
+                try:
+                    clout = CommandLine(
+                        command=klass.version_cmd,
+                        resource_monitor=False,
+                        terminal_output="allatonce",
+                    ).run()
+                except IOError:
+                    return None
+
+                raw_info = clout.runtime.stdout
+            elif klass.version_file is not None:
+                try:
+                    with open(klass.version_file, "rt") as fobj:
+                        raw_info = fobj.read()
+                except OSError:
+                    return None
+            else:
+                return None
+
+            klass._version = klass.parse_version(raw_info)
+
+        return klass._version
+
+    @staticmethod
+    def parse_version(raw_info):
+        raise NotImplementedError
+
+
+class Info(PackageInfo):
+    """
+    Handle FSL ``output_type`` and version information.
+
+    output type refers to the type of file fsl defaults to writing
+    eg, NIFTI, NIFTI_GZ
+
+    Examples
+    --------
+
+    >>> from nipype.interfaces.fsl import Info
+    >>> Info.version()  # doctest: +SKIP
+    >>> Info.output_type()  # doctest: +SKIP
+
+    """
+
+    ftypes = {
+        "NIFTI": ".nii",
+        "NIFTI_PAIR": ".img",
+        "NIFTI_GZ": ".nii.gz",
+        "NIFTI_PAIR_GZ": ".img.gz",
+    }
+
+    if os.getenv("FSLDIR"):
+        version_file = os.path.join(os.getenv("FSLDIR"), "etc", "fslversion")
+
+    @staticmethod
+    def parse_version(raw_info):
+        return raw_info.splitlines()[0]
+
+    @classmethod
+    def output_type_to_ext(cls, output_type):
+        """Get the file extension for the given output type.
+
+        Parameters
+        ----------
+        output_type : {'NIFTI', 'NIFTI_GZ', 'NIFTI_PAIR', 'NIFTI_PAIR_GZ'}
+            String specifying the output type.
+
+        Returns
+        -------
+        extension : str
+            The file extension for the output type.
+        """
+
+        try:
+            return cls.ftypes[output_type]
+        except KeyError:
+            msg = "Invalid FSLOUTPUTTYPE: ", output_type
+            raise KeyError(msg)
+
+    @classmethod
+    def output_type(cls):
+        """Get the global FSL output file type FSLOUTPUTTYPE.
+
+        This returns the value of the environment variable
+        FSLOUTPUTTYPE.  An exception is raised if it is not defined.
+
+        Returns
+        -------
+        fsl_ftype : string
+            Represents the current environment setting of FSLOUTPUTTYPE
+        """
+        try:
+            return os.environ["FSLOUTPUTTYPE"]
+        except KeyError:
+            IFLOGGER.warning(
+                "FSLOUTPUTTYPE environment variable is not set. "
+                "Setting FSLOUTPUTTYPE=NIFTI"
+            )
+            return "NIFTI"
+
+    @staticmethod
+    def standard_image(img_name=None):
+        """Grab an image from the standard location.
+
+        Returns a list of standard images if called without arguments.
+
+        Could be made more fancy to allow for more relocatability"""
+        try:
+            fsldir = os.environ["FSLDIR"]
+        except KeyError:
+            raise Exception("FSL environment variables not set")
+        stdpath = os.path.join(fsldir, "data", "standard")
+        if img_name is None:
+            return [
+                filename.replace(stdpath + "/", "")
+                for filename in glob(os.path.join(stdpath, "*nii*"))
+            ]
+        return os.path.join(stdpath, img_name)
 
 
 def _gen_outfilename(inputs=None, stdout=None, stderr=None, output_dir=None):

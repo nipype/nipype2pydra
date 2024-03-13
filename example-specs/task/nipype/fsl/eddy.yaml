@@ -84,6 +84,9 @@ inputs:
     # type=file|default=<undefined>: File containing session indices for all volumes in --imain
     slice_order: text/text-file
     # type=file|default='': Name of text file completely specifying slice/group acquisition
+  callable_defaults:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set as the `default` method of input fields
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

@@ -1,7 +1,8 @@
 """Module to put any functions that are referred to in the "callables" section of TractSkeleton.yaml"""
 
-import attrs
+from pathlib import Path
 import os.path as op
+import attrs
 
 
 def projected_data_callable(output_dir, inputs, stdout, stderr):

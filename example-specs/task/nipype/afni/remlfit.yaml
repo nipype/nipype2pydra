@@ -96,6 +96,9 @@ inputs:
     wherr_file: Path
     # type=file: dataset for REML residual, whitened using the estimated ARMA(1,1) correlation matrix of the noise (if generated)
     # type=file|default=<undefined>: dataset for REML residual, whitened using the estimated ARMA(1,1) correlation matrix of the noise
+  callable_defaults:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set as the `default` method of input fields
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

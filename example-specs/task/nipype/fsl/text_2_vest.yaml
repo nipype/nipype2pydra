@@ -38,6 +38,9 @@ inputs:
     out_file: Path
     # type=file: matrix data in the format used by FSL tools
     # type=file|default=<undefined>: file name to store matrix data in the format used by FSL tools (e.g., design.mat, design.con design.fts)
+  callable_defaults:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set as the `default` method of input fields
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

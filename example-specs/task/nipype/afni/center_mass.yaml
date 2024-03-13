@@ -49,6 +49,9 @@ inputs:
     # type=file|default=<undefined>: input file to 3dCM
     mask_file: generic/file
     # type=file|default=<undefined>: Only voxels with nonzero values in the provided mask will be averaged.
+  callable_defaults:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set as the `default` method of input fields
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:
@@ -88,7 +91,7 @@ tests:
     automask:
     # type=bool|default=False: Generate the mask automatically
     set_cm:
-    # type=tuple|default=(<traits.trait_types.Float object at 0x10aa84810>, <traits.trait_types.Float object at 0x10aa84910>, <traits.trait_types.Float object at 0x10aa84990>): After computing the center of mass, set the origin fields in the header so that the center of mass will be at (x,y,z) in DICOM coords.
+    # type=tuple|default=(<traits.trait_types.Float object at 0x1121a7a50>, <traits.trait_types.Float object at 0x1121a7b50>, <traits.trait_types.Float object at 0x1121a7bd0>): After computing the center of mass, set the origin fields in the header so that the center of mass will be at (x,y,z) in DICOM coords.
     local_ijk:
     # type=bool|default=False: Output values as (i,j,k) in local orientation
     roi_vals:

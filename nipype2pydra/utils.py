@@ -269,7 +269,7 @@ class UsedSymbols:
 
     imports: ty.Set[str] = attrs.field(factory=set)
     funcs_to_include: ty.Set[ty.Tuple[str, ty.Callable]] = attrs.field(factory=set)
-    classes_to_include: ty.List[ty.Tuple[str, ty.Callable]] = attrs.field(factory=set)
+    classes_to_include: ty.List[ty.Tuple[str, ty.Callable]] = attrs.field(factory=list)
     local_functions: ty.Set[ty.Callable] = attrs.field(factory=set)
     local_classes: ty.List[type] = attrs.field(factory=list)
     constants: ty.Set[ty.Tuple[str, str]] = attrs.field(factory=set)
@@ -278,6 +278,14 @@ class UsedSymbols:
         self.imports.update(other.imports)
         self.funcs_to_include.update(other.funcs_to_include)
         self.funcs_to_include.update((f.__name__, f) for f in other.local_functions)
+        self.classes_to_include.extend(
+            c for c in other.classes_to_include if c not in self.classes_to_include
+        )
+        self.classes_to_include.extend(
+            (c.__name__, c)
+            for c in other.local_classes
+            if (c.__name__, c) not in self.classes_to_include
+        )
         self.constants.update(other.constants)
 
     @classmethod
@@ -417,9 +425,8 @@ class UsedSymbols:
                         if not (
                             (
                                 inspect.isclass(getattr(mod, p[0]))
-                                and not (
-                                    issubclass(getattr(mod, p[0]), BaseInterface)
-                                    or issubclass(getattr(mod, p[0]), TraitedSpec)
+                                and issubclass(
+                                    getattr(mod, p[0]), (BaseInterface, TraitedSpec)
                                 )
                             )
                             or getattr(mod, p[0]) in (Undefined, isdefined)
@@ -447,7 +454,10 @@ class UsedSymbols:
                                 if issubclass(atr, BaseInterface):
                                     # TODO: add warning here
                                     continue  # Don't include nipype interfaces as it gets silly
-                                used.classes_to_include.add((used_part[-1], atr))
+                                # We can't use a set here because we need to preserve the order
+                                class_def = (used_part[-1], atr)
+                                if class_def not in used.classes_to_include:
+                                    used.classes_to_include.append(class_def)
                                 class_body = split_parens_contents(
                                     inspect.getsource(atr)
                                 )[2].split("\n", 1)[1]

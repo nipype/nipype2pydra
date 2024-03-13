@@ -1,10 +1,15 @@
 """Module to put any functions that are referred to in the "callables" section of FNIRT.yaml"""
 
-import attrs
 import logging
+from traits.trait_errors import TraitError
+from pathlib import Path
+from fileformats.generic import File
 from glob import glob
-import os
+from traits.trait_type import TraitType
+from traits.trait_base import _Undefined
 import os.path as op
+import attrs
+import os
 
 
 def warped_file_default(inputs):
@@ -64,7 +69,50 @@ def log_file_callable(output_dir, inputs, stdout, stderr):
     return outputs["log_file"]
 
 
+Undefined = _Undefined()
+
+
+IMG_ZIP_FMT = set([".nii.gz", "tar.gz", ".gii.gz", ".mgz", ".mgh.gz", "img.gz"])
+
+
 IFLOGGER = logging.getLogger("nipype.interface")
+
+
+class PackageInfo(object):
+    _version = None
+    version_cmd = None
+    version_file = None
+
+    @classmethod
+    def version(klass):
+        if klass._version is None:
+            if klass.version_cmd is not None:
+                try:
+                    clout = CommandLine(
+                        command=klass.version_cmd,
+                        resource_monitor=False,
+                        terminal_output="allatonce",
+                    ).run()
+                except IOError:
+                    return None
+
+                raw_info = clout.runtime.stdout
+            elif klass.version_file is not None:
+                try:
+                    with open(klass.version_file, "rt") as fobj:
+                        raw_info = fobj.read()
+                except OSError:
+                    return None
+            else:
+                return None
+
+            klass._version = klass.parse_version(raw_info)
+
+        return klass._version
+
+    @staticmethod
+    def parse_version(raw_info):
+        raise NotImplementedError
 
 
 def fname_presuffix(fname, prefix="", suffix="", newpath=None, use_ext=True):
@@ -306,28 +354,349 @@ def _gen_fname(
     return fname
 
 
-class FSLCommandInputSpec(CommandLineInputSpec):
+class PackageInfo(object):
+    _version = None
+    version_cmd = None
+    version_file = None
+
+    @classmethod
+    def version(klass):
+        if klass._version is None:
+            if klass.version_cmd is not None:
+                try:
+                    clout = CommandLine(
+                        command=klass.version_cmd,
+                        resource_monitor=False,
+                        terminal_output="allatonce",
+                    ).run()
+                except IOError:
+                    return None
+
+                raw_info = clout.runtime.stdout
+            elif klass.version_file is not None:
+                try:
+                    with open(klass.version_file, "rt") as fobj:
+                        raw_info = fobj.read()
+                except OSError:
+                    return None
+            else:
+                return None
+
+            klass._version = klass.parse_version(raw_info)
+
+        return klass._version
+
+    @staticmethod
+    def parse_version(raw_info):
+        raise NotImplementedError
+
+
+class Info(PackageInfo):
     """
-    Base Input Specification for all FSL Commands
+    Handle FSL ``output_type`` and version information.
 
-    All command support specifying FSLOUTPUTTYPE dynamically
-    via output_type.
+    output type refers to the type of file fsl defaults to writing
+    eg, NIFTI, NIFTI_GZ
 
-    Example
-    -------
-    fsl.ExtractRoi(tmin=42, tsize=1, output_type='NIFTI')
+    Examples
+    --------
+
+    >>> from nipype.interfaces.fsl import Info
+    >>> Info.version()  # doctest: +SKIP
+    >>> Info.output_type()  # doctest: +SKIP
+
     """
 
-    output_type = traits.Enum("NIFTI", list(Info.ftypes.keys()), desc="FSL output type")
+    ftypes = {
+        "NIFTI": ".nii",
+        "NIFTI_PAIR": ".img",
+        "NIFTI_GZ": ".nii.gz",
+        "NIFTI_PAIR_GZ": ".img.gz",
+    }
+
+    if os.getenv("FSLDIR"):
+        version_file = os.path.join(os.getenv("FSLDIR"), "etc", "fslversion")
+
+    @staticmethod
+    def parse_version(raw_info):
+        return raw_info.splitlines()[0]
+
+    @classmethod
+    def output_type_to_ext(cls, output_type):
+        """Get the file extension for the given output type.
+
+        Parameters
+        ----------
+        output_type : {'NIFTI', 'NIFTI_GZ', 'NIFTI_PAIR', 'NIFTI_PAIR_GZ'}
+            String specifying the output type.
+
+        Returns
+        -------
+        extension : str
+            The file extension for the output type.
+        """
+
+        try:
+            return cls.ftypes[output_type]
+        except KeyError:
+            msg = "Invalid FSLOUTPUTTYPE: ", output_type
+            raise KeyError(msg)
+
+    @classmethod
+    def output_type(cls):
+        """Get the global FSL output file type FSLOUTPUTTYPE.
+
+        This returns the value of the environment variable
+        FSLOUTPUTTYPE.  An exception is raised if it is not defined.
+
+        Returns
+        -------
+        fsl_ftype : string
+            Represents the current environment setting of FSLOUTPUTTYPE
+        """
+        try:
+            return os.environ["FSLOUTPUTTYPE"]
+        except KeyError:
+            IFLOGGER.warning(
+                "FSLOUTPUTTYPE environment variable is not set. "
+                "Setting FSLOUTPUTTYPE=NIFTI"
+            )
+            return "NIFTI"
+
+    @staticmethod
+    def standard_image(img_name=None):
+        """Grab an image from the standard location.
+
+        Returns a list of standard images if called without arguments.
+
+        Could be made more fancy to allow for more relocatability"""
+        try:
+            fsldir = os.environ["FSLDIR"]
+        except KeyError:
+            raise Exception("FSL environment variables not set")
+        stdpath = os.path.join(fsldir, "data", "standard")
+        if img_name is None:
+            return [
+                filename.replace(stdpath + "/", "")
+                for filename in glob(os.path.join(stdpath, "*nii*"))
+            ]
+        return os.path.join(stdpath, img_name)
 
 
-class TraitedSpec(BaseTraitedSpec):
-    """Create a subclass with strict traits.
+class BasePath(TraitType):
+    """Defines a trait whose value must be a valid filesystem path."""
 
-    This is used in 90% of the cases.
+    # A description of the type of value this trait accepts:
+    exists = False
+    resolve = False
+    _is_file = False
+    _is_dir = False
+
+    @property
+    def info_text(self):
+        """Create the trait's general description."""
+        info_text = "a pathlike object or string"
+        if any((self.exists, self._is_file, self._is_dir)):
+            info_text += " representing a"
+            if self.exists:
+                info_text += "n existing"
+            if self._is_file:
+                info_text += " file"
+            elif self._is_dir:
+                info_text += " directory"
+            else:
+                info_text += " file or directory"
+        return info_text
+
+    def __init__(self, value=attrs.NOTHING, exists=False, resolve=False, **metadata):
+        """Create a BasePath trait."""
+        self.exists = exists
+        self.resolve = resolve
+        super(BasePath, self).__init__(value, **metadata)
+
+    def validate(self, objekt, name, value, return_pathlike=False):
+        """Validate a value change."""
+        try:
+            value = Path(value)  # Use pathlib's validation
+        except Exception:
+            self.error(objekt, name, str(value))
+
+        if self.exists:
+            if not value.exists():
+                self.error(objekt, name, str(value))
+
+            if self._is_file and not value.is_file():
+                self.error(objekt, name, str(value))
+
+            if self._is_dir and not value.is_dir():
+                self.error(objekt, name, str(value))
+
+        if self.resolve:
+            value = path_resolve(value, strict=self.exists)
+
+        if not return_pathlike:
+            value = str(value)
+
+        return value
+
+
+class File(BasePath):
+    """
+    Defines a trait whose value must be a file path.
+
+    >>> from nipype.interfaces.base import File, TraitedSpec, TraitError
+    >>> class A(TraitedSpec):
+    ...     foo = File()
+    >>> a = A()
+    >>> a.foo
+    <undefined>
+
+    >>> a.foo = '/some/made/out/path/to/file'
+    >>> a.foo
+    '/some/made/out/path/to/file'
+
+    >>> class A(TraitedSpec):
+    ...     foo = File(exists=False, resolve=True)
+    >>> a = A(foo='idontexist.txt')
+    >>> a.foo  # doctest: +ELLIPSIS
+    '.../idontexist.txt'
+
+    >>> class A(TraitedSpec):
+    ...     foo = File(exists=True, resolve=True)
+    >>> a = A()
+    >>> a.foo = 'idontexist.txt'  # doctest: +IGNORE_EXCEPTION_DETAIL
+    Traceback (most recent call last):
+    TraitError:
+
+    >>> open('idoexist.txt', 'w').close()
+    >>> a.foo = 'idoexist.txt'
+    >>> a.foo  # doctest: +ELLIPSIS
+    '.../idoexist.txt'
+
+    >>> class A(TraitedSpec):
+    ...     foo = File('idoexist.txt')
+    >>> a = A()
+    >>> a.foo
+    <undefined>
+
+    >>> class A(TraitedSpec):
+    ...     foo = File('idoexist.txt', usedefault=True)
+    >>> a = A()
+    >>> a.foo
+    'idoexist.txt'
+
+    >>> class A(TraitedSpec):
+    ...     foo = File(exists=True, resolve=True, extensions=['.txt', 'txt.gz'])
+    >>> a = A()
+    >>> a.foo = 'idoexist.badtxt'  # doctest: +IGNORE_EXCEPTION_DETAIL
+    Traceback (most recent call last):
+    TraitError:
+
+    >>> a.foo = 'idoexist.txt'
+    >>> a.foo  # doctest: +ELLIPSIS
+    '.../idoexist.txt'
+
+    >>> class A(TraitedSpec):
+    ...     foo = File(extensions=['.nii', '.nii.gz'])
+    >>> a = A()
+    >>> a.foo = 'badext.txt'  # doctest: +IGNORE_EXCEPTION_DETAIL
+    Traceback (most recent call last):
+    TraitError:
+
+    >>> class A(TraitedSpec):
+    ...     foo = File(extensions=['.nii', '.nii.gz'])
+    >>> a = A()
+    >>> a.foo = 'goodext.nii'
+    >>> a.foo
+    'goodext.nii'
+
+    >>> a = A()
+    >>> a.foo = 'idontexist.000.nii'
+    >>> a.foo  # doctest: +ELLIPSIS
+    'idontexist.000.nii'
+
+    >>> a = A()
+    >>> a.foo = 'idontexist.000.nii.gz'
+    >>> a.foo  # doctest: +ELLIPSIS
+    'idontexist.000.nii.gz'
+
     """
 
-    _ = traits.Disallow
+    _is_file = True
+    _exts = None
+
+    def __init__(
+        self,
+        value=NoDefaultSpecified,
+        exists=False,
+        resolve=False,
+        allow_compressed=True,
+        extensions=None,
+        **metadata
+    ):
+        """Create a File trait."""
+        if extensions is not None:
+            if isinstance(extensions, (bytes, str)):
+                extensions = [extensions]
+
+            if allow_compressed is False:
+                extensions = list(set(extensions) - IMG_ZIP_FMT)
+
+            self._exts = sorted(
+                set(
+                    [
+                        ".%s" % ext if not ext.startswith(".") else ext
+                        for ext in extensions
+                    ]
+                )
+            )
+
+        super(File, self).__init__(
+            value=value,
+            exists=exists,
+            resolve=resolve,
+            extensions=self._exts,
+            **metadata
+        )
+
+    def validate(self, objekt, name, value, return_pathlike=False):
+        """Validate a value change."""
+        value = super(File, self).validate(objekt, name, value, return_pathlike=True)
+        if self._exts:
+            fname = value.name
+            if not any((fname.endswith(e) for e in self._exts)):
+                self.error(objekt, name, str(value))
+
+        if not return_pathlike:
+            value = str(value)
+
+        return value
+
+
+def path_resolve(path, strict=False):
+    try:
+        return _resolve_with_filenotfound(path, strict=strict)
+    except TypeError:  # PY35
+        pass
+
+    path = path.absolute()
+    if strict or path.exists():
+        return _resolve_with_filenotfound(path)
+
+    # This is a hacky shortcut, using path.absolute() unmodified
+    # In cases where the existing part of the path contains a
+    # symlink, different results will be produced
+    return path
+
+
+def _resolve_with_filenotfound(path, **kwargs):
+    """Raise FileNotFoundError instead of OSError"""
+    try:
+        return path.resolve(**kwargs)
+    except OSError as e:
+        if isinstance(e, FileNotFoundError):
+            raise
+        raise FileNotFoundError(str(path))
 
 
 class FNIRTOutputSpec(TraitedSpec):

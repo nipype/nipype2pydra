@@ -1,9 +1,11 @@
 """Module to put any functions that are referred to in the "callables" section of Allineate.yaml"""
 
-import os
-import attrs
-import os.path as op
+from looseversion import LooseVersion
 import logging
+from pathlib import Path
+import os.path as op
+import attrs
+import os
 
 
 def out_file_callable(output_dir, inputs, stdout, stderr):
@@ -42,6 +44,43 @@ def allcostx_callable(output_dir, inputs, stdout, stderr):
 
 
 iflogger = logging.getLogger("nipype.interface")
+
+
+class PackageInfo(object):
+    _version = None
+    version_cmd = None
+    version_file = None
+
+    @classmethod
+    def version(klass):
+        if klass._version is None:
+            if klass.version_cmd is not None:
+                try:
+                    clout = CommandLine(
+                        command=klass.version_cmd,
+                        resource_monitor=False,
+                        terminal_output="allatonce",
+                    ).run()
+                except IOError:
+                    return None
+
+                raw_info = clout.runtime.stdout
+            elif klass.version_file is not None:
+                try:
+                    with open(klass.version_file, "rt") as fobj:
+                        raw_info = fobj.read()
+                except OSError:
+                    return None
+            else:
+                return None
+
+            klass._version = klass.parse_version(raw_info)
+
+        return klass._version
+
+    @staticmethod
+    def parse_version(raw_info):
+        raise NotImplementedError
 
 
 def fname_presuffix(fname, prefix="", suffix="", newpath=None, use_ext=True):
@@ -293,6 +332,16 @@ def _gen_fname(
         suffix = ""
     fname = fname_presuffix(basename, suffix=suffix, use_ext=False, newpath=cwd)
     return fname
+
+
+class NipypeInterfaceError(Exception):
+    """Custom error for interfaces"""
+
+    def __init__(self, value):
+        self.value = value
+
+    def __str__(self):
+        return "{}".format(self.value)
 
 
 def split_filename(fname):

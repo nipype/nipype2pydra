@@ -53,6 +53,9 @@ inputs:
     # type=inputmultiobject|default=[]: 
     t1_registration_template: medimage/nifti-gz
     # type=file|default=<undefined>: Anatomical *intensity* template (assumed to be skull-stripped). A common case would be where this would be the same template as specified in the -e option which is not skull stripped.
+  callable_defaults:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set as the `default` method of input fields
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

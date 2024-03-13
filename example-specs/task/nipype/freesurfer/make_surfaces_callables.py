@@ -1,7 +1,7 @@
 """Module to put any functions that are referred to in the "callables" section of MakeSurfaces.yaml"""
 
-import os
 import attrs
+import os
 
 
 def out_white_callable(output_dir, inputs, stdout, stderr):

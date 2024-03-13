@@ -1,9 +1,9 @@
 """Module to put any functions that are referred to in the "callables" section of ImageInfo.yaml"""
 
-import os
+import logging
 import os.path as op
 import attrs
-import logging
+import os
 
 
 def info_callable(output_dir, inputs, stdout, stderr):
@@ -84,6 +84,16 @@ def ph_enc_dir_callable(output_dir, inputs, stdout, stderr):
 
 
 iflogger = logging.getLogger("nipype.interface")
+
+
+class NipypeInterfaceError(Exception):
+    """Custom error for interfaces"""
+
+    def __init__(self, value):
+        self.value = value
+
+    def __str__(self):
+        return "{}".format(self.value)
 
 
 def split_filename(fname):

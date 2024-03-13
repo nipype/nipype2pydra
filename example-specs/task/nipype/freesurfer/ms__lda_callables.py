@@ -1,7 +1,7 @@
 """Module to put any functions that are referred to in the "callables" section of MS_LDA.yaml"""
 
-import os
 import attrs
+import os
 
 
 def weight_file_callable(output_dir, inputs, stdout, stderr):

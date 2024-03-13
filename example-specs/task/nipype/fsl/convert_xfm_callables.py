@@ -1,8 +1,9 @@
 """Module to put any functions that are referred to in the "callables" section of ConvertXFM.yaml"""
 
-import os
-import attrs
+from pathlib import Path
 import os.path as op
+import attrs
+import os
 
 
 def out_file_default(inputs):

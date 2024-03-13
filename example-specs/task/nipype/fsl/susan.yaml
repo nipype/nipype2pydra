@@ -41,6 +41,11 @@ inputs:
     # type=file|default=<undefined>: filename of input timeseries
     out_file: Path
     # type=file|default=<undefined>: output file name
+  callable_defaults:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set as the `default` method of input fields
+    out_file: out_file_default
+    # type=file|default=<undefined>: output file name
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:
@@ -59,8 +64,6 @@ outputs:
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
-    out_file: out_file_callable
-    # type=file|default=<undefined>: output file name
   templates:
   # dict[str, str] - `output_file_template` values to be provided to output fields
   requirements:

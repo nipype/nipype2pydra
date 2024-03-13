@@ -1,7 +1,7 @@
 """Module to put any functions that are referred to in the "callables" section of FIRST.yaml"""
 
-import attrs
 import os.path as op
+import attrs
 
 
 def vtk_surfaces_callable(output_dir, inputs, stdout, stderr):

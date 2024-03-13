@@ -1,7 +1,7 @@
 """Module to put any functions that are referred to in the "callables" section of ParseDICOMDir.yaml"""
 
-import os
 import attrs
+import os
 
 
 def dicom_info_file_callable(output_dir, inputs, stdout, stderr):

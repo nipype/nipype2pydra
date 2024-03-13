@@ -80,6 +80,9 @@ inputs:
     # type=file|default=<undefined>: mask the input dataset
     weight_file: generic/file
     # type=file|default=<undefined>: Set the weighting for each voxel in the base dataset; larger weights mean that voxel count more in the cost function. Must be defined on the same grid as the base dataset
+  callable_defaults:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set as the `default` method of input fields
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

@@ -1,9 +1,10 @@
 """Module to put any functions that are referred to in the "callables" section of MRIConvert.yaml"""
 
-import os
+from pathlib import Path
+import os.path as op
 from nibabel.loadsave import load
 import attrs
-import os.path as op
+import os
 
 
 def out_file_default(inputs):

@@ -46,6 +46,9 @@ inputs:
     # type=file|default=<undefined>: Specifies the ROI of the RGB voxels used.
     rgb_image: medimage/nifti-gz
     # type=file|default=<undefined>: An optional Rgb image can be added as an overlay.It must have the same imagegeometry as the input grayscale image.
+  callable_defaults:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set as the `default` method of input fields
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

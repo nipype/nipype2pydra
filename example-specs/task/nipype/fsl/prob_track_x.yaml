@@ -58,6 +58,13 @@ inputs:
     # type=file|default=<undefined>: waypoint mask or ascii list of waypoint masks - only keep paths going through ALL the masks
     xfm: datascience/text-matrix
     # type=file|default=<undefined>: transformation matrix taking seed space to DTI space (either FLIRT matrix or FNIRT warp_field) - default is identity
+  callable_defaults:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set as the `default` method of input fields
+    mode: mode_default
+    # type=enum|default='simple'|allowed['seedmask','simple','two_mask_symm']: options: simple (single seed voxel), seedmask (mask of seed voxels), twomask_symm (two bet binary masks)
+    out_dir: out_dir_default
+    # type=directory|default=<undefined>: directory to put the final volumes in
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:
@@ -84,10 +91,6 @@ outputs:
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
-    mode: mode_callable
-    # type=enum|default='simple'|allowed['seedmask','simple','two_mask_symm']: options: simple (single seed voxel), seedmask (mask of seed voxels), twomask_symm (two bet binary masks)
-    out_dir: out_dir_callable
-    # type=directory|default=<undefined>: directory to put the final volumes in
   templates:
   # dict[str, str] - `output_file_template` values to be provided to output fields
   requirements:

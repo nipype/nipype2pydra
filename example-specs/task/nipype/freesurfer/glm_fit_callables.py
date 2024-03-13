@@ -1,8 +1,8 @@
 """Module to put any functions that are referred to in the "callables" section of GLMFit.yaml"""
 
-import os
-import attrs
 import os.path as op
+import attrs
+import os
 
 
 def glm_dir_default(inputs):

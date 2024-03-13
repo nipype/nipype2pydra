@@ -40,6 +40,9 @@ inputs:
     # type=file|default='dicominfo.txt': file to which results are written
     subjects_dir: generic/directory
     # type=directory|default=<undefined>: subjects directory
+  callable_defaults:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set as the `default` method of input fields
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

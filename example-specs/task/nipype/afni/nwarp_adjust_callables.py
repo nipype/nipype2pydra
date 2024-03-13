@@ -1,7 +1,7 @@
 """Module to put any functions that are referred to in the "callables" section of NwarpAdjust.yaml"""
 
-import os
 import os.path as op
+import os
 
 
 def out_file_callable(output_dir, inputs, stdout, stderr):

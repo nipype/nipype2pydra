@@ -51,6 +51,9 @@ inputs:
     # type=file|default=<undefined>: output file name part
     weight_ts: generic/file
     # type=file|default=<undefined>: input a 1D file WTS of weights that will be applied multiplicatively to each ROI's average time series. WTS can be a column- or row-file of values, but it must have the same length as the input time series volume. If the initial average time series was A[n] for n=0,..,(N-1) time points, then applying a set of weights W[n] of the same length from WTS would produce a new time series:  B[n] = A[n] * W[n]
+  callable_defaults:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set as the `default` method of input fields
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

@@ -1,8 +1,8 @@
 """Module to put any functions that are referred to in the "callables" section of JointFusion.yaml"""
 
-import os
 from glob import glob
 import attrs
+import os
 
 
 def out_label_fusion_callable(output_dir, inputs, stdout, stderr):

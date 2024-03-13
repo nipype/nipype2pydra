@@ -1,7 +1,7 @@
 """Module to put any functions that are referred to in the "callables" section of FEAT.yaml"""
 
-import os
 from glob import glob
+import os
 
 
 def feat_dir_callable(output_dir, inputs, stdout, stderr):

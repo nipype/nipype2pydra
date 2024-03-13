@@ -1,7 +1,7 @@
 """Module to put any functions that are referred to in the "callables" section of GTMPVC.yaml"""
 
-import os
 import attrs
+import os
 
 
 def pvc_dir_default(inputs):

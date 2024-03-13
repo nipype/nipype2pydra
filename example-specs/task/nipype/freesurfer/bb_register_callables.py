@@ -1,7 +1,8 @@
 """Module to put any functions that are referred to in the "callables" section of BBRegister.yaml"""
 
-import attrs
+from pathlib import Path
 import os.path as op
+import attrs
 
 
 def out_reg_file_default(inputs):

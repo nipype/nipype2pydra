@@ -50,6 +50,11 @@ inputs:
     # type=file|default=<undefined>: Output filename
     subjects_dir: generic/directory
     # type=directory|default=<undefined>: subjects directory
+  callable_defaults:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set as the `default` method of input fields
+    in_average: in_average_default
+    # type=directory|default=<undefined>: Average subject
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:
@@ -69,8 +74,6 @@ outputs:
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
-    in_average: in_average_callable
-    # type=directory|default=<undefined>: Average subject
   templates:
   # dict[str, str] - `output_file_template` values to be provided to output fields
     out_file: '"test.out"'

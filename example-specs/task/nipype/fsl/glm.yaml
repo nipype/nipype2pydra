@@ -64,6 +64,9 @@ inputs:
     # type=file|default=<undefined>: output file name for scaling factors for variance normalisation
     out_z_name: Path
     # type=file|default=<undefined>: output file name for Z-stats (either as txt or image
+  callable_defaults:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set as the `default` method of input fields
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

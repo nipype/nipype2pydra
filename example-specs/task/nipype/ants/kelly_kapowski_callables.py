@@ -1,9 +1,9 @@
 """Module to put any functions that are referred to in the "callables" section of KellyKapowski.yaml"""
 
-import os
-import attrs
-import os.path as op
 import logging
+import os.path as op
+import attrs
+import os
 
 
 def cortical_thickness_callable(output_dir, inputs, stdout, stderr):
@@ -87,6 +87,16 @@ def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
             _, name, ext = split_filename(inputs.segmentation_image)
             output = name + "_warped_white_matter" + ext
         return output
+
+
+class NipypeInterfaceError(Exception):
+    """Custom error for interfaces"""
+
+    def __init__(self, value):
+        self.value = value
+
+    def __str__(self):
+        return "{}".format(self.value)
 
 
 def split_filename(fname):

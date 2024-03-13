@@ -1,8 +1,8 @@
 """Module to put any functions that are referred to in the "callables" section of WarpImageMultiTransform.yaml"""
 
-import os
-import attrs
 import os.path as op
+import attrs
+import os
 
 
 def output_image_default(inputs):

@@ -1,9 +1,9 @@
 """Module to put any functions that are referred to in the "callables" section of WarpPointsToStd.yaml"""
 
-import os
+import logging
 import os.path as op
 import attrs
-import logging
+import os
 
 
 def out_file_callable(output_dir, inputs, stdout, stderr):
@@ -21,6 +21,16 @@ def _overload_extension(
 ):
     if name == "out_file":
         return "%s.%s" % (value, getattr(self, "_outformat"))
+
+
+class NipypeInterfaceError(Exception):
+    """Custom error for interfaces"""
+
+    def __init__(self, value):
+        self.value = value
+
+    def __str__(self):
+        return "{}".format(self.value)
 
 
 def split_filename(fname):

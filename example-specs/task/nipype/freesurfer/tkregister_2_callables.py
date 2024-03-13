@@ -1,8 +1,9 @@
 """Module to put any functions that are referred to in the "callables" section of Tkregister2.yaml"""
 
-import os
-import attrs
+from pathlib import Path
 import os.path as op
+import attrs
+import os
 
 
 def reg_file_callable(output_dir, inputs, stdout, stderr):

@@ -1,8 +1,9 @@
 """Module to put any functions that are referred to in the "callables" section of buildtemplateparallel.yaml"""
 
-import os
-from glob import glob
 import os.path as op
+from glob import glob
+from builtins import range
+import os
 
 
 def final_template_file_callable(output_dir, inputs, stdout, stderr):

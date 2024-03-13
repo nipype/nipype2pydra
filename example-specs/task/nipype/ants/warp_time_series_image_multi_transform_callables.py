@@ -1,7 +1,7 @@
 """Module to put any functions that are referred to in the "callables" section of WarpTimeSeriesImageMultiTransform.yaml"""
 
-import os
 import os.path as op
+import os
 
 
 def output_image_callable(output_dir, inputs, stdout, stderr):

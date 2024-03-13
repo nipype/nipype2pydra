@@ -288,6 +288,9 @@ inputs:
     save_state: Path
     # type=file: The saved registration state to be restored
     # type=file|default=<undefined>: Filename for saving the internal restorable state of the registration
+  callable_defaults:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set as the `default` method of input fields
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

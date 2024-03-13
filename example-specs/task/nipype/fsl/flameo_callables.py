@@ -1,9 +1,9 @@
 """Module to put any functions that are referred to in the "callables" section of FLAMEO.yaml"""
 
-import os
 import re
 from glob import glob
 import attrs
+import os
 
 
 def pes_callable(output_dir, inputs, stdout, stderr):

@@ -1,7 +1,7 @@
 """Module to put any functions that are referred to in the "callables" section of MELODIC.yaml"""
 
-import os
 import attrs
+import os
 
 
 def out_dir_default(inputs):

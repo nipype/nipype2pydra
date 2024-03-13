@@ -564,9 +564,10 @@ class BaseTaskConverter(metaclass=ABCMeta):
                     specs.Directory,
                 ]:  # since this is a template, the file doesn't exist
                     pydra_type = Path
-            elif nm not in self.outputs.callables:
+            elif nm not in self.inputs.callable_defaults:
                 raise Exception(
-                    f"the filed {nm} has genfile=True, but no output template or callables_module provided"
+                    f"the filed {nm} has genfile=True, but no template or "
+                    "`callables_default` function in the callables_module provided"
                 )
 
         pydra_metadata.update(metadata_extra_spec)

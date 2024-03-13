@@ -43,6 +43,9 @@ inputs:
     # type=file|default=<undefined>: Anatomical template created using e.g. LPBA40 data set with buildtemplateparallel.sh in ANTs.
     extraction_registration_mask: generic/file
     # type=file|default=<undefined>: Mask (defined in the template space) used during registration for brain extraction. To limit the metric computation to a specific region.
+  callable_defaults:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set as the `default` method of input fields
   metadata:
   # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
 outputs:

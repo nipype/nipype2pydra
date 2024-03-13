@@ -142,7 +142,9 @@ class NipypeInterface:
                 elif output_type_str == "Directory":
                     parsed.dir_outputs.append(outpt_name)
                 elif output_type_str in ("OutputMultiObject", "List"):
-                    inner_type_str = type(outpt.trait_type.item_trait.trait_type).__name__
+                    inner_type_str = type(
+                        outpt.trait_type.item_trait.trait_type
+                    ).__name__
                     if inner_type_str == "Directory":
                         parsed.dir_outputs.append(outpt_name)
                     elif inner_type_str == "File":
@@ -277,7 +279,12 @@ class NipypeInterface:
             "inputs": self._fields_stub(
                 "inputs",
                 InputsConverter,
-                {"types": {n: type2str(t) for n, t in input_types.items()}},
+                {
+                    "types": {n: type2str(t) for n, t in input_types.items()},
+                    "callable_defaults": {
+                        n: f"{n}_default" for n in sorted(self.callable_defaults)
+                    },
+                },
             ),
             "outputs": self._fields_stub(
                 "outputs",
@@ -830,7 +837,9 @@ def _gen_filename(field, inputs, output_dir, stdout, stderr):
             return ""
         return "_".join(common) + "__"
 
-    def find_nested_methods(methods: ty.List[ty.Callable], interface=None) -> ty.Dict[str, ty.Callable]:
+    def find_nested_methods(
+        methods: ty.List[ty.Callable], interface=None
+    ) -> ty.Dict[str, ty.Callable]:
         if interface is None:
             interface = nipype_interface
         all_nested = {}
@@ -885,7 +894,9 @@ def _gen_filename(field, inputs, output_dir, stdout, stderr):
         if hasattr(nipype_interface, "_cmd"):
             body = body.replace("self.cmd", f'"{nipype_interface._cmd}"')
         body = body.replace("self.", "")
-        body = re.sub(r"super\([^\)]*\)\.(\w+)\(", lambda m: name_map[m.group(1)] + "(", body)
+        body = re.sub(
+            r"super\([^\)]*\)\.(\w+)\(", lambda m: name_map[m.group(1)] + "(", body
+        )
         body = re.sub(r"\w+runtime\.(stdout|stderr)", r"\1", body)
         body = body.replace("os.getcwd()", "output_dir")
         # drop 'self' from the args and add the implicit callable args
@@ -931,7 +942,9 @@ def _gen_filename(field, inputs, output_dir, stdout, stderr):
                 outer_name = name
             else:
                 if outer_name:
-                    new_sig = insert_args_in_method_calls(new_sig, args, name_map=name_map)
+                    new_sig = insert_args_in_method_calls(
+                        new_sig, args, name_map=name_map
+                    )
                     new_src += name_map[outer_name] + new_sig
                     outer_name = None
                 else:

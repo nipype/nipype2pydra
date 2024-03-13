@@ -1,7 +1,8 @@
 """Module to put any functions that are referred to in the "callables" section of Smooth.yaml"""
 
-import attrs
+from pathlib import Path
 import os.path as op
+import attrs
 
 
 def smoothed_file_default(inputs):
