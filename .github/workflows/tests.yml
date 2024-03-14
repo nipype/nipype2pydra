@@ -42,7 +42,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
 
     - name: Update build tools
-      run: python3 -m pip install --upgrade pip build
+      run: python3 -m pip install --upgrade pip build packaging
 
     - name: Install required file-formats packages
       run: |
