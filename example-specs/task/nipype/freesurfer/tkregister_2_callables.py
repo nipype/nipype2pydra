@@ -1,16 +1,9 @@
 """Module to put any functions that are referred to in the "callables" section of Tkregister2.yaml"""
 
+import attrs
 import os
 import os.path as op
 from pathlib import Path
-import attrs
-
-
-def reg_file_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["reg_file"]
 
 
 def fsl_file_callable(output_dir, inputs, stdout, stderr):
@@ -27,9 +20,43 @@ def lta_file_callable(output_dir, inputs, stdout, stderr):
     return outputs["lta_file"]
 
 
+def reg_file_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["reg_file"]
+
+
 # Original source at L885 of <nipype-install>/interfaces/base/core.py
 def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
     raise NotImplementedError
+
+
+# Original source at L1973 of <nipype-install>/interfaces/freesurfer/utils.py
+def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
+    outputs = {}
+    reg_file = os.path.abspath(inputs.reg_file)
+    outputs["reg_file"] = reg_file
+
+    cwd = output_dir
+    fsl_out = inputs.fsl_out
+    if fsl_out is not attrs.NOTHING:
+        if fsl_out is True:
+            outputs["fsl_file"] = fname_presuffix(
+                reg_file, suffix=".mat", newpath=cwd, use_ext=False
+            )
+        else:
+            outputs["fsl_file"] = os.path.abspath(inputs.fsl_out)
+
+    lta_out = inputs.lta_out
+    if lta_out is not attrs.NOTHING:
+        if lta_out is True:
+            outputs["lta_file"] = fname_presuffix(
+                reg_file, suffix=".lta", newpath=cwd, use_ext=False
+            )
+        else:
+            outputs["lta_file"] = os.path.abspath(inputs.lta_out)
+    return outputs
 
 
 # Original source at L108 of <nipype-install>/utils/filemanip.py
@@ -124,30 +151,3 @@ def split_filename(fname):
         fname, ext = op.splitext(fname)
 
     return pth, fname, ext
-
-
-# Original source at L1973 of <nipype-install>/interfaces/freesurfer/utils.py
-def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
-    outputs = {}
-    reg_file = os.path.abspath(inputs.reg_file)
-    outputs["reg_file"] = reg_file
-
-    cwd = output_dir
-    fsl_out = inputs.fsl_out
-    if fsl_out is not attrs.NOTHING:
-        if fsl_out is True:
-            outputs["fsl_file"] = fname_presuffix(
-                reg_file, suffix=".mat", newpath=cwd, use_ext=False
-            )
-        else:
-            outputs["fsl_file"] = os.path.abspath(inputs.fsl_out)
-
-    lta_out = inputs.lta_out
-    if lta_out is not attrs.NOTHING:
-        if lta_out is True:
-            outputs["lta_file"] = fname_presuffix(
-                reg_file, suffix=".lta", newpath=cwd, use_ext=False
-            )
-        else:
-            outputs["lta_file"] = os.path.abspath(inputs.lta_out)
-    return outputs

@@ -1,7 +1,7 @@
 """Module to put any functions that are referred to in the "callables" section of antsIntroduction.yaml"""
 
-import os
 import attrs
+import os
 
 
 def affine_transformation_callable(output_dir, inputs, stdout, stderr):
@@ -11,11 +11,11 @@ def affine_transformation_callable(output_dir, inputs, stdout, stderr):
     return outputs["affine_transformation"]
 
 
-def warp_field_callable(output_dir, inputs, stdout, stderr):
+def input_file_callable(output_dir, inputs, stdout, stderr):
     outputs = _list_outputs(
         output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
     )
-    return outputs["warp_field"]
+    return outputs["input_file"]
 
 
 def inverse_warp_field_callable(output_dir, inputs, stdout, stderr):
@@ -25,18 +25,18 @@ def inverse_warp_field_callable(output_dir, inputs, stdout, stderr):
     return outputs["inverse_warp_field"]
 
 
-def input_file_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["input_file"]
-
-
 def output_file_callable(output_dir, inputs, stdout, stderr):
     outputs = _list_outputs(
         output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
     )
     return outputs["output_file"]
+
+
+def warp_field_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["warp_field"]
 
 
 # Original source at L885 of <nipype-install>/interfaces/base/core.py

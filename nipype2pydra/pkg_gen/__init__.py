@@ -347,30 +347,46 @@ class NipypeInterface:
         )
         # Convert the "_gen_filename" method into a function with any referenced
         # methods, functions and constants included in the module
-        funcs, imports, consts = get_callable_sources(nipype_interface)
-        imports.add("import attrs")
-        callables_str += "\n".join(imports) + "\n\n"
+        funcs, classes, imports, consts = get_callable_sources(nipype_interface)
+
+        # Write imports to file
+        if any(
+            re.match(r"\battrs\b", s, flags=re.MULTILINE)
+            for s in (list(funcs) + classes)
+        ):
+            imports.add("import attrs")
+        obj_imports = set(i for i in imports if i.startswith("from"))
+        mod_imports = imports - obj_imports
+        callables_str += "\n".join(sorted(mod_imports)) + "\n"
+        callables_str += "\n".join(sorted(obj_imports)) + "\n\n"
+
         # Create separate default function for each input field with genfile, which
         # reference the magic "_gen_filename" method
-        for inpt_name, inpt in nipype_interface.input_spec().traits().items():
+        for inpt_name, inpt in sorted(nipype_interface.input_spec().traits().items()):
             if inpt.genfile:
                 callables_str += (
                     f"def {inpt_name}_default(inputs):\n"
                     f'    return _gen_filename("{inpt_name}", inputs=inputs)\n\n'
                 )
+
         # Create separate function for each output field in the "callables" section
         if nipype_interface.output_spec:
-            for output_name in nipype_interface.output_spec().traits().keys():
+            for output_name in sorted(nipype_interface.output_spec().traits().keys()):
                 if output_name not in INBUILT_NIPYPE_TRAIT_NAMES:
                     callables_str += (
                         f"def {output_name}_callable(output_dir, inputs, stdout, stderr):\n"
                         "    outputs = _list_outputs(output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr)\n"
                         '    return outputs["' + output_name + '"]\n\n'
                     )
-        # Add any constants to the module
-        for const in consts:
+
+        # Add any constants to the file
+        for const in sorted(consts):
             callables_str += f"{const[0]} = {const[1]}\n" + "\n\n"
+
+        # Write functions and classes to the file
         callables_str += "\n\n".join(funcs) + "\n\n"
+        callables_str += "\n\n".join(classes) + "\n\n"
+
         # Format the generated code with black
         try:
             callables_str = black.format_file_contents(
@@ -793,7 +809,7 @@ def gen_sample_{frmt.lower()}_data({frmt.lower()}: {frmt}, dest_dir: Path, seed:
 
 def get_callable_sources(
     nipype_interface,
-) -> ty.Tuple[ty.List[str], ty.Set[str], ty.Set[ty.Tuple[str, str]]]:
+) -> ty.Tuple[ty.Set[str], ty.List[str], ty.Set[str], ty.Set[ty.Tuple[str, str]]]:
     """
     Convert the _gen_filename method of a nipype interface into a function that can be
     imported and used by the auto-convert scripts
@@ -805,23 +821,15 @@ def get_callable_sources(
 
     Returns
     -------
-    list[str]
-        the source code of functions to be added to the callables
     set[str]
-        the imports required for the function
+        the source code of functions to be added to the callables module
+    list[str]
+        the source code of classes to be added to the callables module
+    set[str]
+        the imports required for the functions and classes
     set[tuple[str, str]]
-        the external constants required by the function, as (name, value) tuples
+        the external constants required by the functions and classes in (name, value) tuples
     """
-
-    if not hasattr(nipype_interface, "_gen_filename"):
-        func_src = f"""
-def _gen_filename(field, inputs, output_dir, stdout, stderr):
-    raise NotImplementedError(
-        "Could not find '_gen_filename' method in {nipype_interface.__module__}.{nipype_interface.__name__}"
-    )
-"""
-        warn(f"Could not find '_gen_filename' method in {nipype_interface}")
-        return [func_src], set(), set()
 
     IMPLICIT_ARGS = ["inputs", "stdout", "stderr", "output_dir"]
 
@@ -985,21 +993,20 @@ def _gen_filename(field, inputs, output_dir, stdout, stderr):
             process_method(method, method_name, name_map, nipype_interface.__name__)
         )
     # Initialise the source code, imports and constants
-    all_funcs = []
+    all_funcs = set()
+    all_classes = []
     all_imports = set()
     all_constants = set()
     for mod_name, methods in grouped_methods.items():
         mod = import_module(mod_name)
         used = UsedSymbols.find(mod, methods)
-        all_funcs.extend(methods)
+        all_funcs.update(methods)
         for func in used.local_functions:
-            func_src = cleanup_function_body(get_source_code(func))
-            if func_src not in all_funcs:
-                all_funcs.append(func_src)
+            all_funcs.add(cleanup_function_body(get_source_code(func)))
         for klass in used.local_classes:
             klass_src = cleanup_function_body(get_source_code(klass))
-            if klass_src not in all_funcs:
-                all_funcs.append(klass_src)
+            if klass_src not in all_classes:
+                all_classes.append(klass_src)
         for new_func_name, func in used.funcs_to_include:
             func_src = get_source_code(func)
             location_comment, func_src = func_src.split("\n", 1)
@@ -1016,9 +1023,7 @@ def _gen_filename(field, inputs, output_dir, stdout, stderr):
                 + new_func_name
                 + match.group(2)
             )
-            func_src = cleanup_function_body(func_src)
-            if func_src not in all_funcs:
-                all_funcs.append(func_src)
+            all_funcs.add(cleanup_function_body(func_src))
         for new_klass_name, klass in used.classes_to_include:
             klass_src = get_source_code(klass)
             location_comment, klass_src = klass_src.split("\n", 1)
@@ -1036,12 +1041,16 @@ def _gen_filename(field, inputs, output_dir, stdout, stderr):
                 + match.group(2)
             )
             klass_src = cleanup_function_body(klass_src)
-            if klass_src not in all_funcs:
-                all_funcs.append(klass_src)
+            if klass_src not in all_classes:
+                all_classes.append(klass_src)
         all_imports.update(used.imports)
         all_constants.update(used.constants)
     return (
-        reversed(all_funcs),  # Ensure base classes are defined first
+        sorted(
+            all_funcs,
+            key=lambda s: next(s for s in s.splitlines() if s.startswith("def")),
+        ),
+        list(reversed(all_classes)),  # Ensure base classes are defined first
         all_imports,
         all_constants,
     )

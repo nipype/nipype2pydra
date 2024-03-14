@@ -1,14 +1,6 @@
 """Module to put any functions that are referred to in the "callables" section of CANormalize.yaml"""
 
 import os
-import attrs
-
-
-def out_file_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["out_file"]
 
 
 def control_points_callable(output_dir, inputs, stdout, stderr):
@@ -16,6 +8,13 @@ def control_points_callable(output_dir, inputs, stdout, stderr):
         output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
     )
     return outputs["control_points"]
+
+
+def out_file_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["out_file"]
 
 
 # Original source at L885 of <nipype-install>/interfaces/base/core.py

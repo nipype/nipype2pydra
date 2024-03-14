@@ -1,21 +1,7 @@
 """Module to put any functions that are referred to in the "callables" section of MakeSurfaces.yaml"""
 
-import os
 import attrs
-
-
-def out_white_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["out_white"]
-
-
-def out_curv_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["out_curv"]
+import os
 
 
 def out_area_callable(output_dir, inputs, stdout, stderr):
@@ -32,6 +18,13 @@ def out_cortex_callable(output_dir, inputs, stdout, stderr):
     return outputs["out_cortex"]
 
 
+def out_curv_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["out_curv"]
+
+
 def out_pial_callable(output_dir, inputs, stdout, stderr):
     outputs = _list_outputs(
         output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
@@ -44,6 +37,13 @@ def out_thickness_callable(output_dir, inputs, stdout, stderr):
         output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
     )
     return outputs["out_thickness"]
+
+
+def out_white_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["out_white"]
 
 
 # Original source at L885 of <nipype-install>/interfaces/base/core.py

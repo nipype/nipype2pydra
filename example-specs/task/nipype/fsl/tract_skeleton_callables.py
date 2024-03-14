@@ -1,8 +1,8 @@
 """Module to put any functions that are referred to in the "callables" section of TractSkeleton.yaml"""
 
+import attrs
 import os.path as op
 from pathlib import Path
-import attrs
 
 
 def projected_data_callable(output_dir, inputs, stdout, stderr):
@@ -22,6 +22,29 @@ def skeleton_file_callable(output_dir, inputs, stdout, stderr):
 # Original source at L885 of <nipype-install>/interfaces/base/core.py
 def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
     raise NotImplementedError
+
+
+# Original source at L1445 of <nipype-install>/interfaces/fsl/dti.py
+def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
+    outputs = {}
+    _si = inputs
+    if (_si.project_data is not attrs.NOTHING) and _si.project_data:
+        proj_data = _si.projected_data
+        outputs["projected_data"] = proj_data
+        if proj_data is attrs.NOTHING:
+            stem = _si.data_file
+            if _si.alt_data_file is not attrs.NOTHING:
+                stem = _si.alt_data_file
+            outputs["projected_data"] = fname_presuffix(
+                stem, suffix="_skeletonised", newpath=output_dir, use_ext=True
+            )
+    if (_si.skeleton_file is not attrs.NOTHING) and _si.skeleton_file:
+        outputs["skeleton_file"] = _si.skeleton_file
+        if isinstance(_si.skeleton_file, bool):
+            outputs["skeleton_file"] = fname_presuffix(
+                _si.in_file, suffix="_skeleton", newpath=output_dir, use_ext=True
+            )
+    return outputs
 
 
 # Original source at L108 of <nipype-install>/utils/filemanip.py
@@ -116,26 +139,3 @@ def split_filename(fname):
         fname, ext = op.splitext(fname)
 
     return pth, fname, ext
-
-
-# Original source at L1445 of <nipype-install>/interfaces/fsl/dti.py
-def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
-    outputs = {}
-    _si = inputs
-    if (_si.project_data is not attrs.NOTHING) and _si.project_data:
-        proj_data = _si.projected_data
-        outputs["projected_data"] = proj_data
-        if proj_data is attrs.NOTHING:
-            stem = _si.data_file
-            if _si.alt_data_file is not attrs.NOTHING:
-                stem = _si.alt_data_file
-            outputs["projected_data"] = fname_presuffix(
-                stem, suffix="_skeletonised", newpath=output_dir, use_ext=True
-            )
-    if (_si.skeleton_file is not attrs.NOTHING) and _si.skeleton_file:
-        outputs["skeleton_file"] = _si.skeleton_file
-        if isinstance(_si.skeleton_file, bool):
-            outputs["skeleton_file"] = fname_presuffix(
-                _si.in_file, suffix="_skeleton", newpath=output_dir, use_ext=True
-            )
-    return outputs

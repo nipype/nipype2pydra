@@ -1,18 +1,11 @@
 """Module to put any functions that are referred to in the "callables" section of FitMSParams.yaml"""
 
-import os
 import attrs
+import os
 
 
 def out_dir_default(inputs):
     return _gen_filename("out_dir", inputs=inputs)
-
-
-def t1_image_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["t1_image"]
 
 
 def pd_image_callable(output_dir, inputs, stdout, stderr):
@@ -20,6 +13,13 @@ def pd_image_callable(output_dir, inputs, stdout, stderr):
         output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
     )
     return outputs["pd_image"]
+
+
+def t1_image_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["t1_image"]
 
 
 def t2star_image_callable(output_dir, inputs, stdout, stderr):

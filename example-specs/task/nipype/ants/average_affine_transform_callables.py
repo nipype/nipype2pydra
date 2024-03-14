@@ -1,7 +1,6 @@
 """Module to put any functions that are referred to in the "callables" section of AverageAffineTransform.yaml"""
 
 import os
-import attrs
 
 
 def affine_transform_callable(output_dir, inputs, stdout, stderr):

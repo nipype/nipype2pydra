@@ -1,28 +1,21 @@
 """Module to put any functions that are referred to in the "callables" section of EpiReg.yaml"""
 
-import os
 import attrs
+import os
 
 
-def out_file_callable(output_dir, inputs, stdout, stderr):
+def epi2str_inv_callable(output_dir, inputs, stdout, stderr):
     outputs = _list_outputs(
         output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
     )
-    return outputs["out_file"]
+    return outputs["epi2str_inv"]
 
 
-def out_1vol_callable(output_dir, inputs, stdout, stderr):
+def epi2str_mat_callable(output_dir, inputs, stdout, stderr):
     outputs = _list_outputs(
         output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
     )
-    return outputs["out_1vol"]
-
-
-def fmap2str_mat_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["fmap2str_mat"]
+    return outputs["epi2str_mat"]
 
 
 def fmap2epi_mat_callable(output_dir, inputs, stdout, stderr):
@@ -30,6 +23,13 @@ def fmap2epi_mat_callable(output_dir, inputs, stdout, stderr):
         output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
     )
     return outputs["fmap2epi_mat"]
+
+
+def fmap2str_mat_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["fmap2str_mat"]
 
 
 def fmap_epi_callable(output_dir, inputs, stdout, stderr):
@@ -53,27 +53,6 @@ def fmapmag_str_callable(output_dir, inputs, stdout, stderr):
     return outputs["fmapmag_str"]
 
 
-def epi2str_inv_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["epi2str_inv"]
-
-
-def epi2str_mat_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["epi2str_mat"]
-
-
-def shiftmap_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["shiftmap"]
-
-
 def fullwarp_callable(output_dir, inputs, stdout, stderr):
     outputs = _list_outputs(
         output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
@@ -81,11 +60,18 @@ def fullwarp_callable(output_dir, inputs, stdout, stderr):
     return outputs["fullwarp"]
 
 
-def wmseg_callable(output_dir, inputs, stdout, stderr):
+def out_1vol_callable(output_dir, inputs, stdout, stderr):
     outputs = _list_outputs(
         output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
     )
-    return outputs["wmseg"]
+    return outputs["out_1vol"]
+
+
+def out_file_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["out_file"]
 
 
 def seg_callable(output_dir, inputs, stdout, stderr):
@@ -95,11 +81,25 @@ def seg_callable(output_dir, inputs, stdout, stderr):
     return outputs["seg"]
 
 
+def shiftmap_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["shiftmap"]
+
+
 def wmedge_callable(output_dir, inputs, stdout, stderr):
     outputs = _list_outputs(
         output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
     )
     return outputs["wmedge"]
+
+
+def wmseg_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["wmseg"]
 
 
 # Original source at L885 of <nipype-install>/interfaces/base/core.py

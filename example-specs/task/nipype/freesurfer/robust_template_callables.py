@@ -1,7 +1,7 @@
 """Module to put any functions that are referred to in the "callables" section of RobustTemplate.yaml"""
 
-import os
 import attrs
+import os
 
 
 def out_file_callable(output_dir, inputs, stdout, stderr):
@@ -11,18 +11,18 @@ def out_file_callable(output_dir, inputs, stdout, stderr):
     return outputs["out_file"]
 
 
-def transform_outputs_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["transform_outputs"]
-
-
 def scaled_intensity_outputs_callable(output_dir, inputs, stdout, stderr):
     outputs = _list_outputs(
         output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
     )
     return outputs["scaled_intensity_outputs"]
+
+
+def transform_outputs_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["transform_outputs"]
 
 
 # Original source at L885 of <nipype-install>/interfaces/base/core.py

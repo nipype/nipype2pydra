@@ -1,7 +1,6 @@
 """Module to put any functions that are referred to in the "callables" section of ICA_AROMA.yaml"""
 
 import os
-import attrs
 
 
 def aggr_denoised_file_callable(output_dir, inputs, stdout, stderr):

@@ -1,42 +1,7 @@
 """Module to put any functions that are referred to in the "callables" section of Remlfit.yaml"""
 
-import os
 import attrs
-
-
-def out_file_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["out_file"]
-
-
-def var_file_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["var_file"]
-
-
-def rbeta_file_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["rbeta_file"]
-
-
-def glt_file_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["glt_file"]
-
-
-def fitts_file_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["fitts_file"]
+import os
 
 
 def errts_file_callable(output_dir, inputs, stdout, stderr):
@@ -46,18 +11,18 @@ def errts_file_callable(output_dir, inputs, stdout, stderr):
     return outputs["errts_file"]
 
 
-def wherr_file_callable(output_dir, inputs, stdout, stderr):
+def fitts_file_callable(output_dir, inputs, stdout, stderr):
     outputs = _list_outputs(
         output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
     )
-    return outputs["wherr_file"]
+    return outputs["fitts_file"]
 
 
-def ovar_callable(output_dir, inputs, stdout, stderr):
+def glt_file_callable(output_dir, inputs, stdout, stderr):
     outputs = _list_outputs(
         output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
     )
-    return outputs["ovar"]
+    return outputs["glt_file"]
 
 
 def obeta_callable(output_dir, inputs, stdout, stderr):
@@ -74,11 +39,11 @@ def obuck_callable(output_dir, inputs, stdout, stderr):
     return outputs["obuck"]
 
 
-def oglt_callable(output_dir, inputs, stdout, stderr):
+def oerrts_callable(output_dir, inputs, stdout, stderr):
     outputs = _list_outputs(
         output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
     )
-    return outputs["oglt"]
+    return outputs["oerrts"]
 
 
 def ofitts_callable(output_dir, inputs, stdout, stderr):
@@ -88,11 +53,46 @@ def ofitts_callable(output_dir, inputs, stdout, stderr):
     return outputs["ofitts"]
 
 
-def oerrts_callable(output_dir, inputs, stdout, stderr):
+def oglt_callable(output_dir, inputs, stdout, stderr):
     outputs = _list_outputs(
         output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
     )
-    return outputs["oerrts"]
+    return outputs["oglt"]
+
+
+def out_file_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["out_file"]
+
+
+def ovar_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["ovar"]
+
+
+def rbeta_file_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["rbeta_file"]
+
+
+def var_file_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["var_file"]
+
+
+def wherr_file_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["wherr_file"]
 
 
 # Original source at L885 of <nipype-install>/interfaces/base/core.py

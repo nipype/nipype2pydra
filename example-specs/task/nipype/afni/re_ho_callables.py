@@ -1,9 +1,9 @@
 """Module to put any functions that are referred to in the "callables" section of ReHo.yaml"""
 
+import attrs
 import logging
 import os
 import os.path as op
-import attrs
 
 
 def out_file_callable(output_dir, inputs, stdout, stderr):
@@ -21,75 +21,6 @@ def out_vals_callable(output_dir, inputs, stdout, stderr):
 
 
 iflogger = logging.getLogger("nipype.interface")
-
-
-# Original source at L125 of <nipype-install>/interfaces/base/support.py
-class NipypeInterfaceError(Exception):
-    """Custom error for interfaces"""
-
-    def __init__(self, value):
-        self.value = value
-
-    def __str__(self):
-        return "{}".format(self.value)
-
-
-# Original source at L58 of <nipype-install>/utils/filemanip.py
-def split_filename(fname):
-    """Split a filename into parts: path, base filename and extension.
-
-    Parameters
-    ----------
-    fname : str
-        file or path name
-
-    Returns
-    -------
-    pth : str
-        base path from fname
-    fname : str
-        filename from fname, without extension
-    ext : str
-        file extension from fname
-
-    Examples
-    --------
-    >>> from nipype.utils.filemanip import split_filename
-    >>> pth, fname, ext = split_filename('/home/data/subject.nii.gz')
-    >>> pth
-    '/home/data'
-
-    >>> fname
-    'subject'
-
-    >>> ext
-    '.nii.gz'
-
-    """
-
-    special_extensions = [".nii.gz", ".tar.gz", ".niml.dset"]
-
-    pth = op.dirname(fname)
-    fname = op.basename(fname)
-
-    ext = None
-    for special_ext in special_extensions:
-        ext_len = len(special_ext)
-        if (len(fname) > ext_len) and (fname[-ext_len:].lower() == special_ext.lower()):
-            ext = fname[-ext_len:]
-            fname = fname[:-ext_len]
-            break
-    if not ext:
-        fname, ext = op.splitext(fname)
-
-    return pth, fname, ext
-
-
-# Original source at L888 of <nipype-install>/interfaces/base/core.py
-def _overload_extension(
-    value, name=None, inputs=None, stdout=None, stderr=None, output_dir=None
-):
-    return value
 
 
 # Original source at L809 of <nipype-install>/interfaces/base/core.py
@@ -187,6 +118,26 @@ def _filename_from_source(
     return retval
 
 
+# Original source at L885 of <nipype-install>/interfaces/base/core.py
+def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
+    raise NotImplementedError
+
+
+# Original source at L2583 of <nipype-install>/interfaces/afni/utils.py
+def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
+    outputs = nipype_interfaces_afni__AFNICommandBase___list_outputs()
+    if inputs.label_set:
+        outputs["out_vals"] = outputs["out_file"] + "_ROI_reho.vals"
+    return outputs
+
+
+# Original source at L888 of <nipype-install>/interfaces/base/core.py
+def _overload_extension(
+    value, name=None, inputs=None, stdout=None, stderr=None, output_dir=None
+):
+    return value
+
+
 # Original source at L891 of <nipype-install>/interfaces/base/core.py
 def nipype_interfaces_afni__AFNICommandBase___list_outputs(
     inputs=None, stdout=None, stderr=None, output_dir=None
@@ -207,14 +158,63 @@ def nipype_interfaces_afni__AFNICommandBase___list_outputs(
         return outputs
 
 
-# Original source at L885 of <nipype-install>/interfaces/base/core.py
-def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
-    raise NotImplementedError
+# Original source at L58 of <nipype-install>/utils/filemanip.py
+def split_filename(fname):
+    """Split a filename into parts: path, base filename and extension.
+
+    Parameters
+    ----------
+    fname : str
+        file or path name
+
+    Returns
+    -------
+    pth : str
+        base path from fname
+    fname : str
+        filename from fname, without extension
+    ext : str
+        file extension from fname
+
+    Examples
+    --------
+    >>> from nipype.utils.filemanip import split_filename
+    >>> pth, fname, ext = split_filename('/home/data/subject.nii.gz')
+    >>> pth
+    '/home/data'
+
+    >>> fname
+    'subject'
+
+    >>> ext
+    '.nii.gz'
+
+    """
+
+    special_extensions = [".nii.gz", ".tar.gz", ".niml.dset"]
+
+    pth = op.dirname(fname)
+    fname = op.basename(fname)
+
+    ext = None
+    for special_ext in special_extensions:
+        ext_len = len(special_ext)
+        if (len(fname) > ext_len) and (fname[-ext_len:].lower() == special_ext.lower()):
+            ext = fname[-ext_len:]
+            fname = fname[:-ext_len]
+            break
+    if not ext:
+        fname, ext = op.splitext(fname)
+
+    return pth, fname, ext
 
 
-# Original source at L2583 of <nipype-install>/interfaces/afni/utils.py
-def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
-    outputs = nipype_interfaces_afni__AFNICommandBase___list_outputs()
-    if inputs.label_set:
-        outputs["out_vals"] = outputs["out_file"] + "_ROI_reho.vals"
-    return outputs
+# Original source at L125 of <nipype-install>/interfaces/base/support.py
+class NipypeInterfaceError(Exception):
+    """Custom error for interfaces"""
+
+    def __init__(self, value):
+        self.value = value
+
+    def __str__(self):
+        return "{}".format(self.value)

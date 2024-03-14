@@ -1,15 +1,15 @@
 """Module to put any functions that are referred to in the "callables" section of SphericalAverage.yaml"""
 
-import os
 import attrs
-
-
-def out_file_default(inputs):
-    return _gen_filename("out_file", inputs=inputs)
+import os
 
 
 def in_average_default(inputs):
     return _gen_filename("in_average", inputs=inputs)
+
+
+def out_file_default(inputs):
+    return _gen_filename("out_file", inputs=inputs)
 
 
 def out_file_callable(output_dir, inputs, stdout, stderr):

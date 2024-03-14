@@ -16,27 +16,6 @@ def out_file_callable(output_dir, inputs, stdout, stderr):
 iflogger = logging.getLogger("nipype.interface")
 
 
-# Original source at L675 of <nipype-install>/interfaces/afni/preprocess.py
-def _overload_extension(
-    value, name=None, inputs=None, stdout=None, stderr=None, output_dir=None
-):
-    path, base, ext = split_filename(value)
-    if ext.lower() not in [".1d", ".1D", ".nii.gz", ".nii"]:
-        ext = ext + ".1D"
-    return os.path.join(path, base + ext)
-
-
-# Original source at L125 of <nipype-install>/interfaces/base/support.py
-class NipypeInterfaceError(Exception):
-    """Custom error for interfaces"""
-
-    def __init__(self, value):
-        self.value = value
-
-    def __str__(self):
-        return "{}".format(self.value)
-
-
 # Original source at L809 of <nipype-install>/interfaces/base/core.py
 def _filename_from_source(
     name, chain=None, inputs=None, stdout=None, stderr=None, output_dir=None
@@ -132,6 +111,35 @@ def _filename_from_source(
     return retval
 
 
+# Original source at L885 of <nipype-install>/interfaces/base/core.py
+def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
+    raise NotImplementedError
+
+
+# Original source at L248 of <nipype-install>/interfaces/afni/base.py
+def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
+    outputs = nipype_interfaces_afni__AFNICommandBase___list_outputs()
+    metadata = dict(name_source=lambda t: t is not None)
+    out_names = list(inputs.traits(**metadata).keys())
+    if out_names:
+        for name in out_names:
+            if outputs[name]:
+                _, _, ext = split_filename(outputs[name])
+                if ext == "":
+                    outputs[name] = outputs[name] + "+orig.BRIK"
+    return outputs
+
+
+# Original source at L675 of <nipype-install>/interfaces/afni/preprocess.py
+def _overload_extension(
+    value, name=None, inputs=None, stdout=None, stderr=None, output_dir=None
+):
+    path, base, ext = split_filename(value)
+    if ext.lower() not in [".1d", ".1D", ".nii.gz", ".nii"]:
+        ext = ext + ".1D"
+    return os.path.join(path, base + ext)
+
+
 # Original source at L891 of <nipype-install>/interfaces/base/core.py
 def nipype_interfaces_afni__AFNICommandBase___list_outputs(
     inputs=None, stdout=None, stderr=None, output_dir=None
@@ -152,9 +160,20 @@ def nipype_interfaces_afni__AFNICommandBase___list_outputs(
         return outputs
 
 
-# Original source at L885 of <nipype-install>/interfaces/base/core.py
-def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
-    raise NotImplementedError
+# Original source at L248 of <nipype-install>/interfaces/afni/base.py
+def nipype_interfaces_afni__AFNICommand___list_outputs(
+    inputs=None, stdout=None, stderr=None, output_dir=None
+):
+    outputs = nipype_interfaces_afni__AFNICommandBase___list_outputs()
+    metadata = dict(name_source=lambda t: t is not None)
+    out_names = list(inputs.traits(**metadata).keys())
+    if out_names:
+        for name in out_names:
+            if outputs[name]:
+                _, _, ext = split_filename(outputs[name])
+                if ext == "":
+                    outputs[name] = outputs[name] + "+orig.BRIK"
+    return outputs
 
 
 # Original source at L58 of <nipype-install>/utils/filemanip.py
@@ -208,31 +227,12 @@ def split_filename(fname):
     return pth, fname, ext
 
 
-# Original source at L248 of <nipype-install>/interfaces/afni/base.py
-def nipype_interfaces_afni__AFNICommand___list_outputs(
-    inputs=None, stdout=None, stderr=None, output_dir=None
-):
-    outputs = nipype_interfaces_afni__AFNICommandBase___list_outputs()
-    metadata = dict(name_source=lambda t: t is not None)
-    out_names = list(inputs.traits(**metadata).keys())
-    if out_names:
-        for name in out_names:
-            if outputs[name]:
-                _, _, ext = split_filename(outputs[name])
-                if ext == "":
-                    outputs[name] = outputs[name] + "+orig.BRIK"
-    return outputs
+# Original source at L125 of <nipype-install>/interfaces/base/support.py
+class NipypeInterfaceError(Exception):
+    """Custom error for interfaces"""
 
+    def __init__(self, value):
+        self.value = value
 
-# Original source at L248 of <nipype-install>/interfaces/afni/base.py
-def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
-    outputs = nipype_interfaces_afni__AFNICommandBase___list_outputs()
-    metadata = dict(name_source=lambda t: t is not None)
-    out_names = list(inputs.traits(**metadata).keys())
-    if out_names:
-        for name in out_names:
-            if outputs[name]:
-                _, _, ext = split_filename(outputs[name])
-                if ext == "":
-                    outputs[name] = outputs[name] + "+orig.BRIK"
-    return outputs
+    def __str__(self):
+        return "{}".format(self.value)

@@ -1,7 +1,6 @@
 """Module to put any functions that are referred to in the "callables" section of MRIsCombine.yaml"""
 
 import os
-import attrs
 
 
 def out_file_default(inputs):

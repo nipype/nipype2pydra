@@ -1,49 +1,7 @@
 """Module to put any functions that are referred to in the "callables" section of Registration.yaml"""
 
-import os
 import attrs
-
-
-def forward_transforms_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["forward_transforms"]
-
-
-def reverse_forward_transforms_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["reverse_forward_transforms"]
-
-
-def reverse_transforms_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["reverse_transforms"]
-
-
-def forward_invert_flags_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["forward_invert_flags"]
-
-
-def reverse_forward_invert_flags_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["reverse_forward_invert_flags"]
-
-
-def reverse_invert_flags_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["reverse_invert_flags"]
+import os
 
 
 def composite_transform_callable(output_dir, inputs, stdout, stderr):
@@ -53,18 +11,32 @@ def composite_transform_callable(output_dir, inputs, stdout, stderr):
     return outputs["composite_transform"]
 
 
+def elapsed_time_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["elapsed_time"]
+
+
+def forward_invert_flags_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["forward_invert_flags"]
+
+
+def forward_transforms_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["forward_transforms"]
+
+
 def inverse_composite_transform_callable(output_dir, inputs, stdout, stderr):
     outputs = _list_outputs(
         output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
     )
     return outputs["inverse_composite_transform"]
-
-
-def warped_image_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["warped_image"]
 
 
 def inverse_warped_image_callable(output_dir, inputs, stdout, stderr):
@@ -74,13 +46,6 @@ def inverse_warped_image_callable(output_dir, inputs, stdout, stderr):
     return outputs["inverse_warped_image"]
 
 
-def save_state_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["save_state"]
-
-
 def metric_value_callable(output_dir, inputs, stdout, stderr):
     outputs = _list_outputs(
         output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
@@ -88,11 +53,46 @@ def metric_value_callable(output_dir, inputs, stdout, stderr):
     return outputs["metric_value"]
 
 
-def elapsed_time_callable(output_dir, inputs, stdout, stderr):
+def reverse_forward_invert_flags_callable(output_dir, inputs, stdout, stderr):
     outputs = _list_outputs(
         output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
     )
-    return outputs["elapsed_time"]
+    return outputs["reverse_forward_invert_flags"]
+
+
+def reverse_forward_transforms_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["reverse_forward_transforms"]
+
+
+def reverse_invert_flags_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["reverse_invert_flags"]
+
+
+def reverse_transforms_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["reverse_transforms"]
+
+
+def save_state_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["save_state"]
+
+
+def warped_image_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["warped_image"]
 
 
 # Original source at L885 of <nipype-install>/interfaces/base/core.py
@@ -123,39 +123,6 @@ def _get_outputfilenames(
                 "%s_InverseWarped.nii.gz" % inputs.output_transform_prefix
             )
     return inv_output_filename
-
-
-# Original source at L1341 of <nipype-install>/interfaces/ants/registration.py
-def _output_filenames(
-    prefix,
-    count,
-    transform,
-    inverse=False,
-    inputs=None,
-    stdout=None,
-    stderr=None,
-    output_dir=None,
-):
-    low_dimensional_transform_map = {
-        "Rigid": "Rigid.mat",
-        "Affine": "Affine.mat",
-        "GenericAffine": "GenericAffine.mat",
-        "CompositeAffine": "Affine.mat",
-        "Similarity": "Similarity.mat",
-        "Translation": "Translation.mat",
-        "BSpline": "BSpline.txt",
-        "Initial": "DerivedInitialMovingTranslation.mat",
-    }
-    if transform in list(low_dimensional_transform_map.keys()):
-        suffix = low_dimensional_transform_map[transform]
-        inverse_mode = inverse
-    else:
-        inverse_mode = False  # These are not analytically invertable
-        if inverse:
-            suffix = "InverseWarp.nii.gz"
-        else:
-            suffix = "Warp.nii.gz"
-    return "%s%d%s" % (prefix, count, suffix), inverse_mode
 
 
 # Original source at L1363 of <nipype-install>/interfaces/ants/registration.py
@@ -316,3 +283,36 @@ def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
     outputs["reverse_forward_invert_flags"] = outputs["forward_invert_flags"][::-1]
 
     return outputs
+
+
+# Original source at L1341 of <nipype-install>/interfaces/ants/registration.py
+def _output_filenames(
+    prefix,
+    count,
+    transform,
+    inverse=False,
+    inputs=None,
+    stdout=None,
+    stderr=None,
+    output_dir=None,
+):
+    low_dimensional_transform_map = {
+        "Rigid": "Rigid.mat",
+        "Affine": "Affine.mat",
+        "GenericAffine": "GenericAffine.mat",
+        "CompositeAffine": "Affine.mat",
+        "Similarity": "Similarity.mat",
+        "Translation": "Translation.mat",
+        "BSpline": "BSpline.txt",
+        "Initial": "DerivedInitialMovingTranslation.mat",
+    }
+    if transform in list(low_dimensional_transform_map.keys()):
+        suffix = low_dimensional_transform_map[transform]
+        inverse_mode = inverse
+    else:
+        inverse_mode = False  # These are not analytically invertable
+        if inverse:
+            suffix = "InverseWarp.nii.gz"
+        else:
+            suffix = "Warp.nii.gz"
+    return "%s%d%s" % (prefix, count, suffix), inverse_mode

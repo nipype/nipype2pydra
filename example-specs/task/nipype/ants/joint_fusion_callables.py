@@ -1,15 +1,15 @@
 """Module to put any functions that are referred to in the "callables" section of JointFusion.yaml"""
 
+import attrs
 import os
 from glob import glob
-import attrs
 
 
-def out_label_fusion_callable(output_dir, inputs, stdout, stderr):
+def out_atlas_voting_weight_callable(output_dir, inputs, stdout, stderr):
     outputs = _list_outputs(
         output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
     )
-    return outputs["out_label_fusion"]
+    return outputs["out_atlas_voting_weight"]
 
 
 def out_intensity_fusion_callable(output_dir, inputs, stdout, stderr):
@@ -19,18 +19,18 @@ def out_intensity_fusion_callable(output_dir, inputs, stdout, stderr):
     return outputs["out_intensity_fusion"]
 
 
+def out_label_fusion_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["out_label_fusion"]
+
+
 def out_label_post_prob_callable(output_dir, inputs, stdout, stderr):
     outputs = _list_outputs(
         output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
     )
     return outputs["out_label_post_prob"]
-
-
-def out_atlas_voting_weight_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["out_atlas_voting_weight"]
 
 
 # Original source at L885 of <nipype-install>/interfaces/base/core.py

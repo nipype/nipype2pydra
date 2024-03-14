@@ -2,7 +2,6 @@
 
 import os
 import os.path as op
-import attrs
 
 
 def out_file_callable(output_dir, inputs, stdout, stderr):

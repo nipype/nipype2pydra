@@ -1,6 +1,5 @@
 """Module to put any functions that are referred to in the "callables" section of FEAT.yaml"""
 
-import attrs
 import os
 from glob import glob
 

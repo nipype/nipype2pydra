@@ -1,9 +1,9 @@
 """Module to put any functions that are referred to in the "callables" section of SurfaceTransform.yaml"""
 
+import attrs
 import os
 import os.path as op
 from pathlib import Path
-import attrs
 
 
 def out_file_default(inputs):
@@ -34,6 +34,67 @@ filemap = dict(
     niigz="nii.gz",
     gii="gii",
 )
+
+
+# Original source at L663 of <nipype-install>/interfaces/freesurfer/utils.py
+def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
+    if name == "out_file":
+        return _list_outputs(
+            inputs=inputs, stdout=stdout, stderr=stderr, output_dir=output_dir
+        )[name]
+    return None
+
+
+# Original source at L613 of <nipype-install>/interfaces/freesurfer/utils.py
+def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
+    outputs = {}
+    outputs["out_file"] = inputs.out_file
+    if outputs["out_file"] is attrs.NOTHING:
+        if inputs.source_file is not attrs.NOTHING:
+            source = inputs.source_file
+        else:
+            source = inputs.source_annot_file
+
+        # Some recon-all files don't have a proper extension (e.g. "lh.thickness")
+        # so we have to account for that here
+        bad_extensions = [
+            ".%s" % e
+            for e in [
+                "area",
+                "mid",
+                "pial",
+                "avg_curv",
+                "curv",
+                "inflated",
+                "jacobian_white",
+                "orig",
+                "nofix",
+                "smoothwm",
+                "crv",
+                "sphere",
+                "sulc",
+                "thickness",
+                "volume",
+                "white",
+            ]
+        ]
+        use_ext = True
+        if split_filename(source)[2] in bad_extensions:
+            source = source + ".stripme"
+            use_ext = False
+        ext = ""
+        if inputs.target_type is not attrs.NOTHING:
+            ext = "." + filemap[inputs.target_type]
+            use_ext = False
+        outputs["out_file"] = fname_presuffix(
+            source,
+            suffix=".%s%s" % (inputs.target_subject, ext),
+            newpath=output_dir,
+            use_ext=use_ext,
+        )
+    else:
+        outputs["out_file"] = os.path.abspath(inputs.out_file)
+    return outputs
 
 
 # Original source at L108 of <nipype-install>/utils/filemanip.py
@@ -128,64 +189,3 @@ def split_filename(fname):
         fname, ext = op.splitext(fname)
 
     return pth, fname, ext
-
-
-# Original source at L663 of <nipype-install>/interfaces/freesurfer/utils.py
-def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
-    if name == "out_file":
-        return _list_outputs(
-            inputs=inputs, stdout=stdout, stderr=stderr, output_dir=output_dir
-        )[name]
-    return None
-
-
-# Original source at L613 of <nipype-install>/interfaces/freesurfer/utils.py
-def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
-    outputs = {}
-    outputs["out_file"] = inputs.out_file
-    if outputs["out_file"] is attrs.NOTHING:
-        if inputs.source_file is not attrs.NOTHING:
-            source = inputs.source_file
-        else:
-            source = inputs.source_annot_file
-
-        # Some recon-all files don't have a proper extension (e.g. "lh.thickness")
-        # so we have to account for that here
-        bad_extensions = [
-            ".%s" % e
-            for e in [
-                "area",
-                "mid",
-                "pial",
-                "avg_curv",
-                "curv",
-                "inflated",
-                "jacobian_white",
-                "orig",
-                "nofix",
-                "smoothwm",
-                "crv",
-                "sphere",
-                "sulc",
-                "thickness",
-                "volume",
-                "white",
-            ]
-        ]
-        use_ext = True
-        if split_filename(source)[2] in bad_extensions:
-            source = source + ".stripme"
-            use_ext = False
-        ext = ""
-        if inputs.target_type is not attrs.NOTHING:
-            ext = "." + filemap[inputs.target_type]
-            use_ext = False
-        outputs["out_file"] = fname_presuffix(
-            source,
-            suffix=".%s%s" % (inputs.target_subject, ext),
-            newpath=output_dir,
-            use_ext=use_ext,
-        )
-    else:
-        outputs["out_file"] = os.path.abspath(inputs.out_file)
-    return outputs

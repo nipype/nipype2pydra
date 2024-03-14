@@ -1,23 +1,9 @@
 """Module to put any functions that are referred to in the "callables" section of FLAMEO.yaml"""
 
-import re
-import os
-from glob import glob
 import attrs
-
-
-def pes_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["pes"]
-
-
-def res4d_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["res4d"]
+import os
+import re
+from glob import glob
 
 
 def copes_callable(output_dir, inputs, stdout, stderr):
@@ -25,34 +11,6 @@ def copes_callable(output_dir, inputs, stdout, stderr):
         output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
     )
     return outputs["copes"]
-
-
-def var_copes_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["var_copes"]
-
-
-def zstats_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["zstats"]
-
-
-def tstats_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["tstats"]
-
-
-def zfstats_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["zfstats"]
 
 
 def fstats_callable(output_dir, inputs, stdout, stderr):
@@ -69,18 +27,18 @@ def mrefvars_callable(output_dir, inputs, stdout, stderr):
     return outputs["mrefvars"]
 
 
-def tdof_callable(output_dir, inputs, stdout, stderr):
+def pes_callable(output_dir, inputs, stdout, stderr):
     outputs = _list_outputs(
         output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
     )
-    return outputs["tdof"]
+    return outputs["pes"]
 
 
-def weights_callable(output_dir, inputs, stdout, stderr):
+def res4d_callable(output_dir, inputs, stdout, stderr):
     outputs = _list_outputs(
         output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
     )
-    return outputs["weights"]
+    return outputs["res4d"]
 
 
 def stats_dir_callable(output_dir, inputs, stdout, stderr):
@@ -90,24 +48,51 @@ def stats_dir_callable(output_dir, inputs, stdout, stderr):
     return outputs["stats_dir"]
 
 
+def tdof_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["tdof"]
+
+
+def tstats_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["tstats"]
+
+
+def var_copes_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["var_copes"]
+
+
+def weights_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["weights"]
+
+
+def zfstats_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["zfstats"]
+
+
+def zstats_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["zstats"]
+
+
 # Original source at L885 of <nipype-install>/interfaces/base/core.py
 def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
     raise NotImplementedError
-
-
-# Original source at L19 of <nipype-install>/utils/misc.py
-def human_order_sorted(l):
-    """Sorts string in human order (i.e. 'stat10' will go after 'stat2')"""
-
-    def atoi(text):
-        return int(text) if text.isdigit() else text
-
-    def natural_keys(text):
-        if isinstance(text, tuple):
-            text = text[0]
-        return [atoi(c) for c in re.split(r"(\d+)", text)]
-
-    return sorted(l, key=natural_keys)
 
 
 # Original source at L1143 of <nipype-install>/interfaces/fsl/model.py
@@ -165,3 +150,18 @@ def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
     outputs["stats_dir"] = pth
 
     return outputs
+
+
+# Original source at L19 of <nipype-install>/utils/misc.py
+def human_order_sorted(l):
+    """Sorts string in human order (i.e. 'stat10' will go after 'stat2')"""
+
+    def atoi(text):
+        return int(text) if text.isdigit() else text
+
+    def natural_keys(text):
+        if isinstance(text, tuple):
+            text = text[0]
+        return [atoi(c) for c in re.split(r"(\d+)", text)]
+
+    return sorted(l, key=natural_keys)

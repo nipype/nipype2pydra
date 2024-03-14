@@ -1,14 +1,7 @@
 """Module to put any functions that are referred to in the "callables" section of MS_LDA.yaml"""
 
-import os
 import attrs
-
-
-def weight_file_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["weight_file"]
+import os
 
 
 def vol_synth_file_callable(output_dir, inputs, stdout, stderr):
@@ -16,6 +9,13 @@ def vol_synth_file_callable(output_dir, inputs, stdout, stderr):
         output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
     )
     return outputs["vol_synth_file"]
+
+
+def weight_file_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["weight_file"]
 
 
 # Original source at L1416 of <nipype-install>/interfaces/freesurfer/model.py

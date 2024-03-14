@@ -1,46 +1,11 @@
 """Module to put any functions that are referred to in the "callables" section of GTMPVC.yaml"""
 
-import os
 import attrs
+import os
 
 
 def pvc_dir_default(inputs):
     return _gen_filename("pvc_dir", inputs=inputs)
-
-
-def pvc_dir_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["pvc_dir"]
-
-
-def ref_file_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["ref_file"]
-
-
-def hb_nifti_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["hb_nifti"]
-
-
-def hb_dat_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["hb_dat"]
-
-
-def nopvc_file_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["nopvc_file"]
 
 
 def gtm_file_callable(output_dir, inputs, stdout, stderr):
@@ -57,39 +22,25 @@ def gtm_stats_callable(output_dir, inputs, stdout, stderr):
     return outputs["gtm_stats"]
 
 
+def hb_dat_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["hb_dat"]
+
+
+def hb_nifti_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["hb_nifti"]
+
+
 def input_file_callable(output_dir, inputs, stdout, stderr):
     outputs = _list_outputs(
         output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
     )
     return outputs["input_file"]
-
-
-def reg_pet2anat_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["reg_pet2anat"]
-
-
-def reg_anat2pet_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["reg_anat2pet"]
-
-
-def reg_rbvpet2anat_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["reg_rbvpet2anat"]
-
-
-def reg_anat2rbvpet_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["reg_anat2rbvpet"]
 
 
 def mgx_ctxgm_callable(output_dir, inputs, stdout, stderr):
@@ -99,13 +50,6 @@ def mgx_ctxgm_callable(output_dir, inputs, stdout, stderr):
     return outputs["mgx_ctxgm"]
 
 
-def mgx_subctxgm_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["mgx_subctxgm"]
-
-
 def mgx_gm_callable(output_dir, inputs, stdout, stderr):
     outputs = _list_outputs(
         output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
@@ -113,11 +57,18 @@ def mgx_gm_callable(output_dir, inputs, stdout, stderr):
     return outputs["mgx_gm"]
 
 
-def rbv_callable(output_dir, inputs, stdout, stderr):
+def mgx_subctxgm_callable(output_dir, inputs, stdout, stderr):
     outputs = _list_outputs(
         output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
     )
-    return outputs["rbv"]
+    return outputs["mgx_subctxgm"]
+
+
+def nopvc_file_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["nopvc_file"]
 
 
 def opt_params_callable(output_dir, inputs, stdout, stderr):
@@ -127,11 +78,53 @@ def opt_params_callable(output_dir, inputs, stdout, stderr):
     return outputs["opt_params"]
 
 
-def yhat0_callable(output_dir, inputs, stdout, stderr):
+def pvc_dir_callable(output_dir, inputs, stdout, stderr):
     outputs = _list_outputs(
         output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
     )
-    return outputs["yhat0"]
+    return outputs["pvc_dir"]
+
+
+def rbv_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["rbv"]
+
+
+def ref_file_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["ref_file"]
+
+
+def reg_anat2pet_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["reg_anat2pet"]
+
+
+def reg_anat2rbvpet_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["reg_anat2rbvpet"]
+
+
+def reg_pet2anat_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["reg_pet2anat"]
+
+
+def reg_rbvpet2anat_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["reg_rbvpet2anat"]
 
 
 def yhat_callable(output_dir, inputs, stdout, stderr):
@@ -139,6 +132,13 @@ def yhat_callable(output_dir, inputs, stdout, stderr):
         output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
     )
     return outputs["yhat"]
+
+
+def yhat0_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["yhat0"]
 
 
 def yhat_full_fov_callable(output_dir, inputs, stdout, stderr):

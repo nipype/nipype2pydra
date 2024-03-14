@@ -1,14 +1,7 @@
 """Module to put any functions that are referred to in the "callables" section of BrainExtraction.yaml"""
 
-import os
 import attrs
-
-
-def BrainExtractionMask_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["BrainExtractionMask"]
+import os
 
 
 def BrainExtractionBrain_callable(output_dir, inputs, stdout, stderr):
@@ -58,6 +51,13 @@ def BrainExtractionLaplacian_callable(output_dir, inputs, stdout, stderr):
         output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
     )
     return outputs["BrainExtractionLaplacian"]
+
+
+def BrainExtractionMask_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["BrainExtractionMask"]
 
 
 def BrainExtractionPrior0GenericAffine_callable(output_dir, inputs, stdout, stderr):

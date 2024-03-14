@@ -1,7 +1,14 @@
 """Module to put any functions that are referred to in the "callables" section of Eddy.yaml"""
 
-import os
 import attrs
+import os
+
+
+def out_cnr_maps_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["out_cnr_maps"]
 
 
 def out_corrected_callable(output_dir, inputs, stdout, stderr):
@@ -11,18 +18,11 @@ def out_corrected_callable(output_dir, inputs, stdout, stderr):
     return outputs["out_corrected"]
 
 
-def out_parameter_callable(output_dir, inputs, stdout, stderr):
+def out_movement_over_time_callable(output_dir, inputs, stdout, stderr):
     outputs = _list_outputs(
         output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
     )
-    return outputs["out_parameter"]
-
-
-def out_rotated_bvecs_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["out_rotated_bvecs"]
+    return outputs["out_movement_over_time"]
 
 
 def out_movement_rms_callable(output_dir, inputs, stdout, stderr):
@@ -32,11 +32,67 @@ def out_movement_rms_callable(output_dir, inputs, stdout, stderr):
     return outputs["out_movement_rms"]
 
 
+def out_outlier_free_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["out_outlier_free"]
+
+
+def out_outlier_map_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["out_outlier_map"]
+
+
+def out_outlier_n_sqr_stdev_map_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["out_outlier_n_sqr_stdev_map"]
+
+
+def out_outlier_n_stdev_map_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["out_outlier_n_stdev_map"]
+
+
+def out_outlier_report_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["out_outlier_report"]
+
+
+def out_parameter_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["out_parameter"]
+
+
+def out_residuals_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["out_residuals"]
+
+
 def out_restricted_movement_rms_callable(output_dir, inputs, stdout, stderr):
     outputs = _list_outputs(
         output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
     )
     return outputs["out_restricted_movement_rms"]
+
+
+def out_rotated_bvecs_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["out_rotated_bvecs"]
 
 
 def out_shell_alignment_parameters_callable(output_dir, inputs, stdout, stderr):
@@ -51,62 +107,6 @@ def out_shell_pe_translation_parameters_callable(output_dir, inputs, stdout, std
         output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
     )
     return outputs["out_shell_pe_translation_parameters"]
-
-
-def out_outlier_map_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["out_outlier_map"]
-
-
-def out_outlier_n_stdev_map_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["out_outlier_n_stdev_map"]
-
-
-def out_outlier_n_sqr_stdev_map_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["out_outlier_n_sqr_stdev_map"]
-
-
-def out_outlier_report_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["out_outlier_report"]
-
-
-def out_outlier_free_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["out_outlier_free"]
-
-
-def out_movement_over_time_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["out_movement_over_time"]
-
-
-def out_cnr_maps_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["out_cnr_maps"]
-
-
-def out_residuals_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["out_residuals"]
 
 
 # Original source at L885 of <nipype-install>/interfaces/base/core.py

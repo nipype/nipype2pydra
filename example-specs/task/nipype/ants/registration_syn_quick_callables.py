@@ -1,14 +1,20 @@
 """Module to put any functions that are referred to in the "callables" section of RegistrationSynQuick.yaml"""
 
 import os
-import attrs
 
 
-def warped_image_callable(output_dir, inputs, stdout, stderr):
+def forward_warp_field_callable(output_dir, inputs, stdout, stderr):
     outputs = _list_outputs(
         output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
     )
-    return outputs["warped_image"]
+    return outputs["forward_warp_field"]
+
+
+def inverse_warp_field_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["inverse_warp_field"]
 
 
 def inverse_warped_image_callable(output_dir, inputs, stdout, stderr):
@@ -25,18 +31,11 @@ def out_matrix_callable(output_dir, inputs, stdout, stderr):
     return outputs["out_matrix"]
 
 
-def forward_warp_field_callable(output_dir, inputs, stdout, stderr):
+def warped_image_callable(output_dir, inputs, stdout, stderr):
     outputs = _list_outputs(
         output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
     )
-    return outputs["forward_warp_field"]
-
-
-def inverse_warp_field_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["inverse_warp_field"]
+    return outputs["warped_image"]
 
 
 # Original source at L885 of <nipype-install>/interfaces/base/core.py

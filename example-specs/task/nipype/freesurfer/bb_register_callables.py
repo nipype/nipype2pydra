@@ -1,19 +1,26 @@
 """Module to put any functions that are referred to in the "callables" section of BBRegister.yaml"""
 
+import attrs
 import os.path as op
 from pathlib import Path
-import attrs
 
 
 def out_reg_file_default(inputs):
     return _gen_filename("out_reg_file", inputs=inputs)
 
 
-def out_reg_file_callable(output_dir, inputs, stdout, stderr):
+def init_cost_file_callable(output_dir, inputs, stdout, stderr):
     outputs = _list_outputs(
         output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
     )
-    return outputs["out_reg_file"]
+    return outputs["init_cost_file"]
+
+
+def min_cost_file_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["min_cost_file"]
 
 
 def out_fsl_file_callable(output_dir, inputs, stdout, stderr):
@@ -30,18 +37,11 @@ def out_lta_file_callable(output_dir, inputs, stdout, stderr):
     return outputs["out_lta_file"]
 
 
-def min_cost_file_callable(output_dir, inputs, stdout, stderr):
+def out_reg_file_callable(output_dir, inputs, stdout, stderr):
     outputs = _list_outputs(
         output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
     )
-    return outputs["min_cost_file"]
-
-
-def init_cost_file_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["init_cost_file"]
+    return outputs["out_reg_file"]
 
 
 def registered_file_callable(output_dir, inputs, stdout, stderr):
@@ -49,6 +49,66 @@ def registered_file_callable(output_dir, inputs, stdout, stderr):
         output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
     )
     return outputs["registered_file"]
+
+
+# Original source at L1894 of <nipype-install>/interfaces/freesurfer/preprocess.py
+def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
+    if name == "out_reg_file":
+        return _list_outputs(
+            inputs=inputs, stdout=stdout, stderr=stderr, output_dir=output_dir
+        )[name]
+    return None
+
+
+# Original source at L1835 of <nipype-install>/interfaces/freesurfer/preprocess.py
+def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
+    outputs = {}
+    _in = inputs
+
+    if _in.out_reg_file is not attrs.NOTHING:
+        outputs["out_reg_file"] = op.abspath(_in.out_reg_file)
+    elif _in.source_file:
+        suffix = "_bbreg_%s.dat" % _in.subject_id
+        outputs["out_reg_file"] = fname_presuffix(
+            _in.source_file, suffix=suffix, use_ext=False
+        )
+
+    if _in.registered_file is not attrs.NOTHING:
+        if isinstance(_in.registered_file, bool):
+            outputs["registered_file"] = fname_presuffix(
+                _in.source_file, suffix="_bbreg"
+            )
+        else:
+            outputs["registered_file"] = op.abspath(_in.registered_file)
+
+    if _in.out_lta_file is not attrs.NOTHING:
+        if isinstance(_in.out_lta_file, bool):
+            suffix = "_bbreg_%s.lta" % _in.subject_id
+            out_lta_file = fname_presuffix(
+                _in.source_file, suffix=suffix, use_ext=False
+            )
+            outputs["out_lta_file"] = out_lta_file
+        else:
+            outputs["out_lta_file"] = op.abspath(_in.out_lta_file)
+
+    if _in.out_fsl_file is not attrs.NOTHING:
+        if isinstance(_in.out_fsl_file, bool):
+            suffix = "_bbreg_%s.mat" % _in.subject_id
+            out_fsl_file = fname_presuffix(
+                _in.source_file, suffix=suffix, use_ext=False
+            )
+            outputs["out_fsl_file"] = out_fsl_file
+        else:
+            outputs["out_fsl_file"] = op.abspath(_in.out_fsl_file)
+
+    if _in.init_cost_file is not attrs.NOTHING:
+        if isinstance(_in.out_fsl_file, bool):
+            outputs["init_cost_file"] = outputs["out_reg_file"] + ".initcost"
+        else:
+            outputs["init_cost_file"] = op.abspath(_in.init_cost_file)
+
+    outputs["min_cost_file"] = outputs["out_reg_file"] + ".mincost"
+    return outputs
 
 
 # Original source at L108 of <nipype-install>/utils/filemanip.py
@@ -143,63 +203,3 @@ def split_filename(fname):
         fname, ext = op.splitext(fname)
 
     return pth, fname, ext
-
-
-# Original source at L1894 of <nipype-install>/interfaces/freesurfer/preprocess.py
-def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
-    if name == "out_reg_file":
-        return _list_outputs(
-            inputs=inputs, stdout=stdout, stderr=stderr, output_dir=output_dir
-        )[name]
-    return None
-
-
-# Original source at L1835 of <nipype-install>/interfaces/freesurfer/preprocess.py
-def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
-    outputs = {}
-    _in = inputs
-
-    if _in.out_reg_file is not attrs.NOTHING:
-        outputs["out_reg_file"] = op.abspath(_in.out_reg_file)
-    elif _in.source_file:
-        suffix = "_bbreg_%s.dat" % _in.subject_id
-        outputs["out_reg_file"] = fname_presuffix(
-            _in.source_file, suffix=suffix, use_ext=False
-        )
-
-    if _in.registered_file is not attrs.NOTHING:
-        if isinstance(_in.registered_file, bool):
-            outputs["registered_file"] = fname_presuffix(
-                _in.source_file, suffix="_bbreg"
-            )
-        else:
-            outputs["registered_file"] = op.abspath(_in.registered_file)
-
-    if _in.out_lta_file is not attrs.NOTHING:
-        if isinstance(_in.out_lta_file, bool):
-            suffix = "_bbreg_%s.lta" % _in.subject_id
-            out_lta_file = fname_presuffix(
-                _in.source_file, suffix=suffix, use_ext=False
-            )
-            outputs["out_lta_file"] = out_lta_file
-        else:
-            outputs["out_lta_file"] = op.abspath(_in.out_lta_file)
-
-    if _in.out_fsl_file is not attrs.NOTHING:
-        if isinstance(_in.out_fsl_file, bool):
-            suffix = "_bbreg_%s.mat" % _in.subject_id
-            out_fsl_file = fname_presuffix(
-                _in.source_file, suffix=suffix, use_ext=False
-            )
-            outputs["out_fsl_file"] = out_fsl_file
-        else:
-            outputs["out_fsl_file"] = op.abspath(_in.out_fsl_file)
-
-    if _in.init_cost_file is not attrs.NOTHING:
-        if isinstance(_in.out_fsl_file, bool):
-            outputs["init_cost_file"] = outputs["out_reg_file"] + ".initcost"
-        else:
-            outputs["init_cost_file"] = op.abspath(_in.init_cost_file)
-
-    outputs["min_cost_file"] = outputs["out_reg_file"] + ".mincost"
-    return outputs

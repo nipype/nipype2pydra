@@ -1,14 +1,6 @@
 """Module to put any functions that are referred to in the "callables" section of OutlierCount.yaml"""
 
 import os.path as op
-import attrs
-
-
-def out_outliers_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["out_outliers"]
 
 
 def out_file_callable(output_dir, inputs, stdout, stderr):
@@ -16,6 +8,13 @@ def out_file_callable(output_dir, inputs, stdout, stderr):
         output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
     )
     return outputs["out_file"]
+
+
+def out_outliers_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["out_outliers"]
 
 
 # Original source at L885 of <nipype-install>/interfaces/base/core.py

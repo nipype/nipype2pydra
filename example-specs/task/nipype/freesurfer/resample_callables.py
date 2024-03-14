@@ -1,8 +1,8 @@
 """Module to put any functions that are referred to in the "callables" section of Resample.yaml"""
 
+import attrs
 import os.path as op
 from pathlib import Path
-import attrs
 
 
 def resampled_file_default(inputs):
@@ -14,6 +14,35 @@ def resampled_file_callable(output_dir, inputs, stdout, stderr):
         output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
     )
     return outputs["resampled_file"]
+
+
+# Original source at L811 of <nipype-install>/interfaces/freesurfer/preprocess.py
+def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
+    if name == "resampled_file":
+        return _get_outfilename(
+            inputs=inputs, stdout=stdout, stderr=stderr, output_dir=output_dir
+        )
+    return None
+
+
+# Original source at L797 of <nipype-install>/interfaces/freesurfer/preprocess.py
+def _get_outfilename(inputs=None, stdout=None, stderr=None, output_dir=None):
+    if inputs.resampled_file is not attrs.NOTHING:
+        outfile = inputs.resampled_file
+    else:
+        outfile = fname_presuffix(
+            inputs.in_file, newpath=output_dir, suffix="_resample"
+        )
+    return outfile
+
+
+# Original source at L806 of <nipype-install>/interfaces/freesurfer/preprocess.py
+def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
+    outputs = {}
+    outputs["resampled_file"] = _get_outfilename(
+        inputs=inputs, stdout=stdout, stderr=stderr, output_dir=output_dir
+    )
+    return outputs
 
 
 # Original source at L108 of <nipype-install>/utils/filemanip.py
@@ -108,32 +137,3 @@ def split_filename(fname):
         fname, ext = op.splitext(fname)
 
     return pth, fname, ext
-
-
-# Original source at L797 of <nipype-install>/interfaces/freesurfer/preprocess.py
-def _get_outfilename(inputs=None, stdout=None, stderr=None, output_dir=None):
-    if inputs.resampled_file is not attrs.NOTHING:
-        outfile = inputs.resampled_file
-    else:
-        outfile = fname_presuffix(
-            inputs.in_file, newpath=output_dir, suffix="_resample"
-        )
-    return outfile
-
-
-# Original source at L811 of <nipype-install>/interfaces/freesurfer/preprocess.py
-def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
-    if name == "resampled_file":
-        return _get_outfilename(
-            inputs=inputs, stdout=stdout, stderr=stderr, output_dir=output_dir
-        )
-    return None
-
-
-# Original source at L806 of <nipype-install>/interfaces/freesurfer/preprocess.py
-def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
-    outputs = {}
-    outputs["resampled_file"] = _get_outfilename(
-        inputs=inputs, stdout=stdout, stderr=stderr, output_dir=output_dir
-    )
-    return outputs

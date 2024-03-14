@@ -1,7 +1,6 @@
 """Module to put any functions that are referred to in the "callables" section of MultiplyImages.yaml"""
 
 import os
-import attrs
 
 
 def output_product_image_callable(output_dir, inputs, stdout, stderr):

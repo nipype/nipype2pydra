@@ -1,9 +1,9 @@
 """Module to put any functions that are referred to in the "callables" section of WarpPointsToStd.yaml"""
 
+import attrs
 import logging
 import os
 import os.path as op
-import attrs
 
 
 def out_file_callable(output_dir, inputs, stdout, stderr):
@@ -14,76 +14,6 @@ def out_file_callable(output_dir, inputs, stdout, stderr):
 
 
 iflogger = logging.getLogger("nipype.interface")
-
-
-# Original source at L2585 of <nipype-install>/interfaces/fsl/utils.py
-def _overload_extension(
-    value, name, inputs=None, stdout=None, stderr=None, output_dir=None
-):
-    if name == "out_file":
-        return "%s.%s" % (value, getattr(self, "_outformat"))
-
-
-# Original source at L125 of <nipype-install>/interfaces/base/support.py
-class NipypeInterfaceError(Exception):
-    """Custom error for interfaces"""
-
-    def __init__(self, value):
-        self.value = value
-
-    def __str__(self):
-        return "{}".format(self.value)
-
-
-# Original source at L58 of <nipype-install>/utils/filemanip.py
-def split_filename(fname):
-    """Split a filename into parts: path, base filename and extension.
-
-    Parameters
-    ----------
-    fname : str
-        file or path name
-
-    Returns
-    -------
-    pth : str
-        base path from fname
-    fname : str
-        filename from fname, without extension
-    ext : str
-        file extension from fname
-
-    Examples
-    --------
-    >>> from nipype.utils.filemanip import split_filename
-    >>> pth, fname, ext = split_filename('/home/data/subject.nii.gz')
-    >>> pth
-    '/home/data'
-
-    >>> fname
-    'subject'
-
-    >>> ext
-    '.nii.gz'
-
-    """
-
-    special_extensions = [".nii.gz", ".tar.gz", ".niml.dset"]
-
-    pth = op.dirname(fname)
-    fname = op.basename(fname)
-
-    ext = None
-    for special_ext in special_extensions:
-        ext_len = len(special_ext)
-        if (len(fname) > ext_len) and (fname[-ext_len:].lower() == special_ext.lower()):
-            ext = fname[-ext_len:]
-            fname = fname[:-ext_len]
-            break
-    if not ext:
-        fname, ext = op.splitext(fname)
-
-    return pth, fname, ext
 
 
 # Original source at L809 of <nipype-install>/interfaces/base/core.py
@@ -202,3 +132,73 @@ def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
             if fname is not attrs.NOTHING:
                 outputs[out_name] = os.path.abspath(fname)
         return outputs
+
+
+# Original source at L2585 of <nipype-install>/interfaces/fsl/utils.py
+def _overload_extension(
+    value, name, inputs=None, stdout=None, stderr=None, output_dir=None
+):
+    if name == "out_file":
+        return "%s.%s" % (value, getattr(self, "_outformat"))
+
+
+# Original source at L58 of <nipype-install>/utils/filemanip.py
+def split_filename(fname):
+    """Split a filename into parts: path, base filename and extension.
+
+    Parameters
+    ----------
+    fname : str
+        file or path name
+
+    Returns
+    -------
+    pth : str
+        base path from fname
+    fname : str
+        filename from fname, without extension
+    ext : str
+        file extension from fname
+
+    Examples
+    --------
+    >>> from nipype.utils.filemanip import split_filename
+    >>> pth, fname, ext = split_filename('/home/data/subject.nii.gz')
+    >>> pth
+    '/home/data'
+
+    >>> fname
+    'subject'
+
+    >>> ext
+    '.nii.gz'
+
+    """
+
+    special_extensions = [".nii.gz", ".tar.gz", ".niml.dset"]
+
+    pth = op.dirname(fname)
+    fname = op.basename(fname)
+
+    ext = None
+    for special_ext in special_extensions:
+        ext_len = len(special_ext)
+        if (len(fname) > ext_len) and (fname[-ext_len:].lower() == special_ext.lower()):
+            ext = fname[-ext_len:]
+            fname = fname[:-ext_len]
+            break
+    if not ext:
+        fname, ext = op.splitext(fname)
+
+    return pth, fname, ext
+
+
+# Original source at L125 of <nipype-install>/interfaces/base/support.py
+class NipypeInterfaceError(Exception):
+    """Custom error for interfaces"""
+
+    def __init__(self, value):
+        self.value = value
+
+    def __str__(self):
+        return "{}".format(self.value)

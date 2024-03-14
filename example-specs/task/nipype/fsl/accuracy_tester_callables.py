@@ -1,7 +1,7 @@
 """Module to put any functions that are referred to in the "callables" section of AccuracyTester.yaml"""
 
-from fileformats.generic import Directory
 import attrs
+from fileformats.generic import Directory
 
 
 def output_directory_callable(output_dir, inputs, stdout, stderr):

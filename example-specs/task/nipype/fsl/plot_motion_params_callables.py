@@ -1,9 +1,9 @@
 """Module to put any functions that are referred to in the "callables" section of PlotMotionParams.yaml"""
 
+import attrs
 import os
 import os.path as op
 from pathlib import Path
-import attrs
 
 
 def out_file_default(inputs):
@@ -15,6 +15,30 @@ def out_file_callable(output_dir, inputs, stdout, stderr):
         output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
     )
     return outputs["out_file"]
+
+
+# Original source at L1495 of <nipype-install>/interfaces/fsl/utils.py
+def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
+    if name == "out_file":
+        return _list_outputs(
+            inputs=inputs, stdout=stdout, stderr=stderr, output_dir=output_dir
+        )["out_file"]
+    return None
+
+
+# Original source at L1478 of <nipype-install>/interfaces/fsl/utils.py
+def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
+    outputs = {}
+    out_file = inputs.out_file
+    if out_file is attrs.NOTHING:
+        if isinstance(inputs.in_file, list):
+            infile = inputs.in_file[0]
+        else:
+            infile = inputs.in_file
+        plttype = dict(rot="rot", tra="trans", dis="disp")[inputs.plot_type[:3]]
+        out_file = fname_presuffix(infile, suffix="_%s.png" % plttype, use_ext=False)
+    outputs["out_file"] = os.path.abspath(out_file)
+    return outputs
 
 
 # Original source at L108 of <nipype-install>/utils/filemanip.py
@@ -109,27 +133,3 @@ def split_filename(fname):
         fname, ext = op.splitext(fname)
 
     return pth, fname, ext
-
-
-# Original source at L1495 of <nipype-install>/interfaces/fsl/utils.py
-def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
-    if name == "out_file":
-        return _list_outputs(
-            inputs=inputs, stdout=stdout, stderr=stderr, output_dir=output_dir
-        )["out_file"]
-    return None
-
-
-# Original source at L1478 of <nipype-install>/interfaces/fsl/utils.py
-def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
-    outputs = {}
-    out_file = inputs.out_file
-    if out_file is attrs.NOTHING:
-        if isinstance(inputs.in_file, list):
-            infile = inputs.in_file[0]
-        else:
-            infile = inputs.in_file
-        plttype = dict(rot="rot", tra="trans", dis="disp")[inputs.plot_type[:3]]
-        out_file = fname_presuffix(infile, suffix="_%s.png" % plttype, use_ext=False)
-    outputs["out_file"] = os.path.abspath(out_file)
-    return outputs

@@ -1,9 +1,43 @@
 """Module to put any functions that are referred to in the "callables" section of RobustRegister.yaml"""
 
-import attrs
 import os
 import os.path as op
 from pathlib import Path
+
+
+def half_source_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["half_source"]
+
+
+def half_source_xfm_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["half_source_xfm"]
+
+
+def half_targ_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["half_targ"]
+
+
+def half_targ_xfm_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["half_targ_xfm"]
+
+
+def half_weights_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["half_weights"]
 
 
 def out_reg_file_callable(output_dir, inputs, stdout, stderr):
@@ -27,44 +61,39 @@ def weights_file_callable(output_dir, inputs, stdout, stderr):
     return outputs["weights_file"]
 
 
-def half_source_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["half_source"]
-
-
-def half_targ_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["half_targ"]
-
-
-def half_weights_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["half_weights"]
-
-
-def half_source_xfm_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["half_source_xfm"]
-
-
-def half_targ_xfm_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["half_targ_xfm"]
-
-
 # Original source at L885 of <nipype-install>/interfaces/base/core.py
 def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
     raise NotImplementedError
+
+
+# Original source at L2357 of <nipype-install>/interfaces/freesurfer/preprocess.py
+def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
+    outputs = {}
+    cwd = output_dir
+    prefixes = dict(src=inputs.source_file, trg=inputs.target_file)
+    suffixes = dict(
+        out_reg_file=("src", "_robustreg.lta", False),
+        registered_file=("src", "_robustreg", True),
+        weights_file=("src", "_robustweights", True),
+        half_source=("src", "_halfway", True),
+        half_targ=("trg", "_halfway", True),
+        half_weights=("src", "_halfweights", True),
+        half_source_xfm=("src", "_robustxfm.lta", False),
+        half_targ_xfm=("trg", "_robustxfm.lta", False),
+    )
+    for name, sufftup in list(suffixes.items()):
+        value = getattr(inputs, name)
+        if value:
+            if value is True:
+                outputs[name] = fname_presuffix(
+                    prefixes[sufftup[0]],
+                    suffix=sufftup[1],
+                    newpath=cwd,
+                    use_ext=sufftup[2],
+                )
+            else:
+                outputs[name] = os.path.abspath(value)
+    return outputs
 
 
 # Original source at L108 of <nipype-install>/utils/filemanip.py
@@ -159,33 +188,3 @@ def split_filename(fname):
         fname, ext = op.splitext(fname)
 
     return pth, fname, ext
-
-
-# Original source at L2357 of <nipype-install>/interfaces/freesurfer/preprocess.py
-def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
-    outputs = {}
-    cwd = output_dir
-    prefixes = dict(src=inputs.source_file, trg=inputs.target_file)
-    suffixes = dict(
-        out_reg_file=("src", "_robustreg.lta", False),
-        registered_file=("src", "_robustreg", True),
-        weights_file=("src", "_robustweights", True),
-        half_source=("src", "_halfway", True),
-        half_targ=("trg", "_halfway", True),
-        half_weights=("src", "_halfweights", True),
-        half_source_xfm=("src", "_robustxfm.lta", False),
-        half_targ_xfm=("trg", "_robustxfm.lta", False),
-    )
-    for name, sufftup in list(suffixes.items()):
-        value = getattr(inputs, name)
-        if value:
-            if value is True:
-                outputs[name] = fname_presuffix(
-                    prefixes[sufftup[0]],
-                    suffix=sufftup[1],
-                    newpath=cwd,
-                    use_ext=sufftup[2],
-                )
-            else:
-                outputs[name] = os.path.abspath(value)
-    return outputs

@@ -1,9 +1,9 @@
 """Module to put any functions that are referred to in the "callables" section of Binarize.yaml"""
 
+import attrs
 import os
 import os.path as op
 from pathlib import Path
-import attrs
 
 
 def binary_file_default(inputs):
@@ -22,6 +22,47 @@ def count_file_callable(output_dir, inputs, stdout, stderr):
         output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
     )
     return outputs["count_file"]
+
+
+# Original source at L702 of <nipype-install>/interfaces/freesurfer/model.py
+def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
+    if name == "binary_file":
+        return _list_outputs(
+            inputs=inputs, stdout=stdout, stderr=stderr, output_dir=output_dir
+        )[name]
+    return None
+
+
+# Original source at L661 of <nipype-install>/interfaces/freesurfer/model.py
+def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
+    outputs = {}
+    outfile = inputs.binary_file
+    if outfile is attrs.NOTHING:
+        if inputs.out_type is not attrs.NOTHING:
+            outfile = fname_presuffix(
+                inputs.in_file,
+                newpath=output_dir,
+                suffix=".".join(("_thresh", inputs.out_type)),
+                use_ext=False,
+            )
+        else:
+            outfile = fname_presuffix(
+                inputs.in_file, newpath=output_dir, suffix="_thresh"
+            )
+    outputs["binary_file"] = os.path.abspath(outfile)
+    value = inputs.count_file
+    if value is not attrs.NOTHING:
+        if isinstance(value, bool):
+            if value:
+                outputs["count_file"] = fname_presuffix(
+                    inputs.in_file,
+                    suffix="_count.txt",
+                    newpath=output_dir,
+                    use_ext=False,
+                )
+        else:
+            outputs["count_file"] = value
+    return outputs
 
 
 # Original source at L108 of <nipype-install>/utils/filemanip.py
@@ -116,44 +157,3 @@ def split_filename(fname):
         fname, ext = op.splitext(fname)
 
     return pth, fname, ext
-
-
-# Original source at L702 of <nipype-install>/interfaces/freesurfer/model.py
-def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
-    if name == "binary_file":
-        return _list_outputs(
-            inputs=inputs, stdout=stdout, stderr=stderr, output_dir=output_dir
-        )[name]
-    return None
-
-
-# Original source at L661 of <nipype-install>/interfaces/freesurfer/model.py
-def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
-    outputs = {}
-    outfile = inputs.binary_file
-    if outfile is attrs.NOTHING:
-        if inputs.out_type is not attrs.NOTHING:
-            outfile = fname_presuffix(
-                inputs.in_file,
-                newpath=output_dir,
-                suffix=".".join(("_thresh", inputs.out_type)),
-                use_ext=False,
-            )
-        else:
-            outfile = fname_presuffix(
-                inputs.in_file, newpath=output_dir, suffix="_thresh"
-            )
-    outputs["binary_file"] = os.path.abspath(outfile)
-    value = inputs.count_file
-    if value is not attrs.NOTHING:
-        if isinstance(value, bool):
-            if value:
-                outputs["count_file"] = fname_presuffix(
-                    inputs.in_file,
-                    suffix="_count.txt",
-                    newpath=output_dir,
-                    use_ext=False,
-                )
-        else:
-            outputs["count_file"] = value
-    return outputs

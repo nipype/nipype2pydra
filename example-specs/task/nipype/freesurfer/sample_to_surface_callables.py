@@ -1,20 +1,13 @@
 """Module to put any functions that are referred to in the "callables" section of SampleToSurface.yaml"""
 
+import attrs
 import os
 import os.path as op
 from pathlib import Path
-import attrs
 
 
 def out_file_default(inputs):
     return _gen_filename("out_file", inputs=inputs)
-
-
-def out_file_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["out_file"]
 
 
 def hits_file_callable(output_dir, inputs, stdout, stderr):
@@ -22,6 +15,13 @@ def hits_file_callable(output_dir, inputs, stdout, stderr):
         output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
     )
     return outputs["hits_file"]
+
+
+def out_file_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["out_file"]
 
 
 def vox_file_callable(output_dir, inputs, stdout, stderr):
@@ -48,6 +48,73 @@ filemap = dict(
     niigz="nii.gz",
     gii="gii",
 )
+
+
+# Original source at L420 of <nipype-install>/interfaces/freesurfer/utils.py
+def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
+    if name == "out_file":
+        return _list_outputs(
+            inputs=inputs, stdout=stdout, stderr=stderr, output_dir=output_dir
+        )[name]
+    return None
+
+
+# Original source at L378 of <nipype-install>/interfaces/freesurfer/utils.py
+def _get_outfilename(
+    opt="out_file", inputs=None, stdout=None, stderr=None, output_dir=None
+):
+    outfile = getattr(inputs, opt)
+    if (outfile is attrs.NOTHING) or isinstance(outfile, bool):
+        if inputs.out_type is not attrs.NOTHING:
+            if opt == "hits_file":
+                suffix = "_hits." + filemap[inputs.out_type]
+            else:
+                suffix = "." + filemap[inputs.out_type]
+        elif opt == "hits_file":
+            suffix = "_hits.mgz"
+        else:
+            suffix = ".mgz"
+        outfile = fname_presuffix(
+            inputs.source_file,
+            newpath=output_dir,
+            prefix=inputs.hemi + ".",
+            suffix=suffix,
+            use_ext=False,
+        )
+    return outfile
+
+
+# Original source at L399 of <nipype-install>/interfaces/freesurfer/utils.py
+def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
+    outputs = {}
+    outputs["out_file"] = os.path.abspath(
+        _get_outfilename(
+            inputs=inputs, stdout=stdout, stderr=stderr, output_dir=output_dir
+        )
+    )
+    hitsfile = inputs.hits_file
+    if hitsfile is not attrs.NOTHING:
+        outputs["hits_file"] = hitsfile
+        if isinstance(hitsfile, bool):
+            hitsfile = _get_outfilename(
+                "hits_file",
+                inputs=inputs,
+                stdout=stdout,
+                stderr=stderr,
+                output_dir=output_dir,
+            )
+    voxfile = inputs.vox_file
+    if voxfile is not attrs.NOTHING:
+        if isinstance(voxfile, bool):
+            voxfile = fname_presuffix(
+                inputs.source_file,
+                newpath=output_dir,
+                prefix=inputs.hemi + ".",
+                suffix="_vox.txt",
+                use_ext=False,
+            )
+        outputs["vox_file"] = voxfile
+    return outputs
 
 
 # Original source at L108 of <nipype-install>/utils/filemanip.py
@@ -142,70 +209,3 @@ def split_filename(fname):
         fname, ext = op.splitext(fname)
 
     return pth, fname, ext
-
-
-# Original source at L378 of <nipype-install>/interfaces/freesurfer/utils.py
-def _get_outfilename(
-    opt="out_file", inputs=None, stdout=None, stderr=None, output_dir=None
-):
-    outfile = getattr(inputs, opt)
-    if (outfile is attrs.NOTHING) or isinstance(outfile, bool):
-        if inputs.out_type is not attrs.NOTHING:
-            if opt == "hits_file":
-                suffix = "_hits." + filemap[inputs.out_type]
-            else:
-                suffix = "." + filemap[inputs.out_type]
-        elif opt == "hits_file":
-            suffix = "_hits.mgz"
-        else:
-            suffix = ".mgz"
-        outfile = fname_presuffix(
-            inputs.source_file,
-            newpath=output_dir,
-            prefix=inputs.hemi + ".",
-            suffix=suffix,
-            use_ext=False,
-        )
-    return outfile
-
-
-# Original source at L420 of <nipype-install>/interfaces/freesurfer/utils.py
-def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
-    if name == "out_file":
-        return _list_outputs(
-            inputs=inputs, stdout=stdout, stderr=stderr, output_dir=output_dir
-        )[name]
-    return None
-
-
-# Original source at L399 of <nipype-install>/interfaces/freesurfer/utils.py
-def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
-    outputs = {}
-    outputs["out_file"] = os.path.abspath(
-        _get_outfilename(
-            inputs=inputs, stdout=stdout, stderr=stderr, output_dir=output_dir
-        )
-    )
-    hitsfile = inputs.hits_file
-    if hitsfile is not attrs.NOTHING:
-        outputs["hits_file"] = hitsfile
-        if isinstance(hitsfile, bool):
-            hitsfile = _get_outfilename(
-                "hits_file",
-                inputs=inputs,
-                stdout=stdout,
-                stderr=stderr,
-                output_dir=output_dir,
-            )
-    voxfile = inputs.vox_file
-    if voxfile is not attrs.NOTHING:
-        if isinstance(voxfile, bool):
-            voxfile = fname_presuffix(
-                inputs.source_file,
-                newpath=output_dir,
-                prefix=inputs.hemi + ".",
-                suffix="_vox.txt",
-                use_ext=False,
-            )
-        outputs["vox_file"] = voxfile
-    return outputs

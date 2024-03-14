@@ -1,10 +1,10 @@
 """Module to put any functions that are referred to in the "callables" section of FindTheBiggest.yaml"""
 
-from glob import glob
 import attrs
 import logging
 import os
 import os.path as op
+from glob import glob
 from pathlib import Path
 
 
@@ -22,42 +22,87 @@ def out_file_callable(output_dir, inputs, stdout, stderr):
 IFLOGGER = logging.getLogger("nipype.interface")
 
 
-# Original source at L1069 of <nipype-install>/interfaces/base/core.py
-class PackageInfo(object):
-    _version = None
-    version_cmd = None
-    version_file = None
+# Original source at L1341 of <nipype-install>/interfaces/fsl/dti.py
+def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
+    if name == "out_file":
+        return _list_outputs(
+            inputs=inputs, stdout=stdout, stderr=stderr, output_dir=output_dir
+        )[name]
+    else:
+        return None
 
-    @classmethod
-    def version(klass):
-        if klass._version is None:
-            if klass.version_cmd is not None:
-                try:
-                    clout = CommandLine(
-                        command=klass.version_cmd,
-                        resource_monitor=False,
-                        terminal_output="allatonce",
-                    ).run()
-                except IOError:
-                    return None
 
-                raw_info = clout.runtime.stdout
-            elif klass.version_file is not None:
-                try:
-                    with open(klass.version_file, "rt") as fobj:
-                        raw_info = fobj.read()
-                except OSError:
-                    return None
-            else:
-                return None
+# Original source at L205 of <nipype-install>/interfaces/fsl/base.py
+def _gen_fname(
+    basename,
+    cwd=None,
+    suffix=None,
+    change_ext=True,
+    ext=None,
+    inputs=None,
+    stdout=None,
+    stderr=None,
+    output_dir=None,
+):
+    """Generate a filename based on the given parameters.
 
-            klass._version = klass.parse_version(raw_info)
+    The filename will take the form: cwd/basename<suffix><ext>.
+    If change_ext is True, it will use the extensions specified in
+    <instance>inputs.output_type.
 
-        return klass._version
+    Parameters
+    ----------
+    basename : str
+        Filename to base the new filename on.
+    cwd : str
+        Path to prefix to the new filename. (default is output_dir)
+    suffix : str
+        Suffix to add to the `basename`.  (defaults is '' )
+    change_ext : bool
+        Flag to change the filename extension to the FSL output type.
+        (default True)
 
-    @staticmethod
-    def parse_version(raw_info):
-        raise NotImplementedError
+    Returns
+    -------
+    fname : str
+        New filename based on given parameters.
+
+    """
+
+    if basename == "":
+        msg = "Unable to generate filename for command %s. " % "find_the_biggest"
+        msg += "basename is not set!"
+        raise ValueError(msg)
+    if cwd is None:
+        cwd = output_dir
+    if ext is None:
+        ext = Info.output_type_to_ext(inputs.output_type)
+    if change_ext:
+        if suffix:
+            suffix = "".join((suffix, ext))
+        else:
+            suffix = ext
+    if suffix is None:
+        suffix = ""
+    fname = fname_presuffix(basename, suffix=suffix, use_ext=False, newpath=cwd)
+    return fname
+
+
+# Original source at L1333 of <nipype-install>/interfaces/fsl/dti.py
+def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
+    outputs = {}
+    outputs["out_file"] = inputs.out_file
+    if outputs["out_file"] is attrs.NOTHING:
+        outputs["out_file"] = _gen_fname(
+            "biggestSegmentation",
+            suffix="",
+            inputs=inputs,
+            stdout=stdout,
+            stderr=stderr,
+            output_dir=output_dir,
+        )
+    outputs["out_file"] = os.path.abspath(outputs["out_file"])
+    return outputs
 
 
 # Original source at L108 of <nipype-install>/utils/filemanip.py
@@ -154,6 +199,44 @@ def split_filename(fname):
     return pth, fname, ext
 
 
+# Original source at L1069 of <nipype-install>/interfaces/base/core.py
+class PackageInfo(object):
+    _version = None
+    version_cmd = None
+    version_file = None
+
+    @classmethod
+    def version(klass):
+        if klass._version is None:
+            if klass.version_cmd is not None:
+                try:
+                    clout = CommandLine(
+                        command=klass.version_cmd,
+                        resource_monitor=False,
+                        terminal_output="allatonce",
+                    ).run()
+                except IOError:
+                    return None
+
+                raw_info = clout.runtime.stdout
+            elif klass.version_file is not None:
+                try:
+                    with open(klass.version_file, "rt") as fobj:
+                        raw_info = fobj.read()
+                except OSError:
+                    return None
+            else:
+                return None
+
+            klass._version = klass.parse_version(raw_info)
+
+        return klass._version
+
+    @staticmethod
+    def parse_version(raw_info):
+        raise NotImplementedError
+
+
 # Original source at L40 of <nipype-install>/interfaces/fsl/base.py
 class Info(PackageInfo):
     """
@@ -245,86 +328,3 @@ class Info(PackageInfo):
                 for filename in glob(os.path.join(stdpath, "*nii*"))
             ]
         return os.path.join(stdpath, img_name)
-
-
-# Original source at L205 of <nipype-install>/interfaces/fsl/base.py
-def _gen_fname(
-    basename,
-    cwd=None,
-    suffix=None,
-    change_ext=True,
-    ext=None,
-    inputs=None,
-    stdout=None,
-    stderr=None,
-    output_dir=None,
-):
-    """Generate a filename based on the given parameters.
-
-    The filename will take the form: cwd/basename<suffix><ext>.
-    If change_ext is True, it will use the extensions specified in
-    <instance>inputs.output_type.
-
-    Parameters
-    ----------
-    basename : str
-        Filename to base the new filename on.
-    cwd : str
-        Path to prefix to the new filename. (default is output_dir)
-    suffix : str
-        Suffix to add to the `basename`.  (defaults is '' )
-    change_ext : bool
-        Flag to change the filename extension to the FSL output type.
-        (default True)
-
-    Returns
-    -------
-    fname : str
-        New filename based on given parameters.
-
-    """
-
-    if basename == "":
-        msg = "Unable to generate filename for command %s. " % "find_the_biggest"
-        msg += "basename is not set!"
-        raise ValueError(msg)
-    if cwd is None:
-        cwd = output_dir
-    if ext is None:
-        ext = Info.output_type_to_ext(inputs.output_type)
-    if change_ext:
-        if suffix:
-            suffix = "".join((suffix, ext))
-        else:
-            suffix = ext
-    if suffix is None:
-        suffix = ""
-    fname = fname_presuffix(basename, suffix=suffix, use_ext=False, newpath=cwd)
-    return fname
-
-
-# Original source at L1341 of <nipype-install>/interfaces/fsl/dti.py
-def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
-    if name == "out_file":
-        return _list_outputs(
-            inputs=inputs, stdout=stdout, stderr=stderr, output_dir=output_dir
-        )[name]
-    else:
-        return None
-
-
-# Original source at L1333 of <nipype-install>/interfaces/fsl/dti.py
-def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
-    outputs = {}
-    outputs["out_file"] = inputs.out_file
-    if outputs["out_file"] is attrs.NOTHING:
-        outputs["out_file"] = _gen_fname(
-            "biggestSegmentation",
-            suffix="",
-            inputs=inputs,
-            stdout=stdout,
-            stderr=stderr,
-            output_dir=output_dir,
-        )
-    outputs["out_file"] = os.path.abspath(outputs["out_file"])
-    return outputs

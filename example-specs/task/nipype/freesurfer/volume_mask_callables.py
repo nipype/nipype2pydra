@@ -1,14 +1,6 @@
 """Module to put any functions that are referred to in the "callables" section of VolumeMask.yaml"""
 
 import os
-import attrs
-
-
-def out_ribbon_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["out_ribbon"]
 
 
 def lh_ribbon_callable(output_dir, inputs, stdout, stderr):
@@ -16,6 +8,13 @@ def lh_ribbon_callable(output_dir, inputs, stdout, stderr):
         output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
     )
     return outputs["lh_ribbon"]
+
+
+def out_ribbon_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["out_ribbon"]
 
 
 def rh_ribbon_callable(output_dir, inputs, stdout, stderr):

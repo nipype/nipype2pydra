@@ -1,52 +1,17 @@
 """Module to put any functions that are referred to in the "callables" section of MCFLIRT.yaml"""
 
-from looseversion import LooseVersion
 import attrs
+import logging
 import os
 import os.path as op
-from nibabel import load
 from glob import glob
-import logging
+from looseversion import LooseVersion
+from nibabel import load
 from pathlib import Path
 
 
 def out_file_default(inputs):
     return _gen_filename("out_file", inputs=inputs)
-
-
-def out_file_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["out_file"]
-
-
-def variance_img_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["variance_img"]
-
-
-def std_img_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["std_img"]
-
-
-def mean_img_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["mean_img"]
-
-
-def par_file_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["par_file"]
 
 
 def mat_file_callable(output_dir, inputs, stdout, stderr):
@@ -56,6 +21,27 @@ def mat_file_callable(output_dir, inputs, stdout, stderr):
     return outputs["mat_file"]
 
 
+def mean_img_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["mean_img"]
+
+
+def out_file_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["out_file"]
+
+
+def par_file_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["par_file"]
+
+
 def rms_files_callable(output_dir, inputs, stdout, stderr):
     outputs = _list_outputs(
         output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
@@ -63,7 +49,196 @@ def rms_files_callable(output_dir, inputs, stdout, stderr):
     return outputs["rms_files"]
 
 
+def std_img_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["std_img"]
+
+
+def variance_img_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["variance_img"]
+
+
 IFLOGGER = logging.getLogger("nipype.interface")
+
+
+# Original source at L962 of <nipype-install>/interfaces/fsl/preprocess.py
+def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
+    if name == "out_file":
+        return _gen_outfilename(
+            inputs=inputs, stdout=stdout, stderr=stderr, output_dir=output_dir
+        )
+    return None
+
+
+# Original source at L205 of <nipype-install>/interfaces/fsl/base.py
+def _gen_fname(
+    basename,
+    cwd=None,
+    suffix=None,
+    change_ext=True,
+    ext=None,
+    inputs=None,
+    stdout=None,
+    stderr=None,
+    output_dir=None,
+):
+    """Generate a filename based on the given parameters.
+
+    The filename will take the form: cwd/basename<suffix><ext>.
+    If change_ext is True, it will use the extensions specified in
+    <instance>inputs.output_type.
+
+    Parameters
+    ----------
+    basename : str
+        Filename to base the new filename on.
+    cwd : str
+        Path to prefix to the new filename. (default is output_dir)
+    suffix : str
+        Suffix to add to the `basename`.  (defaults is '' )
+    change_ext : bool
+        Flag to change the filename extension to the FSL output type.
+        (default True)
+
+    Returns
+    -------
+    fname : str
+        New filename based on given parameters.
+
+    """
+
+    if basename == "":
+        msg = "Unable to generate filename for command %s. " % "mcflirt"
+        msg += "basename is not set!"
+        raise ValueError(msg)
+    if cwd is None:
+        cwd = output_dir
+    if ext is None:
+        ext = Info.output_type_to_ext(inputs.output_type)
+    if change_ext:
+        if suffix:
+            suffix = "".join((suffix, ext))
+        else:
+            suffix = ext
+    if suffix is None:
+        suffix = ""
+    fname = fname_presuffix(basename, suffix=suffix, use_ext=False, newpath=cwd)
+    return fname
+
+
+# Original source at L967 of <nipype-install>/interfaces/fsl/preprocess.py
+def _gen_outfilename(inputs=None, stdout=None, stderr=None, output_dir=None):
+    out_file = inputs.out_file
+    if out_file is not attrs.NOTHING:
+        out_file = os.path.realpath(out_file)
+    if (out_file is attrs.NOTHING) and (inputs.in_file is not attrs.NOTHING):
+        out_file = _gen_fname(
+            inputs.in_file,
+            suffix="_mcf",
+            inputs=inputs,
+            stdout=stdout,
+            stderr=stderr,
+            output_dir=output_dir,
+        )
+    return os.path.abspath(out_file)
+
+
+# Original source at L906 of <nipype-install>/interfaces/fsl/preprocess.py
+def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
+    outputs = {}
+
+    outputs["out_file"] = _gen_outfilename(
+        inputs=inputs, stdout=stdout, stderr=stderr, output_dir=output_dir
+    )
+    output_dir = os.path.dirname(outputs["out_file"])
+
+    if (inputs.stats_imgs is not attrs.NOTHING) and inputs.stats_imgs:
+        if LooseVersion(Info.version()) < LooseVersion("6.0.0"):
+            # FSL <6.0 outputs have .nii.gz_variance.nii.gz as extension
+            outputs["variance_img"] = _gen_fname(
+                outputs["out_file"] + "_variance.ext",
+                cwd=output_dir,
+                inputs=inputs,
+                stdout=stdout,
+                stderr=stderr,
+                output_dir=output_dir,
+            )
+            outputs["std_img"] = _gen_fname(
+                outputs["out_file"] + "_sigma.ext",
+                cwd=output_dir,
+                inputs=inputs,
+                stdout=stdout,
+                stderr=stderr,
+                output_dir=output_dir,
+            )
+        else:
+            outputs["variance_img"] = _gen_fname(
+                outputs["out_file"],
+                suffix="_variance",
+                cwd=output_dir,
+                inputs=inputs,
+                stdout=stdout,
+                stderr=stderr,
+                output_dir=output_dir,
+            )
+            outputs["std_img"] = _gen_fname(
+                outputs["out_file"],
+                suffix="_sigma",
+                cwd=output_dir,
+                inputs=inputs,
+                stdout=stdout,
+                stderr=stderr,
+                output_dir=output_dir,
+            )
+
+    # The mean image created if -stats option is specified ('meanvol')
+    # is missing the top and bottom slices. Therefore we only expose the
+    # mean image created by -meanvol option ('mean_reg') which isn't
+    # corrupted.
+    # Note that the same problem holds for the std and variance image.
+
+    if (inputs.mean_vol is not attrs.NOTHING) and inputs.mean_vol:
+        if LooseVersion(Info.version()) < LooseVersion("6.0.0"):
+            # FSL <6.0 outputs have .nii.gz_mean_img.nii.gz as extension
+            outputs["mean_img"] = _gen_fname(
+                outputs["out_file"] + "_mean_reg.ext",
+                cwd=output_dir,
+                inputs=inputs,
+                stdout=stdout,
+                stderr=stderr,
+                output_dir=output_dir,
+            )
+        else:
+            outputs["mean_img"] = _gen_fname(
+                outputs["out_file"],
+                suffix="_mean_reg",
+                cwd=output_dir,
+                inputs=inputs,
+                stdout=stdout,
+                stderr=stderr,
+                output_dir=output_dir,
+            )
+
+    if (inputs.save_mats is not attrs.NOTHING) and inputs.save_mats:
+        _, filename = os.path.split(outputs["out_file"])
+        matpathname = os.path.join(output_dir, filename + ".mat")
+        _, _, _, timepoints = load(inputs.in_file).shape
+        outputs["mat_file"] = []
+        for t in range(timepoints):
+            outputs["mat_file"].append(os.path.join(matpathname, "MAT_%04d" % t))
+    if (inputs.save_plots is not attrs.NOTHING) and inputs.save_plots:
+        # Note - if e.g. out_file has .nii.gz, you get .nii.gz.par,
+        # which is what mcflirt does!
+        outputs["par_file"] = outputs["out_file"] + ".par"
+    if (inputs.save_rms is not attrs.NOTHING) and inputs.save_rms:
+        outfile = outputs["out_file"]
+        outputs["rms_files"] = [outfile + "_abs.rms", outfile + "_rel.rms"]
+    return outputs
 
 
 # Original source at L108 of <nipype-install>/utils/filemanip.py
@@ -158,62 +333,6 @@ def split_filename(fname):
         fname, ext = op.splitext(fname)
 
     return pth, fname, ext
-
-
-# Original source at L205 of <nipype-install>/interfaces/fsl/base.py
-def _gen_fname(
-    basename,
-    cwd=None,
-    suffix=None,
-    change_ext=True,
-    ext=None,
-    inputs=None,
-    stdout=None,
-    stderr=None,
-    output_dir=None,
-):
-    """Generate a filename based on the given parameters.
-
-    The filename will take the form: cwd/basename<suffix><ext>.
-    If change_ext is True, it will use the extensions specified in
-    <instance>inputs.output_type.
-
-    Parameters
-    ----------
-    basename : str
-        Filename to base the new filename on.
-    cwd : str
-        Path to prefix to the new filename. (default is output_dir)
-    suffix : str
-        Suffix to add to the `basename`.  (defaults is '' )
-    change_ext : bool
-        Flag to change the filename extension to the FSL output type.
-        (default True)
-
-    Returns
-    -------
-    fname : str
-        New filename based on given parameters.
-
-    """
-
-    if basename == "":
-        msg = "Unable to generate filename for command %s. " % "mcflirt"
-        msg += "basename is not set!"
-        raise ValueError(msg)
-    if cwd is None:
-        cwd = output_dir
-    if ext is None:
-        ext = Info.output_type_to_ext(inputs.output_type)
-    if change_ext:
-        if suffix:
-            suffix = "".join((suffix, ext))
-        else:
-            suffix = ext
-    if suffix is None:
-        suffix = ""
-    fname = fname_presuffix(basename, suffix=suffix, use_ext=False, newpath=cwd)
-    return fname
 
 
 # Original source at L1069 of <nipype-install>/interfaces/base/core.py
@@ -345,122 +464,3 @@ class Info(PackageInfo):
                 for filename in glob(os.path.join(stdpath, "*nii*"))
             ]
         return os.path.join(stdpath, img_name)
-
-
-# Original source at L967 of <nipype-install>/interfaces/fsl/preprocess.py
-def _gen_outfilename(inputs=None, stdout=None, stderr=None, output_dir=None):
-    out_file = inputs.out_file
-    if out_file is not attrs.NOTHING:
-        out_file = os.path.realpath(out_file)
-    if (out_file is attrs.NOTHING) and (inputs.in_file is not attrs.NOTHING):
-        out_file = _gen_fname(
-            inputs.in_file,
-            suffix="_mcf",
-            inputs=inputs,
-            stdout=stdout,
-            stderr=stderr,
-            output_dir=output_dir,
-        )
-    return os.path.abspath(out_file)
-
-
-# Original source at L962 of <nipype-install>/interfaces/fsl/preprocess.py
-def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
-    if name == "out_file":
-        return _gen_outfilename(
-            inputs=inputs, stdout=stdout, stderr=stderr, output_dir=output_dir
-        )
-    return None
-
-
-# Original source at L906 of <nipype-install>/interfaces/fsl/preprocess.py
-def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
-    outputs = {}
-
-    outputs["out_file"] = _gen_outfilename(
-        inputs=inputs, stdout=stdout, stderr=stderr, output_dir=output_dir
-    )
-    output_dir = os.path.dirname(outputs["out_file"])
-
-    if (inputs.stats_imgs is not attrs.NOTHING) and inputs.stats_imgs:
-        if LooseVersion(Info.version()) < LooseVersion("6.0.0"):
-            # FSL <6.0 outputs have .nii.gz_variance.nii.gz as extension
-            outputs["variance_img"] = _gen_fname(
-                outputs["out_file"] + "_variance.ext",
-                cwd=output_dir,
-                inputs=inputs,
-                stdout=stdout,
-                stderr=stderr,
-                output_dir=output_dir,
-            )
-            outputs["std_img"] = _gen_fname(
-                outputs["out_file"] + "_sigma.ext",
-                cwd=output_dir,
-                inputs=inputs,
-                stdout=stdout,
-                stderr=stderr,
-                output_dir=output_dir,
-            )
-        else:
-            outputs["variance_img"] = _gen_fname(
-                outputs["out_file"],
-                suffix="_variance",
-                cwd=output_dir,
-                inputs=inputs,
-                stdout=stdout,
-                stderr=stderr,
-                output_dir=output_dir,
-            )
-            outputs["std_img"] = _gen_fname(
-                outputs["out_file"],
-                suffix="_sigma",
-                cwd=output_dir,
-                inputs=inputs,
-                stdout=stdout,
-                stderr=stderr,
-                output_dir=output_dir,
-            )
-
-    # The mean image created if -stats option is specified ('meanvol')
-    # is missing the top and bottom slices. Therefore we only expose the
-    # mean image created by -meanvol option ('mean_reg') which isn't
-    # corrupted.
-    # Note that the same problem holds for the std and variance image.
-
-    if (inputs.mean_vol is not attrs.NOTHING) and inputs.mean_vol:
-        if LooseVersion(Info.version()) < LooseVersion("6.0.0"):
-            # FSL <6.0 outputs have .nii.gz_mean_img.nii.gz as extension
-            outputs["mean_img"] = _gen_fname(
-                outputs["out_file"] + "_mean_reg.ext",
-                cwd=output_dir,
-                inputs=inputs,
-                stdout=stdout,
-                stderr=stderr,
-                output_dir=output_dir,
-            )
-        else:
-            outputs["mean_img"] = _gen_fname(
-                outputs["out_file"],
-                suffix="_mean_reg",
-                cwd=output_dir,
-                inputs=inputs,
-                stdout=stdout,
-                stderr=stderr,
-                output_dir=output_dir,
-            )
-
-    if (inputs.save_mats is not attrs.NOTHING) and inputs.save_mats:
-        _, filename = os.path.split(outputs["out_file"])
-        matpathname = os.path.join(output_dir, filename + ".mat")
-        _, _, _, timepoints = load(inputs.in_file).shape
-        outputs["mat_file"] = []
-        for t in range(timepoints):
-            outputs["mat_file"].append(os.path.join(matpathname, "MAT_%04d" % t))
-    if (inputs.save_plots is not attrs.NOTHING) and inputs.save_plots:
-        # Note - if e.g. out_file has .nii.gz, you get .nii.gz.par,
-        # which is what mcflirt does!
-        outputs["par_file"] = outputs["out_file"] + ".par"
-    if (inputs.save_rms is not attrs.NOTHING) and inputs.save_rms:
-        outfile = outputs["out_file"]
-        outputs["rms_files"] = [outfile + "_abs.rms", outfile + "_rel.rms"]
-    return outputs

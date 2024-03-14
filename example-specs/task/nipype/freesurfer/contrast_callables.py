@@ -1,7 +1,6 @@
 """Module to put any functions that are referred to in the "callables" section of Contrast.yaml"""
 
 import os
-import attrs
 
 
 def out_contrast_callable(output_dir, inputs, stdout, stderr):
@@ -11,18 +10,18 @@ def out_contrast_callable(output_dir, inputs, stdout, stderr):
     return outputs["out_contrast"]
 
 
-def out_stats_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["out_stats"]
-
-
 def out_log_callable(output_dir, inputs, stdout, stderr):
     outputs = _list_outputs(
         output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
     )
     return outputs["out_log"]
+
+
+def out_stats_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["out_stats"]
 
 
 # Original source at L885 of <nipype-install>/interfaces/base/core.py

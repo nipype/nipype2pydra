@@ -1,18 +1,11 @@
 """Module to put any functions that are referred to in the "callables" section of SMM.yaml"""
 
-from glob import glob
 import attrs
 import logging
 import os
 import os.path as op
+from glob import glob
 from pathlib import Path
-
-
-def null_p_map_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["null_p_map"]
 
 
 def activation_p_map_callable(output_dir, inputs, stdout, stderr):
@@ -29,45 +22,109 @@ def deactivation_p_map_callable(output_dir, inputs, stdout, stderr):
     return outputs["deactivation_p_map"]
 
 
+def null_p_map_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["null_p_map"]
+
+
 IFLOGGER = logging.getLogger("nipype.interface")
 
 
-# Original source at L1069 of <nipype-install>/interfaces/base/core.py
-class PackageInfo(object):
-    _version = None
-    version_cmd = None
-    version_file = None
+# Original source at L885 of <nipype-install>/interfaces/base/core.py
+def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
+    raise NotImplementedError
 
-    @classmethod
-    def version(klass):
-        if klass._version is None:
-            if klass.version_cmd is not None:
-                try:
-                    clout = CommandLine(
-                        command=klass.version_cmd,
-                        resource_monitor=False,
-                        terminal_output="allatonce",
-                    ).run()
-                except IOError:
-                    return None
 
-                raw_info = clout.runtime.stdout
-            elif klass.version_file is not None:
-                try:
-                    with open(klass.version_file, "rt") as fobj:
-                        raw_info = fobj.read()
-                except OSError:
-                    return None
-            else:
-                return None
+# Original source at L205 of <nipype-install>/interfaces/fsl/base.py
+def _gen_fname(
+    basename,
+    cwd=None,
+    suffix=None,
+    change_ext=True,
+    ext=None,
+    inputs=None,
+    stdout=None,
+    stderr=None,
+    output_dir=None,
+):
+    """Generate a filename based on the given parameters.
 
-            klass._version = klass.parse_version(raw_info)
+    The filename will take the form: cwd/basename<suffix><ext>.
+    If change_ext is True, it will use the extensions specified in
+    <instance>inputs.output_type.
 
-        return klass._version
+    Parameters
+    ----------
+    basename : str
+        Filename to base the new filename on.
+    cwd : str
+        Path to prefix to the new filename. (default is output_dir)
+    suffix : str
+        Suffix to add to the `basename`.  (defaults is '' )
+    change_ext : bool
+        Flag to change the filename extension to the FSL output type.
+        (default True)
 
-    @staticmethod
-    def parse_version(raw_info):
-        raise NotImplementedError
+    Returns
+    -------
+    fname : str
+        New filename based on given parameters.
+
+    """
+
+    if basename == "":
+        msg = "Unable to generate filename for command %s. " % "mm --ld=logdir"
+        msg += "basename is not set!"
+        raise ValueError(msg)
+    if cwd is None:
+        cwd = output_dir
+    if ext is None:
+        ext = Info.output_type_to_ext(inputs.output_type)
+    if change_ext:
+        if suffix:
+            suffix = "".join((suffix, ext))
+        else:
+            suffix = ext
+    if suffix is None:
+        suffix = ""
+    fname = fname_presuffix(basename, suffix=suffix, use_ext=False, newpath=cwd)
+    return fname
+
+
+# Original source at L1650 of <nipype-install>/interfaces/fsl/model.py
+def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
+    outputs = {}
+    # TODO get the true logdir from the stdout
+    outputs["null_p_map"] = _gen_fname(
+        basename="w1_mean",
+        cwd="logdir",
+        inputs=inputs,
+        stdout=stdout,
+        stderr=stderr,
+        output_dir=output_dir,
+    )
+    outputs["activation_p_map"] = _gen_fname(
+        basename="w2_mean",
+        cwd="logdir",
+        inputs=inputs,
+        stdout=stdout,
+        stderr=stderr,
+        output_dir=output_dir,
+    )
+    if (
+        inputs.no_deactivation_class is attrs.NOTHING
+    ) or not inputs.no_deactivation_class:
+        outputs["deactivation_p_map"] = _gen_fname(
+            basename="w3_mean",
+            cwd="logdir",
+            inputs=inputs,
+            stdout=stdout,
+            stderr=stderr,
+            output_dir=output_dir,
+        )
+    return outputs
 
 
 # Original source at L108 of <nipype-install>/utils/filemanip.py
@@ -164,6 +221,44 @@ def split_filename(fname):
     return pth, fname, ext
 
 
+# Original source at L1069 of <nipype-install>/interfaces/base/core.py
+class PackageInfo(object):
+    _version = None
+    version_cmd = None
+    version_file = None
+
+    @classmethod
+    def version(klass):
+        if klass._version is None:
+            if klass.version_cmd is not None:
+                try:
+                    clout = CommandLine(
+                        command=klass.version_cmd,
+                        resource_monitor=False,
+                        terminal_output="allatonce",
+                    ).run()
+                except IOError:
+                    return None
+
+                raw_info = clout.runtime.stdout
+            elif klass.version_file is not None:
+                try:
+                    with open(klass.version_file, "rt") as fobj:
+                        raw_info = fobj.read()
+                except OSError:
+                    return None
+            else:
+                return None
+
+            klass._version = klass.parse_version(raw_info)
+
+        return klass._version
+
+    @staticmethod
+    def parse_version(raw_info):
+        raise NotImplementedError
+
+
 # Original source at L40 of <nipype-install>/interfaces/fsl/base.py
 class Info(PackageInfo):
     """
@@ -255,98 +350,3 @@ class Info(PackageInfo):
                 for filename in glob(os.path.join(stdpath, "*nii*"))
             ]
         return os.path.join(stdpath, img_name)
-
-
-# Original source at L205 of <nipype-install>/interfaces/fsl/base.py
-def _gen_fname(
-    basename,
-    cwd=None,
-    suffix=None,
-    change_ext=True,
-    ext=None,
-    inputs=None,
-    stdout=None,
-    stderr=None,
-    output_dir=None,
-):
-    """Generate a filename based on the given parameters.
-
-    The filename will take the form: cwd/basename<suffix><ext>.
-    If change_ext is True, it will use the extensions specified in
-    <instance>inputs.output_type.
-
-    Parameters
-    ----------
-    basename : str
-        Filename to base the new filename on.
-    cwd : str
-        Path to prefix to the new filename. (default is output_dir)
-    suffix : str
-        Suffix to add to the `basename`.  (defaults is '' )
-    change_ext : bool
-        Flag to change the filename extension to the FSL output type.
-        (default True)
-
-    Returns
-    -------
-    fname : str
-        New filename based on given parameters.
-
-    """
-
-    if basename == "":
-        msg = "Unable to generate filename for command %s. " % "mm --ld=logdir"
-        msg += "basename is not set!"
-        raise ValueError(msg)
-    if cwd is None:
-        cwd = output_dir
-    if ext is None:
-        ext = Info.output_type_to_ext(inputs.output_type)
-    if change_ext:
-        if suffix:
-            suffix = "".join((suffix, ext))
-        else:
-            suffix = ext
-    if suffix is None:
-        suffix = ""
-    fname = fname_presuffix(basename, suffix=suffix, use_ext=False, newpath=cwd)
-    return fname
-
-
-# Original source at L885 of <nipype-install>/interfaces/base/core.py
-def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
-    raise NotImplementedError
-
-
-# Original source at L1650 of <nipype-install>/interfaces/fsl/model.py
-def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
-    outputs = {}
-    # TODO get the true logdir from the stdout
-    outputs["null_p_map"] = _gen_fname(
-        basename="w1_mean",
-        cwd="logdir",
-        inputs=inputs,
-        stdout=stdout,
-        stderr=stderr,
-        output_dir=output_dir,
-    )
-    outputs["activation_p_map"] = _gen_fname(
-        basename="w2_mean",
-        cwd="logdir",
-        inputs=inputs,
-        stdout=stdout,
-        stderr=stderr,
-        output_dir=output_dir,
-    )
-    if (
-        inputs.no_deactivation_class is attrs.NOTHING
-    ) or not inputs.no_deactivation_class:
-        outputs["deactivation_p_map"] = _gen_fname(
-            basename="w3_mean",
-            cwd="logdir",
-            inputs=inputs,
-            stdout=stdout,
-            stderr=stderr,
-            output_dir=output_dir,
-        )
-    return outputs

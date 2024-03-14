@@ -1,6 +1,6 @@
 """Module to put any functions that are referred to in the "callables" section of TrainingSetCreator.yaml"""
 
-import attrs
+import os
 
 
 def mel_icas_out_callable(output_dir, inputs, stdout, stderr):
@@ -10,7 +10,12 @@ def mel_icas_out_callable(output_dir, inputs, stdout, stderr):
     return outputs["mel_icas_out"]
 
 
-def _gen_filename(field, inputs, output_dir, stdout, stderr):
-    raise NotImplementedError(
-        "Could not find '_gen_filename' method in nipype.interfaces.fsl.fix.TrainingSetCreator"
-    )
+# Original source at L122 of <nipype-install>/interfaces/fsl/fix.py
+def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
+    mel_icas = []
+    for item in inputs.mel_icas_in:
+        if os.path.exists(os.path.join(item, "hand_labels_noise.txt")):
+            mel_icas.append(item)
+    outputs = {}
+    outputs["mel_icas_out"] = mel_icas
+    return outputs

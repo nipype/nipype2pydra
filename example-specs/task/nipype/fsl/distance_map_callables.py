@@ -1,9 +1,9 @@
 """Module to put any functions that are referred to in the "callables" section of DistanceMap.yaml"""
 
+import attrs
 import os
 import os.path as op
 from pathlib import Path
-import attrs
 
 
 def distance_map_default(inputs):
@@ -22,6 +22,35 @@ def local_max_file_callable(output_dir, inputs, stdout, stderr):
         output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
     )
     return outputs["local_max_file"]
+
+
+# Original source at L1537 of <nipype-install>/interfaces/fsl/dti.py
+def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
+    if name == "distance_map":
+        return _list_outputs(
+            inputs=inputs, stdout=stdout, stderr=stderr, output_dir=output_dir
+        )["distance_map"]
+    return None
+
+
+# Original source at L1519 of <nipype-install>/interfaces/fsl/dti.py
+def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
+    outputs = {}
+    _si = inputs
+    outputs["distance_map"] = _si.distance_map
+    if _si.distance_map is attrs.NOTHING:
+        outputs["distance_map"] = fname_presuffix(
+            _si.in_file, suffix="_dstmap", use_ext=True, newpath=output_dir
+        )
+    outputs["distance_map"] = os.path.abspath(outputs["distance_map"])
+    if _si.local_max_file is not attrs.NOTHING:
+        outputs["local_max_file"] = _si.local_max_file
+        if isinstance(_si.local_max_file, bool):
+            outputs["local_max_file"] = fname_presuffix(
+                _si.in_file, suffix="_lclmax", use_ext=True, newpath=output_dir
+            )
+        outputs["local_max_file"] = os.path.abspath(outputs["local_max_file"])
+    return outputs
 
 
 # Original source at L108 of <nipype-install>/utils/filemanip.py
@@ -116,32 +145,3 @@ def split_filename(fname):
         fname, ext = op.splitext(fname)
 
     return pth, fname, ext
-
-
-# Original source at L1537 of <nipype-install>/interfaces/fsl/dti.py
-def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
-    if name == "distance_map":
-        return _list_outputs(
-            inputs=inputs, stdout=stdout, stderr=stderr, output_dir=output_dir
-        )["distance_map"]
-    return None
-
-
-# Original source at L1519 of <nipype-install>/interfaces/fsl/dti.py
-def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
-    outputs = {}
-    _si = inputs
-    outputs["distance_map"] = _si.distance_map
-    if _si.distance_map is attrs.NOTHING:
-        outputs["distance_map"] = fname_presuffix(
-            _si.in_file, suffix="_dstmap", use_ext=True, newpath=output_dir
-        )
-    outputs["distance_map"] = os.path.abspath(outputs["distance_map"])
-    if _si.local_max_file is not attrs.NOTHING:
-        outputs["local_max_file"] = _si.local_max_file
-        if isinstance(_si.local_max_file, bool):
-            outputs["local_max_file"] = fname_presuffix(
-                _si.in_file, suffix="_lclmax", use_ext=True, newpath=output_dir
-            )
-        outputs["local_max_file"] = os.path.abspath(outputs["local_max_file"])
-    return outputs

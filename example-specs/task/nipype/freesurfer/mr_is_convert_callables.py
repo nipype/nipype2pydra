@@ -1,8 +1,8 @@
 """Module to put any functions that are referred to in the "callables" section of MRIsConvert.yaml"""
 
+import attrs
 import os
 import os.path as op
-import attrs
 
 
 def out_file_default(inputs):
@@ -14,6 +14,49 @@ def converted_callable(output_dir, inputs, stdout, stderr):
         output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
     )
     return outputs["converted"]
+
+
+# Original source at L1309 of <nipype-install>/interfaces/freesurfer/utils.py
+def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
+    if name == "out_file":
+        return os.path.abspath(
+            _gen_outfilename(
+                inputs=inputs, stdout=stdout, stderr=stderr, output_dir=output_dir
+            )
+        )
+    else:
+        return None
+
+
+# Original source at L1315 of <nipype-install>/interfaces/freesurfer/utils.py
+def _gen_outfilename(inputs=None, stdout=None, stderr=None, output_dir=None):
+    if inputs.out_file is not attrs.NOTHING:
+        return inputs.out_file
+    elif inputs.annot_file is not attrs.NOTHING:
+        _, name, ext = split_filename(inputs.annot_file)
+    elif inputs.parcstats_file is not attrs.NOTHING:
+        _, name, ext = split_filename(inputs.parcstats_file)
+    elif inputs.label_file is not attrs.NOTHING:
+        _, name, ext = split_filename(inputs.label_file)
+    elif inputs.scalarcurv_file is not attrs.NOTHING:
+        _, name, ext = split_filename(inputs.scalarcurv_file)
+    elif inputs.functional_file is not attrs.NOTHING:
+        _, name, ext = split_filename(inputs.functional_file)
+    elif inputs.in_file is not attrs.NOTHING:
+        _, name, ext = split_filename(inputs.in_file)
+
+    return name + ext + "_converted." + inputs.out_datatype
+
+
+# Original source at L1304 of <nipype-install>/interfaces/freesurfer/utils.py
+def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
+    outputs = {}
+    outputs["converted"] = os.path.abspath(
+        _gen_outfilename(
+            inputs=inputs, stdout=stdout, stderr=stderr, output_dir=output_dir
+        )
+    )
+    return outputs
 
 
 # Original source at L58 of <nipype-install>/utils/filemanip.py
@@ -65,46 +108,3 @@ def split_filename(fname):
         fname, ext = op.splitext(fname)
 
     return pth, fname, ext
-
-
-# Original source at L1315 of <nipype-install>/interfaces/freesurfer/utils.py
-def _gen_outfilename(inputs=None, stdout=None, stderr=None, output_dir=None):
-    if inputs.out_file is not attrs.NOTHING:
-        return inputs.out_file
-    elif inputs.annot_file is not attrs.NOTHING:
-        _, name, ext = split_filename(inputs.annot_file)
-    elif inputs.parcstats_file is not attrs.NOTHING:
-        _, name, ext = split_filename(inputs.parcstats_file)
-    elif inputs.label_file is not attrs.NOTHING:
-        _, name, ext = split_filename(inputs.label_file)
-    elif inputs.scalarcurv_file is not attrs.NOTHING:
-        _, name, ext = split_filename(inputs.scalarcurv_file)
-    elif inputs.functional_file is not attrs.NOTHING:
-        _, name, ext = split_filename(inputs.functional_file)
-    elif inputs.in_file is not attrs.NOTHING:
-        _, name, ext = split_filename(inputs.in_file)
-
-    return name + ext + "_converted." + inputs.out_datatype
-
-
-# Original source at L1309 of <nipype-install>/interfaces/freesurfer/utils.py
-def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
-    if name == "out_file":
-        return os.path.abspath(
-            _gen_outfilename(
-                inputs=inputs, stdout=stdout, stderr=stderr, output_dir=output_dir
-            )
-        )
-    else:
-        return None
-
-
-# Original source at L1304 of <nipype-install>/interfaces/freesurfer/utils.py
-def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
-    outputs = {}
-    outputs["converted"] = os.path.abspath(
-        _gen_outfilename(
-            inputs=inputs, stdout=stdout, stderr=stderr, output_dir=output_dir
-        )
-    )
-    return outputs

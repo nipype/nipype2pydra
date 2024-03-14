@@ -1,8 +1,8 @@
 """Module to put any functions that are referred to in the "callables" section of MRITessellate.yaml"""
 
+import attrs
 import os
 import os.path as op
-import attrs
 
 
 def out_file_default(inputs):
@@ -14,6 +14,36 @@ def surface_callable(output_dir, inputs, stdout, stderr):
         output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
     )
     return outputs["surface"]
+
+
+# Original source at L1484 of <nipype-install>/interfaces/freesurfer/utils.py
+def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
+    if name == "out_file":
+        return _gen_outfilename(
+            inputs=inputs, stdout=stdout, stderr=stderr, output_dir=output_dir
+        )
+    else:
+        return None
+
+
+# Original source at L1490 of <nipype-install>/interfaces/freesurfer/utils.py
+def _gen_outfilename(inputs=None, stdout=None, stderr=None, output_dir=None):
+    if inputs.out_file is not attrs.NOTHING:
+        return inputs.out_file
+    else:
+        _, name, ext = split_filename(inputs.in_file)
+        return name + ext + "_" + str(inputs.label_value)
+
+
+# Original source at L1479 of <nipype-install>/interfaces/freesurfer/utils.py
+def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
+    outputs = {}
+    outputs["surface"] = os.path.abspath(
+        _gen_outfilename(
+            inputs=inputs, stdout=stdout, stderr=stderr, output_dir=output_dir
+        )
+    )
+    return outputs
 
 
 # Original source at L58 of <nipype-install>/utils/filemanip.py
@@ -65,33 +95,3 @@ def split_filename(fname):
         fname, ext = op.splitext(fname)
 
     return pth, fname, ext
-
-
-# Original source at L1490 of <nipype-install>/interfaces/freesurfer/utils.py
-def _gen_outfilename(inputs=None, stdout=None, stderr=None, output_dir=None):
-    if inputs.out_file is not attrs.NOTHING:
-        return inputs.out_file
-    else:
-        _, name, ext = split_filename(inputs.in_file)
-        return name + ext + "_" + str(inputs.label_value)
-
-
-# Original source at L1484 of <nipype-install>/interfaces/freesurfer/utils.py
-def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
-    if name == "out_file":
-        return _gen_outfilename(
-            inputs=inputs, stdout=stdout, stderr=stderr, output_dir=output_dir
-        )
-    else:
-        return None
-
-
-# Original source at L1479 of <nipype-install>/interfaces/freesurfer/utils.py
-def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
-    outputs = {}
-    outputs["surface"] = os.path.abspath(
-        _gen_outfilename(
-            inputs=inputs, stdout=stdout, stderr=stderr, output_dir=output_dir
-        )
-    )
-    return outputs

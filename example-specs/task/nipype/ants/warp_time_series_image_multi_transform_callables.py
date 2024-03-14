@@ -2,7 +2,6 @@
 
 import os
 import os.path as op
-import attrs
 
 
 def output_image_callable(output_dir, inputs, stdout, stderr):
@@ -15,6 +14,16 @@ def output_image_callable(output_dir, inputs, stdout, stderr):
 # Original source at L885 of <nipype-install>/interfaces/base/core.py
 def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
     raise NotImplementedError
+
+
+# Original source at L137 of <nipype-install>/interfaces/ants/resampling.py
+def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
+    outputs = {}
+    _, name, ext = split_filename(os.path.abspath(inputs.input_image))
+    outputs["output_image"] = os.path.join(
+        output_dir, "".join((name, inputs.out_postfix, ext))
+    )
+    return outputs
 
 
 # Original source at L58 of <nipype-install>/utils/filemanip.py
@@ -66,13 +75,3 @@ def split_filename(fname):
         fname, ext = op.splitext(fname)
 
     return pth, fname, ext
-
-
-# Original source at L137 of <nipype-install>/interfaces/ants/resampling.py
-def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
-    outputs = {}
-    _, name, ext = split_filename(os.path.abspath(inputs.input_image))
-    outputs["output_image"] = os.path.join(
-        output_dir, "".join((name, inputs.out_postfix, ext))
-    )
-    return outputs

@@ -1,9 +1,9 @@
 """Module to put any functions that are referred to in the "callables" section of MRIConvert.yaml"""
 
-from nibabel import load
 import attrs
 import os
 import os.path as op
+from nibabel import load
 from pathlib import Path
 
 
@@ -16,6 +16,76 @@ def out_file_callable(output_dir, inputs, stdout, stderr):
         output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
     )
     return outputs["out_file"]
+
+
+# Original source at L603 of <nipype-install>/interfaces/freesurfer/preprocess.py
+def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
+    if name == "out_file":
+        return _get_outfilename(
+            inputs=inputs, stdout=stdout, stderr=stderr, output_dir=output_dir
+        )
+    return None
+
+
+# Original source at L550 of <nipype-install>/interfaces/freesurfer/preprocess.py
+def _get_outfilename(inputs=None, stdout=None, stderr=None, output_dir=None):
+    outfile = inputs.out_file
+    if outfile is attrs.NOTHING:
+        if inputs.out_type is not attrs.NOTHING:
+            suffix = "_out." + filemap[inputs.out_type]
+        else:
+            suffix = "_out.nii.gz"
+        outfile = fname_presuffix(
+            inputs.in_file, newpath=output_dir, suffix=suffix, use_ext=False
+        )
+    return os.path.abspath(outfile)
+
+
+# Original source at L562 of <nipype-install>/interfaces/freesurfer/preprocess.py
+def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
+    outputs = {}
+    outfile = _get_outfilename(
+        inputs=inputs, stdout=stdout, stderr=stderr, output_dir=output_dir
+    )
+    if (inputs.split is not attrs.NOTHING) and inputs.split:
+        size = load(inputs.in_file).shape
+        if len(size) == 3:
+            tp = 1
+        else:
+            tp = size[-1]
+        if outfile.endswith(".mgz"):
+            stem = outfile.split(".mgz")[0]
+            ext = ".mgz"
+        elif outfile.endswith(".nii.gz"):
+            stem = outfile.split(".nii.gz")[0]
+            ext = ".nii.gz"
+        else:
+            stem = ".".join(outfile.split(".")[:-1])
+            ext = "." + outfile.split(".")[-1]
+        outfile = []
+        for idx in range(0, tp):
+            outfile.append(stem + "%04d" % idx + ext)
+    if inputs.out_type is not attrs.NOTHING:
+        if inputs.out_type in ["spm", "analyze"]:
+            # generate all outputs
+            size = load(inputs.in_file).shape
+            if len(size) == 3:
+                tp = 1
+            else:
+                tp = size[-1]
+                # have to take care of all the frame manipulations
+                raise Exception(
+                    "Not taking frame manipulations into account- please warn the developers"
+                )
+            outfiles = []
+            outfile = _get_outfilename(
+                inputs=inputs, stdout=stdout, stderr=stderr, output_dir=output_dir
+            )
+            for i in range(tp):
+                outfiles.append(fname_presuffix(outfile, suffix="%03d" % (i + 1)))
+            outfile = outfiles
+    outputs["out_file"] = outfile
+    return outputs
 
 
 # Original source at L108 of <nipype-install>/utils/filemanip.py
@@ -110,73 +180,3 @@ def split_filename(fname):
         fname, ext = op.splitext(fname)
 
     return pth, fname, ext
-
-
-# Original source at L550 of <nipype-install>/interfaces/freesurfer/preprocess.py
-def _get_outfilename(inputs=None, stdout=None, stderr=None, output_dir=None):
-    outfile = inputs.out_file
-    if outfile is attrs.NOTHING:
-        if inputs.out_type is not attrs.NOTHING:
-            suffix = "_out." + filemap[inputs.out_type]
-        else:
-            suffix = "_out.nii.gz"
-        outfile = fname_presuffix(
-            inputs.in_file, newpath=output_dir, suffix=suffix, use_ext=False
-        )
-    return os.path.abspath(outfile)
-
-
-# Original source at L603 of <nipype-install>/interfaces/freesurfer/preprocess.py
-def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
-    if name == "out_file":
-        return _get_outfilename(
-            inputs=inputs, stdout=stdout, stderr=stderr, output_dir=output_dir
-        )
-    return None
-
-
-# Original source at L562 of <nipype-install>/interfaces/freesurfer/preprocess.py
-def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
-    outputs = {}
-    outfile = _get_outfilename(
-        inputs=inputs, stdout=stdout, stderr=stderr, output_dir=output_dir
-    )
-    if (inputs.split is not attrs.NOTHING) and inputs.split:
-        size = load(inputs.in_file).shape
-        if len(size) == 3:
-            tp = 1
-        else:
-            tp = size[-1]
-        if outfile.endswith(".mgz"):
-            stem = outfile.split(".mgz")[0]
-            ext = ".mgz"
-        elif outfile.endswith(".nii.gz"):
-            stem = outfile.split(".nii.gz")[0]
-            ext = ".nii.gz"
-        else:
-            stem = ".".join(outfile.split(".")[:-1])
-            ext = "." + outfile.split(".")[-1]
-        outfile = []
-        for idx in range(0, tp):
-            outfile.append(stem + "%04d" % idx + ext)
-    if inputs.out_type is not attrs.NOTHING:
-        if inputs.out_type in ["spm", "analyze"]:
-            # generate all outputs
-            size = load(inputs.in_file).shape
-            if len(size) == 3:
-                tp = 1
-            else:
-                tp = size[-1]
-                # have to take care of all the frame manipulations
-                raise Exception(
-                    "Not taking frame manipulations into account- please warn the developers"
-                )
-            outfiles = []
-            outfile = _get_outfilename(
-                inputs=inputs, stdout=stdout, stderr=stderr, output_dir=output_dir
-            )
-            for i in range(tp):
-                outfiles.append(fname_presuffix(outfile, suffix="%03d" % (i + 1)))
-            outfile = outfiles
-    outputs["out_file"] = outfile
-    return outputs

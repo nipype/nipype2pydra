@@ -1,9 +1,9 @@
 """Module to put any functions that are referred to in the "callables" section of Label2Vol.yaml"""
 
+import attrs
 import os
 import os.path as op
 from pathlib import Path
-import attrs
 
 
 def vol_label_file_default(inputs):
@@ -15,6 +15,35 @@ def vol_label_file_callable(output_dir, inputs, stdout, stderr):
         output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
     )
     return outputs["vol_label_file"]
+
+
+# Original source at L1311 of <nipype-install>/interfaces/freesurfer/model.py
+def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
+    if name == "vol_label_file":
+        return _list_outputs(
+            inputs=inputs, stdout=stdout, stderr=stderr, output_dir=output_dir
+        )[name]
+    return None
+
+
+# Original source at L1293 of <nipype-install>/interfaces/freesurfer/model.py
+def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
+    outputs = {}
+    outfile = inputs.vol_label_file
+    if outfile is attrs.NOTHING:
+        for key in ["label_file", "annot_file", "seg_file"]:
+            if getattr(inputs, key) is not attrs.NOTHING:
+                path = getattr(inputs, key)
+                if isinstance(path, list):
+                    path = path[0]
+                _, src = os.path.split(path)
+        if inputs.aparc_aseg is not attrs.NOTHING:
+            src = "aparc+aseg.mgz"
+        outfile = fname_presuffix(
+            src, suffix="_vol.nii.gz", newpath=output_dir, use_ext=False
+        )
+    outputs["vol_label_file"] = outfile
+    return outputs
 
 
 # Original source at L108 of <nipype-install>/utils/filemanip.py
@@ -109,32 +138,3 @@ def split_filename(fname):
         fname, ext = op.splitext(fname)
 
     return pth, fname, ext
-
-
-# Original source at L1311 of <nipype-install>/interfaces/freesurfer/model.py
-def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
-    if name == "vol_label_file":
-        return _list_outputs(
-            inputs=inputs, stdout=stdout, stderr=stderr, output_dir=output_dir
-        )[name]
-    return None
-
-
-# Original source at L1293 of <nipype-install>/interfaces/freesurfer/model.py
-def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
-    outputs = {}
-    outfile = inputs.vol_label_file
-    if outfile is attrs.NOTHING:
-        for key in ["label_file", "annot_file", "seg_file"]:
-            if getattr(inputs, key) is not attrs.NOTHING:
-                path = getattr(inputs, key)
-                if isinstance(path, list):
-                    path = path[0]
-                _, src = os.path.split(path)
-        if inputs.aparc_aseg is not attrs.NOTHING:
-            src = "aparc+aseg.mgz"
-        outfile = fname_presuffix(
-            src, suffix="_vol.nii.gz", newpath=output_dir, use_ext=False
-        )
-    outputs["vol_label_file"] = outfile
-    return outputs

@@ -1,27 +1,13 @@
 """Module to put any functions that are referred to in the "callables" section of SegStats.yaml"""
 
+import attrs
 import os
 import os.path as op
 from pathlib import Path
-import attrs
 
 
 def summary_file_default(inputs):
     return _gen_filename("summary_file", inputs=inputs)
-
-
-def summary_file_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["summary_file"]
-
-
-def avgwf_txt_file_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["avgwf_txt_file"]
 
 
 def avgwf_file_callable(output_dir, inputs, stdout, stderr):
@@ -31,11 +17,64 @@ def avgwf_file_callable(output_dir, inputs, stdout, stderr):
     return outputs["avgwf_file"]
 
 
+def avgwf_txt_file_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["avgwf_txt_file"]
+
+
 def sf_avg_file_callable(output_dir, inputs, stdout, stderr):
     outputs = _list_outputs(
         output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
     )
     return outputs["sf_avg_file"]
+
+
+def summary_file_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["summary_file"]
+
+
+# Original source at L1071 of <nipype-install>/interfaces/freesurfer/model.py
+def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
+    if name == "summary_file":
+        return _list_outputs(
+            inputs=inputs, stdout=stdout, stderr=stderr, output_dir=output_dir
+        )[name]
+    return None
+
+
+# Original source at L1025 of <nipype-install>/interfaces/freesurfer/model.py
+def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
+    outputs = {}
+    if inputs.summary_file is not attrs.NOTHING:
+        outputs["summary_file"] = os.path.abspath(inputs.summary_file)
+    else:
+        outputs["summary_file"] = os.path.join(output_dir, "summary.stats")
+    suffices = dict(
+        avgwf_txt_file="_avgwf.txt",
+        avgwf_file="_avgwf.nii.gz",
+        sf_avg_file="sfavg.txt",
+    )
+    if inputs.segmentation_file is not attrs.NOTHING:
+        _, src = os.path.split(inputs.segmentation_file)
+    if inputs.annot is not attrs.NOTHING:
+        src = "_".join(inputs.annot)
+    if inputs.surf_label is not attrs.NOTHING:
+        src = "_".join(inputs.surf_label)
+    for name, suffix in list(suffices.items()):
+        value = getattr(inputs, name)
+        if value is not attrs.NOTHING:
+            if isinstance(value, bool):
+                outputs[name] = fname_presuffix(
+                    src, suffix=suffix, newpath=output_dir, use_ext=False
+                )
+            else:
+                outputs[name] = os.path.abspath(value)
+    return outputs
 
 
 # Original source at L108 of <nipype-install>/utils/filemanip.py
@@ -130,42 +169,3 @@ def split_filename(fname):
         fname, ext = op.splitext(fname)
 
     return pth, fname, ext
-
-
-# Original source at L1071 of <nipype-install>/interfaces/freesurfer/model.py
-def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
-    if name == "summary_file":
-        return _list_outputs(
-            inputs=inputs, stdout=stdout, stderr=stderr, output_dir=output_dir
-        )[name]
-    return None
-
-
-# Original source at L1025 of <nipype-install>/interfaces/freesurfer/model.py
-def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
-    outputs = {}
-    if inputs.summary_file is not attrs.NOTHING:
-        outputs["summary_file"] = os.path.abspath(inputs.summary_file)
-    else:
-        outputs["summary_file"] = os.path.join(output_dir, "summary.stats")
-    suffices = dict(
-        avgwf_txt_file="_avgwf.txt",
-        avgwf_file="_avgwf.nii.gz",
-        sf_avg_file="sfavg.txt",
-    )
-    if inputs.segmentation_file is not attrs.NOTHING:
-        _, src = os.path.split(inputs.segmentation_file)
-    if inputs.annot is not attrs.NOTHING:
-        src = "_".join(inputs.annot)
-    if inputs.surf_label is not attrs.NOTHING:
-        src = "_".join(inputs.surf_label)
-    for name, suffix in list(suffices.items()):
-        value = getattr(inputs, name)
-        if value is not attrs.NOTHING:
-            if isinstance(value, bool):
-                outputs[name] = fname_presuffix(
-                    src, suffix=suffix, newpath=output_dir, use_ext=False
-                )
-            else:
-                outputs[name] = os.path.abspath(value)
-    return outputs

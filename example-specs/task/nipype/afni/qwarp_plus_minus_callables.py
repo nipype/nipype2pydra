@@ -1,31 +1,10 @@
 """Module to put any functions that are referred to in the "callables" section of QwarpPlusMinus.yaml"""
 
-from looseversion import LooseVersion
 import attrs
 import os
 import os.path as op
+from looseversion import LooseVersion
 from pathlib import Path
-
-
-def warped_source_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["warped_source"]
-
-
-def warped_base_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["warped_base"]
-
-
-def source_warp_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["source_warp"]
 
 
 def base_warp_callable(output_dir, inputs, stdout, stderr):
@@ -35,6 +14,27 @@ def base_warp_callable(output_dir, inputs, stdout, stderr):
     return outputs["base_warp"]
 
 
+def source_warp_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["source_warp"]
+
+
+def warped_base_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["warped_base"]
+
+
+def warped_source_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["warped_source"]
+
+
 def weights_callable(output_dir, inputs, stdout, stderr):
     outputs = _list_outputs(
         output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
@@ -42,42 +42,17 @@ def weights_callable(output_dir, inputs, stdout, stderr):
     return outputs["weights"]
 
 
-# Original source at L1069 of <nipype-install>/interfaces/base/core.py
-class PackageInfo(object):
-    _version = None
-    version_cmd = None
-    version_file = None
-
-    @classmethod
-    def version(klass):
-        if klass._version is None:
-            if klass.version_cmd is not None:
-                try:
-                    clout = CommandLine(
-                        command=klass.version_cmd,
-                        resource_monitor=False,
-                        terminal_output="allatonce",
-                    ).run()
-                except IOError:
-                    return None
-
-                raw_info = clout.runtime.stdout
-            elif klass.version_file is not None:
-                try:
-                    with open(klass.version_file, "rt") as fobj:
-                        raw_info = fobj.read()
-                except OSError:
-                    return None
-            else:
-                return None
-
-            klass._version = klass.parse_version(raw_info)
-
-        return klass._version
-
-    @staticmethod
-    def parse_version(raw_info):
-        raise NotImplementedError
+# Original source at L4449 of <nipype-install>/interfaces/afni/preprocess.py
+def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
+    if name == "out_file":
+        return _gen_fname(
+            inputs.in_file,
+            suffix="_QW",
+            inputs=inputs,
+            stdout=stdout,
+            stderr=stderr,
+            output_dir=output_dir,
+        )
 
 
 # Original source at L260 of <nipype-install>/interfaces/afni/base.py
@@ -135,88 +110,88 @@ def _gen_fname(
     return fname
 
 
-# Original source at L26 of <nipype-install>/interfaces/afni/base.py
-class Info(PackageInfo):
-    """Handle afni output type and version information."""
+# Original source at L4372 of <nipype-install>/interfaces/afni/preprocess.py
+def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
+    outputs = {}
 
-    __outputtype = "AFNI"
-    ftypes = {"NIFTI": ".nii", "AFNI": "", "NIFTI_GZ": ".nii.gz"}
-    version_cmd = "afni --version"
-
-    @staticmethod
-    def parse_version(raw_info):
-        """Check and parse AFNI's version."""
-        version_stamp = raw_info.split("\n")[0].split("Version ")[1]
-        if version_stamp.startswith("AFNI"):
-            version_stamp = version_stamp.split("AFNI_")[1]
-        elif version_stamp.startswith("Debian"):
-            version_stamp = version_stamp.split("Debian-")[1].split("~")[0]
+    if inputs.out_file is attrs.NOTHING:
+        prefix = _gen_fname(
+            inputs.in_file,
+            suffix="_QW",
+            inputs=inputs,
+            stdout=stdout,
+            stderr=stderr,
+            output_dir=output_dir,
+        )
+        outputtype = inputs.outputtype
+        if outputtype == "AFNI":
+            ext = ".HEAD"
+            suffix = "+tlrc"
         else:
-            return None
+            ext = Info.output_type_to_ext(outputtype)
+            suffix = ""
+    else:
+        prefix = inputs.out_file
+        ext_ind = max([prefix.lower().rfind(".nii.gz"), prefix.lower().rfind(".nii")])
+        if ext_ind == -1:
+            ext = ".HEAD"
+            suffix = "+tlrc"
+        else:
+            ext = prefix[ext_ind:]
+            suffix = ""
 
-        version = LooseVersion(version_stamp.replace("_", ".")).version[:3]
-        if version[0] < 1000:
-            version[0] = version[0] + 2000
-        return tuple(version)
+    # All outputs should be in the same directory as the prefix
+    out_dir = os.path.dirname(os.path.abspath(prefix))
 
-    @classmethod
-    def output_type_to_ext(cls, outputtype):
-        """
-        Get the file extension for the given output type.
+    outputs["warped_source"] = (
+        fname_presuffix(prefix, suffix=suffix, use_ext=False, newpath=out_dir) + ext
+    )
+    if not inputs.nowarp:
+        outputs["source_warp"] = (
+            fname_presuffix(
+                prefix, suffix="_WARP" + suffix, use_ext=False, newpath=out_dir
+            )
+            + ext
+        )
+    if inputs.iwarp:
+        outputs["base_warp"] = (
+            fname_presuffix(
+                prefix, suffix="_WARPINV" + suffix, use_ext=False, newpath=out_dir
+            )
+            + ext
+        )
+    if inputs.out_weight_file is not attrs.NOTHING:
+        outputs["weights"] = os.path.abspath(inputs.out_weight_file)
 
-        Parameters
-        ----------
-        outputtype : {'NIFTI', 'NIFTI_GZ', 'AFNI'}
-            String specifying the output type.
-
-        Returns
-        -------
-        extension : str
-            The file extension for the output type.
-
-        """
-        try:
-            return cls.ftypes[outputtype]
-        except KeyError as e:
-            msg = "Invalid AFNIOUTPUTTYPE: ", outputtype
-            raise KeyError(msg) from e
-
-    @classmethod
-    def outputtype(cls):
-        """
-        Set default output filetype.
-
-        AFNI has no environment variables, Output filetypes get set in command line calls
-        Nipype uses ``AFNI`` as default
-
-
-        Returns
-        -------
-        None
-
-        """
-        return "AFNI"
-
-    @staticmethod
-    def standard_image(img_name):
-        """
-        Grab an image from the standard location.
-
-        Could be made more fancy to allow for more relocatability
-
-        """
-        clout = CommandLine(
-            "which afni",
-            ignore_exception=True,
-            resource_monitor=False,
-            terminal_output="allatonce",
-        ).run()
-        if clout.runtime.returncode != 0:
-            return None
-
-        out = clout.runtime.stdout
-        basedir = os.path.split(out)[0]
-        return os.path.join(basedir, img_name)
+    if inputs.plusminus:
+        outputs["warped_source"] = (
+            fname_presuffix(
+                prefix, suffix="_PLUS" + suffix, use_ext=False, newpath=out_dir
+            )
+            + ext
+        )
+        outputs["warped_base"] = (
+            fname_presuffix(
+                prefix, suffix="_MINUS" + suffix, use_ext=False, newpath=out_dir
+            )
+            + ext
+        )
+        outputs["source_warp"] = (
+            fname_presuffix(
+                prefix, suffix="_PLUS_WARP" + suffix, use_ext=False, newpath=out_dir
+            )
+            + ext
+        )
+        outputs["base_warp"] = (
+            fname_presuffix(
+                prefix,
+                suffix="_MINUS_WARP" + suffix,
+                use_ext=False,
+                newpath=out_dir,
+            )
+            + ext
+        )
+    return outputs
 
 
 # Original source at L108 of <nipype-install>/utils/filemanip.py
@@ -313,98 +288,123 @@ def split_filename(fname):
     return pth, fname, ext
 
 
-# Original source at L4449 of <nipype-install>/interfaces/afni/preprocess.py
-def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
-    if name == "out_file":
-        return _gen_fname(
-            inputs.in_file,
-            suffix="_QW",
-            inputs=inputs,
-            stdout=stdout,
-            stderr=stderr,
-            output_dir=output_dir,
-        )
+# Original source at L1069 of <nipype-install>/interfaces/base/core.py
+class PackageInfo(object):
+    _version = None
+    version_cmd = None
+    version_file = None
+
+    @classmethod
+    def version(klass):
+        if klass._version is None:
+            if klass.version_cmd is not None:
+                try:
+                    clout = CommandLine(
+                        command=klass.version_cmd,
+                        resource_monitor=False,
+                        terminal_output="allatonce",
+                    ).run()
+                except IOError:
+                    return None
+
+                raw_info = clout.runtime.stdout
+            elif klass.version_file is not None:
+                try:
+                    with open(klass.version_file, "rt") as fobj:
+                        raw_info = fobj.read()
+                except OSError:
+                    return None
+            else:
+                return None
+
+            klass._version = klass.parse_version(raw_info)
+
+        return klass._version
+
+    @staticmethod
+    def parse_version(raw_info):
+        raise NotImplementedError
 
 
-# Original source at L4372 of <nipype-install>/interfaces/afni/preprocess.py
-def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
-    outputs = {}
+# Original source at L26 of <nipype-install>/interfaces/afni/base.py
+class Info(PackageInfo):
+    """Handle afni output type and version information."""
 
-    if inputs.out_file is attrs.NOTHING:
-        prefix = _gen_fname(
-            inputs.in_file,
-            suffix="_QW",
-            inputs=inputs,
-            stdout=stdout,
-            stderr=stderr,
-            output_dir=output_dir,
-        )
-        outputtype = inputs.outputtype
-        if outputtype == "AFNI":
-            ext = ".HEAD"
-            suffix = "+tlrc"
+    __outputtype = "AFNI"
+    ftypes = {"NIFTI": ".nii", "AFNI": "", "NIFTI_GZ": ".nii.gz"}
+    version_cmd = "afni --version"
+
+    @staticmethod
+    def parse_version(raw_info):
+        """Check and parse AFNI's version."""
+        version_stamp = raw_info.split("\n")[0].split("Version ")[1]
+        if version_stamp.startswith("AFNI"):
+            version_stamp = version_stamp.split("AFNI_")[1]
+        elif version_stamp.startswith("Debian"):
+            version_stamp = version_stamp.split("Debian-")[1].split("~")[0]
         else:
-            ext = Info.output_type_to_ext(outputtype)
-            suffix = ""
-    else:
-        prefix = inputs.out_file
-        ext_ind = max([prefix.lower().rfind(".nii.gz"), prefix.lower().rfind(".nii")])
-        if ext_ind == -1:
-            ext = ".HEAD"
-            suffix = "+tlrc"
-        else:
-            ext = prefix[ext_ind:]
-            suffix = ""
+            return None
 
-    # All outputs should be in the same directory as the prefix
-    out_dir = os.path.dirname(os.path.abspath(prefix))
+        version = LooseVersion(version_stamp.replace("_", ".")).version[:3]
+        if version[0] < 1000:
+            version[0] = version[0] + 2000
+        return tuple(version)
 
-    outputs["warped_source"] = (
-        fname_presuffix(prefix, suffix=suffix, use_ext=False, newpath=out_dir) + ext
-    )
-    if not inputs.nowarp:
-        outputs["source_warp"] = (
-            fname_presuffix(
-                prefix, suffix="_WARP" + suffix, use_ext=False, newpath=out_dir
-            )
-            + ext
-        )
-    if inputs.iwarp:
-        outputs["base_warp"] = (
-            fname_presuffix(
-                prefix, suffix="_WARPINV" + suffix, use_ext=False, newpath=out_dir
-            )
-            + ext
-        )
-    if inputs.out_weight_file is not attrs.NOTHING:
-        outputs["weights"] = os.path.abspath(inputs.out_weight_file)
+    @classmethod
+    def output_type_to_ext(cls, outputtype):
+        """
+        Get the file extension for the given output type.
 
-    if inputs.plusminus:
-        outputs["warped_source"] = (
-            fname_presuffix(
-                prefix, suffix="_PLUS" + suffix, use_ext=False, newpath=out_dir
-            )
-            + ext
-        )
-        outputs["warped_base"] = (
-            fname_presuffix(
-                prefix, suffix="_MINUS" + suffix, use_ext=False, newpath=out_dir
-            )
-            + ext
-        )
-        outputs["source_warp"] = (
-            fname_presuffix(
-                prefix, suffix="_PLUS_WARP" + suffix, use_ext=False, newpath=out_dir
-            )
-            + ext
-        )
-        outputs["base_warp"] = (
-            fname_presuffix(
-                prefix,
-                suffix="_MINUS_WARP" + suffix,
-                use_ext=False,
-                newpath=out_dir,
-            )
-            + ext
-        )
-    return outputs
+        Parameters
+        ----------
+        outputtype : {'NIFTI', 'NIFTI_GZ', 'AFNI'}
+            String specifying the output type.
+
+        Returns
+        -------
+        extension : str
+            The file extension for the output type.
+
+        """
+        try:
+            return cls.ftypes[outputtype]
+        except KeyError as e:
+            msg = "Invalid AFNIOUTPUTTYPE: ", outputtype
+            raise KeyError(msg) from e
+
+    @classmethod
+    def outputtype(cls):
+        """
+        Set default output filetype.
+
+        AFNI has no environment variables, Output filetypes get set in command line calls
+        Nipype uses ``AFNI`` as default
+
+
+        Returns
+        -------
+        None
+
+        """
+        return "AFNI"
+
+    @staticmethod
+    def standard_image(img_name):
+        """
+        Grab an image from the standard location.
+
+        Could be made more fancy to allow for more relocatability
+
+        """
+        clout = CommandLine(
+            "which afni",
+            ignore_exception=True,
+            resource_monitor=False,
+            terminal_output="allatonce",
+        ).run()
+        if clout.runtime.returncode != 0:
+            return None
+
+        out = clout.runtime.stdout
+        basedir = os.path.split(out)[0]
+        return os.path.join(basedir, img_name)

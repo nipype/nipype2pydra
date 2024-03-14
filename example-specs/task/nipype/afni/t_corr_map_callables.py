@@ -1,38 +1,10 @@
 """Module to put any functions that are referred to in the "callables" section of TCorrMap.yaml"""
 
-from looseversion import LooseVersion
 import attrs
 import logging
 import os
 import os.path as op
-
-
-def mean_file_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["mean_file"]
-
-
-def zmean_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["zmean"]
-
-
-def qmean_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["qmean"]
-
-
-def pmean_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["pmean"]
+from looseversion import LooseVersion
 
 
 def absolute_threshold_callable(output_dir, inputs, stdout, stderr):
@@ -40,34 +12,6 @@ def absolute_threshold_callable(output_dir, inputs, stdout, stderr):
         output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
     )
     return outputs["absolute_threshold"]
-
-
-def var_absolute_threshold_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["var_absolute_threshold"]
-
-
-def var_absolute_threshold_normalize_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["var_absolute_threshold_normalize"]
-
-
-def correlation_maps_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["correlation_maps"]
-
-
-def correlation_maps_masked_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["correlation_maps_masked"]
 
 
 def average_expr_callable(output_dir, inputs, stdout, stderr):
@@ -84,11 +28,18 @@ def average_expr_nonzero_callable(output_dir, inputs, stdout, stderr):
     return outputs["average_expr_nonzero"]
 
 
-def sum_expr_callable(output_dir, inputs, stdout, stderr):
+def correlation_maps_callable(output_dir, inputs, stdout, stderr):
     outputs = _list_outputs(
         output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
     )
-    return outputs["sum_expr"]
+    return outputs["correlation_maps"]
+
+
+def correlation_maps_masked_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["correlation_maps_masked"]
 
 
 def histogram_callable(output_dir, inputs, stdout, stderr):
@@ -98,18 +49,56 @@ def histogram_callable(output_dir, inputs, stdout, stderr):
     return outputs["histogram"]
 
 
+def mean_file_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["mean_file"]
+
+
+def pmean_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["pmean"]
+
+
+def qmean_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["qmean"]
+
+
+def sum_expr_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["sum_expr"]
+
+
+def var_absolute_threshold_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["var_absolute_threshold"]
+
+
+def var_absolute_threshold_normalize_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["var_absolute_threshold_normalize"]
+
+
+def zmean_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["zmean"]
+
+
 iflogger = logging.getLogger("nipype.interface")
-
-
-# Original source at L125 of <nipype-install>/interfaces/base/support.py
-class NipypeInterfaceError(Exception):
-    """Custom error for interfaces"""
-
-    def __init__(self, value):
-        self.value = value
-
-    def __str__(self):
-        return "{}".format(self.value)
 
 
 # Original source at L809 of <nipype-install>/interfaces/base/core.py
@@ -207,6 +196,33 @@ def _filename_from_source(
     return retval
 
 
+# Original source at L885 of <nipype-install>/interfaces/base/core.py
+def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
+    raise NotImplementedError
+
+
+# Original source at L248 of <nipype-install>/interfaces/afni/base.py
+def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
+    outputs = nipype_interfaces_afni__AFNICommandBase___list_outputs()
+    metadata = dict(name_source=lambda t: t is not None)
+    out_names = list(inputs.traits(**metadata).keys())
+    if out_names:
+        for name in out_names:
+            if outputs[name]:
+                _, _, ext = split_filename(outputs[name])
+                if ext == "":
+                    outputs[name] = outputs[name] + "+orig.BRIK"
+    return outputs
+
+
+# Original source at L242 of <nipype-install>/interfaces/afni/base.py
+def _overload_extension(
+    value, name=None, inputs=None, stdout=None, stderr=None, output_dir=None
+):
+    path, base, _ = split_filename(value)
+    return os.path.join(path, base + Info.output_type_to_ext(inputs.outputtype))
+
+
 # Original source at L891 of <nipype-install>/interfaces/base/core.py
 def nipype_interfaces_afni__AFNICommandBase___list_outputs(
     inputs=None, stdout=None, stderr=None, output_dir=None
@@ -227,47 +243,20 @@ def nipype_interfaces_afni__AFNICommandBase___list_outputs(
         return outputs
 
 
-# Original source at L885 of <nipype-install>/interfaces/base/core.py
-def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
-    raise NotImplementedError
-
-
-# Original source at L1069 of <nipype-install>/interfaces/base/core.py
-class PackageInfo(object):
-    _version = None
-    version_cmd = None
-    version_file = None
-
-    @classmethod
-    def version(klass):
-        if klass._version is None:
-            if klass.version_cmd is not None:
-                try:
-                    clout = CommandLine(
-                        command=klass.version_cmd,
-                        resource_monitor=False,
-                        terminal_output="allatonce",
-                    ).run()
-                except IOError:
-                    return None
-
-                raw_info = clout.runtime.stdout
-            elif klass.version_file is not None:
-                try:
-                    with open(klass.version_file, "rt") as fobj:
-                        raw_info = fobj.read()
-                except OSError:
-                    return None
-            else:
-                return None
-
-            klass._version = klass.parse_version(raw_info)
-
-        return klass._version
-
-    @staticmethod
-    def parse_version(raw_info):
-        raise NotImplementedError
+# Original source at L248 of <nipype-install>/interfaces/afni/base.py
+def nipype_interfaces_afni__AFNICommand___list_outputs(
+    inputs=None, stdout=None, stderr=None, output_dir=None
+):
+    outputs = nipype_interfaces_afni__AFNICommandBase___list_outputs()
+    metadata = dict(name_source=lambda t: t is not None)
+    out_names = list(inputs.traits(**metadata).keys())
+    if out_names:
+        for name in out_names:
+            if outputs[name]:
+                _, _, ext = split_filename(outputs[name])
+                if ext == "":
+                    outputs[name] = outputs[name] + "+orig.BRIK"
+    return outputs
 
 
 # Original source at L58 of <nipype-install>/utils/filemanip.py
@@ -319,6 +308,55 @@ def split_filename(fname):
         fname, ext = op.splitext(fname)
 
     return pth, fname, ext
+
+
+# Original source at L125 of <nipype-install>/interfaces/base/support.py
+class NipypeInterfaceError(Exception):
+    """Custom error for interfaces"""
+
+    def __init__(self, value):
+        self.value = value
+
+    def __str__(self):
+        return "{}".format(self.value)
+
+
+# Original source at L1069 of <nipype-install>/interfaces/base/core.py
+class PackageInfo(object):
+    _version = None
+    version_cmd = None
+    version_file = None
+
+    @classmethod
+    def version(klass):
+        if klass._version is None:
+            if klass.version_cmd is not None:
+                try:
+                    clout = CommandLine(
+                        command=klass.version_cmd,
+                        resource_monitor=False,
+                        terminal_output="allatonce",
+                    ).run()
+                except IOError:
+                    return None
+
+                raw_info = clout.runtime.stdout
+            elif klass.version_file is not None:
+                try:
+                    with open(klass.version_file, "rt") as fobj:
+                        raw_info = fobj.read()
+                except OSError:
+                    return None
+            else:
+                return None
+
+            klass._version = klass.parse_version(raw_info)
+
+        return klass._version
+
+    @staticmethod
+    def parse_version(raw_info):
+        raise NotImplementedError
 
 
 # Original source at L26 of <nipype-install>/interfaces/afni/base.py
@@ -403,41 +441,3 @@ class Info(PackageInfo):
         out = clout.runtime.stdout
         basedir = os.path.split(out)[0]
         return os.path.join(basedir, img_name)
-
-
-# Original source at L242 of <nipype-install>/interfaces/afni/base.py
-def _overload_extension(
-    value, name=None, inputs=None, stdout=None, stderr=None, output_dir=None
-):
-    path, base, _ = split_filename(value)
-    return os.path.join(path, base + Info.output_type_to_ext(inputs.outputtype))
-
-
-# Original source at L248 of <nipype-install>/interfaces/afni/base.py
-def nipype_interfaces_afni__AFNICommand___list_outputs(
-    inputs=None, stdout=None, stderr=None, output_dir=None
-):
-    outputs = nipype_interfaces_afni__AFNICommandBase___list_outputs()
-    metadata = dict(name_source=lambda t: t is not None)
-    out_names = list(inputs.traits(**metadata).keys())
-    if out_names:
-        for name in out_names:
-            if outputs[name]:
-                _, _, ext = split_filename(outputs[name])
-                if ext == "":
-                    outputs[name] = outputs[name] + "+orig.BRIK"
-    return outputs
-
-
-# Original source at L248 of <nipype-install>/interfaces/afni/base.py
-def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
-    outputs = nipype_interfaces_afni__AFNICommandBase___list_outputs()
-    metadata = dict(name_source=lambda t: t is not None)
-    out_names = list(inputs.traits(**metadata).keys())
-    if out_names:
-        for name in out_names:
-            if outputs[name]:
-                _, _, ext = split_filename(outputs[name])
-                if ext == "":
-                    outputs[name] = outputs[name] + "+orig.BRIK"
-    return outputs

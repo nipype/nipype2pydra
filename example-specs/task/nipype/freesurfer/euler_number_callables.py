@@ -1,6 +1,11 @@
 """Module to put any functions that are referred to in the "callables" section of EulerNumber.yaml"""
 
-import attrs
+
+def defects_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["defects"]
 
 
 def euler_callable(output_dir, inputs, stdout, stderr):
@@ -8,13 +13,6 @@ def euler_callable(output_dir, inputs, stdout, stderr):
         output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
     )
     return outputs["euler"]
-
-
-def defects_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["defects"]
 
 
 # Original source at L885 of <nipype-install>/interfaces/base/core.py

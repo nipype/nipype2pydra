@@ -1,7 +1,6 @@
 """Module to put any functions that are referred to in the "callables" section of CorticalThickness.yaml"""
 
 import os
-import attrs
 
 
 def BrainExtractionMask_callable(output_dir, inputs, stdout, stderr):
@@ -9,13 +8,6 @@ def BrainExtractionMask_callable(output_dir, inputs, stdout, stderr):
         output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
     )
     return outputs["BrainExtractionMask"]
-
-
-def ExtractedBrainN4_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["ExtractedBrainN4"]
 
 
 def BrainSegmentation_callable(output_dir, inputs, stdout, stderr):
@@ -39,46 +31,18 @@ def BrainSegmentationPosteriors_callable(output_dir, inputs, stdout, stderr):
     return outputs["BrainSegmentationPosteriors"]
 
 
+def BrainVolumes_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["BrainVolumes"]
+
+
 def CorticalThickness_callable(output_dir, inputs, stdout, stderr):
     outputs = _list_outputs(
         output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
     )
     return outputs["CorticalThickness"]
-
-
-def TemplateToSubject1GenericAffine_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["TemplateToSubject1GenericAffine"]
-
-
-def TemplateToSubject0Warp_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["TemplateToSubject0Warp"]
-
-
-def SubjectToTemplate1Warp_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["SubjectToTemplate1Warp"]
-
-
-def SubjectToTemplate0GenericAffine_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["SubjectToTemplate0GenericAffine"]
-
-
-def SubjectToTemplateLogJacobian_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["SubjectToTemplateLogJacobian"]
 
 
 def CorticalThicknessNormedToTemplate_callable(output_dir, inputs, stdout, stderr):
@@ -88,11 +52,46 @@ def CorticalThicknessNormedToTemplate_callable(output_dir, inputs, stdout, stder
     return outputs["CorticalThicknessNormedToTemplate"]
 
 
-def BrainVolumes_callable(output_dir, inputs, stdout, stderr):
+def ExtractedBrainN4_callable(output_dir, inputs, stdout, stderr):
     outputs = _list_outputs(
         output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
     )
-    return outputs["BrainVolumes"]
+    return outputs["ExtractedBrainN4"]
+
+
+def SubjectToTemplate0GenericAffine_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["SubjectToTemplate0GenericAffine"]
+
+
+def SubjectToTemplate1Warp_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["SubjectToTemplate1Warp"]
+
+
+def SubjectToTemplateLogJacobian_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["SubjectToTemplateLogJacobian"]
+
+
+def TemplateToSubject0Warp_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["TemplateToSubject0Warp"]
+
+
+def TemplateToSubject1GenericAffine_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["TemplateToSubject1GenericAffine"]
 
 
 # Original source at L885 of <nipype-install>/interfaces/base/core.py

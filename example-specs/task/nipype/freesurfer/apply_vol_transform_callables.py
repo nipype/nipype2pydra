@@ -1,9 +1,9 @@
 """Module to put any functions that are referred to in the "callables" section of ApplyVolTransform.yaml"""
 
+import attrs
 import os
 import os.path as op
 from pathlib import Path
-import attrs
 
 
 def transformed_file_default(inputs):
@@ -15,6 +15,39 @@ def transformed_file_callable(output_dir, inputs, stdout, stderr):
         output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
     )
     return outputs["transformed_file"]
+
+
+# Original source at L2088 of <nipype-install>/interfaces/freesurfer/preprocess.py
+def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
+    if name == "transformed_file":
+        return _get_outfile(
+            inputs=inputs, stdout=stdout, stderr=stderr, output_dir=output_dir
+        )
+    return None
+
+
+# Original source at L2070 of <nipype-install>/interfaces/freesurfer/preprocess.py
+def _get_outfile(inputs=None, stdout=None, stderr=None, output_dir=None):
+    outfile = inputs.transformed_file
+    if outfile is attrs.NOTHING:
+        if inputs.inverse is True:
+            if inputs.fs_target is True:
+                src = "orig.mgz"
+            else:
+                src = inputs.target_file
+        else:
+            src = inputs.source_file
+        outfile = fname_presuffix(src, newpath=output_dir, suffix="_warped")
+    return outfile
+
+
+# Original source at L2083 of <nipype-install>/interfaces/freesurfer/preprocess.py
+def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
+    outputs = {}
+    outputs["transformed_file"] = os.path.abspath(
+        _get_outfile(inputs=inputs, stdout=stdout, stderr=stderr, output_dir=output_dir)
+    )
+    return outputs
 
 
 # Original source at L108 of <nipype-install>/utils/filemanip.py
@@ -109,36 +142,3 @@ def split_filename(fname):
         fname, ext = op.splitext(fname)
 
     return pth, fname, ext
-
-
-# Original source at L2070 of <nipype-install>/interfaces/freesurfer/preprocess.py
-def _get_outfile(inputs=None, stdout=None, stderr=None, output_dir=None):
-    outfile = inputs.transformed_file
-    if outfile is attrs.NOTHING:
-        if inputs.inverse is True:
-            if inputs.fs_target is True:
-                src = "orig.mgz"
-            else:
-                src = inputs.target_file
-        else:
-            src = inputs.source_file
-        outfile = fname_presuffix(src, newpath=output_dir, suffix="_warped")
-    return outfile
-
-
-# Original source at L2088 of <nipype-install>/interfaces/freesurfer/preprocess.py
-def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
-    if name == "transformed_file":
-        return _get_outfile(
-            inputs=inputs, stdout=stdout, stderr=stderr, output_dir=output_dir
-        )
-    return None
-
-
-# Original source at L2083 of <nipype-install>/interfaces/freesurfer/preprocess.py
-def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
-    outputs = {}
-    outputs["transformed_file"] = os.path.abspath(
-        _get_outfile(inputs=inputs, stdout=stdout, stderr=stderr, output_dir=output_dir)
-    )
-    return outputs

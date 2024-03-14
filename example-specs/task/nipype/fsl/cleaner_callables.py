@@ -1,7 +1,6 @@
 """Module to put any functions that are referred to in the "callables" section of Cleaner.yaml"""
 
 import os
-import attrs
 
 
 def cleaned_functional_file_callable(output_dir, inputs, stdout, stderr):

@@ -1,33 +1,19 @@
 """Module to put any functions that are referred to in the "callables" section of FNIRT.yaml"""
 
 import attrs
+import logging
 import os
 import os.path as op
 from glob import glob
-import logging
 from pathlib import Path
-
-
-def warped_file_default(inputs):
-    return _gen_filename("warped_file", inputs=inputs)
 
 
 def log_file_default(inputs):
     return _gen_filename("log_file", inputs=inputs)
 
 
-def fieldcoeff_file_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["fieldcoeff_file"]
-
-
-def warped_file_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["warped_file"]
+def warped_file_default(inputs):
+    return _gen_filename("warped_file", inputs=inputs)
 
 
 def field_file_callable(output_dir, inputs, stdout, stderr):
@@ -37,11 +23,25 @@ def field_file_callable(output_dir, inputs, stdout, stderr):
     return outputs["field_file"]
 
 
+def fieldcoeff_file_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["fieldcoeff_file"]
+
+
 def jacobian_file_callable(output_dir, inputs, stdout, stderr):
     outputs = _list_outputs(
         output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
     )
     return outputs["jacobian_file"]
+
+
+def log_file_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["log_file"]
 
 
 def modulatedref_file_callable(output_dir, inputs, stdout, stderr):
@@ -58,108 +58,23 @@ def out_intensitymap_file_callable(output_dir, inputs, stdout, stderr):
     return outputs["out_intensitymap_file"]
 
 
-def log_file_callable(output_dir, inputs, stdout, stderr):
+def warped_file_callable(output_dir, inputs, stdout, stderr):
     outputs = _list_outputs(
         output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
     )
-    return outputs["log_file"]
+    return outputs["warped_file"]
 
 
 IFLOGGER = logging.getLogger("nipype.interface")
 
 
-# Original source at L108 of <nipype-install>/utils/filemanip.py
-def fname_presuffix(fname, prefix="", suffix="", newpath=None, use_ext=True):
-    """Manipulates path and name of input filename
-
-    Parameters
-    ----------
-    fname : string
-        A filename (may or may not include path)
-    prefix : string
-        Characters to prepend to the filename
-    suffix : string
-        Characters to append to the filename
-    newpath : string
-        Path to replace the path of the input fname
-    use_ext : boolean
-        If True (default), appends the extension of the original file
-        to the output name.
-
-    Returns
-    -------
-    Absolute path of the modified filename
-
-    >>> from nipype.utils.filemanip import fname_presuffix
-    >>> fname = 'foo.nii.gz'
-    >>> fname_presuffix(fname,'pre','post','/tmp')
-    '/tmp/prefoopost.nii.gz'
-
-    >>> from nipype.interfaces.base import attrs.NOTHING
-    >>> fname_presuffix(fname, 'pre', 'post', attrs.NOTHING) == \
-            fname_presuffix(fname, 'pre', 'post')
-    True
-
-    """
-    pth, fname, ext = split_filename(fname)
-    if not use_ext:
-        ext = ""
-
-    # No need for : bool(attrs.NOTHING is not attrs.NOTHING) evaluates to False
-    if newpath:
-        pth = op.abspath(newpath)
-    return op.join(pth, prefix + fname + suffix + ext)
-
-
-# Original source at L58 of <nipype-install>/utils/filemanip.py
-def split_filename(fname):
-    """Split a filename into parts: path, base filename and extension.
-
-    Parameters
-    ----------
-    fname : str
-        file or path name
-
-    Returns
-    -------
-    pth : str
-        base path from fname
-    fname : str
-        filename from fname, without extension
-    ext : str
-        file extension from fname
-
-    Examples
-    --------
-    >>> from nipype.utils.filemanip import split_filename
-    >>> pth, fname, ext = split_filename('/home/data/subject.nii.gz')
-    >>> pth
-    '/home/data'
-
-    >>> fname
-    'subject'
-
-    >>> ext
-    '.nii.gz'
-
-    """
-
-    special_extensions = [".nii.gz", ".tar.gz", ".niml.dset"]
-
-    pth = op.dirname(fname)
-    fname = op.basename(fname)
-
-    ext = None
-    for special_ext in special_extensions:
-        ext_len = len(special_ext)
-        if (len(fname) > ext_len) and (fname[-ext_len:].lower() == special_ext.lower()):
-            ext = fname[-ext_len:]
-            fname = fname[:-ext_len]
-            break
-    if not ext:
-        fname, ext = op.splitext(fname)
-
-    return pth, fname, ext
+# Original source at L1341 of <nipype-install>/interfaces/fsl/preprocess.py
+def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
+    if name in ["warped_file", "log_file"]:
+        return _list_outputs(
+            inputs=inputs, stdout=stdout, stderr=stderr, output_dir=output_dir
+        )[name]
+    return None
 
 
 # Original source at L205 of <nipype-install>/interfaces/fsl/base.py
@@ -216,6 +131,162 @@ def _gen_fname(
         suffix = ""
     fname = fname_presuffix(basename, suffix=suffix, use_ext=False, newpath=cwd)
     return fname
+
+
+# Original source at L1298 of <nipype-install>/interfaces/fsl/preprocess.py
+def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
+    outputs = {}
+    for key, suffix in list(filemap.items()):
+        inval = getattr(inputs, key)
+        change_ext = True
+        if key in ["warped_file", "log_file"]:
+            if suffix.endswith(".txt"):
+                change_ext = False
+            if inval is not attrs.NOTHING:
+                outputs[key] = os.path.abspath(inval)
+            else:
+                outputs[key] = _gen_fname(
+                    inputs.in_file,
+                    suffix="_" + suffix,
+                    change_ext=change_ext,
+                    inputs=inputs,
+                    stdout=stdout,
+                    stderr=stderr,
+                    output_dir=output_dir,
+                )
+        elif inval is not attrs.NOTHING:
+            if isinstance(inval, bool):
+                if inval:
+                    outputs[key] = _gen_fname(
+                        inputs.in_file,
+                        suffix="_" + suffix,
+                        change_ext=change_ext,
+                        inputs=inputs,
+                        stdout=stdout,
+                        stderr=stderr,
+                        output_dir=output_dir,
+                    )
+            else:
+                outputs[key] = os.path.abspath(inval)
+
+        if key == "out_intensitymap_file" and (outputs[key] is not attrs.NOTHING):
+            basename = intensitymap_file_basename(
+                outputs[key],
+                inputs=inputs,
+                stdout=stdout,
+                stderr=stderr,
+                output_dir=output_dir,
+            )
+            outputs[key] = [outputs[key], "%s.txt" % basename]
+    return outputs
+
+
+# Original source at L108 of <nipype-install>/utils/filemanip.py
+def fname_presuffix(fname, prefix="", suffix="", newpath=None, use_ext=True):
+    """Manipulates path and name of input filename
+
+    Parameters
+    ----------
+    fname : string
+        A filename (may or may not include path)
+    prefix : string
+        Characters to prepend to the filename
+    suffix : string
+        Characters to append to the filename
+    newpath : string
+        Path to replace the path of the input fname
+    use_ext : boolean
+        If True (default), appends the extension of the original file
+        to the output name.
+
+    Returns
+    -------
+    Absolute path of the modified filename
+
+    >>> from nipype.utils.filemanip import fname_presuffix
+    >>> fname = 'foo.nii.gz'
+    >>> fname_presuffix(fname,'pre','post','/tmp')
+    '/tmp/prefoopost.nii.gz'
+
+    >>> from nipype.interfaces.base import attrs.NOTHING
+    >>> fname_presuffix(fname, 'pre', 'post', attrs.NOTHING) == \
+            fname_presuffix(fname, 'pre', 'post')
+    True
+
+    """
+    pth, fname, ext = split_filename(fname)
+    if not use_ext:
+        ext = ""
+
+    # No need for : bool(attrs.NOTHING is not attrs.NOTHING) evaluates to False
+    if newpath:
+        pth = op.abspath(newpath)
+    return op.join(pth, prefix + fname + suffix + ext)
+
+
+# Original source at L1364 of <nipype-install>/interfaces/fsl/preprocess.py
+def intensitymap_file_basename(
+    f, inputs=None, stdout=None, stderr=None, output_dir=None
+):
+    """Removes valid intensitymap extensions from `f`, returning a basename
+    that can refer to both intensitymap files.
+    """
+    for ext in list(Info.ftypes.values()) + [".txt"]:
+        if f.endswith(ext):
+            return f[: -len(ext)]
+    # TODO consider warning for this case
+    return f
+
+
+# Original source at L58 of <nipype-install>/utils/filemanip.py
+def split_filename(fname):
+    """Split a filename into parts: path, base filename and extension.
+
+    Parameters
+    ----------
+    fname : str
+        file or path name
+
+    Returns
+    -------
+    pth : str
+        base path from fname
+    fname : str
+        filename from fname, without extension
+    ext : str
+        file extension from fname
+
+    Examples
+    --------
+    >>> from nipype.utils.filemanip import split_filename
+    >>> pth, fname, ext = split_filename('/home/data/subject.nii.gz')
+    >>> pth
+    '/home/data'
+
+    >>> fname
+    'subject'
+
+    >>> ext
+    '.nii.gz'
+
+    """
+
+    special_extensions = [".nii.gz", ".tar.gz", ".niml.dset"]
+
+    pth = op.dirname(fname)
+    fname = op.basename(fname)
+
+    ext = None
+    for special_ext in special_extensions:
+        ext_len = len(special_ext)
+        if (len(fname) > ext_len) and (fname[-ext_len:].lower() == special_ext.lower()):
+            ext = fname[-ext_len:]
+            fname = fname[:-ext_len]
+            break
+    if not ext:
+        fname, ext = op.splitext(fname)
+
+    return pth, fname, ext
 
 
 # Original source at L1069 of <nipype-install>/interfaces/base/core.py
@@ -347,74 +418,3 @@ class Info(PackageInfo):
                 for filename in glob(os.path.join(stdpath, "*nii*"))
             ]
         return os.path.join(stdpath, img_name)
-
-
-# Original source at L1364 of <nipype-install>/interfaces/fsl/preprocess.py
-def intensitymap_file_basename(
-    f, inputs=None, stdout=None, stderr=None, output_dir=None
-):
-    """Removes valid intensitymap extensions from `f`, returning a basename
-    that can refer to both intensitymap files.
-    """
-    for ext in list(Info.ftypes.values()) + [".txt"]:
-        if f.endswith(ext):
-            return f[: -len(ext)]
-    # TODO consider warning for this case
-    return f
-
-
-# Original source at L1341 of <nipype-install>/interfaces/fsl/preprocess.py
-def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
-    if name in ["warped_file", "log_file"]:
-        return _list_outputs(
-            inputs=inputs, stdout=stdout, stderr=stderr, output_dir=output_dir
-        )[name]
-    return None
-
-
-# Original source at L1298 of <nipype-install>/interfaces/fsl/preprocess.py
-def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
-    outputs = {}
-    for key, suffix in list(filemap.items()):
-        inval = getattr(inputs, key)
-        change_ext = True
-        if key in ["warped_file", "log_file"]:
-            if suffix.endswith(".txt"):
-                change_ext = False
-            if inval is not attrs.NOTHING:
-                outputs[key] = os.path.abspath(inval)
-            else:
-                outputs[key] = _gen_fname(
-                    inputs.in_file,
-                    suffix="_" + suffix,
-                    change_ext=change_ext,
-                    inputs=inputs,
-                    stdout=stdout,
-                    stderr=stderr,
-                    output_dir=output_dir,
-                )
-        elif inval is not attrs.NOTHING:
-            if isinstance(inval, bool):
-                if inval:
-                    outputs[key] = _gen_fname(
-                        inputs.in_file,
-                        suffix="_" + suffix,
-                        change_ext=change_ext,
-                        inputs=inputs,
-                        stdout=stdout,
-                        stderr=stderr,
-                        output_dir=output_dir,
-                    )
-            else:
-                outputs[key] = os.path.abspath(inval)
-
-        if key == "out_intensitymap_file" and (outputs[key] is not attrs.NOTHING):
-            basename = intensitymap_file_basename(
-                outputs[key],
-                inputs=inputs,
-                stdout=stdout,
-                stderr=stderr,
-                output_dir=output_dir,
-            )
-            outputs[key] = [outputs[key], "%s.txt" % basename]
-    return outputs

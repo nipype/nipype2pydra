@@ -1,10 +1,38 @@
 """Module to put any functions that are referred to in the "callables" section of FWHMx.yaml"""
 
-import numpy as np
 import attrs
 import logging
+import numpy as np
 import os
 import os.path as op
+
+
+def acf_param_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["acf_param"]
+
+
+def fwhm_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["fwhm"]
+
+
+def out_acf_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["out_acf"]
+
+
+def out_detrend_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["out_detrend"]
 
 
 def out_file_callable(output_dir, inputs, stdout, stderr):
@@ -21,104 +49,7 @@ def out_subbricks_callable(output_dir, inputs, stdout, stderr):
     return outputs["out_subbricks"]
 
 
-def out_detrend_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["out_detrend"]
-
-
-def fwhm_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["fwhm"]
-
-
-def acf_param_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["acf_param"]
-
-
-def out_acf_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["out_acf"]
-
-
 iflogger = logging.getLogger("nipype.interface")
-
-
-# Original source at L125 of <nipype-install>/interfaces/base/support.py
-class NipypeInterfaceError(Exception):
-    """Custom error for interfaces"""
-
-    def __init__(self, value):
-        self.value = value
-
-    def __str__(self):
-        return "{}".format(self.value)
-
-
-# Original source at L58 of <nipype-install>/utils/filemanip.py
-def split_filename(fname):
-    """Split a filename into parts: path, base filename and extension.
-
-    Parameters
-    ----------
-    fname : str
-        file or path name
-
-    Returns
-    -------
-    pth : str
-        base path from fname
-    fname : str
-        filename from fname, without extension
-    ext : str
-        file extension from fname
-
-    Examples
-    --------
-    >>> from nipype.utils.filemanip import split_filename
-    >>> pth, fname, ext = split_filename('/home/data/subject.nii.gz')
-    >>> pth
-    '/home/data'
-
-    >>> fname
-    'subject'
-
-    >>> ext
-    '.nii.gz'
-
-    """
-
-    special_extensions = [".nii.gz", ".tar.gz", ".niml.dset"]
-
-    pth = op.dirname(fname)
-    fname = op.basename(fname)
-
-    ext = None
-    for special_ext in special_extensions:
-        ext_len = len(special_ext)
-        if (len(fname) > ext_len) and (fname[-ext_len:].lower() == special_ext.lower()):
-            ext = fname[-ext_len:]
-            fname = fname[:-ext_len]
-            break
-    if not ext:
-        fname, ext = op.splitext(fname)
-
-    return pth, fname, ext
-
-
-# Original source at L888 of <nipype-install>/interfaces/base/core.py
-def _overload_extension(
-    value, name=None, inputs=None, stdout=None, stderr=None, output_dir=None
-):
-    return value
 
 
 # Original source at L809 of <nipype-install>/interfaces/base/core.py
@@ -216,26 +147,6 @@ def _filename_from_source(
     return retval
 
 
-# Original source at L891 of <nipype-install>/interfaces/base/core.py
-def nipype_interfaces_afni__AFNICommandBase___list_outputs(
-    inputs=None, stdout=None, stderr=None, output_dir=None
-):
-    metadata = dict(name_source=lambda t: t is not None)
-    traits = inputs.traits(**metadata)
-    if traits:
-        outputs = {}
-        for name, trait_spec in list(traits.items()):
-            out_name = name
-            if trait_spec.output_name is not None:
-                out_name = trait_spec.output_name
-            fname = _filename_from_source(
-                name, inputs=inputs, stdout=stdout, stderr=stderr, output_dir=output_dir
-            )
-            if fname is not attrs.NOTHING:
-                outputs[out_name] = os.path.abspath(fname)
-        return outputs
-
-
 # Original source at L885 of <nipype-install>/interfaces/base/core.py
 def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
     raise NotImplementedError
@@ -271,3 +182,92 @@ def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
             outputs["out_acf"] = op.abspath(inputs.acf)
 
     return outputs
+
+
+# Original source at L888 of <nipype-install>/interfaces/base/core.py
+def _overload_extension(
+    value, name=None, inputs=None, stdout=None, stderr=None, output_dir=None
+):
+    return value
+
+
+# Original source at L891 of <nipype-install>/interfaces/base/core.py
+def nipype_interfaces_afni__AFNICommandBase___list_outputs(
+    inputs=None, stdout=None, stderr=None, output_dir=None
+):
+    metadata = dict(name_source=lambda t: t is not None)
+    traits = inputs.traits(**metadata)
+    if traits:
+        outputs = {}
+        for name, trait_spec in list(traits.items()):
+            out_name = name
+            if trait_spec.output_name is not None:
+                out_name = trait_spec.output_name
+            fname = _filename_from_source(
+                name, inputs=inputs, stdout=stdout, stderr=stderr, output_dir=output_dir
+            )
+            if fname is not attrs.NOTHING:
+                outputs[out_name] = os.path.abspath(fname)
+        return outputs
+
+
+# Original source at L58 of <nipype-install>/utils/filemanip.py
+def split_filename(fname):
+    """Split a filename into parts: path, base filename and extension.
+
+    Parameters
+    ----------
+    fname : str
+        file or path name
+
+    Returns
+    -------
+    pth : str
+        base path from fname
+    fname : str
+        filename from fname, without extension
+    ext : str
+        file extension from fname
+
+    Examples
+    --------
+    >>> from nipype.utils.filemanip import split_filename
+    >>> pth, fname, ext = split_filename('/home/data/subject.nii.gz')
+    >>> pth
+    '/home/data'
+
+    >>> fname
+    'subject'
+
+    >>> ext
+    '.nii.gz'
+
+    """
+
+    special_extensions = [".nii.gz", ".tar.gz", ".niml.dset"]
+
+    pth = op.dirname(fname)
+    fname = op.basename(fname)
+
+    ext = None
+    for special_ext in special_extensions:
+        ext_len = len(special_ext)
+        if (len(fname) > ext_len) and (fname[-ext_len:].lower() == special_ext.lower()):
+            ext = fname[-ext_len:]
+            fname = fname[:-ext_len]
+            break
+    if not ext:
+        fname, ext = op.splitext(fname)
+
+    return pth, fname, ext
+
+
+# Original source at L125 of <nipype-install>/interfaces/base/support.py
+class NipypeInterfaceError(Exception):
+    """Custom error for interfaces"""
+
+    def __init__(self, value):
+        self.value = value
+
+    def __str__(self):
+        return "{}".format(self.value)

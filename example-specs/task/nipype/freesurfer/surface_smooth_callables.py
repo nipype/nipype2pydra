@@ -1,8 +1,8 @@
 """Module to put any functions that are referred to in the "callables" section of SurfaceSmooth.yaml"""
 
+import attrs
 import os.path as op
 from pathlib import Path
-import attrs
 
 
 def out_file_default(inputs):
@@ -14,6 +14,31 @@ def out_file_callable(output_dir, inputs, stdout, stderr):
         output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
     )
     return outputs["out_file"]
+
+
+# Original source at L504 of <nipype-install>/interfaces/freesurfer/utils.py
+def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
+    if name == "out_file":
+        return _list_outputs(
+            inputs=inputs, stdout=stdout, stderr=stderr, output_dir=output_dir
+        )[name]
+    return None
+
+
+# Original source at L490 of <nipype-install>/interfaces/freesurfer/utils.py
+def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
+    outputs = {}
+    outputs["out_file"] = inputs.out_file
+    if outputs["out_file"] is attrs.NOTHING:
+        in_file = inputs.in_file
+        if inputs.fwhm is not attrs.NOTHING:
+            kernel = inputs.fwhm
+        else:
+            kernel = inputs.smooth_iters
+        outputs["out_file"] = fname_presuffix(
+            in_file, suffix="_smooth%d" % kernel, newpath=output_dir
+        )
+    return outputs
 
 
 # Original source at L108 of <nipype-install>/utils/filemanip.py
@@ -108,28 +133,3 @@ def split_filename(fname):
         fname, ext = op.splitext(fname)
 
     return pth, fname, ext
-
-
-# Original source at L504 of <nipype-install>/interfaces/freesurfer/utils.py
-def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
-    if name == "out_file":
-        return _list_outputs(
-            inputs=inputs, stdout=stdout, stderr=stderr, output_dir=output_dir
-        )[name]
-    return None
-
-
-# Original source at L490 of <nipype-install>/interfaces/freesurfer/utils.py
-def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
-    outputs = {}
-    outputs["out_file"] = inputs.out_file
-    if outputs["out_file"] is attrs.NOTHING:
-        in_file = inputs.in_file
-        if inputs.fwhm is not attrs.NOTHING:
-            kernel = inputs.fwhm
-        else:
-            kernel = inputs.smooth_iters
-        outputs["out_file"] = fname_presuffix(
-            in_file, suffix="_smooth%d" % kernel, newpath=output_dir
-        )
-    return outputs

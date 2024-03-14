@@ -1,7 +1,6 @@
 """Module to put any functions that are referred to in the "callables" section of ANTS.yaml"""
 
 import os
-import attrs
 
 
 def affine_transform_callable(output_dir, inputs, stdout, stderr):
@@ -9,13 +8,6 @@ def affine_transform_callable(output_dir, inputs, stdout, stderr):
         output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
     )
     return outputs["affine_transform"]
-
-
-def warp_transform_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["warp_transform"]
 
 
 def inverse_warp_transform_callable(output_dir, inputs, stdout, stderr):
@@ -37,6 +29,13 @@ def metaheader_raw_callable(output_dir, inputs, stdout, stderr):
         output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
     )
     return outputs["metaheader_raw"]
+
+
+def warp_transform_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["warp_transform"]
 
 
 # Original source at L885 of <nipype-install>/interfaces/base/core.py

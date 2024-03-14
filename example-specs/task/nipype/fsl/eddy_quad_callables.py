@@ -1,8 +1,36 @@
 """Module to put any functions that are referred to in the "callables" section of EddyQuad.yaml"""
 
+import attrs
 import os
 from glob import glob
-import attrs
+
+
+def avg_b0_pe_png_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["avg_b0_pe_png"]
+
+
+def avg_b_png_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["avg_b_png"]
+
+
+def clean_volumes_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["clean_volumes"]
+
+
+def cnr_png_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["cnr_png"]
 
 
 def qc_json_callable(output_dir, inputs, stdout, stderr):
@@ -19,34 +47,6 @@ def qc_pdf_callable(output_dir, inputs, stdout, stderr):
     return outputs["qc_pdf"]
 
 
-def avg_b_png_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["avg_b_png"]
-
-
-def avg_b0_pe_png_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["avg_b0_pe_png"]
-
-
-def cnr_png_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["cnr_png"]
-
-
-def vdm_png_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["vdm_png"]
-
-
 def residuals_callable(output_dir, inputs, stdout, stderr):
     outputs = _list_outputs(
         output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
@@ -54,11 +54,11 @@ def residuals_callable(output_dir, inputs, stdout, stderr):
     return outputs["residuals"]
 
 
-def clean_volumes_callable(output_dir, inputs, stdout, stderr):
+def vdm_png_callable(output_dir, inputs, stdout, stderr):
     outputs = _list_outputs(
         output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
     )
-    return outputs["clean_volumes"]
+    return outputs["vdm_png"]
 
 
 # Original source at L885 of <nipype-install>/interfaces/base/core.py

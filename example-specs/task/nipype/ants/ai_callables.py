@@ -1,7 +1,5 @@
 """Module to put any functions that are referred to in the "callables" section of AI.yaml"""
 
-import attrs
-
 
 def output_transform_callable(output_dir, inputs, stdout, stderr):
     outputs = _list_outputs(

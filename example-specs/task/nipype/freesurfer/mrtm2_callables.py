@@ -1,19 +1,12 @@
 """Module to put any functions that are referred to in the "callables" section of MRTM2.yaml"""
 
+import attrs
 import os
 import os.path as op
-import attrs
 
 
 def glm_dir_default(inputs):
     return _gen_filename("glm_dir", inputs=inputs)
-
-
-def glm_dir_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["glm_dir"]
 
 
 def beta_file_callable(output_dir, inputs, stdout, stderr):
@@ -23,18 +16,25 @@ def beta_file_callable(output_dir, inputs, stdout, stderr):
     return outputs["beta_file"]
 
 
+def bp_file_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["bp_file"]
+
+
+def dof_file_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["dof_file"]
+
+
 def error_file_callable(output_dir, inputs, stdout, stderr):
     outputs = _list_outputs(
         output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
     )
     return outputs["error_file"]
-
-
-def error_var_file_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["error_var_file"]
 
 
 def error_stddev_file_callable(output_dir, inputs, stdout, stderr):
@@ -44,6 +44,13 @@ def error_stddev_file_callable(output_dir, inputs, stdout, stderr):
     return outputs["error_stddev_file"]
 
 
+def error_var_file_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["error_var_file"]
+
+
 def estimate_file_callable(output_dir, inputs, stdout, stderr):
     outputs = _list_outputs(
         output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
@@ -51,11 +58,18 @@ def estimate_file_callable(output_dir, inputs, stdout, stderr):
     return outputs["estimate_file"]
 
 
-def mask_file_callable(output_dir, inputs, stdout, stderr):
+def frame_eigenvectors_callable(output_dir, inputs, stdout, stderr):
     outputs = _list_outputs(
         output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
     )
-    return outputs["mask_file"]
+    return outputs["frame_eigenvectors"]
+
+
+def ftest_file_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["ftest_file"]
 
 
 def fwhm_file_callable(output_dir, inputs, stdout, stderr):
@@ -63,13 +77,6 @@ def fwhm_file_callable(output_dir, inputs, stdout, stderr):
         output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
     )
     return outputs["fwhm_file"]
-
-
-def dof_file_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["dof_file"]
 
 
 def gamma_file_callable(output_dir, inputs, stdout, stderr):
@@ -86,46 +93,11 @@ def gamma_var_file_callable(output_dir, inputs, stdout, stderr):
     return outputs["gamma_var_file"]
 
 
-def sig_file_callable(output_dir, inputs, stdout, stderr):
+def glm_dir_callable(output_dir, inputs, stdout, stderr):
     outputs = _list_outputs(
         output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
     )
-    return outputs["sig_file"]
-
-
-def ftest_file_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["ftest_file"]
-
-
-def spatial_eigenvectors_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["spatial_eigenvectors"]
-
-
-def frame_eigenvectors_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["frame_eigenvectors"]
-
-
-def singular_values_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["singular_values"]
-
-
-def svd_stats_file_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["svd_stats_file"]
+    return outputs["glm_dir"]
 
 
 def k2p_file_callable(output_dir, inputs, stdout, stderr):
@@ -135,62 +107,39 @@ def k2p_file_callable(output_dir, inputs, stdout, stderr):
     return outputs["k2p_file"]
 
 
-def bp_file_callable(output_dir, inputs, stdout, stderr):
+def mask_file_callable(output_dir, inputs, stdout, stderr):
     outputs = _list_outputs(
         output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
     )
-    return outputs["bp_file"]
+    return outputs["mask_file"]
 
 
-# Original source at L58 of <nipype-install>/utils/filemanip.py
-def split_filename(fname):
-    """Split a filename into parts: path, base filename and extension.
+def sig_file_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["sig_file"]
 
-    Parameters
-    ----------
-    fname : str
-        file or path name
 
-    Returns
-    -------
-    pth : str
-        base path from fname
-    fname : str
-        filename from fname, without extension
-    ext : str
-        file extension from fname
+def singular_values_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["singular_values"]
 
-    Examples
-    --------
-    >>> from nipype.utils.filemanip import split_filename
-    >>> pth, fname, ext = split_filename('/home/data/subject.nii.gz')
-    >>> pth
-    '/home/data'
 
-    >>> fname
-    'subject'
+def spatial_eigenvectors_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["spatial_eigenvectors"]
 
-    >>> ext
-    '.nii.gz'
 
-    """
-
-    special_extensions = [".nii.gz", ".tar.gz", ".niml.dset"]
-
-    pth = op.dirname(fname)
-    fname = op.basename(fname)
-
-    ext = None
-    for special_ext in special_extensions:
-        ext_len = len(special_ext)
-        if (len(fname) > ext_len) and (fname[-ext_len:].lower() == special_ext.lower()):
-            ext = fname[-ext_len:]
-            fname = fname[:-ext_len]
-            break
-    if not ext:
-        fname, ext = op.splitext(fname)
-
-    return pth, fname, ext
+def svd_stats_file_callable(output_dir, inputs, stdout, stderr):
+    outputs = _list_outputs(
+        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
+    )
+    return outputs["svd_stats_file"]
 
 
 # Original source at L560 of <nipype-install>/interfaces/freesurfer/model.py
@@ -262,3 +211,54 @@ def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
         outputs["svd_stats_file"] = os.path.join(pcadir, "stats.dat")
 
     return outputs
+
+
+# Original source at L58 of <nipype-install>/utils/filemanip.py
+def split_filename(fname):
+    """Split a filename into parts: path, base filename and extension.
+
+    Parameters
+    ----------
+    fname : str
+        file or path name
+
+    Returns
+    -------
+    pth : str
+        base path from fname
+    fname : str
+        filename from fname, without extension
+    ext : str
+        file extension from fname
+
+    Examples
+    --------
+    >>> from nipype.utils.filemanip import split_filename
+    >>> pth, fname, ext = split_filename('/home/data/subject.nii.gz')
+    >>> pth
+    '/home/data'
+
+    >>> fname
+    'subject'
+
+    >>> ext
+    '.nii.gz'
+
+    """
+
+    special_extensions = [".nii.gz", ".tar.gz", ".niml.dset"]
+
+    pth = op.dirname(fname)
+    fname = op.basename(fname)
+
+    ext = None
+    for special_ext in special_extensions:
+        ext_len = len(special_ext)
+        if (len(fname) > ext_len) and (fname[-ext_len:].lower() == special_ext.lower()):
+            ext = fname[-ext_len:]
+            fname = fname[:-ext_len]
+            break
+    if not ext:
+        fname, ext = op.splitext(fname)
+
+    return pth, fname, ext
