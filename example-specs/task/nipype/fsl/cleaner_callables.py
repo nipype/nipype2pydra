@@ -1,6 +1,7 @@
 """Module to put any functions that are referred to in the "callables" section of Cleaner.yaml"""
 
 import os
+import attrs
 
 
 def cleaned_functional_file_callable(output_dir, inputs, stdout, stderr):
@@ -10,10 +11,12 @@ def cleaned_functional_file_callable(output_dir, inputs, stdout, stderr):
     return outputs["cleaned_functional_file"]
 
 
+# Original source at L885 of <nipype-install>/interfaces/base/core.py
 def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
     raise NotImplementedError
 
 
+# Original source at L376 of <nipype-install>/interfaces/fsl/fix.py
 def _get_cleaned_functional_filename(
     artifacts_list_filename, inputs=None, stdout=None, stderr=None, output_dir=None
 ):
@@ -27,6 +30,7 @@ def _get_cleaned_functional_filename(
     return os.path.join(artifacts_list_file_path, functional_filename + "_clean.nii.gz")
 
 
+# Original source at L388 of <nipype-install>/interfaces/fsl/fix.py
 def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
     outputs = {}
     outputs["cleaned_functional_file"] = _get_cleaned_functional_filename(

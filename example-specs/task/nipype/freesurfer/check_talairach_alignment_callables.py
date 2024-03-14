@@ -1,5 +1,7 @@
 """Module to put any functions that are referred to in the "callables" section of CheckTalairachAlignment.yaml"""
 
+import attrs
+
 
 def out_file_callable(output_dir, inputs, stdout, stderr):
     outputs = _list_outputs(
@@ -8,10 +10,12 @@ def out_file_callable(output_dir, inputs, stdout, stderr):
     return outputs["out_file"]
 
 
+# Original source at L885 of <nipype-install>/interfaces/base/core.py
 def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
     raise NotImplementedError
 
 
+# Original source at L2127 of <nipype-install>/interfaces/freesurfer/utils.py
 def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
     outputs = {}
     outputs["out_file"] = inputs.in_file

@@ -1,7 +1,7 @@
 """Module to put any functions that are referred to in the "callables" section of FitMSParams.yaml"""
 
-import attrs
 import os
+import attrs
 
 
 def out_dir_default(inputs):
@@ -29,12 +29,14 @@ def t2star_image_callable(output_dir, inputs, stdout, stderr):
     return outputs["t2star_image"]
 
 
+# Original source at L2456 of <nipype-install>/interfaces/freesurfer/preprocess.py
 def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
     if name == "out_dir":
         return output_dir
     return None
 
 
+# Original source at L2445 of <nipype-install>/interfaces/freesurfer/preprocess.py
 def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
     outputs = {}
     if inputs.out_dir is attrs.NOTHING:

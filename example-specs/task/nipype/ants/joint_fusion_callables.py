@@ -1,8 +1,8 @@
 """Module to put any functions that are referred to in the "callables" section of JointFusion.yaml"""
 
+import os
 from glob import glob
 import attrs
-import os
 
 
 def out_label_fusion_callable(output_dir, inputs, stdout, stderr):
@@ -33,10 +33,12 @@ def out_atlas_voting_weight_callable(output_dir, inputs, stdout, stderr):
     return outputs["out_atlas_voting_weight"]
 
 
+# Original source at L885 of <nipype-install>/interfaces/base/core.py
 def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
     raise NotImplementedError
 
 
+# Original source at L1541 of <nipype-install>/interfaces/ants/segmentation.py
 def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
     outputs = {}
     if inputs.out_label_fusion is not attrs.NOTHING:

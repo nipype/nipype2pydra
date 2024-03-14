@@ -32,10 +32,12 @@ def segmentation_file_callable(output_dir, inputs, stdout, stderr):
     return outputs["segmentation_file"]
 
 
+# Original source at L885 of <nipype-install>/interfaces/base/core.py
 def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
     raise NotImplementedError
 
 
+# Original source at L58 of <nipype-install>/utils/filemanip.py
 def split_filename(fname):
     """Split a filename into parts: path, base filename and extension.
 
@@ -86,6 +88,7 @@ def split_filename(fname):
     return pth, fname, ext
 
 
+# Original source at L2279 of <nipype-install>/interfaces/fsl/preprocess.py
 def _gen_mesh_names(
     name, structures, inputs=None, stdout=None, stderr=None, output_dir=None
 ):
@@ -105,6 +108,7 @@ def _gen_mesh_names(
     return None
 
 
+# Original source at L2259 of <nipype-install>/interfaces/fsl/preprocess.py
 def _gen_fname(basename, inputs=None, stdout=None, stderr=None, output_dir=None):
     path, outname, ext = split_filename(inputs.out_file)
 
@@ -126,6 +130,7 @@ def _gen_fname(basename, inputs=None, stdout=None, stderr=None, output_dir=None)
     return None
 
 
+# Original source at L2230 of <nipype-install>/interfaces/fsl/preprocess.py
 def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
     outputs = {}
 

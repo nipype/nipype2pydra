@@ -1,7 +1,7 @@
 """Module to put any functions that are referred to in the "callables" section of MRICoreg.yaml"""
 
-import attrs
 import os
+import attrs
 
 
 def out_reg_file_callable(output_dir, inputs, stdout, stderr):
@@ -25,10 +25,12 @@ def out_params_file_callable(output_dir, inputs, stdout, stderr):
     return outputs["out_params_file"]
 
 
+# Original source at L885 of <nipype-install>/interfaces/base/core.py
 def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
     raise NotImplementedError
 
 
+# Original source at L592 of <nipype-install>/interfaces/freesurfer/registration.py
 def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
     outputs = {}
 

@@ -1,7 +1,7 @@
 """Module to put any functions that are referred to in the "callables" section of ParcellationStats.yaml"""
 
-import attrs
 import os
+import attrs
 
 
 def out_table_default(inputs):
@@ -26,6 +26,7 @@ def out_color_callable(output_dir, inputs, stdout, stderr):
     return outputs["out_color"]
 
 
+# Original source at L3519 of <nipype-install>/interfaces/freesurfer/utils.py
 def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
     if name in ["out_table", "out_color"]:
         return _list_outputs(
@@ -34,6 +35,7 @@ def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
     return None
 
 
+# Original source at L3524 of <nipype-install>/interfaces/freesurfer/utils.py
 def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
     outputs = {}
     if inputs.out_table is not attrs.NOTHING:

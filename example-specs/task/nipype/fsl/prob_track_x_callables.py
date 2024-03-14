@@ -1,11 +1,11 @@
 """Module to put any functions that are referred to in the "callables" section of ProbTrackX.yaml"""
 
 from glob import glob
-import logging
-from pathlib import Path
-import os.path as op
 import attrs
+import logging
 import os
+import os.path as op
+from pathlib import Path
 
 
 def mode_default(inputs):
@@ -54,6 +54,7 @@ def particle_files_callable(output_dir, inputs, stdout, stderr):
 IFLOGGER = logging.getLogger("nipype.interface")
 
 
+# Original source at L1069 of <nipype-install>/interfaces/base/core.py
 class PackageInfo(object):
     _version = None
     version_cmd = None
@@ -91,6 +92,7 @@ class PackageInfo(object):
         raise NotImplementedError
 
 
+# Original source at L108 of <nipype-install>/utils/filemanip.py
 def fname_presuffix(fname, prefix="", suffix="", newpath=None, use_ext=True):
     """Manipulates path and name of input filename
 
@@ -133,6 +135,7 @@ def fname_presuffix(fname, prefix="", suffix="", newpath=None, use_ext=True):
     return op.join(pth, prefix + fname + suffix + ext)
 
 
+# Original source at L58 of <nipype-install>/utils/filemanip.py
 def split_filename(fname):
     """Split a filename into parts: path, base filename and extension.
 
@@ -183,6 +186,7 @@ def split_filename(fname):
     return pth, fname, ext
 
 
+# Original source at L40 of <nipype-install>/interfaces/fsl/base.py
 class Info(PackageInfo):
     """
     Handle FSL ``output_type`` and version information.
@@ -275,6 +279,7 @@ class Info(PackageInfo):
         return os.path.join(stdpath, img_name)
 
 
+# Original source at L205 of <nipype-install>/interfaces/fsl/base.py
 def _gen_fname(
     basename,
     cwd=None,
@@ -330,6 +335,7 @@ def _gen_fname(
     return fname
 
 
+# Original source at L921 of <nipype-install>/interfaces/fsl/dti.py
 def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
     if name == "out_dir":
         return output_dir
@@ -340,6 +346,7 @@ def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
             return "seedmask"
 
 
+# Original source at L871 of <nipype-install>/interfaces/fsl/dti.py
 def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
     outputs = {}
     if inputs.out_dir is attrs.NOTHING:

@@ -1,10 +1,10 @@
 """Module to put any functions that are referred to in the "callables" section of MotionOutliers.yaml"""
 
-import logging
 from glob import glob
-import os.path as op
 import attrs
+import logging
 import os
+import os.path as op
 
 
 def out_file_callable(output_dir, inputs, stdout, stderr):
@@ -28,12 +28,13 @@ def out_metric_plot_callable(output_dir, inputs, stdout, stderr):
     return outputs["out_metric_plot"]
 
 
-iflogger = logging.getLogger("nipype.interface")
-
-
 IFLOGGER = logging.getLogger("nipype.interface")
 
 
+iflogger = logging.getLogger("nipype.interface")
+
+
+# Original source at L1069 of <nipype-install>/interfaces/base/core.py
 class PackageInfo(object):
     _version = None
     version_cmd = None
@@ -71,6 +72,7 @@ class PackageInfo(object):
         raise NotImplementedError
 
 
+# Original source at L40 of <nipype-install>/interfaces/fsl/base.py
 class Info(PackageInfo):
     """
     Handle FSL ``output_type`` and version information.
@@ -163,12 +165,14 @@ class Info(PackageInfo):
         return os.path.join(stdpath, img_name)
 
 
+# Original source at L249 of <nipype-install>/interfaces/fsl/base.py
 def _overload_extension(
     value, name=None, inputs=None, stdout=None, stderr=None, output_dir=None
 ):
     return value + Info.output_type_to_ext(inputs.output_type)
 
 
+# Original source at L125 of <nipype-install>/interfaces/base/support.py
 class NipypeInterfaceError(Exception):
     """Custom error for interfaces"""
 
@@ -179,6 +183,7 @@ class NipypeInterfaceError(Exception):
         return "{}".format(self.value)
 
 
+# Original source at L58 of <nipype-install>/utils/filemanip.py
 def split_filename(fname):
     """Split a filename into parts: path, base filename and extension.
 
@@ -229,6 +234,7 @@ def split_filename(fname):
     return pth, fname, ext
 
 
+# Original source at L809 of <nipype-install>/interfaces/base/core.py
 def _filename_from_source(
     name, chain=None, inputs=None, stdout=None, stderr=None, output_dir=None
 ):
@@ -323,10 +329,12 @@ def _filename_from_source(
     return retval
 
 
+# Original source at L885 of <nipype-install>/interfaces/base/core.py
 def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
     raise NotImplementedError
 
 
+# Original source at L891 of <nipype-install>/interfaces/base/core.py
 def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
     metadata = dict(name_source=lambda t: t is not None)
     traits = inputs.traits(**metadata)

@@ -1,7 +1,8 @@
 """Module to put any functions that are referred to in the "callables" section of EddyQuad.yaml"""
 
-import attrs
 import os
+from glob import glob
+import attrs
 
 
 def qc_json_callable(output_dir, inputs, stdout, stderr):
@@ -60,10 +61,12 @@ def clean_volumes_callable(output_dir, inputs, stdout, stderr):
     return outputs["clean_volumes"]
 
 
+# Original source at L885 of <nipype-install>/interfaces/base/core.py
 def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
     raise NotImplementedError
 
 
+# Original source at L1673 of <nipype-install>/interfaces/fsl/epi.py
 def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
     from glob import glob
 

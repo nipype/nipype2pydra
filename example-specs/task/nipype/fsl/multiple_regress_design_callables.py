@@ -1,5 +1,7 @@
 """Module to put any functions that are referred to in the "callables" section of MultipleRegressDesign.yaml"""
 
+import attrs
+
 
 def design_mat_callable(output_dir, inputs, stdout, stderr):
     outputs = _list_outputs(

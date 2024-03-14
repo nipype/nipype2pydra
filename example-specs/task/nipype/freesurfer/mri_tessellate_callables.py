@@ -1,8 +1,8 @@
 """Module to put any functions that are referred to in the "callables" section of MRITessellate.yaml"""
 
+import os
 import os.path as op
 import attrs
-import os
 
 
 def out_file_default(inputs):
@@ -16,6 +16,7 @@ def surface_callable(output_dir, inputs, stdout, stderr):
     return outputs["surface"]
 
 
+# Original source at L58 of <nipype-install>/utils/filemanip.py
 def split_filename(fname):
     """Split a filename into parts: path, base filename and extension.
 
@@ -66,6 +67,7 @@ def split_filename(fname):
     return pth, fname, ext
 
 
+# Original source at L1490 of <nipype-install>/interfaces/freesurfer/utils.py
 def _gen_outfilename(inputs=None, stdout=None, stderr=None, output_dir=None):
     if inputs.out_file is not attrs.NOTHING:
         return inputs.out_file
@@ -74,6 +76,7 @@ def _gen_outfilename(inputs=None, stdout=None, stderr=None, output_dir=None):
         return name + ext + "_" + str(inputs.label_value)
 
 
+# Original source at L1484 of <nipype-install>/interfaces/freesurfer/utils.py
 def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
     if name == "out_file":
         return _gen_outfilename(
@@ -83,6 +86,7 @@ def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
         return None
 
 
+# Original source at L1479 of <nipype-install>/interfaces/freesurfer/utils.py
 def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
     outputs = {}
     outputs["surface"] = os.path.abspath(

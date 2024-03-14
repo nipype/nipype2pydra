@@ -1,7 +1,7 @@
 """Module to put any functions that are referred to in the "callables" section of Eddy.yaml"""
 
-import attrs
 import os
+import attrs
 
 
 def out_corrected_callable(output_dir, inputs, stdout, stderr):
@@ -109,10 +109,12 @@ def out_residuals_callable(output_dir, inputs, stdout, stderr):
     return outputs["out_residuals"]
 
 
+# Original source at L885 of <nipype-install>/interfaces/base/core.py
 def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
     raise NotImplementedError
 
 
+# Original source at L1008 of <nipype-install>/interfaces/fsl/epi.py
 def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
     outputs = {}
     outputs["out_corrected"] = os.path.abspath("%s.nii.gz" % inputs.out_base)

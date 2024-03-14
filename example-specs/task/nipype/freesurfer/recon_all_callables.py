@@ -280,10 +280,12 @@ def entorhinal_exvivo_stats_callable(output_dir, inputs, stdout, stderr):
     return outputs["entorhinal_exvivo_stats"]
 
 
+# Original source at L1502 of <nipype-install>/interfaces/freesurfer/preprocess.py
 def _gen_subjects_dir(inputs=None, stdout=None, stderr=None, output_dir=None):
     return output_dir
 
 
+# Original source at L1505 of <nipype-install>/interfaces/freesurfer/preprocess.py
 def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
     if name == "subjects_dir":
         return _gen_subjects_dir(
@@ -292,6 +294,7 @@ def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
     return None
 
 
+# Original source at L1510 of <nipype-install>/interfaces/freesurfer/preprocess.py
 def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
     """
     See io.FreeSurferSource.outputs for the list of outputs returned

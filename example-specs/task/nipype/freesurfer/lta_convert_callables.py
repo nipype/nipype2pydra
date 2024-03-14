@@ -1,6 +1,7 @@
 """Module to put any functions that are referred to in the "callables" section of LTAConvert.yaml"""
 
 import os
+import attrs
 
 
 def out_lta_callable(output_dir, inputs, stdout, stderr):
@@ -38,10 +39,12 @@ def out_itk_callable(output_dir, inputs, stdout, stderr):
     return outputs["out_itk"]
 
 
+# Original source at L885 of <nipype-install>/interfaces/base/core.py
 def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
     raise NotImplementedError
 
 
+# Original source at L4206 of <nipype-install>/interfaces/freesurfer/utils.py
 def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
     outputs = {}
     for name, default in (

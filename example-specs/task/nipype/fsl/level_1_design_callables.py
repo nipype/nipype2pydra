@@ -1,5 +1,7 @@
 """Module to put any functions that are referred to in the "callables" section of Level1Design.yaml"""
 
+import attrs
+
 
 def fsf_files_callable(output_dir, inputs, stdout, stderr):
     outputs = _list_outputs(

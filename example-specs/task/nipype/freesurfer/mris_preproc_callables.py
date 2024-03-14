@@ -1,7 +1,7 @@
 """Module to put any functions that are referred to in the "callables" section of MRISPreproc.yaml"""
 
-import attrs
 import os
+import attrs
 
 
 def out_file_default(inputs):
@@ -15,6 +15,7 @@ def out_file_callable(output_dir, inputs, stdout, stderr):
     return outputs["out_file"]
 
 
+# Original source at L144 of <nipype-install>/interfaces/freesurfer/model.py
 def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
     if name == "out_file":
         return _list_outputs(
@@ -23,6 +24,7 @@ def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
     return None
 
 
+# Original source at L134 of <nipype-install>/interfaces/freesurfer/model.py
 def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
     outputs = {}
     outfile = inputs.out_file

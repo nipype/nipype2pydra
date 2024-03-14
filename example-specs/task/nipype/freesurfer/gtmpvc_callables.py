@@ -1,7 +1,7 @@
 """Module to put any functions that are referred to in the "callables" section of GTMPVC.yaml"""
 
-import attrs
 import os
+import attrs
 
 
 def pvc_dir_default(inputs):
@@ -155,10 +155,12 @@ def yhat_with_noise_callable(output_dir, inputs, stdout, stderr):
     return outputs["yhat_with_noise"]
 
 
+# Original source at L885 of <nipype-install>/interfaces/base/core.py
 def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
     raise NotImplementedError
 
 
+# Original source at L522 of <nipype-install>/interfaces/freesurfer/petsurfer.py
 def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
     outputs = {}
     # Get the top-level output directory

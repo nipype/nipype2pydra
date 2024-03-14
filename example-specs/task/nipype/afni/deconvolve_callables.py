@@ -1,10 +1,10 @@
 """Module to put any functions that are referred to in the "callables" section of Deconvolve.yaml"""
 
 from looseversion import LooseVersion
-from pathlib import Path
-import os.path as op
 import attrs
 import os
+import os.path as op
+from pathlib import Path
 
 
 def out_file_callable(output_dir, inputs, stdout, stderr):
@@ -35,6 +35,7 @@ def cbucket_callable(output_dir, inputs, stdout, stderr):
     return outputs["cbucket"]
 
 
+# Original source at L1069 of <nipype-install>/interfaces/base/core.py
 class PackageInfo(object):
     _version = None
     version_cmd = None
@@ -72,6 +73,7 @@ class PackageInfo(object):
         raise NotImplementedError
 
 
+# Original source at L108 of <nipype-install>/utils/filemanip.py
 def fname_presuffix(fname, prefix="", suffix="", newpath=None, use_ext=True):
     """Manipulates path and name of input filename
 
@@ -114,6 +116,7 @@ def fname_presuffix(fname, prefix="", suffix="", newpath=None, use_ext=True):
     return op.join(pth, prefix + fname + suffix + ext)
 
 
+# Original source at L58 of <nipype-install>/utils/filemanip.py
 def split_filename(fname):
     """Split a filename into parts: path, base filename and extension.
 
@@ -164,6 +167,7 @@ def split_filename(fname):
     return pth, fname, ext
 
 
+# Original source at L26 of <nipype-install>/interfaces/afni/base.py
 class Info(PackageInfo):
     """Handle afni output type and version information."""
 
@@ -247,6 +251,7 @@ class Info(PackageInfo):
         return os.path.join(basedir, img_name)
 
 
+# Original source at L260 of <nipype-install>/interfaces/afni/base.py
 def _gen_fname(
     basename,
     cwd=None,
@@ -301,10 +306,12 @@ def _gen_fname(
     return fname
 
 
+# Original source at L885 of <nipype-install>/interfaces/base/core.py
 def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
     raise NotImplementedError
 
 
+# Original source at L322 of <nipype-install>/interfaces/afni/model.py
 def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
     outputs = {}
 

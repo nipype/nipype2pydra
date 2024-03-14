@@ -1,8 +1,8 @@
 """Module to put any functions that are referred to in the "callables" section of Atropos.yaml"""
 
+import os
 import os.path as op
 import attrs
-import os
 
 
 def out_classified_image_name_default(inputs):
@@ -23,6 +23,7 @@ def posteriors_callable(output_dir, inputs, stdout, stderr):
     return outputs["posteriors"]
 
 
+# Original source at L58 of <nipype-install>/utils/filemanip.py
 def split_filename(fname):
     """Split a filename into parts: path, base filename and extension.
 
@@ -73,6 +74,7 @@ def split_filename(fname):
     return pth, fname, ext
 
 
+# Original source at L232 of <nipype-install>/interfaces/ants/segmentation.py
 def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
     if name == "out_classified_image_name":
         output = inputs.out_classified_image_name
@@ -82,6 +84,7 @@ def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
         return output
 
 
+# Original source at L240 of <nipype-install>/interfaces/ants/segmentation.py
 def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
     outputs = {}
     outputs["classified_image"] = os.path.abspath(

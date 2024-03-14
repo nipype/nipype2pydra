@@ -7,8 +7,9 @@ import itertools
 import attrs
 from .base import BaseTaskConverter
 from ..utils import (
-    split_parens_contents,
+    extract_args,
     UsedSymbols,
+    get_source_code,
     get_local_functions,
     get_local_constants,
     cleanup_function_body,
@@ -111,15 +112,15 @@ class FunctionTaskConverter(BaseTaskConverter):
 
         for func in sorted(used.local_functions, key=attrgetter("__name__")):
             spec_str += "\n\n" + cleanup_function_body(
-                inspect.getsource(func)
+                get_source_code(func)
             )
 
         spec_str += "\n\n# Functions defined in neighbouring modules that have been included inline instead of imported\n\n"
 
         for func_name, func in sorted(used.funcs_to_include, key=itemgetter(0)):
-            func_src = inspect.getsource(func)
+            func_src = get_source_code(func)
             func_src = re.sub(
-                r"^(def) (\w+)(?=\()",
+                r"^(#[^\n]+\ndef) (\w+)(?=\()",
                 r"\1 " + func_name,
                 func_src,
                 flags=re.MULTILINE,
@@ -127,9 +128,9 @@ class FunctionTaskConverter(BaseTaskConverter):
             spec_str += "\n\n" + cleanup_function_body(func_src)
 
         for klass_name, klass in sorted(used.classes_to_include, key=itemgetter(0)):
-            klass_src = inspect.getsource(klass)
+            klass_src = get_source_code(klass)
             klass_src = re.sub(
-                r"^(class) (\w+)(?=\()",
+                r"^(#[^\n]+\nclass) (\w+)(?=\()",
                 r"\1 " + klass_name,
                 klass_src,
                 flags=re.MULTILINE,
@@ -155,7 +156,7 @@ class FunctionTaskConverter(BaseTaskConverter):
         method_returns: ty.Dict[str, ty.List[str]] = None,
     ):
         src = inspect.getsource(method)
-        pre, args, post = split_parens_contents(src)
+        pre, args, post = extract_args(src)
         args.remove("self")
         if "runtime" in args:
             args.remove("runtime")

@@ -1,8 +1,8 @@
 """Module to put any functions that are referred to in the "callables" section of GLMFit.yaml"""
 
+import os
 import os.path as op
 import attrs
-import os
 
 
 def glm_dir_default(inputs):
@@ -142,6 +142,7 @@ def bp_file_callable(output_dir, inputs, stdout, stderr):
     return outputs["bp_file"]
 
 
+# Original source at L58 of <nipype-install>/utils/filemanip.py
 def split_filename(fname):
     """Split a filename into parts: path, base filename and extension.
 
@@ -192,12 +193,14 @@ def split_filename(fname):
     return pth, fname, ext
 
 
+# Original source at L560 of <nipype-install>/interfaces/freesurfer/model.py
 def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
     if name == "glm_dir":
         return output_dir
     return None
 
 
+# Original source at L496 of <nipype-install>/interfaces/freesurfer/model.py
 def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
     outputs = {}
     # Get the top-level output directory

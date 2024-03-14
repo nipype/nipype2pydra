@@ -1,7 +1,7 @@
 """Module to put any functions that are referred to in the "callables" section of Registration.yaml"""
 
-import attrs
 import os
+import attrs
 
 
 def forward_transforms_callable(output_dir, inputs, stdout, stderr):
@@ -95,10 +95,12 @@ def elapsed_time_callable(output_dir, inputs, stdout, stderr):
     return outputs["elapsed_time"]
 
 
+# Original source at L885 of <nipype-install>/interfaces/base/core.py
 def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
     raise NotImplementedError
 
 
+# Original source at L1201 of <nipype-install>/interfaces/ants/registration.py
 def _get_outputfilenames(
     inverse=False, inputs=None, stdout=None, stderr=None, output_dir=None
 ):
@@ -123,6 +125,7 @@ def _get_outputfilenames(
     return inv_output_filename
 
 
+# Original source at L1341 of <nipype-install>/interfaces/ants/registration.py
 def _output_filenames(
     prefix,
     count,
@@ -155,6 +158,7 @@ def _output_filenames(
     return "%s%d%s" % (prefix, count, suffix), inverse_mode
 
 
+# Original source at L1363 of <nipype-install>/interfaces/ants/registration.py
 def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
     outputs = {}
     outputs["forward_transforms"] = []

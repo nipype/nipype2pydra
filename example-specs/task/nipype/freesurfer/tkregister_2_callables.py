@@ -1,9 +1,9 @@
 """Module to put any functions that are referred to in the "callables" section of Tkregister2.yaml"""
 
-from pathlib import Path
-import os.path as op
-import attrs
 import os
+import os.path as op
+from pathlib import Path
+import attrs
 
 
 def reg_file_callable(output_dir, inputs, stdout, stderr):
@@ -27,10 +27,12 @@ def lta_file_callable(output_dir, inputs, stdout, stderr):
     return outputs["lta_file"]
 
 
+# Original source at L885 of <nipype-install>/interfaces/base/core.py
 def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
     raise NotImplementedError
 
 
+# Original source at L108 of <nipype-install>/utils/filemanip.py
 def fname_presuffix(fname, prefix="", suffix="", newpath=None, use_ext=True):
     """Manipulates path and name of input filename
 
@@ -73,6 +75,7 @@ def fname_presuffix(fname, prefix="", suffix="", newpath=None, use_ext=True):
     return op.join(pth, prefix + fname + suffix + ext)
 
 
+# Original source at L58 of <nipype-install>/utils/filemanip.py
 def split_filename(fname):
     """Split a filename into parts: path, base filename and extension.
 
@@ -123,6 +126,7 @@ def split_filename(fname):
     return pth, fname, ext
 
 
+# Original source at L1973 of <nipype-install>/interfaces/freesurfer/utils.py
 def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
     outputs = {}
     reg_file = os.path.abspath(inputs.reg_file)

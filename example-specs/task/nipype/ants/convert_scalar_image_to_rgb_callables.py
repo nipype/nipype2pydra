@@ -1,6 +1,7 @@
 """Module to put any functions that are referred to in the "callables" section of ConvertScalarImageToRGB.yaml"""
 
 import os
+import attrs
 
 
 def output_image_callable(output_dir, inputs, stdout, stderr):
@@ -10,10 +11,12 @@ def output_image_callable(output_dir, inputs, stdout, stderr):
     return outputs["output_image"]
 
 
+# Original source at L885 of <nipype-install>/interfaces/base/core.py
 def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
     raise NotImplementedError
 
 
+# Original source at L103 of <nipype-install>/interfaces/ants/visualization.py
 def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
     outputs = {}
     outputs["output_image"] = os.path.join(output_dir, inputs.output_image)

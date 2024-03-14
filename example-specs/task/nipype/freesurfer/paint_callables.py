@@ -1,6 +1,7 @@
 """Module to put any functions that are referred to in the "callables" section of Paint.yaml"""
 
 import os
+import attrs
 
 
 def out_file_callable(output_dir, inputs, stdout, stderr):
@@ -10,10 +11,12 @@ def out_file_callable(output_dir, inputs, stdout, stderr):
     return outputs["out_file"]
 
 
+# Original source at L885 of <nipype-install>/interfaces/base/core.py
 def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
     raise NotImplementedError
 
 
+# Original source at L393 of <nipype-install>/interfaces/freesurfer/registration.py
 def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
     outputs = {}
     outputs["out_file"] = os.path.abspath(inputs.out_file)

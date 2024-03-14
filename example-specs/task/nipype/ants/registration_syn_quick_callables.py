@@ -1,6 +1,7 @@
 """Module to put any functions that are referred to in the "callables" section of RegistrationSynQuick.yaml"""
 
 import os
+import attrs
 
 
 def warped_image_callable(output_dir, inputs, stdout, stderr):
@@ -38,10 +39,12 @@ def inverse_warp_field_callable(output_dir, inputs, stdout, stderr):
     return outputs["inverse_warp_field"]
 
 
+# Original source at L885 of <nipype-install>/interfaces/base/core.py
 def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
     raise NotImplementedError
 
 
+# Original source at L1777 of <nipype-install>/interfaces/ants/registration.py
 def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
     outputs = {}
     out_base = os.path.abspath(inputs.output_prefix)

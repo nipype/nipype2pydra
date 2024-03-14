@@ -1,6 +1,7 @@
 """Module to put any functions that are referred to in the "callables" section of Classifier.yaml"""
 
 import os
+import attrs
 
 
 def artifacts_list_file_callable(output_dir, inputs, stdout, stderr):
@@ -10,10 +11,12 @@ def artifacts_list_file_callable(output_dir, inputs, stdout, stderr):
     return outputs["artifacts_list_file"]
 
 
+# Original source at L885 of <nipype-install>/interfaces/base/core.py
 def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
     raise NotImplementedError
 
 
+# Original source at L304 of <nipype-install>/interfaces/fsl/fix.py
 def _gen_artifacts_list_file(
     mel_ica, thresh, inputs=None, stdout=None, stderr=None, output_dir=None
 ):
@@ -25,6 +28,7 @@ def _gen_artifacts_list_file(
     return fname
 
 
+# Original source at L312 of <nipype-install>/interfaces/fsl/fix.py
 def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
     outputs = {}
     outputs["artifacts_list_file"] = _gen_artifacts_list_file(

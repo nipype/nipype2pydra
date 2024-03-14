@@ -1,9 +1,10 @@
 """Module to put any functions that are referred to in the "callables" section of buildtemplateparallel.yaml"""
 
+from builtins import range
+import attrs
+import os
 import os.path as op
 from glob import glob
-from builtins import range
-import os
 
 
 def final_template_file_callable(output_dir, inputs, stdout, stderr):
@@ -27,10 +28,12 @@ def subject_outfiles_callable(output_dir, inputs, stdout, stderr):
     return outputs["subject_outfiles"]
 
 
+# Original source at L885 of <nipype-install>/interfaces/base/core.py
 def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
     raise NotImplementedError
 
 
+# Original source at L58 of <nipype-install>/utils/filemanip.py
 def split_filename(fname):
     """Split a filename into parts: path, base filename and extension.
 
@@ -81,6 +84,7 @@ def split_filename(fname):
     return pth, fname, ext
 
 
+# Original source at L340 of <nipype-install>/interfaces/ants/legacy.py
 def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
     outputs = {}
     outputs["template_files"] = []

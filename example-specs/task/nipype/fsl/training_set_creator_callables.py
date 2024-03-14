@@ -1,5 +1,7 @@
 """Module to put any functions that are referred to in the "callables" section of TrainingSetCreator.yaml"""
 
+import attrs
+
 
 def mel_icas_out_callable(output_dir, inputs, stdout, stderr):
     outputs = _list_outputs(

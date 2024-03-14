@@ -1,7 +1,8 @@
 """Module to put any functions that are referred to in the "callables" section of MPRtoMNI305.yaml"""
 
-import os.path as op
 import os
+import os.path as op
+import attrs
 
 
 def out_file_callable(output_dir, inputs, stdout, stderr):
@@ -18,6 +19,7 @@ def log_file_callable(output_dir, inputs, stdout, stderr):
     return outputs["log_file"]
 
 
+# Original source at L216 of <nipype-install>/interfaces/freesurfer/base.py
 def nipype_interfaces_freesurfer__FSScriptCommand___list_outputs(
     inputs=None, stdout=None, stderr=None, output_dir=None
 ):
@@ -26,10 +28,12 @@ def nipype_interfaces_freesurfer__FSScriptCommand___list_outputs(
     return outputs
 
 
+# Original source at L885 of <nipype-install>/interfaces/base/core.py
 def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
     raise NotImplementedError
 
 
+# Original source at L58 of <nipype-install>/utils/filemanip.py
 def split_filename(fname):
     """Split a filename into parts: path, base filename and extension.
 
@@ -80,10 +84,12 @@ def split_filename(fname):
     return pth, fname, ext
 
 
+# Original source at L97 of <nipype-install>/interfaces/freesurfer/registration.py
 def _get_fname(fname, inputs=None, stdout=None, stderr=None, output_dir=None):
     return split_filename(fname)[1]
 
 
+# Original source at L100 of <nipype-install>/interfaces/freesurfer/registration.py
 def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
     outputs = nipype_interfaces_freesurfer__FSScriptCommand___list_outputs()
     fullname = "_".join(

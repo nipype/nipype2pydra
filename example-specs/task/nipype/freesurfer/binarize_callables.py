@@ -1,9 +1,9 @@
 """Module to put any functions that are referred to in the "callables" section of Binarize.yaml"""
 
-from pathlib import Path
-import os.path as op
-import attrs
 import os
+import os.path as op
+from pathlib import Path
+import attrs
 
 
 def binary_file_default(inputs):
@@ -24,6 +24,7 @@ def count_file_callable(output_dir, inputs, stdout, stderr):
     return outputs["count_file"]
 
 
+# Original source at L108 of <nipype-install>/utils/filemanip.py
 def fname_presuffix(fname, prefix="", suffix="", newpath=None, use_ext=True):
     """Manipulates path and name of input filename
 
@@ -66,6 +67,7 @@ def fname_presuffix(fname, prefix="", suffix="", newpath=None, use_ext=True):
     return op.join(pth, prefix + fname + suffix + ext)
 
 
+# Original source at L58 of <nipype-install>/utils/filemanip.py
 def split_filename(fname):
     """Split a filename into parts: path, base filename and extension.
 
@@ -116,6 +118,7 @@ def split_filename(fname):
     return pth, fname, ext
 
 
+# Original source at L702 of <nipype-install>/interfaces/freesurfer/model.py
 def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
     if name == "binary_file":
         return _list_outputs(
@@ -124,6 +127,7 @@ def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
     return None
 
 
+# Original source at L661 of <nipype-install>/interfaces/freesurfer/model.py
 def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
     outputs = {}
     outfile = inputs.binary_file

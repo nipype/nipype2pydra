@@ -1,9 +1,9 @@
 """Module to put any functions that are referred to in the "callables" section of FLAMEO.yaml"""
 
 import re
+import os
 from glob import glob
 import attrs
-import os
 
 
 def pes_callable(output_dir, inputs, stdout, stderr):
@@ -90,10 +90,12 @@ def stats_dir_callable(output_dir, inputs, stdout, stderr):
     return outputs["stats_dir"]
 
 
+# Original source at L885 of <nipype-install>/interfaces/base/core.py
 def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
     raise NotImplementedError
 
 
+# Original source at L19 of <nipype-install>/utils/misc.py
 def human_order_sorted(l):
     """Sorts string in human order (i.e. 'stat10' will go after 'stat2')"""
 
@@ -108,6 +110,7 @@ def human_order_sorted(l):
     return sorted(l, key=natural_keys)
 
 
+# Original source at L1143 of <nipype-install>/interfaces/fsl/model.py
 def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
     outputs = {}
     pth = os.path.join(output_dir, inputs.log_dir)

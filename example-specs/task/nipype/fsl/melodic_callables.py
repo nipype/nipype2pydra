@@ -1,7 +1,7 @@
 """Module to put any functions that are referred to in the "callables" section of MELODIC.yaml"""
 
-import attrs
 import os
+import attrs
 
 
 def out_dir_default(inputs):
@@ -22,11 +22,13 @@ def report_dir_callable(output_dir, inputs, stdout, stderr):
     return outputs["report_dir"]
 
 
+# Original source at L1858 of <nipype-install>/interfaces/fsl/model.py
 def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
     if name == "out_dir":
         return output_dir
 
 
+# Original source at L1848 of <nipype-install>/interfaces/fsl/model.py
 def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
     outputs = {}
     if inputs.out_dir is not attrs.NOTHING:

@@ -1,6 +1,7 @@
 """Module to put any functions that are referred to in the "callables" section of CreateJacobianDeterminantImage.yaml"""
 
 import os
+import attrs
 
 
 def jacobian_image_callable(output_dir, inputs, stdout, stderr):
@@ -10,10 +11,12 @@ def jacobian_image_callable(output_dir, inputs, stdout, stderr):
     return outputs["jacobian_image"]
 
 
+# Original source at L885 of <nipype-install>/interfaces/base/core.py
 def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
     raise NotImplementedError
 
 
+# Original source at L756 of <nipype-install>/interfaces/ants/utils.py
 def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
     outputs = {}
     outputs["jacobian_image"] = os.path.abspath(inputs.outputImage)

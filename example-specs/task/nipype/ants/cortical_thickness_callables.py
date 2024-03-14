@@ -1,6 +1,7 @@
 """Module to put any functions that are referred to in the "callables" section of CorticalThickness.yaml"""
 
 import os
+import attrs
 
 
 def BrainExtractionMask_callable(output_dir, inputs, stdout, stderr):
@@ -94,10 +95,12 @@ def BrainVolumes_callable(output_dir, inputs, stdout, stderr):
     return outputs["BrainVolumes"]
 
 
+# Original source at L885 of <nipype-install>/interfaces/base/core.py
 def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
     raise NotImplementedError
 
 
+# Original source at L789 of <nipype-install>/interfaces/ants/segmentation.py
 def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
     outputs = {}
     outputs["BrainExtractionMask"] = os.path.join(

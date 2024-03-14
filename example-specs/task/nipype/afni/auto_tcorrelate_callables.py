@@ -1,9 +1,9 @@
 """Module to put any functions that are referred to in the "callables" section of AutoTcorrelate.yaml"""
 
-import logging
-import os.path as op
 import attrs
+import logging
 import os
+import os.path as op
 
 
 def out_file_callable(output_dir, inputs, stdout, stderr):
@@ -16,56 +16,7 @@ def out_file_callable(output_dir, inputs, stdout, stderr):
 iflogger = logging.getLogger("nipype.interface")
 
 
-def split_filename(fname):
-    """Split a filename into parts: path, base filename and extension.
-
-    Parameters
-    ----------
-    fname : str
-        file or path name
-
-    Returns
-    -------
-    pth : str
-        base path from fname
-    fname : str
-        filename from fname, without extension
-    ext : str
-        file extension from fname
-
-    Examples
-    --------
-    >>> from nipype.utils.filemanip import split_filename
-    >>> pth, fname, ext = split_filename('/home/data/subject.nii.gz')
-    >>> pth
-    '/home/data'
-
-    >>> fname
-    'subject'
-
-    >>> ext
-    '.nii.gz'
-
-    """
-
-    special_extensions = [".nii.gz", ".tar.gz", ".niml.dset"]
-
-    pth = op.dirname(fname)
-    fname = op.basename(fname)
-
-    ext = None
-    for special_ext in special_extensions:
-        ext_len = len(special_ext)
-        if (len(fname) > ext_len) and (fname[-ext_len:].lower() == special_ext.lower()):
-            ext = fname[-ext_len:]
-            fname = fname[:-ext_len]
-            break
-    if not ext:
-        fname, ext = op.splitext(fname)
-
-    return pth, fname, ext
-
-
+# Original source at L675 of <nipype-install>/interfaces/afni/preprocess.py
 def _overload_extension(
     value, name=None, inputs=None, stdout=None, stderr=None, output_dir=None
 ):
@@ -75,6 +26,7 @@ def _overload_extension(
     return os.path.join(path, base + ext)
 
 
+# Original source at L125 of <nipype-install>/interfaces/base/support.py
 class NipypeInterfaceError(Exception):
     """Custom error for interfaces"""
 
@@ -85,56 +37,7 @@ class NipypeInterfaceError(Exception):
         return "{}".format(self.value)
 
 
-def split_filename(fname):
-    """Split a filename into parts: path, base filename and extension.
-
-    Parameters
-    ----------
-    fname : str
-        file or path name
-
-    Returns
-    -------
-    pth : str
-        base path from fname
-    fname : str
-        filename from fname, without extension
-    ext : str
-        file extension from fname
-
-    Examples
-    --------
-    >>> from nipype.utils.filemanip import split_filename
-    >>> pth, fname, ext = split_filename('/home/data/subject.nii.gz')
-    >>> pth
-    '/home/data'
-
-    >>> fname
-    'subject'
-
-    >>> ext
-    '.nii.gz'
-
-    """
-
-    special_extensions = [".nii.gz", ".tar.gz", ".niml.dset"]
-
-    pth = op.dirname(fname)
-    fname = op.basename(fname)
-
-    ext = None
-    for special_ext in special_extensions:
-        ext_len = len(special_ext)
-        if (len(fname) > ext_len) and (fname[-ext_len:].lower() == special_ext.lower()):
-            ext = fname[-ext_len:]
-            fname = fname[:-ext_len]
-            break
-    if not ext:
-        fname, ext = op.splitext(fname)
-
-    return pth, fname, ext
-
-
+# Original source at L809 of <nipype-install>/interfaces/base/core.py
 def _filename_from_source(
     name, chain=None, inputs=None, stdout=None, stderr=None, output_dir=None
 ):
@@ -229,6 +132,7 @@ def _filename_from_source(
     return retval
 
 
+# Original source at L891 of <nipype-install>/interfaces/base/core.py
 def nipype_interfaces_afni__AFNICommandBase___list_outputs(
     inputs=None, stdout=None, stderr=None, output_dir=None
 ):
@@ -248,10 +152,12 @@ def nipype_interfaces_afni__AFNICommandBase___list_outputs(
         return outputs
 
 
+# Original source at L885 of <nipype-install>/interfaces/base/core.py
 def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
     raise NotImplementedError
 
 
+# Original source at L58 of <nipype-install>/utils/filemanip.py
 def split_filename(fname):
     """Split a filename into parts: path, base filename and extension.
 
@@ -302,6 +208,7 @@ def split_filename(fname):
     return pth, fname, ext
 
 
+# Original source at L248 of <nipype-install>/interfaces/afni/base.py
 def nipype_interfaces_afni__AFNICommand___list_outputs(
     inputs=None, stdout=None, stderr=None, output_dir=None
 ):
@@ -317,6 +224,7 @@ def nipype_interfaces_afni__AFNICommand___list_outputs(
     return outputs
 
 
+# Original source at L248 of <nipype-install>/interfaces/afni/base.py
 def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
     outputs = nipype_interfaces_afni__AFNICommandBase___list_outputs()
     metadata = dict(name_source=lambda t: t is not None)

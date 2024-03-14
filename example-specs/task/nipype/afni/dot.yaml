@@ -85,7 +85,7 @@ tests:
     mask:
     # type=file|default=<undefined>: Use this dataset as a mask
     mrange:
-    # type=tuple|default=(<traits.trait_types.Float object at 0x1121ae190>, <traits.trait_types.Float object at 0x1121ae090>): Means to further restrict the voxels from 'mset' so thatonly those mask values within this range (inclusive) willbe used.
+    # type=tuple|default=(<traits.trait_types.Float object at 0x1079efdd0>, <traits.trait_types.Float object at 0x1079efcd0>): Means to further restrict the voxels from 'mset' so thatonly those mask values within this range (inclusive) willbe used.
     demean:
     # type=bool|default=False: Remove the mean from each volume prior to computing the correlation
     docor:

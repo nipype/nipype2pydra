@@ -1,7 +1,8 @@
 """Module to put any functions that are referred to in the "callables" section of WarpTimeSeriesImageMultiTransform.yaml"""
 
-import os.path as op
 import os
+import os.path as op
+import attrs
 
 
 def output_image_callable(output_dir, inputs, stdout, stderr):
@@ -11,10 +12,12 @@ def output_image_callable(output_dir, inputs, stdout, stderr):
     return outputs["output_image"]
 
 
+# Original source at L885 of <nipype-install>/interfaces/base/core.py
 def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
     raise NotImplementedError
 
 
+# Original source at L58 of <nipype-install>/utils/filemanip.py
 def split_filename(fname):
     """Split a filename into parts: path, base filename and extension.
 
@@ -65,6 +68,7 @@ def split_filename(fname):
     return pth, fname, ext
 
 
+# Original source at L137 of <nipype-install>/interfaces/ants/resampling.py
 def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
     outputs = {}
     _, name, ext = split_filename(os.path.abspath(inputs.input_image))

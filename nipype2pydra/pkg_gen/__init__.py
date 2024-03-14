@@ -30,7 +30,8 @@ from nipype2pydra.task import (
 )
 from nipype2pydra.utils import (
     UsedSymbols,
-    split_parens_contents,
+    extract_args,
+    get_source_code,
     cleanup_function_body,
     insert_args_in_signature,
     INBUILT_NIPYPE_TRAIT_NAMES,
@@ -347,6 +348,7 @@ class NipypeInterface:
         # Convert the "_gen_filename" method into a function with any referenced
         # methods, functions and constants included in the module
         funcs, imports, consts = get_callable_sources(nipype_interface)
+        imports.add("import attrs")
         callables_str += "\n".join(imports) + "\n\n"
         # Create separate default function for each input field with genfile, which
         # reference the magic "_gen_filename" method
@@ -838,21 +840,25 @@ def _gen_filename(field, inputs, output_dir, stdout, stderr):
         return "_".join(common) + "__"
 
     def find_nested_methods(
-        methods: ty.List[ty.Callable], interface=None
+        methods: ty.List[ty.Callable], class_name: str, interface=None
     ) -> ty.Dict[str, ty.Callable]:
         if interface is None:
             interface = nipype_interface
         all_nested = {}
         for method in methods:
-            method_src = inspect.getsource(method)
-            for match in re.findall(r"self\.(\w+)\(", method_src):
+            method_src = get_source_code(method)
+            for match in re.findall(
+                r"(?:self|" + class_name + r")\.(\w+)\(", method_src
+            ):
                 if match in ("output_spec", "_outputs"):
                     continue
                 nested = getattr(nipype_interface, match)
                 func_name = nested.__name__
                 if func_name not in all_nested and func_name != method.__name__:
                     all_nested[func_name] = nested
-                    all_nested.update(find_nested_methods([nested]))
+                    all_nested.update(
+                        find_nested_methods([nested], class_name=class_name)
+                    )
             for match in re.findall(r"super\([^\)]*\)\.(\w+)\(", method_src):
                 nested = None
                 for base in interface.__bases__:
@@ -873,13 +879,17 @@ def _gen_filename(field, inputs, output_dir, stdout, stderr):
                 )
                 if func_name not in all_nested:
                     all_nested[func_name] = nested
-                    all_nested.update(find_nested_methods([nested], interface=base))
+                    all_nested.update(
+                        find_nested_methods(
+                            [nested], class_name=class_name, interface=base
+                        )
+                    )
         return all_nested
 
     def process_method(
-        method: ty.Callable, new_name: str, name_map: ty.Dict[str, str]
+        method: ty.Callable, new_name: str, name_map: ty.Dict[str, str], class_name: str
     ) -> str:
-        src = inspect.getsource(method)
+        src = get_source_code(method)
         src = src.replace("if self.output_spec:", "if True:")
         src = re.sub(
             r"outputs = self\.(output_spec|_outputs)\(\).*$",
@@ -887,9 +897,9 @@ def _gen_filename(field, inputs, output_dir, stdout, stderr):
             src,
             flags=re.MULTILINE,
         )
-        prefix, args, body = split_parens_contents(src)
+        prefix, args, body = extract_args(src)
         body = insert_args_in_method_calls(
-            body, [f"{a}={a}" for a in IMPLICIT_ARGS], name_map
+            body, [f"{a}={a}" for a in IMPLICIT_ARGS], name_map, class_name
         )
         if hasattr(nipype_interface, "_cmd"):
             body = body.replace("self.cmd", f'"{nipype_interface._cmd}"')
@@ -905,13 +915,17 @@ def _gen_filename(field, inputs, output_dir, stdout, stderr):
         for implicit in IMPLICIT_ARGS:
             if implicit not in arg_names:
                 args.append(f"{implicit}=None")
-        match = re.match(r"(.*\n?\s*def\s+)", prefix)
-        src = match.group(1) + new_name + "(" + ", ".join(args) + body
+        match = re.match(r"(\s*#[^\n]*\n)(\s*@[^\n]*\n)*(\s*def\s+)", prefix)
+        prefix = "".join(g for g in match.groups() if g and g.strip() != "@classmethod")
+        src = prefix + new_name + "(" + ", ".join(args) + body
         src = cleanup_function_body(src)
         return src
 
     def insert_args_in_method_calls(
-        src: str, args: ty.List[ty.Tuple[str, str]], name_map: ty.Dict[str, str]
+        src: str,
+        args: ty.List[ty.Tuple[str, str]],
+        name_map: ty.Dict[str, str],
+        class_name: str,
     ) -> str:
         """Insert additional arguments into the method calls
 
@@ -923,7 +937,9 @@ def _gen_filename(field, inputs, output_dir, stdout, stderr):
             the arguments to insert into the method calls
         """
         # Split the src code into chunks delimited by calls to methods (i.e. 'self.<method>(.*)')
-        method_re = re.compile(r"self\.(\w+)(?=\()", flags=re.MULTILINE | re.DOTALL)
+        method_re = re.compile(
+            r"(?:self|" + class_name + r")\.(\w+)(?=\()", flags=re.MULTILINE | re.DOTALL
+        )
         splits = method_re.split(src)
         new_src = splits[0]
         # Iterate through these chunks and add the additional args to the method calls
@@ -943,7 +959,7 @@ def _gen_filename(field, inputs, output_dir, stdout, stderr):
             else:
                 if outer_name:
                     new_sig = insert_args_in_method_calls(
-                        new_sig, args, name_map=name_map
+                        new_sig, args, name_map=name_map, class_name=class_name
                     )
                     new_src += name_map[outer_name] + new_sig
                     outer_name = None
@@ -958,13 +974,15 @@ def _gen_filename(field, inputs, output_dir, stdout, stderr):
 
     # Get all methods to be included in the callables module
     all_methods = {m.__name__: m for m in methods_to_process}
-    all_methods.update(find_nested_methods(methods_to_process))
+    all_methods.update(
+        find_nested_methods(methods_to_process, class_name=nipype_interface.__name__)
+    )
     name_map = {m.__name__: n for n, m in all_methods.items()}
     # Group the nested methods by their module
     grouped_methods = defaultdict(list)
     for method_name, method in all_methods.items():
         grouped_methods[method.__module__].append(
-            process_method(method, method_name, name_map)
+            process_method(method, method_name, name_map, nipype_interface.__name__)
         )
     # Initialise the source code, imports and constants
     all_funcs = []
@@ -975,27 +993,51 @@ def _gen_filename(field, inputs, output_dir, stdout, stderr):
         used = UsedSymbols.find(mod, methods)
         all_funcs.extend(methods)
         for func in used.local_functions:
-            all_funcs.append(cleanup_function_body(inspect.getsource(func)))
+            func_src = cleanup_function_body(get_source_code(func))
+            if func_src not in all_funcs:
+                all_funcs.append(func_src)
         for klass in used.local_classes:
-            all_funcs.append(cleanup_function_body(inspect.getsource(klass)))
+            klass_src = cleanup_function_body(get_source_code(klass))
+            if klass_src not in all_funcs:
+                all_funcs.append(klass_src)
         for new_func_name, func in used.funcs_to_include:
-            func_src = inspect.getsource(func)
+            func_src = get_source_code(func)
+            location_comment, func_src = func_src.split("\n", 1)
             match = re.match(
                 r"(.*)\bdef *" + func.__name__ + r"(?=\()(.*)$",
                 func_src,
                 re.DOTALL | re.MULTILINE,
             )
-            func_src = match.group(1) + "def " + new_func_name + match.group(2)
-            all_funcs.append(cleanup_function_body(func_src))
+            func_src = (
+                location_comment.strip()
+                + "\n"
+                + match.group(1)
+                + "def "
+                + new_func_name
+                + match.group(2)
+            )
+            func_src = cleanup_function_body(func_src)
+            if func_src not in all_funcs:
+                all_funcs.append(func_src)
         for new_klass_name, klass in used.classes_to_include:
-            klass_src = inspect.getsource(klass)
+            klass_src = get_source_code(klass)
+            location_comment, klass_src = klass_src.split("\n", 1)
             match = re.match(
-                r" *class *" + klass.__name__ + r"(?=\()(.*)$",
+                r"(.*)\bclass *" + klass.__name__ + r"(?=\()(.*)$",
                 klass_src,
                 re.DOTALL | re.MULTILINE,
             )
-            klass_src = "class " + new_klass_name + match.group(1)
-            all_funcs.append(cleanup_function_body(klass_src))
+            klass_src = (
+                location_comment.strip()
+                + "\n"
+                + match.group(1)
+                + "class "
+                + new_klass_name
+                + match.group(2)
+            )
+            klass_src = cleanup_function_body(klass_src)
+            if klass_src not in all_funcs:
+                all_funcs.append(klass_src)
         all_imports.update(used.imports)
         all_constants.update(used.constants)
     return (

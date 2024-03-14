@@ -1,7 +1,7 @@
 """Module to put any functions that are referred to in the "callables" section of SurfaceSnapshots.yaml"""
 
-from pathlib import Path
 import os.path as op
+from pathlib import Path
 import attrs
 
 
@@ -16,6 +16,7 @@ def snapshots_callable(output_dir, inputs, stdout, stderr):
     return outputs["snapshots"]
 
 
+# Original source at L108 of <nipype-install>/utils/filemanip.py
 def fname_presuffix(fname, prefix="", suffix="", newpath=None, use_ext=True):
     """Manipulates path and name of input filename
 
@@ -58,6 +59,7 @@ def fname_presuffix(fname, prefix="", suffix="", newpath=None, use_ext=True):
     return op.join(pth, prefix + fname + suffix + ext)
 
 
+# Original source at L58 of <nipype-install>/utils/filemanip.py
 def split_filename(fname):
     """Split a filename into parts: path, base filename and extension.
 
@@ -108,6 +110,7 @@ def split_filename(fname):
     return pth, fname, ext
 
 
+# Original source at L151 of <nipype-install>/interfaces/freesurfer/base.py
 def _gen_fname(
     basename,
     fname=None,
@@ -144,12 +147,14 @@ def _gen_fname(
     return fname
 
 
+# Original source at L1106 of <nipype-install>/interfaces/freesurfer/utils.py
 def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
     if name == "tcl_script":
         return "snapshots.tcl"
     return None
 
 
+# Original source at L1085 of <nipype-install>/interfaces/freesurfer/utils.py
 def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
     outputs = {}
     if inputs.screenshot_stem is attrs.NOTHING:

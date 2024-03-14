@@ -1,9 +1,9 @@
 """Module to put any functions that are referred to in the "callables" section of ReHo.yaml"""
 
 import logging
+import os
 import os.path as op
 import attrs
-import os
 
 
 def out_file_callable(output_dir, inputs, stdout, stderr):
@@ -23,6 +23,7 @@ def out_vals_callable(output_dir, inputs, stdout, stderr):
 iflogger = logging.getLogger("nipype.interface")
 
 
+# Original source at L125 of <nipype-install>/interfaces/base/support.py
 class NipypeInterfaceError(Exception):
     """Custom error for interfaces"""
 
@@ -33,6 +34,7 @@ class NipypeInterfaceError(Exception):
         return "{}".format(self.value)
 
 
+# Original source at L58 of <nipype-install>/utils/filemanip.py
 def split_filename(fname):
     """Split a filename into parts: path, base filename and extension.
 
@@ -83,12 +85,14 @@ def split_filename(fname):
     return pth, fname, ext
 
 
+# Original source at L888 of <nipype-install>/interfaces/base/core.py
 def _overload_extension(
     value, name=None, inputs=None, stdout=None, stderr=None, output_dir=None
 ):
     return value
 
 
+# Original source at L809 of <nipype-install>/interfaces/base/core.py
 def _filename_from_source(
     name, chain=None, inputs=None, stdout=None, stderr=None, output_dir=None
 ):
@@ -183,6 +187,7 @@ def _filename_from_source(
     return retval
 
 
+# Original source at L891 of <nipype-install>/interfaces/base/core.py
 def nipype_interfaces_afni__AFNICommandBase___list_outputs(
     inputs=None, stdout=None, stderr=None, output_dir=None
 ):
@@ -202,10 +207,12 @@ def nipype_interfaces_afni__AFNICommandBase___list_outputs(
         return outputs
 
 
+# Original source at L885 of <nipype-install>/interfaces/base/core.py
 def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
     raise NotImplementedError
 
 
+# Original source at L2583 of <nipype-install>/interfaces/afni/utils.py
 def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
     outputs = nipype_interfaces_afni__AFNICommandBase___list_outputs()
     if inputs.label_set:

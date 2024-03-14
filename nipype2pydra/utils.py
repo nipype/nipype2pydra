@@ -12,6 +12,7 @@ from pathlib import Path
 from fileformats.core import FileSet
 from .exceptions import UnmatchedParensException
 from nipype.interfaces.base import BaseInterface, TraitedSpec, isdefined, Undefined
+from nipype.interfaces.base import traits_extension
 
 try:
     from typing import GenericAlias
@@ -150,28 +151,34 @@ def add_exc_note(e, note):
     return e
 
 
-def split_parens_contents(snippet, brackets: bool = False, delimiter=","):
-    """Splits the code snippet at the first opening parenthesis into a 3-tuple
-    consisting of the pre-paren text, the contents of the parens and the post-paren
+def extract_args(snippet) -> ty.Tuple[str, ty.List[str], str]:
+    """Splits the code snippet at the first opening parenthesis/bracket into a 3-tuple
+    consisting of the preceding text + opening paren/bracket, the arguments/items
+    within the parenthesis/bracket pair, and the closing paren/bracket + trailing text.
+
+    Quotes and escaped characters are handled correctly, and the function can be used
+    to split on either parentheses or brackets. The only limitation is that raw strings
+    are not supported.
 
     Parameters
     ----------
     snippet: str
-        the code snippet to split
-    brackets: bool, optional
-        whether to split at brackets instead of parens, by default False
-    delimiter: str, optional
-        an optional delimiter to split the contents of the parens by, by default None
-        means that they aren't split
+        the code snippet to split on the first opening parenthesis/bracket to its matching
+        closing parenthesis/bracket
 
     Returns
     -------
     pre: str
-        the text before the opening parenthesis
-    contents: str or list[str]
-        the contents of the parens
+        the opening parenthesis/bracket and preceding text
+    args: list[str]
+        the arguments supplied to the callable/signature
     post: str
-        the text after the closing parenthesis
+        the closing parenthesis/bracket and trailing text
+
+    Raises
+    ------
+    UnmatchedParensException
+        if the first parenthesis/bracket in the snippet is unmatched
     """
     splits = re.split(
         r"(\(|\)|\[|\]|'|\"|\\\(|\\\)|\\\[|\\\]|\\'|\\\")",
@@ -227,10 +234,10 @@ def split_parens_contents(snippet, brackets: bool = False, delimiter=","):
             if (
                 first
                 and depth[first] == 1
-                and delimiter in s
+                and "," in s
                 and all(d == 0 for b, d in depth.items() if b != first)
             ):
-                parts = [p.strip() for p in s.split(delimiter)]
+                parts = [p.strip() for p in s.split(",")]
                 if parts:
                     next_item += parts[0]
                     next_item = next_item.strip()
@@ -273,6 +280,10 @@ class UsedSymbols:
     local_functions: ty.Set[ty.Callable] = attrs.field(factory=set)
     local_classes: ty.List[type] = attrs.field(factory=list)
     constants: ty.Set[ty.Tuple[str, str]] = attrs.field(factory=set)
+
+    IGNORE_MODULES = [
+        "traits.trait_handlers",  # Old traits module, pre v6.0
+    ]
 
     def update(self, other: "UsedSymbols"):
         self.imports.update(other.imports)
@@ -320,18 +331,16 @@ class UsedSymbols:
         local_constants = get_local_constants(module)
         local_classes = get_local_classes(module)
         for line in source_code.split("\n"):
-            if (line.startswith("from") and " import " in line) or line.startswith(
-                "import"
-            ):
+            if block:
+                block += line.strip()
+                if ")" in line:
+                    imports.append(block)
+                    block = ""
+            elif re.match(r"^\s*(from[\w \.]+)?import\b[\w \.\,\(\)]+$", line):
                 if "(" in line and ")" not in line:
                     block = line.strip()
                 else:
                     imports.append(line.strip())
-            elif ")" in line and block:
-                imports.append(block + line.strip())
-                block = ""
-            elif block:
-                block += line.strip()
         # extract imported symbols from import statements
         symbols_re = re.compile(r"(?<!\"|')\b(\w+)\b(?!\"|')")
         comments_re = re.compile(r"\s*#.*")
@@ -361,9 +370,11 @@ class UsedSymbols:
                     local_class.__name__ in used_symbols
                     and local_class not in used.local_classes
                 ):
+                    if issubclass(local_class, (BaseInterface, TraitedSpec)):
+                        continue
                     used.local_classes.append(local_class)
                     class_body = inspect.getsource(local_class)
-                    bases = split_parens_contents(class_body)[1]
+                    bases = extract_args(class_body)[1]
                     used_symbols.update(bases)
                     class_body = comments_re.sub("", class_body)
                     local_class_symbols = symbols_re.findall(class_body)
@@ -379,6 +390,12 @@ class UsedSymbols:
                     used_symbols.update(const_def_symbols)
                     new_symbols = True
         used_symbols -= set(cls.SYMBOLS_TO_IGNORE)
+
+        pkg_name = module.__name__.split(".", 1)[0]
+
+        def is_pkg_import(mod_name: str) -> bool:
+            return mod_name.startswith(".") or mod_name.startswith(f"{pkg_name}.")
+
         # functions to copy from a relative or nipype module into the output module
         for stmt in imports:
             stmt = stmt.replace("\n", "")
@@ -394,10 +411,12 @@ class UsedSymbols:
                     + "import "
                     + ", ".join(" as ".join(p) for p in used_parts)
                 )
-                match = re.match(r"from ([\w\.]+)", base_stmt)
+                match = re.match(r"\s*from ([\w\.]+)", base_stmt)
                 import_mod = match.group(1) if match else ""
+                if import_mod in cls.IGNORE_MODULES:
+                    continue
                 if import_mod:
-                    if import_mod.startswith(".") or import_mod.startswith("nipype."):
+                    if is_pkg_import(import_mod):
                         to_include = True
                         if import_mod.startswith("."):
                             match = re.match(r"(\.*)(.*)", import_mod)
@@ -415,7 +434,7 @@ class UsedSymbols:
                         else:
                             assert False
                     else:
-                        to_include = True
+                        to_include = False
                         mod_name = import_mod
                     mod = import_module(mod_name)
                     # Filter out any interfaces that have been dragged in
@@ -429,7 +448,13 @@ class UsedSymbols:
                                     getattr(mod, p[0]), (BaseInterface, TraitedSpec)
                                 )
                             )
-                            or getattr(mod, p[0]) in (Undefined, isdefined)
+                            or getattr(mod, p[0])
+                            in (
+                                Undefined,
+                                isdefined,
+                                traits_extension.File,
+                                traits_extension.Directory,
+                            )
                         )
                     ]
                     if not used_parts:
@@ -438,11 +463,10 @@ class UsedSymbols:
                         mod_func_bodies = []
                         for used_part in used_parts:
                             atr = getattr(mod, used_part[0])
+                            # Check that it is actually a local import
                             if (
                                 inspect.isfunction(atr) or inspect.isclass(atr)
-                            ) and not atr.__module__.startswith(
-                                "nipype."
-                            ):  # Check that it is actually a local import
+                            ) and not is_pkg_import(atr.__module__):
                                 used.imports.add(
                                     f"from {atr.__module__} import "
                                     + " as ".join(used_part)
@@ -458,9 +482,9 @@ class UsedSymbols:
                                 class_def = (used_part[-1], atr)
                                 if class_def not in used.classes_to_include:
                                     used.classes_to_include.append(class_def)
-                                class_body = split_parens_contents(
-                                    inspect.getsource(atr)
-                                )[2].split("\n", 1)[1]
+                                class_body = extract_args(inspect.getsource(atr))[
+                                    2
+                                ].split("\n", 1)[1]
                                 mod_func_bodies.append(class_body)
                         # Recursively include neighbouring objects imported in the module
                         if mod is not builtins:
@@ -511,7 +535,7 @@ def get_local_constants(mod):
         if ("(" in first_line and ")" not in first_line) or (
             "[" in first_line and "]" not in first_line
         ):
-            pre, args, post = split_parens_contents(following)
+            pre, args, post = extract_args(following)
             local_vars.append(
                 (attr_name, pre + re.sub(r"\n *", "", ", ".join(args)) + post[0])
             )
@@ -536,7 +560,7 @@ def cleanup_function_body(function_body: str) -> str:
     function_body: str
         The processed source code
     """
-    if re.match(r".*\n?\s*(def|class)\s+", function_body):
+    if re.match(r"(\s*#.*\n)?(\s*@.*\n)*\s*(def|class)\s+", function_body):
         with_signature = True
     else:
         with_signature = False
@@ -557,13 +581,13 @@ def cleanup_function_body(function_body: str) -> str:
     parts = re.split(r"not isdefined\b", function_body, flags=re.MULTILINE)
     new_function_body = parts[0]
     for part in parts[1:]:
-        pre, args, post = split_parens_contents(part)
+        pre, args, post = extract_args(part)
         new_function_body += pre + f"{args[0]} is attrs.NOTHING" + post
     function_body = new_function_body
     parts = re.split(r"isdefined\b", function_body, flags=re.MULTILINE)
     new_function_body = parts[0]
     for part in parts[1:]:
-        pre, args, post = split_parens_contents(part)
+        pre, args, post = extract_args(part)
         assert len(args) == 1, f"Unexpected number of arguments in isdefined: {args}"
         new_function_body += pre + f"{args[0]} is not attrs.NOTHING" + post
     function_body = new_function_body
@@ -588,7 +612,26 @@ def insert_args_in_signature(snippet: str, new_args: ty.Iterable[str]) -> str:
         the modified function signature
     """
     # Split out the argstring from the rest of the code snippet
-    pre, args, post = split_parens_contents(snippet)
+    pre, args, post = extract_args(snippet)
     if "runtime" in args:
         args.remove("runtime")
     return pre + ", ".join(args + new_args) + post
+
+
+def get_source_code(func_or_klass: ty.Union[ty.Callable, ty.Type]) -> str:
+    """Get the source code of a function or class, including a comment with the
+    original source location
+    """
+    src = inspect.getsource(func_or_klass)
+    line_number = inspect.getsourcelines(func_or_klass)[1]
+    module = inspect.getmodule(func_or_klass)
+    rel_module_path = os.path.sep.join(
+        module.__name__.split(".")[1:-1] + [Path(module.__file__).name]
+    )
+    install_placeholder = f"<{module.__name__.split('.', 1)[0]}-install>"
+    indent = re.match(r"^(\s*)", src).group(1)
+    comment = (
+        f"{indent}# Original source at L{line_number} of "
+        f"{install_placeholder}{os.path.sep}{rel_module_path}\n"
+    )
+    return comment + src

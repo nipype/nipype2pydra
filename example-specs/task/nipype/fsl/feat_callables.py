@@ -1,7 +1,8 @@
 """Module to put any functions that are referred to in the "callables" section of FEAT.yaml"""
 
-from glob import glob
+import attrs
 import os
+from glob import glob
 
 
 def feat_dir_callable(output_dir, inputs, stdout, stderr):
@@ -11,10 +12,12 @@ def feat_dir_callable(output_dir, inputs, stdout, stderr):
     return outputs["feat_dir"]
 
 
+# Original source at L885 of <nipype-install>/interfaces/base/core.py
 def _gen_filename(name, inputs=None, stdout=None, stderr=None, output_dir=None):
     raise NotImplementedError
 
 
+# Original source at L465 of <nipype-install>/interfaces/fsl/model.py
 def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
     outputs = {}
     is_ica = False
