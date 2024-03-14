@@ -33,16 +33,16 @@ jobs:
         python-version: ${{ matrix.python-version }}
 
     - name: Update build tools
-      run: python -m pip install --upgrade pip
+      run: python3 -m pip install --upgrade pip
 
     - name: Install required file-formats packages
       run: |
         pushd required-fileformats
-        python -m pip install -r requirements.txt
+        python3 -m pip install -r requirements.txt
         popd
 
     - name: Install Package
-      run: python -m pip install -e .[test]
+      run: python3 -m pip install -e .[test]
 
     - name: Pytest
       run: pytest -vvs --cov nipype2pydra --cov-config .coveragerc --cov-report xml
