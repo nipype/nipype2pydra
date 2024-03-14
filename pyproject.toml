@@ -19,20 +19,10 @@ dependencies = [
     "requests>=2.31.0",
     "traits",
 ]
-license = {file = "LICENSE"}
-authors = [
-    {name = "Thomas G. Close", email = "tom.g.close@gmail.com"},
-]
-maintainers = [
-    {name = "Thomas G. Close", email = "tom.g.close@gmail.com"},
-]
-keywords = [
-    "nipype",
-    "data",
-    "pydra",
-    "workflows",
-    "converters",
-]
+license = { file = "LICENSE" }
+authors = [{ name = "Thomas G. Close", email = "tom.g.close@gmail.com" }]
+maintainers = [{ name = "Thomas G. Close", email = "tom.g.close@gmail.com" }]
+keywords = ["nipype", "data", "pydra", "workflows", "converters"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Environment :: Console",
@@ -50,12 +40,7 @@ classifiers = [
 dynamic = ["version"]
 
 [project.optional-dependencies]
-dev = [
-    "pre-commit",
-    "codespell",
-    "flake8",
-    "flake8-pyproject",
-]
+dev = ["pre-commit", "codespell", "flake8", "flake8-pyproject"]
 test = [
     "pytest >=6.2.5",
     "pytest-env>=0.6.2",
@@ -63,37 +48,8 @@ test = [
     "fileformats-medimage-extras",
     "fileformats-medimage-afni",
     "fileformats-medimage-ants",
-    "fileformats-medimage-brainsuite",
-    "fileformats-medimage-bru2nii",
-    "fileformats-medimage-c3",
-    "fileformats-medimage-camino",
-    "fileformats-medimage-camino2trackvis",
-    "fileformats-medimage-cat12",
-    "fileformats-medimage-cmtk",
-    "fileformats-medimage-dcmstack",
-    "fileformats-medimage-diffusion_toolkit",
-    "fileformats-medimage-dipy",
-    "fileformats-medimage-dtitk",
-    "fileformats-medimage-dynamic_slicer",
-    "fileformats-medimage-elastix",
     "fileformats-medimage-freesurfer",
     "fileformats-medimage-fsl",
-    "fileformats-medimage-meshfix",
-    "fileformats-medimage-minc",
-    "fileformats-medimage-mipav",
-    "fileformats-medimage-niftyfit",
-    "fileformats-medimage-niftyreg",
-    "fileformats-medimage-niftyseg",
-    "fileformats-medimage-nilearn",
-    "fileformats-medimage-nitime",
-    "fileformats-medimage-petpvc",
-    "fileformats-medimage-quickshear",
-    "fileformats-medimage-robex",
-    "fileformats-medimage-semtools",
-    "fileformats-medimage-slicer",
-    "fileformats-medimage-spm",
-    "fileformats-medimage-vista",
-    "fileformats-medimage-workbench",
     "qsiprep",
 ]
 docs = [
@@ -123,12 +79,8 @@ version-file = "nipype2pydra/_version.py"
 allow-direct-references = true
 
 [tool.hatch.build]
-packages = [
-    "nipype2pydra",
-]
-exclude = [
-    "/tests",
-]
+packages = ["nipype2pydra"]
+exclude = ["/tests"]
 
 [tool.black]
 line-length = 88
@@ -140,9 +92,7 @@ ignore-words = ".codespell-ignorewords"
 
 [tool.flake8]
 doctests = true
-per-file-ignores = [
-    "__init__.py:F401"
-]
+per-file-ignores = ["__init__.py:F401"]
 max-line-length = 88
 select = "C,E,F,W,B,B950"
 extend-ignore = ['E203', 'E501', 'E129', 'W503']
