@@ -23,9 +23,18 @@ jobs:
       run:
         shell: bash -l {0}
     steps:
+    - name: Install Ubuntu packaging
+      run: sudo apt update && sudo apt install -y python3-packaging
+
     - uses: actions/checkout@v2
-    - name: Disable etelemetry
-      run:  echo "NO_ET=TRUE" >> $GITHUB_ENV
+
+    - name: Unset header
+      # checkout@v2 adds a header that makes branch protection report errors
+      # because the Github action bot is not a collaborator on the repo
+      run: git config --local --unset http.https://github.com/.extraheader
+
+    - name: Fetch tags
+      run: git fetch --prune --unshallow
 
     - name: Set up Python ${{ matrix.python-version }} on ${{ matrix.os }}
       uses: actions/setup-python@v2
@@ -33,7 +42,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
 
     - name: Update build tools
-      run: python3 -m pip install --upgrade pip
+      run: python3 -m pip install --upgrade pip build
 
     - name: Install required file-formats packages
       run: |
