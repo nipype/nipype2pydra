@@ -1,4 +1,5 @@
 from nipype2pydra.utils import extract_args, get_source_code
+from nipype2pydra.testing import test_line_number_of_function
 
 
 def test_split_parens_contents1():
@@ -76,9 +77,7 @@ def test_split_parens_contents8():
 
 
 def test_split_parens_contents9():
-    assert extract_args(
-        'foo(cwd=bar("tmpdir"), basename="maskexf")'
-    ) == (
+    assert extract_args('foo(cwd=bar("tmpdir"), basename="maskexf")') == (
         "foo(",
         ['cwd=bar("tmpdir")', 'basename="maskexf"'],
         ")",
@@ -86,7 +85,7 @@ def test_split_parens_contents9():
 
 
 def test_source_code():
-    assert get_source_code(extract_args).splitlines()[:2] == [
-        "# Original source at L153 of <nipype2pydra-install>/utils.py",
-        "def extract_args(snippet: str) -> ty.Tuple[str, ty.List[str], str]:"
+    assert get_source_code(test_line_number_of_function).splitlines()[:2] == [
+        "# Original source at L1 of <nipype2pydra-install>/testing.py",
+        "def test_line_number_of_function():",
     ]

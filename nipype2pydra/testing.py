@@ -1,7 +1,12 @@
-import logging
-import asyncio
-from pydra.engine.core import Result, TaskBase
-from pydra.engine.workers import ConcurrentFuturesWorker
+def test_line_number_of_function():
+    """Test function used to test the detection of a line number of a function."""
+    return 1
+
+
+import logging  # noqa: E402
+import asyncio  # noqa: E402
+from pydra.engine.core import Result, TaskBase  # noqa: E402
+from pydra.engine.workers import ConcurrentFuturesWorker  # noqa: E402
 
 
 logger = logging.getLogger("pydra")
