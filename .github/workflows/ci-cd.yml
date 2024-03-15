@@ -1,0 +1,108 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  release:
+    types: [published]
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        os: [macos-latest, ubuntu-latest]
+        python-version: ["3.8", "3.11"]
+      fail-fast: false
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash -l {0}
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Unset header
+      # checkout@v2 adds a header that makes branch protection report errors
+      # because the Github action bot is not a collaborator on the repo
+      run: git config --local --unset http.https://github.com/.extraheader
+
+    - name: Fetch tags
+      run: git fetch --prune --unshallow
+
+    - name: Disable etelemetry
+      run:  echo "NO_ET=TRUE" >> $GITHUB_ENV
+
+    - name: Set up Python ${{ matrix.python-version }} on ${{ matrix.os }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Update build tools
+      run: python3 -m pip install --upgrade pip setuptools wheel
+
+    - name: Install required file-formats packages
+      run: |
+        pushd required-fileformats
+        python3 -m pip install -r requirements.txt
+        popd
+
+    - name: Install Package
+      run: python3 -m pip install -e .[test]
+
+    - name: Pytest
+      run: pytest -vvs --cov nipype2pydra --cov-config .coveragerc --cov-report xml
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v2
+      with:
+        fail_ci_if_error: true
+        token: ${{ secrets.CODECOV_TOKEN }}
+
+  deploy:
+    needs: [test]
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: recursive
+        fetch-depth: 0
+
+    - name: Unset header
+      # checkout@v2 adds a header that makes branch protection report errors
+      # because the Github action bot is not a collaborator on the repo
+      run: git config --local --unset http.https://github.com/.extraheader
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install build tools
+      run: python3 -m pip install build twine
+
+    - name: Build source and wheel distributions
+      run: python3 -m build .
+
+    - name: Check distributions
+      run: twine check dist/*
+
+    - name: Check for PyPI token on tag
+      id: deployable
+      if: github.event_name == 'release'
+      env:
+        PYPI_API_TOKEN: "${{ secrets.PYPI_API_TOKEN }}"
+      run: if [ -n "$PYPI_API_TOKEN" ]; then echo "DEPLOY=true" >> $GITHUB_OUTPUT; fi
+
+    - name: Upload to PyPI
+      if: steps.deployable.outputs.DEPLOY
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        user: __token__
+        password: ${{ secrets.PYPI_API_TOKEN }}
