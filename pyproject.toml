@@ -50,7 +50,6 @@ test = [
     "fileformats-medimage-ants",
     "fileformats-medimage-freesurfer",
     "fileformats-medimage-fsl",
-    "qsiprep",
 ]
 docs = [
     "packaging",
