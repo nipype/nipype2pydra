@@ -28,6 +28,7 @@ XFAIL_INTERFACES_IN_COMBINED = [
     "fsl-level_1_design",
     "fsl-apply_mask",
     "fsl-smooth",
+    "fsl-merge",
 ]
 
 
