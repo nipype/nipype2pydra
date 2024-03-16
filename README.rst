@@ -1,7 +1,7 @@
 Nipype2Pydra
 ============
-.. image:: https://github.com/nipype/nipype2pydra/actions/workflows/tests.yml/badge.svg
-   :target: https://github.com/nipype/nipype2pydra/actions/workflows/tests.yml
+.. image:: https://github.com/nipype/nipype2pydra/actions/workflows/ci-cd.yml/badge.svg
+   :target: https://github.com/nipype/nipype2pydra/actions/workflows/ci-cd.yml
 .. image:: https://codecov.io/gh/nipype/nipype2pydra/branch/main/graph/badge.svg?token=UIS0OGPST7
    :target: https://codecov.io/gh/nipype/nipype2pydra
 .. image:: https://img.shields.io/pypi/pyversions/nipype2pydra.svg
