@@ -76,6 +76,7 @@ def test_task_conversion(task_spec_file, cli_runner, work_dir, gen_test_conftest
         nipype_interface = getattr(
             import_module(task_spec["nipype_module"]), task_spec["nipype_name"]
         )
+        assert nipype_interface.__name__ == task_spec["nipype_name"]  # sanity check
 
         nipype_input_names = nipype_interface.input_spec().all_trait_names()
         inputs_omit = task_spec["inputs"]["omit"] if task_spec["inputs"]["omit"] else []
