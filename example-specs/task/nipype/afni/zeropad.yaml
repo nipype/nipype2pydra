@@ -1,0 +1,196 @@
+# This file is used to manually specify the semi-automatic conversion of
+# 'nipype.interfaces.afni.utils.Zeropad' from Nipype to Pydra.
+#
+# Please fill-in/edit the fields below where appropriate
+#
+# Docs
+# ----
+# Adds planes of zeros to a dataset (i.e., pads it out).
+# 
+#     For complete details, see the `3dZeropad Documentation.
+#     <https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dZeropad.html>`__
+# 
+#     Examples
+#     --------
+#     >>> from nipype.interfaces import afni
+#     >>> zeropad = afni.Zeropad()
+#     >>> zeropad.inputs.in_files = 'functional.nii'
+#     >>> zeropad.inputs.out_file = 'pad_functional.nii'
+#     >>> zeropad.inputs.I = 10
+#     >>> zeropad.inputs.S = 10
+#     >>> zeropad.inputs.A = 10
+#     >>> zeropad.inputs.P = 10
+#     >>> zeropad.inputs.R = 10
+#     >>> zeropad.inputs.L = 10
+#     >>> zeropad.cmdline
+#     '3dZeropad -A 10 -I 10 -L 10 -P 10 -R 10 -S 10 -prefix pad_functional.nii functional.nii'
+#     >>> res = zeropad.run()  # doctest: +SKIP
+# 
+#     
+task_name: Zeropad
+nipype_name: Zeropad
+nipype_module: nipype.interfaces.afni.utils
+inputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    in_files: medimage/nifti1
+    # type=file|default=<undefined>: input dataset
+    master: generic/file
+    # type=file|default=<undefined>: match the volume described in dataset 'mset', where mset must have the same orientation and grid spacing as dataset to be padded. the goal of -master is to make the output dataset from 3dZeropad match the spatial 'extents' of mset by adding or subtracting slices as needed. You can't use -I,-S,..., or -mm with -master
+    out_file: Path
+    # type=file: output file
+    # type=file|default=<undefined>: output dataset prefix name (default 'zeropad')
+  callable_defaults:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set as the `default` method of input fields
+  metadata:
+  # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
+outputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    out_file: medimage/nifti1
+    # type=file: output file
+    # type=file|default=<undefined>: output dataset prefix name (default 'zeropad')
+  callables:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set to the `callable` attribute of output fields
+  templates:
+  # dict[str, str] - `output_file_template` values to be provided to output fields
+  requirements:
+  # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
+tests:
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    in_files:
+    # type=file|default=<undefined>: input dataset
+    out_file:
+    # type=file: output file
+    # type=file|default=<undefined>: output dataset prefix name (default 'zeropad')
+    I:
+    # type=int|default=0: adds 'n' planes of zero at the Inferior edge
+    S:
+    # type=int|default=0: adds 'n' planes of zero at the Superior edge
+    A:
+    # type=int|default=0: adds 'n' planes of zero at the Anterior edge
+    P:
+    # type=int|default=0: adds 'n' planes of zero at the Posterior edge
+    L:
+    # type=int|default=0: adds 'n' planes of zero at the Left edge
+    R:
+    # type=int|default=0: adds 'n' planes of zero at the Right edge
+    z:
+    # type=int|default=0: adds 'n' planes of zero on EACH of the dataset z-axis (slice-direction) faces
+    RL:
+    # type=int|default=0: specify that planes should be added or cut symmetrically to make the resulting volume haveN slices in the right-left direction
+    AP:
+    # type=int|default=0: specify that planes should be added or cut symmetrically to make the resulting volume haveN slices in the anterior-posterior direction
+    IS:
+    # type=int|default=0: specify that planes should be added or cut symmetrically to make the resulting volume haveN slices in the inferior-superior direction
+    mm:
+    # type=bool|default=False: pad counts 'n' are in mm instead of slices, where each 'n' is an integer and at least 'n' mm of slices will be added/removed; e.g., n =  3 and slice thickness = 2.5 mm ==> 2 slices added
+    master:
+    # type=file|default=<undefined>: match the volume described in dataset 'mset', where mset must have the same orientation and grid spacing as dataset to be padded. the goal of -master is to make the output dataset from 3dZeropad match the spatial 'extents' of mset by adding or subtracting slices as needed. You can't use -I,-S,..., or -mm with -master
+    num_threads:
+    # type=int|default=1: set number of threads
+    outputtype:
+    # type=enum|default='AFNI'|allowed['AFNI','NIFTI','NIFTI_GZ']: AFNI output filetype
+    args:
+    # type=str|default='': Additional parameters to the command
+    environ:
+    # type=dict|default={}: Environment variables
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    in_files:
+    # type=file|default=<undefined>: input dataset
+    out_file: '"pad_functional.nii"'
+    # type=file: output file
+    # type=file|default=<undefined>: output dataset prefix name (default 'zeropad')
+    I: '10'
+    # type=int|default=0: adds 'n' planes of zero at the Inferior edge
+    S: '10'
+    # type=int|default=0: adds 'n' planes of zero at the Superior edge
+    A: '10'
+    # type=int|default=0: adds 'n' planes of zero at the Anterior edge
+    P: '10'
+    # type=int|default=0: adds 'n' planes of zero at the Posterior edge
+    R: '10'
+    # type=int|default=0: adds 'n' planes of zero at the Right edge
+    L: '10'
+    # type=int|default=0: adds 'n' planes of zero at the Left edge
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+doctests:
+- cmdline: 3dZeropad -A 10 -I 10 -L 10 -P 10 -R 10 -S 10 -prefix pad_functional.nii functional.nii
+  # str - the expected cmdline output
+  inputs:
+  # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
+  # If the field is of file-format type and the value is None, then the
+  # '.mock()' method of the corresponding class is used instead.
+    in_files:
+    # type=file|default=<undefined>: input dataset
+    out_file: '"pad_functional.nii"'
+    # type=file: output file
+    # type=file|default=<undefined>: output dataset prefix name (default 'zeropad')
+    I: '10'
+    # type=int|default=0: adds 'n' planes of zero at the Inferior edge
+    S: '10'
+    # type=int|default=0: adds 'n' planes of zero at the Superior edge
+    A: '10'
+    # type=int|default=0: adds 'n' planes of zero at the Anterior edge
+    P: '10'
+    # type=int|default=0: adds 'n' planes of zero at the Posterior edge
+    R: '10'
+    # type=int|default=0: adds 'n' planes of zero at the Right edge
+    L: '10'
+    # type=int|default=0: adds 'n' planes of zero at the Left edge
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  directive:
+  # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

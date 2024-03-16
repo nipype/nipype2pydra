@@ -1,0 +1,251 @@
+# This file is used to manually specify the semi-automatic conversion of
+# 'nipype.interfaces.freesurfer.utils.SampleToSurface' from Nipype to Pydra.
+#
+# Please fill-in/edit the fields below where appropriate
+#
+# Docs
+# ----
+# Sample a volume to the cortical surface using Freesurfer's mri_vol2surf.
+# 
+#     You must supply a sampling method, range, and units.  You can project
+#     either a given distance (in mm) or a given fraction of the cortical
+#     thickness at that vertex along the surface normal from the target surface,
+#     and then set the value of that vertex to be either the value at that point
+#     or the average or maximum value found along the projection vector.
+# 
+#     By default, the surface will be saved as a vector with a length equal to the
+#     number of vertices on the target surface.  This is not a problem for Freesurfer
+#     programs, but if you intend to use the file with interfaces to another package,
+#     you must set the ``reshape`` input to True, which will factor the surface vector
+#     into a matrix with dimensions compatible with proper Nifti files.
+# 
+#     Examples
+#     --------
+# 
+#     >>> import nipype.interfaces.freesurfer as fs
+#     >>> sampler = fs.SampleToSurface(hemi="lh")
+#     >>> sampler.inputs.source_file = "cope1.nii.gz"
+#     >>> sampler.inputs.reg_file = "register.dat"
+#     >>> sampler.inputs.sampling_method = "average"
+#     >>> sampler.inputs.sampling_range = 1
+#     >>> sampler.inputs.sampling_units = "frac"
+#     >>> sampler.cmdline  # doctest: +ELLIPSIS
+#     'mri_vol2surf --hemi lh --o ...lh.cope1.mgz --reg register.dat --projfrac-avg 1.000 --mov cope1.nii.gz'
+#     >>> res = sampler.run() # doctest: +SKIP
+# 
+#     
+task_name: SampleToSurface
+nipype_name: SampleToSurface
+nipype_module: nipype.interfaces.freesurfer.utils
+inputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    mask_label: generic/file
+    # type=file|default=<undefined>: label file to mask output with
+    out_file: Path
+    # type=file: surface file
+    # type=file|default=<undefined>: surface file to write
+    reference_file: generic/file
+    # type=file|default=<undefined>: reference volume (default is orig.mgz)
+    reg_file: datascience/dat-file
+    # type=file|default=<undefined>: source-to-reference registration file
+    source_file: medimage/nifti-gz
+    # type=file|default=<undefined>: volume to sample values from
+    subjects_dir: generic/directory
+    # type=directory|default=<undefined>: subjects directory
+  callable_defaults:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set as the `default` method of input fields
+  metadata:
+  # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
+outputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    hits_file: generic/file
+    # type=file: image with number of hits at each voxel
+    # type=traitcompound|default=None: save image with number of hits at each voxel
+    out_file: generic/file
+    # type=file: surface file
+    # type=file|default=<undefined>: surface file to write
+    vox_file: generic/file
+    # type=file: text file with the number of voxels intersecting the surface
+    # type=traitcompound|default=None: text file with the number of voxels intersecting the surface
+  callables:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set to the `callable` attribute of output fields
+  templates:
+  # dict[str, str] - `output_file_template` values to be provided to output fields
+    out_file: out_file
+    # type=file: surface file
+    # type=file|default=<undefined>: surface file to write
+  requirements:
+  # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
+tests:
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    source_file:
+    # type=file|default=<undefined>: volume to sample values from
+    reference_file:
+    # type=file|default=<undefined>: reference volume (default is orig.mgz)
+    hemi:
+    # type=enum|default='lh'|allowed['lh','rh']: target hemisphere
+    surface:
+    # type=string|default='': target surface (default is white)
+    reg_file:
+    # type=file|default=<undefined>: source-to-reference registration file
+    reg_header:
+    # type=bool|default=False: register based on header geometry
+    mni152reg:
+    # type=bool|default=False: source volume is in MNI152 space
+    apply_rot:
+    # type=tuple|default=(0.0, 0.0, 0.0): rotation angles (in degrees) to apply to reg matrix
+    apply_trans:
+    # type=tuple|default=(0.0, 0.0, 0.0): translation (in mm) to apply to reg matrix
+    override_reg_subj:
+    # type=bool|default=False: override the subject in the reg file header
+    sampling_method:
+    # type=enum|default='point'|allowed['average','max','point']: how to sample -- at a point or at the max or average over a range
+    sampling_range:
+    # type=traitcompound|default=None: sampling range - a point or a tuple of (min, max, step)
+    sampling_units:
+    # type=enum|default='mm'|allowed['frac','mm']: sampling range type -- either 'mm' or 'frac'
+    projection_stem:
+    # type=string|default='': stem for precomputed linear estimates and volume fractions
+    smooth_vol:
+    # type=float|default=0.0: smooth input volume (mm fwhm)
+    smooth_surf:
+    # type=float|default=0.0: smooth output surface (mm fwhm)
+    interp_method:
+    # type=enum|default='nearest'|allowed['nearest','trilinear']: interpolation method
+    cortex_mask:
+    # type=bool|default=False: mask the target surface with hemi.cortex.label
+    mask_label:
+    # type=file|default=<undefined>: label file to mask output with
+    float2int_method:
+    # type=enum|default='round'|allowed['round','tkregister']: method to convert reg matrix values (default is round)
+    fix_tk_reg:
+    # type=bool|default=False: make reg matrix round-compatible
+    subject_id:
+    # type=string|default='': subject id
+    target_subject:
+    # type=string|default='': sample to surface of different subject than source
+    surf_reg:
+    # type=traitcompound|default=None: use surface registration to target subject
+    ico_order:
+    # type=int|default=0: icosahedron order when target_subject is 'ico'
+    reshape:
+    # type=bool|default=False: reshape surface vector to fit in non-mgh format
+    no_reshape:
+    # type=bool|default=False: do not reshape surface vector (default)
+    reshape_slices:
+    # type=int|default=0: number of 'slices' for reshaping
+    scale_input:
+    # type=float|default=0.0: multiple all intensities by scale factor
+    frame:
+    # type=int|default=0: save only one frame (0-based)
+    out_file:
+    # type=file: surface file
+    # type=file|default=<undefined>: surface file to write
+    out_type:
+    # type=enum|default='cor'|allowed['afni','analyze','analyze4d','bfloat','brik','bshort','cor','gdf','gii','mgh','mgz','minc','nifti1','nii','niigz','otl','outline','sdt','spm']: output file type
+    hits_file:
+    # type=file: image with number of hits at each voxel
+    # type=traitcompound|default=None: save image with number of hits at each voxel
+    hits_type:
+    # type=enum|default='cor'|allowed['afni','analyze','analyze4d','bfloat','brik','bshort','cor','gdf','mgh','mgz','minc','nifti1','nii','niigz','otl','outline','sdt','spm']: hits file type
+    vox_file:
+    # type=file: text file with the number of voxels intersecting the surface
+    # type=traitcompound|default=None: text file with the number of voxels intersecting the surface
+    subjects_dir:
+    # type=directory|default=<undefined>: subjects directory
+    args:
+    # type=str|default='': Additional parameters to the command
+    environ:
+    # type=dict|default={}: Environment variables
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    source_file:
+    # type=file|default=<undefined>: volume to sample values from
+    reg_file:
+    # type=file|default=<undefined>: source-to-reference registration file
+    sampling_method: '"average"'
+    # type=enum|default='point'|allowed['average','max','point']: how to sample -- at a point or at the max or average over a range
+    sampling_range: '1'
+    # type=traitcompound|default=None: sampling range - a point or a tuple of (min, max, step)
+    sampling_units: '"frac"'
+    # type=enum|default='mm'|allowed['frac','mm']: sampling range type -- either 'mm' or 'frac'
+    hemi: '"lh"'
+    # type=enum|default='lh'|allowed['lh','rh']: target hemisphere
+  imports: &id001
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  - module: nipype.interfaces.freesurfer as fs
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+doctests:
+- cmdline: mri_vol2surf --hemi lh --o ...lh.cope1.mgz --reg register.dat --projfrac-avg 1.000 --mov cope1.nii.gz
+  # str - the expected cmdline output
+  inputs:
+  # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
+  # If the field is of file-format type and the value is None, then the
+  # '.mock()' method of the corresponding class is used instead.
+    source_file:
+    # type=file|default=<undefined>: volume to sample values from
+    reg_file:
+    # type=file|default=<undefined>: source-to-reference registration file
+    sampling_method: '"average"'
+    # type=enum|default='point'|allowed['average','max','point']: how to sample -- at a point or at the max or average over a range
+    sampling_range: '1'
+    # type=traitcompound|default=None: sampling range - a point or a tuple of (min, max, step)
+    sampling_units: '"frac"'
+    # type=enum|default='mm'|allowed['frac','mm']: sampling range type -- either 'mm' or 'frac'
+    hemi: '"lh"'
+    # type=enum|default='lh'|allowed['lh','rh']: target hemisphere
+  imports: *id001
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  directive:
+  # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

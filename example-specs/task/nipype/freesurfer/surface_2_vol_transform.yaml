@@ -1,0 +1,176 @@
+# This file is used to manually specify the semi-automatic conversion of
+# 'nipype.interfaces.freesurfer.utils.Surface2VolTransform' from Nipype to Pydra.
+#
+# Please fill-in/edit the fields below where appropriate
+#
+# Docs
+# ----
+# Use FreeSurfer mri_surf2vol to apply a transform.
+# 
+#     Examples
+#     --------
+# 
+#     >>> from nipype.interfaces.freesurfer import Surface2VolTransform
+#     >>> xfm2vol = Surface2VolTransform()
+#     >>> xfm2vol.inputs.source_file = 'lh.cope1.mgz'
+#     >>> xfm2vol.inputs.reg_file = 'register.mat'
+#     >>> xfm2vol.inputs.hemi = 'lh'
+#     >>> xfm2vol.inputs.template_file = 'cope1.nii.gz'
+#     >>> xfm2vol.inputs.subjects_dir = '.'
+#     >>> xfm2vol.cmdline
+#     'mri_surf2vol --hemi lh --volreg register.mat --surfval lh.cope1.mgz --sd . --template cope1.nii.gz --outvol lh.cope1_asVol.nii --vtxvol lh.cope1_asVol_vertex.nii'
+#     >>> res = xfm2vol.run()# doctest: +SKIP
+# 
+#     
+task_name: Surface2VolTransform
+nipype_name: Surface2VolTransform
+nipype_module: nipype.interfaces.freesurfer.utils
+inputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    reg_file: datascience/text-matrix
+    # type=file|default=<undefined>: tkRAS-to-tkRAS matrix   (tkregister2 format)
+    source_file: medimage/mgh-gz
+    # type=file|default=<undefined>: This is the source of the surface values
+    template_file: medimage/nifti-gz
+    # type=file|default=<undefined>: Output template volume
+    transformed_file: Path
+    # type=file: Path to output file if used normally
+    # type=file|default=<undefined>: Output volume
+    vertexvol_file: Path
+    # type=file: vertex map volume path id. Optional
+    # type=file|default=<undefined>: Path name of the vertex output volume, which is the same as output volume except that the value of each voxel is the vertex-id that is mapped to that voxel.
+  callable_defaults:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set as the `default` method of input fields
+  metadata:
+  # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
+outputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    transformed_file: generic/file
+    # type=file: Path to output file if used normally
+    # type=file|default=<undefined>: Output volume
+    vertexvol_file: generic/file
+    # type=file: vertex map volume path id. Optional
+    # type=file|default=<undefined>: Path name of the vertex output volume, which is the same as output volume except that the value of each voxel is the vertex-id that is mapped to that voxel.
+  callables:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set to the `callable` attribute of output fields
+  templates:
+  # dict[str, str] - `output_file_template` values to be provided to output fields
+  requirements:
+  # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
+tests:
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    source_file:
+    # type=file|default=<undefined>: This is the source of the surface values
+    hemi:
+    # type=str|default='': hemisphere of data
+    transformed_file:
+    # type=file: Path to output file if used normally
+    # type=file|default=<undefined>: Output volume
+    reg_file:
+    # type=file|default=<undefined>: tkRAS-to-tkRAS matrix   (tkregister2 format)
+    template_file:
+    # type=file|default=<undefined>: Output template volume
+    mkmask:
+    # type=bool|default=False: make a mask instead of loading surface values
+    vertexvol_file:
+    # type=file: vertex map volume path id. Optional
+    # type=file|default=<undefined>: Path name of the vertex output volume, which is the same as output volume except that the value of each voxel is the vertex-id that is mapped to that voxel.
+    surf_name:
+    # type=str|default='': surfname (default is white)
+    projfrac:
+    # type=float|default=0.0: thickness fraction
+    subjects_dir:
+    # type=str|default='': freesurfer subjects directory defaults to $SUBJECTS_DIR
+    subject_id:
+    # type=str|default='': subject id
+    args:
+    # type=str|default='': Additional parameters to the command
+    environ:
+    # type=dict|default={}: Environment variables
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    source_file:
+    # type=file|default=<undefined>: This is the source of the surface values
+    reg_file:
+    # type=file|default=<undefined>: tkRAS-to-tkRAS matrix   (tkregister2 format)
+    hemi: '"lh"'
+    # type=str|default='': hemisphere of data
+    template_file:
+    # type=file|default=<undefined>: Output template volume
+    subjects_dir: '"."'
+    # type=str|default='': freesurfer subjects directory defaults to $SUBJECTS_DIR
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+doctests:
+- cmdline: mri_surf2vol --hemi lh --volreg register.mat --surfval lh.cope1.mgz --sd . --template cope1.nii.gz --outvol lh.cope1_asVol.nii --vtxvol lh.cope1_asVol_vertex.nii
+  # str - the expected cmdline output
+  inputs:
+  # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
+  # If the field is of file-format type and the value is None, then the
+  # '.mock()' method of the corresponding class is used instead.
+    source_file:
+    # type=file|default=<undefined>: This is the source of the surface values
+    reg_file:
+    # type=file|default=<undefined>: tkRAS-to-tkRAS matrix   (tkregister2 format)
+    hemi: '"lh"'
+    # type=str|default='': hemisphere of data
+    template_file:
+    # type=file|default=<undefined>: Output template volume
+    subjects_dir: '"."'
+    # type=str|default='': freesurfer subjects directory defaults to $SUBJECTS_DIR
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  directive:
+  # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

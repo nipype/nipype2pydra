@@ -1,0 +1,172 @@
+# This file is used to manually specify the semi-automatic conversion of
+# 'nipype.interfaces.afni.utils.LocalBistat' from Nipype to Pydra.
+#
+# Please fill-in/edit the fields below where appropriate
+#
+# Docs
+# ----
+# 3dLocalBistat - computes statistics between 2 datasets, at each voxel,
+#     based on a local neighborhood of that voxel.
+# 
+#     For complete details, see the `3dLocalBistat Documentation.
+#     <https://afni.nimh.nih.gov/pub../pub/dist/doc/program_help/3dLocalBistat.html>`_
+# 
+#     Examples
+#     --------
+#     >>> from nipype.interfaces import afni
+#     >>> bistat = afni.LocalBistat()
+#     >>> bistat.inputs.in_file1 = 'functional.nii'
+#     >>> bistat.inputs.in_file2 = 'structural.nii'
+#     >>> bistat.inputs.neighborhood = ('SPHERE', 1.2)
+#     >>> bistat.inputs.stat = 'pearson'
+#     >>> bistat.inputs.outputtype = 'NIFTI'
+#     >>> bistat.cmdline
+#     "3dLocalBistat -prefix functional_bistat.nii -nbhd 'SPHERE(1.2)' -stat pearson functional.nii structural.nii"
+#     >>> res = automask.run()  # doctest: +SKIP
+# 
+#     
+task_name: LocalBistat
+nipype_name: LocalBistat
+nipype_module: nipype.interfaces.afni.utils
+inputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    in_file1: medimage/nifti1
+    # type=file|default=<undefined>: Filename of the first image
+    in_file2: medimage/nifti1
+    # type=file|default=<undefined>: Filename of the second image
+    mask_file: generic/file
+    # type=file|default=<undefined>: mask image file name. Voxels NOT in the mask will not be used in the neighborhood of any voxel. Also, a voxel NOT in the mask will have its statistic(s) computed as zero (0).
+    out_file: Path
+    # type=file: output file
+    # type=file|default=<undefined>: Output dataset.
+    weight_file: generic/file
+    # type=file|default=<undefined>: File name of an image to use as a weight.  Only applies to 'pearson' statistics.
+  callable_defaults:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set as the `default` method of input fields
+  metadata:
+  # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
+outputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    out_file: generic/file
+    # type=file: output file
+    # type=file|default=<undefined>: Output dataset.
+  callables:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set to the `callable` attribute of output fields
+  templates:
+  # dict[str, str] - `output_file_template` values to be provided to output fields
+  requirements:
+  # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
+tests:
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    in_file1:
+    # type=file|default=<undefined>: Filename of the first image
+    in_file2:
+    # type=file|default=<undefined>: Filename of the second image
+    neighborhood:
+    # type=traitcompound|default=None: The region around each voxel that will be extracted for the statistics calculation. Possible regions are: 'SPHERE', 'RHDD' (rhombic dodecahedron), 'TOHD' (truncated octahedron) with a given radius in mm or 'RECT' (rectangular block) with dimensions to specify in mm.
+    stat:
+    # type=inputmultiobject|default=[]: Statistics to compute. Possible names are:    * pearson  = Pearson correlation coefficient   * spearman = Spearman correlation coefficient   * quadrant = Quadrant correlation coefficient   * mutinfo  = Mutual Information   * normuti  = Normalized Mutual Information   * jointent = Joint entropy   * hellinger= Hellinger metric   * crU      = Correlation ratio (Unsymmetric)   * crM      = Correlation ratio (symmetrized by Multiplication)   * crA      = Correlation ratio (symmetrized by Addition)   * L2slope  = slope of least-squares (L2) linear regression of                the data from dataset1 vs. the dataset2                (i.e., d2 = a + b*d1 ==> this is 'b')   * L1slope  = slope of least-absolute-sum (L1) linear                regression of the data from dataset1 vs.                the dataset2   * num      = number of the values in the region:                with the use of -mask or -automask,                the size of the region around any given                voxel will vary; this option lets you                map that size.   * ALL      = all of the above, in that order  More than one option can be used.
+    mask_file:
+    # type=file|default=<undefined>: mask image file name. Voxels NOT in the mask will not be used in the neighborhood of any voxel. Also, a voxel NOT in the mask will have its statistic(s) computed as zero (0).
+    automask:
+    # type=bool|default=False: Compute the mask as in program 3dAutomask.
+    weight_file:
+    # type=file|default=<undefined>: File name of an image to use as a weight.  Only applies to 'pearson' statistics.
+    out_file:
+    # type=file: output file
+    # type=file|default=<undefined>: Output dataset.
+    num_threads:
+    # type=int|default=1: set number of threads
+    outputtype:
+    # type=enum|default='AFNI'|allowed['AFNI','NIFTI','NIFTI_GZ']: AFNI output filetype
+    args:
+    # type=str|default='': Additional parameters to the command
+    environ:
+    # type=dict|default={}: Environment variables
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    in_file1:
+    # type=file|default=<undefined>: Filename of the first image
+    in_file2:
+    # type=file|default=<undefined>: Filename of the second image
+    neighborhood: ("SPHERE", 1.2)
+    # type=traitcompound|default=None: The region around each voxel that will be extracted for the statistics calculation. Possible regions are: 'SPHERE', 'RHDD' (rhombic dodecahedron), 'TOHD' (truncated octahedron) with a given radius in mm or 'RECT' (rectangular block) with dimensions to specify in mm.
+    stat: '"pearson"'
+    # type=inputmultiobject|default=[]: Statistics to compute. Possible names are:    * pearson  = Pearson correlation coefficient   * spearman = Spearman correlation coefficient   * quadrant = Quadrant correlation coefficient   * mutinfo  = Mutual Information   * normuti  = Normalized Mutual Information   * jointent = Joint entropy   * hellinger= Hellinger metric   * crU      = Correlation ratio (Unsymmetric)   * crM      = Correlation ratio (symmetrized by Multiplication)   * crA      = Correlation ratio (symmetrized by Addition)   * L2slope  = slope of least-squares (L2) linear regression of                the data from dataset1 vs. the dataset2                (i.e., d2 = a + b*d1 ==> this is 'b')   * L1slope  = slope of least-absolute-sum (L1) linear                regression of the data from dataset1 vs.                the dataset2   * num      = number of the values in the region:                with the use of -mask or -automask,                the size of the region around any given                voxel will vary; this option lets you                map that size.   * ALL      = all of the above, in that order  More than one option can be used.
+    outputtype: '"NIFTI"'
+    # type=enum|default='AFNI'|allowed['AFNI','NIFTI','NIFTI_GZ']: AFNI output filetype
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+doctests:
+- cmdline: 3dLocalBistat -prefix functional_bistat.nii -nbhd "SPHERE(1.2)" -stat pearson functional.nii structural.nii
+  # str - the expected cmdline output
+  inputs:
+  # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
+  # If the field is of file-format type and the value is None, then the
+  # '.mock()' method of the corresponding class is used instead.
+    in_file1:
+    # type=file|default=<undefined>: Filename of the first image
+    in_file2:
+    # type=file|default=<undefined>: Filename of the second image
+    neighborhood: ("SPHERE", 1.2)
+    # type=traitcompound|default=None: The region around each voxel that will be extracted for the statistics calculation. Possible regions are: 'SPHERE', 'RHDD' (rhombic dodecahedron), 'TOHD' (truncated octahedron) with a given radius in mm or 'RECT' (rectangular block) with dimensions to specify in mm.
+    stat: '"pearson"'
+    # type=inputmultiobject|default=[]: Statistics to compute. Possible names are:    * pearson  = Pearson correlation coefficient   * spearman = Spearman correlation coefficient   * quadrant = Quadrant correlation coefficient   * mutinfo  = Mutual Information   * normuti  = Normalized Mutual Information   * jointent = Joint entropy   * hellinger= Hellinger metric   * crU      = Correlation ratio (Unsymmetric)   * crM      = Correlation ratio (symmetrized by Multiplication)   * crA      = Correlation ratio (symmetrized by Addition)   * L2slope  = slope of least-squares (L2) linear regression of                the data from dataset1 vs. the dataset2                (i.e., d2 = a + b*d1 ==> this is 'b')   * L1slope  = slope of least-absolute-sum (L1) linear                regression of the data from dataset1 vs.                the dataset2   * num      = number of the values in the region:                with the use of -mask or -automask,                the size of the region around any given                voxel will vary; this option lets you                map that size.   * ALL      = all of the above, in that order  More than one option can be used.
+    outputtype: '"NIFTI"'
+    # type=enum|default='AFNI'|allowed['AFNI','NIFTI','NIFTI_GZ']: AFNI output filetype
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  directive:
+  # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

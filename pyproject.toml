@@ -1,5 +1,5 @@
 [build-system]
-requires = ["hatchling", "hatch-vcs"]
+requires = ["hatchling", "hatch-vcs", "setuptools", "packaging"]
 build-backend = "hatchling.build"
 
 [project]
@@ -16,22 +16,13 @@ dependencies = [
     "fileformats >=0.8",
     "fileformats-medimage >=0.4",
     "fileformats-datascience",
+    "requests>=2.31.0",
     "traits",
 ]
-license = {file = "LICENSE"}
-authors = [
-    {name = "Thomas G. Close", email = "tom.g.close@gmail.com"},
-]
-maintainers = [
-    {name = "Thomas G. Close", email = "tom.g.close@gmail.com"},
-]
-keywords = [
-    "nipype",
-    "data",
-    "pydra",
-    "workflows",
-    "converters",
-]
+license = { file = "LICENSE" }
+authors = [{ name = "Thomas G. Close", email = "tom.g.close@gmail.com" }]
+maintainers = [{ name = "Thomas G. Close", email = "tom.g.close@gmail.com" }]
+keywords = ["nipype", "data", "pydra", "workflows", "converters"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Environment :: Console",
@@ -49,17 +40,16 @@ classifiers = [
 dynamic = ["version"]
 
 [project.optional-dependencies]
-dev = [
-    "pre-commit",
-    "codespell",
-    "flake8",
-    "flake8-pyproject",
-]
+dev = ["pre-commit", "codespell", "flake8", "flake8-pyproject"]
 test = [
     "pytest >=6.2.5",
     "pytest-env>=0.6.2",
     "pytest-cov>=2.12.1",
     "fileformats-medimage-extras",
+    "fileformats-medimage-afni",
+    "fileformats-medimage-ants",
+    "fileformats-medimage-freesurfer",
+    "fileformats-medimage-fsl",
 ]
 docs = [
     "packaging",
@@ -88,14 +78,11 @@ version-file = "nipype2pydra/_version.py"
 allow-direct-references = true
 
 [tool.hatch.build]
-packages = [
-    "nipype2pydra",
-]
-exclude = [
-    "/tests",
-]
+packages = ["nipype2pydra"]
+exclude = ["/tests"]
 
 [tool.black]
+line-length = 88
 target-version = ['py37']
 exclude = "nipype2pydra/_version.py"
 
@@ -104,9 +91,7 @@ ignore-words = ".codespell-ignorewords"
 
 [tool.flake8]
 doctests = true
-per-file-ignores = [
-    "__init__.py:F401"
-]
+per-file-ignores = ["__init__.py:F401"]
 max-line-length = 88
 select = "C,E,F,W,B,B950"
 extend-ignore = ['E203', 'E501', 'E129', 'W503']

@@ -1,0 +1,187 @@
+# This file is used to manually specify the semi-automatic conversion of
+# 'nipype.interfaces.freesurfer.model.MS_LDA' from Nipype to Pydra.
+#
+# Please fill-in/edit the fields below where appropriate
+#
+# Docs
+# ----
+# Perform LDA reduction on the intensity space of an arbitrary # of FLASH images
+# 
+#     Examples
+#     --------
+#     >>> grey_label = 2
+#     >>> white_label = 3
+#     >>> zero_value = 1
+#     >>> optimalWeights = MS_LDA(lda_labels=[grey_label, white_label],                                 label_file='label.mgz', weight_file='weights.txt',                                 shift=zero_value, vol_synth_file='synth_out.mgz',                                 conform=True, use_weights=True,                                 images=['FLASH1.mgz', 'FLASH2.mgz', 'FLASH3.mgz'])
+#     >>> optimalWeights.cmdline
+#     'mri_ms_LDA -conform -label label.mgz -lda 2 3 -shift 1 -W -synth synth_out.mgz -weight weights.txt FLASH1.mgz FLASH2.mgz FLASH3.mgz'
+# 
+#     
+task_name: MS_LDA
+nipype_name: MS_LDA
+nipype_module: nipype.interfaces.freesurfer.model
+inputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    images: medimage/mgh-gz+list-of
+    # type=inputmultiobject|default=[]: list of input FLASH images
+    label_file: medimage/mgh-gz
+    # type=file|default=<undefined>: filename of the label volume
+    mask_file: generic/file
+    # type=file|default=<undefined>: filename of the brain mask volume
+    subjects_dir: generic/directory
+    # type=directory|default=<undefined>: subjects directory
+    vol_synth_file: Path
+    # type=file: 
+    # type=file|default=<undefined>: filename for the synthesized output volume
+    weight_file: Path
+    # type=file: 
+    # type=file|default=<undefined>: filename for the LDA weights (input or output)
+  callable_defaults:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set as the `default` method of input fields
+  metadata:
+  # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
+outputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    vol_synth_file: medimage/mgh-gz
+    # type=file: 
+    # type=file|default=<undefined>: filename for the synthesized output volume
+    weight_file: text/text-file
+    # type=file: 
+    # type=file|default=<undefined>: filename for the LDA weights (input or output)
+  callables:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set to the `callable` attribute of output fields
+  templates:
+  # dict[str, str] - `output_file_template` values to be provided to output fields
+  requirements:
+  # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
+tests:
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    lda_labels:
+    # type=list|default=[]: pair of class labels to optimize
+    weight_file:
+    # type=file: 
+    # type=file|default=<undefined>: filename for the LDA weights (input or output)
+    vol_synth_file:
+    # type=file: 
+    # type=file|default=<undefined>: filename for the synthesized output volume
+    label_file:
+    # type=file|default=<undefined>: filename of the label volume
+    mask_file:
+    # type=file|default=<undefined>: filename of the brain mask volume
+    shift:
+    # type=int|default=0: shift all values equal to the given value to zero
+    conform:
+    # type=bool|default=False: Conform the input volumes (brain mask typically already conformed)
+    use_weights:
+    # type=bool|default=False: Use the weights from a previously generated weight file
+    images:
+    # type=inputmultiobject|default=[]: list of input FLASH images
+    subjects_dir:
+    # type=directory|default=<undefined>: subjects directory
+    args:
+    # type=str|default='': Additional parameters to the command
+    environ:
+    # type=dict|default={}: Environment variables
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    lda_labels: '[grey_label, white_label]'
+    # type=list|default=[]: pair of class labels to optimize
+    label_file:
+    # type=file|default=<undefined>: filename of the label volume
+    weight_file: '"weights.txt"'
+    # type=file: 
+    # type=file|default=<undefined>: filename for the LDA weights (input or output)
+    shift: zero_value
+    # type=int|default=0: shift all values equal to the given value to zero
+    vol_synth_file: '"synth_out.mgz"'
+    # type=file: 
+    # type=file|default=<undefined>: filename for the synthesized output volume
+    conform: 'True'
+    # type=bool|default=False: Conform the input volumes (brain mask typically already conformed)
+    use_weights: 'True'
+    # type=bool|default=False: Use the weights from a previously generated weight file
+    images:
+    # type=inputmultiobject|default=[]: list of input FLASH images
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+doctests:
+- cmdline: mri_ms_LDA -conform -label label.mgz -lda 2 3 -shift 1 -W -synth synth_out.mgz -weight weights.txt FLASH1.mgz FLASH2.mgz FLASH3.mgz
+  # str - the expected cmdline output
+  inputs:
+  # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
+  # If the field is of file-format type and the value is None, then the
+  # '.mock()' method of the corresponding class is used instead.
+    lda_labels: '[grey_label, white_label]'
+    # type=list|default=[]: pair of class labels to optimize
+    label_file:
+    # type=file|default=<undefined>: filename of the label volume
+    weight_file: '"weights.txt"'
+    # type=file: 
+    # type=file|default=<undefined>: filename for the LDA weights (input or output)
+    shift: zero_value
+    # type=int|default=0: shift all values equal to the given value to zero
+    vol_synth_file: '"synth_out.mgz"'
+    # type=file: 
+    # type=file|default=<undefined>: filename for the synthesized output volume
+    conform: 'True'
+    # type=bool|default=False: Conform the input volumes (brain mask typically already conformed)
+    use_weights: 'True'
+    # type=bool|default=False: Use the weights from a previously generated weight file
+    images:
+    # type=inputmultiobject|default=[]: list of input FLASH images
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  directive:
+  # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

@@ -1,0 +1,157 @@
+# This file is used to manually specify the semi-automatic conversion of
+# 'nipype.interfaces.afni.utils.NwarpApply' from Nipype to Pydra.
+#
+# Please fill-in/edit the fields below where appropriate
+#
+# Docs
+# ----
+# Program to apply a nonlinear 3D warp saved from 3dQwarp
+#     (or 3dNwarpCat, etc.) to a 3D dataset, to produce a warped
+#     version of the source dataset.
+# 
+#     For complete details, see the `3dNwarpApply Documentation.
+#     <https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dNwarpApply.html>`_
+# 
+#     Examples
+#     --------
+#     >>> from nipype.interfaces import afni
+#     >>> nwarp = afni.NwarpApply()
+#     >>> nwarp.inputs.in_file = 'Fred+orig'
+#     >>> nwarp.inputs.master = 'NWARP'
+#     >>> nwarp.inputs.warp = "'Fred_WARP+tlrc Fred.Xaff12.1D'"
+#     >>> nwarp.cmdline
+#     "3dNwarpApply -source Fred+orig -interp wsinc5 -master NWARP -prefix Fred+orig_Nwarp -nwarp 'Fred_WARP+tlrc Fred.Xaff12.1D'"
+#     >>> res = nwarp.run()  # doctest: +SKIP
+# 
+#     
+task_name: NwarpApply
+nipype_name: NwarpApply
+nipype_module: nipype.interfaces.afni.utils
+inputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    master: generic/file
+    # type=file|default=<undefined>: the name of the master dataset, which defines the output grid
+    out_file: Path
+    # type=file: output file
+    # type=file|default=<undefined>: output image file name
+  callable_defaults:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set as the `default` method of input fields
+  metadata:
+  # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
+outputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    out_file: generic/file
+    # type=file: output file
+    # type=file|default=<undefined>: output image file name
+  callables:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set to the `callable` attribute of output fields
+  templates:
+  # dict[str, str] - `output_file_template` values to be provided to output fields
+  requirements:
+  # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
+tests:
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    in_file:
+    # type=traitcompound|default=None: the name of the dataset to be warped can be multiple datasets
+    warp:
+    # type=string|default='': the name of the warp dataset. multiple warps can be concatenated (make sure they exist)
+    inv_warp:
+    # type=bool|default=False: After the warp specified in '-nwarp' is computed, invert it
+    master:
+    # type=file|default=<undefined>: the name of the master dataset, which defines the output grid
+    interp:
+    # type=enum|default='wsinc5'|allowed['NN','cubic','linear','nearestneighbor','nearestneighbour','quintic','tricubic','trilinear','triquintic','wsinc5']: defines interpolation method to use during warp
+    ainterp:
+    # type=enum|default='NN'|allowed['NN','cubic','linear','nearestneighbor','nearestneighbour','quintic','tricubic','trilinear','triquintic','wsinc5']: specify a different interpolation method than might be used for the warp
+    out_file:
+    # type=file: output file
+    # type=file|default=<undefined>: output image file name
+    short:
+    # type=bool|default=False: Write output dataset using 16-bit short integers, rather than the usual 32-bit floats.
+    quiet:
+    # type=bool|default=False: don't be verbose :(
+    verb:
+    # type=bool|default=False: be extra verbose :)
+    args:
+    # type=str|default='': Additional parameters to the command
+    environ:
+    # type=dict|default={}: Environment variables
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    in_file: '"Fred+orig"'
+    # type=traitcompound|default=None: the name of the dataset to be warped can be multiple datasets
+    master:
+    # type=file|default=<undefined>: the name of the master dataset, which defines the output grid
+    warp: '"''Fred_WARP+tlrc Fred.Xaff12.1D''"'
+    # type=string|default='': the name of the warp dataset. multiple warps can be concatenated (make sure they exist)
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+doctests:
+- cmdline: 3dNwarpApply -source Fred+orig -interp wsinc5 -master NWARP -prefix Fred+orig_Nwarp -nwarp "Fred_WARP+tlrc Fred.Xaff12.1D"
+  # str - the expected cmdline output
+  inputs:
+  # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
+  # If the field is of file-format type and the value is None, then the
+  # '.mock()' method of the corresponding class is used instead.
+    in_file: '"Fred+orig"'
+    # type=traitcompound|default=None: the name of the dataset to be warped can be multiple datasets
+    master:
+    # type=file|default=<undefined>: the name of the master dataset, which defines the output grid
+    warp: '"''Fred_WARP+tlrc Fred.Xaff12.1D''"'
+    # type=string|default='': the name of the warp dataset. multiple warps can be concatenated (make sure they exist)
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  directive:
+  # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

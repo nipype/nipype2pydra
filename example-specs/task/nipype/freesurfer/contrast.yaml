@@ -1,0 +1,187 @@
+# This file is used to manually specify the semi-automatic conversion of
+# 'nipype.interfaces.freesurfer.utils.Contrast' from Nipype to Pydra.
+#
+# Please fill-in/edit the fields below where appropriate
+#
+# Docs
+# ----
+# 
+#     Compute surface-wise gray/white contrast
+# 
+#     Examples
+#     ========
+#     >>> from nipype.interfaces.freesurfer import Contrast
+#     >>> contrast = Contrast()
+#     >>> contrast.inputs.subject_id = '10335'
+#     >>> contrast.inputs.hemisphere = 'lh'
+#     >>> contrast.inputs.white = 'lh.white' # doctest: +SKIP
+#     >>> contrast.inputs.thickness = 'lh.thickness' # doctest: +SKIP
+#     >>> contrast.inputs.annotation = '../label/lh.aparc.annot' # doctest: +SKIP
+#     >>> contrast.inputs.cortex = '../label/lh.cortex.label' # doctest: +SKIP
+#     >>> contrast.inputs.rawavg = '../mri/rawavg.mgz' # doctest: +SKIP
+#     >>> contrast.inputs.orig = '../mri/orig.mgz' # doctest: +SKIP
+#     >>> contrast.cmdline # doctest: +SKIP
+#     'pctsurfcon --lh-only --s 10335'
+#     
+task_name: Contrast
+nipype_name: Contrast
+nipype_module: nipype.interfaces.freesurfer.utils
+inputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    annotation: medimage-freesurfer/annot
+    # type=file|default=<undefined>: Input annotation file must be <subject_id>/label/<hemisphere>.aparc.annot
+    cortex: medimage-freesurfer/label
+    # type=file|default=<undefined>: Input cortex label must be <subject_id>/label/<hemisphere>.cortex.label
+    orig: medimage/mgh-gz
+    # type=file|default=<undefined>: Implicit input file mri/orig.mgz
+    rawavg: medimage/mgh-gz
+    # type=file|default=<undefined>: Implicit input file mri/rawavg.mgz
+    subjects_dir: generic/directory
+    # type=directory|default=<undefined>: subjects directory
+    thickness: medimage-freesurfer/thickness
+    # type=file|default=<undefined>: Input file must be <subject_id>/surf/?h.thickness
+    white: medimage-freesurfer/white
+    # type=file|default=<undefined>: Input file must be <subject_id>/surf/<hemisphere>.white
+  callable_defaults:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set as the `default` method of input fields
+  metadata:
+  # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
+outputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    out_contrast: generic/file
+    # type=file: Output contrast file from Contrast
+    out_log: generic/file
+    # type=file: Output log from Contrast
+    out_stats: generic/file
+    # type=file: Output stats file from Contrast
+  callables:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set to the `callable` attribute of output fields
+  templates:
+  # dict[str, str] - `output_file_template` values to be provided to output fields
+  requirements:
+  # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
+tests:
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    subject_id:
+    # type=string|default='subject_id': Subject being processed
+    hemisphere:
+    # type=enum|default='lh'|allowed['lh','rh']: Hemisphere being processed
+    thickness:
+    # type=file|default=<undefined>: Input file must be <subject_id>/surf/?h.thickness
+    white:
+    # type=file|default=<undefined>: Input file must be <subject_id>/surf/<hemisphere>.white
+    annotation:
+    # type=file|default=<undefined>: Input annotation file must be <subject_id>/label/<hemisphere>.aparc.annot
+    cortex:
+    # type=file|default=<undefined>: Input cortex label must be <subject_id>/label/<hemisphere>.cortex.label
+    orig:
+    # type=file|default=<undefined>: Implicit input file mri/orig.mgz
+    rawavg:
+    # type=file|default=<undefined>: Implicit input file mri/rawavg.mgz
+    copy_inputs:
+    # type=bool|default=False: If running as a node, set this to True.This will copy the input files to the node directory.
+    subjects_dir:
+    # type=directory|default=<undefined>: subjects directory
+    args:
+    # type=str|default='': Additional parameters to the command
+    environ:
+    # type=dict|default={}: Environment variables
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    subject_id: '"10335"'
+    # type=string|default='subject_id': Subject being processed
+    hemisphere: '"lh"'
+    # type=enum|default='lh'|allowed['lh','rh']: Hemisphere being processed
+    white:
+    # type=file|default=<undefined>: Input file must be <subject_id>/surf/<hemisphere>.white
+    thickness:
+    # type=file|default=<undefined>: Input file must be <subject_id>/surf/?h.thickness
+    annotation:
+    # type=file|default=<undefined>: Input annotation file must be <subject_id>/label/<hemisphere>.aparc.annot
+    cortex:
+    # type=file|default=<undefined>: Input cortex label must be <subject_id>/label/<hemisphere>.cortex.label
+    rawavg:
+    # type=file|default=<undefined>: Implicit input file mri/rawavg.mgz
+    orig:
+    # type=file|default=<undefined>: Implicit input file mri/orig.mgz
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+doctests:
+- cmdline: pctsurfcon --lh-only --s 10335
+  # str - the expected cmdline output
+  inputs:
+  # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
+  # If the field is of file-format type and the value is None, then the
+  # '.mock()' method of the corresponding class is used instead.
+    subject_id: '"10335"'
+    # type=string|default='subject_id': Subject being processed
+    hemisphere: '"lh"'
+    # type=enum|default='lh'|allowed['lh','rh']: Hemisphere being processed
+    white:
+    # type=file|default=<undefined>: Input file must be <subject_id>/surf/<hemisphere>.white
+    thickness:
+    # type=file|default=<undefined>: Input file must be <subject_id>/surf/?h.thickness
+    annotation:
+    # type=file|default=<undefined>: Input annotation file must be <subject_id>/label/<hemisphere>.aparc.annot
+    cortex:
+    # type=file|default=<undefined>: Input cortex label must be <subject_id>/label/<hemisphere>.cortex.label
+    rawavg:
+    # type=file|default=<undefined>: Implicit input file mri/rawavg.mgz
+    orig:
+    # type=file|default=<undefined>: Implicit input file mri/orig.mgz
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  directive:
+  # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

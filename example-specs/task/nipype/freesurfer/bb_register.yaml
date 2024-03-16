@@ -1,0 +1,200 @@
+# This file is used to manually specify the semi-automatic conversion of
+# 'nipype.interfaces.freesurfer.preprocess.BBRegister' from Nipype to Pydra.
+#
+# Please fill-in/edit the fields below where appropriate
+#
+# Docs
+# ----
+# Use FreeSurfer bbregister to register a volume to the Freesurfer anatomical.
+# 
+#     This program performs within-subject, cross-modal registration using a
+#     boundary-based cost function. It is required that you have an anatomical
+#     scan of the subject that has already been recon-all-ed using freesurfer.
+# 
+#     Examples
+#     --------
+# 
+#     >>> from nipype.interfaces.freesurfer import BBRegister
+#     >>> bbreg = BBRegister(subject_id='me', source_file='structural.nii', init='header', contrast_type='t2')
+#     >>> bbreg.cmdline
+#     'bbregister --t2 --init-header --reg structural_bbreg_me.dat --mov structural.nii --s me'
+# 
+#     
+task_name: BBRegister
+nipype_name: BBRegister
+nipype_module: nipype.interfaces.freesurfer.preprocess
+inputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    init_reg_file: generic/file
+    # type=file|default=<undefined>: existing registration file
+    intermediate_file: generic/file
+    # type=file|default=<undefined>: Intermediate image, e.g. in case of partial FOV
+    out_reg_file: Path
+    # type=file: Output registration file
+    # type=file|default=<undefined>: output registration file
+    source_file: medimage/nifti1
+    # type=file|default=<undefined>: source file to be registered
+    subjects_dir: generic/directory
+    # type=directory|default=<undefined>: subjects directory
+  callable_defaults:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set as the `default` method of input fields
+  metadata:
+  # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
+outputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    init_cost_file: generic/file
+    # type=file: Output initial registration cost file
+    # type=traitcompound|default=None: output initial registration cost file
+    min_cost_file: generic/file
+    # type=file: Output registration minimum cost file
+    out_fsl_file: generic/file
+    # type=file: Output FLIRT-style registration file
+    # type=traitcompound|default=None: write the transformation matrix in FSL FLIRT format
+    out_lta_file: generic/file
+    # type=file: Output LTA-style registration file
+    # type=traitcompound|default=None: write the transformation matrix in LTA format
+    out_reg_file: generic/file
+    # type=file: Output registration file
+    # type=file|default=<undefined>: output registration file
+    registered_file: generic/file
+    # type=file: Registered and resampled source file
+    # type=traitcompound|default=None: output warped sourcefile either True or filename
+  callables:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set to the `callable` attribute of output fields
+  templates:
+  # dict[str, str] - `output_file_template` values to be provided to output fields
+    out_reg_file: out_reg_file
+    # type=file: Output registration file
+    # type=file|default=<undefined>: output registration file
+  requirements:
+  # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
+tests:
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    init:
+    # type=enum|default='coreg'|allowed['best','coreg','fsl','header','rr','spm']: initialize registration with mri_coreg, spm, fsl, or header
+    init_reg_file:
+    # type=file|default=<undefined>: existing registration file
+    subject_id:
+    # type=str|default='': freesurfer subject id
+    source_file:
+    # type=file|default=<undefined>: source file to be registered
+    contrast_type:
+    # type=enum|default='t1'|allowed['bold','dti','t1','t2']: contrast type of image
+    intermediate_file:
+    # type=file|default=<undefined>: Intermediate image, e.g. in case of partial FOV
+    reg_frame:
+    # type=int|default=0: 0-based frame index for 4D source file
+    reg_middle_frame:
+    # type=bool|default=False: Register middle frame of 4D source file
+    out_reg_file:
+    # type=file: Output registration file
+    # type=file|default=<undefined>: output registration file
+    spm_nifti:
+    # type=bool|default=False: force use of nifti rather than analyze with SPM
+    epi_mask:
+    # type=bool|default=False: mask out B0 regions in stages 1 and 2
+    dof:
+    # type=enum|default=6|allowed[12,6,9]: number of transform degrees of freedom
+    fsldof:
+    # type=int|default=0: degrees of freedom for initial registration (FSL)
+    out_fsl_file:
+    # type=file: Output FLIRT-style registration file
+    # type=traitcompound|default=None: write the transformation matrix in FSL FLIRT format
+    out_lta_file:
+    # type=file: Output LTA-style registration file
+    # type=traitcompound|default=None: write the transformation matrix in LTA format
+    registered_file:
+    # type=file: Registered and resampled source file
+    # type=traitcompound|default=None: output warped sourcefile either True or filename
+    init_cost_file:
+    # type=file: Output initial registration cost file
+    # type=traitcompound|default=None: output initial registration cost file
+    subjects_dir:
+    # type=directory|default=<undefined>: subjects directory
+    args:
+    # type=str|default='': Additional parameters to the command
+    environ:
+    # type=dict|default={}: Environment variables
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    subject_id: '"me"'
+    # type=str|default='': freesurfer subject id
+    source_file:
+    # type=file|default=<undefined>: source file to be registered
+    init: '"header"'
+    # type=enum|default='coreg'|allowed['best','coreg','fsl','header','rr','spm']: initialize registration with mri_coreg, spm, fsl, or header
+    contrast_type: '"t2"'
+    # type=enum|default='t1'|allowed['bold','dti','t1','t2']: contrast type of image
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+doctests:
+- cmdline: bbregister --t2 --init-header --reg structural_bbreg_me.dat --mov structural.nii --s me
+  # str - the expected cmdline output
+  inputs:
+  # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
+  # If the field is of file-format type and the value is None, then the
+  # '.mock()' method of the corresponding class is used instead.
+    subject_id: '"me"'
+    # type=str|default='': freesurfer subject id
+    source_file:
+    # type=file|default=<undefined>: source file to be registered
+    init: '"header"'
+    # type=enum|default='coreg'|allowed['best','coreg','fsl','header','rr','spm']: initialize registration with mri_coreg, spm, fsl, or header
+    contrast_type: '"t2"'
+    # type=enum|default='t1'|allowed['bold','dti','t1','t2']: contrast type of image
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  directive:
+  # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

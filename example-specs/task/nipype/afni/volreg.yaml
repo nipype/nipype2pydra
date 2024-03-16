@@ -1,0 +1,272 @@
+# This file is used to manually specify the semi-automatic conversion of
+# 'nipype.interfaces.afni.preprocess.Volreg' from Nipype to Pydra.
+#
+# Please fill-in/edit the fields below where appropriate
+#
+# Docs
+# ----
+# Register input volumes to a base volume using AFNI 3dvolreg command
+# 
+#     For complete details, see the `3dvolreg Documentation.
+#     <https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dvolreg.html>`_
+# 
+#     Examples
+#     --------
+#     >>> from nipype.interfaces import afni
+#     >>> volreg = afni.Volreg()
+#     >>> volreg.inputs.in_file = 'functional.nii'
+#     >>> volreg.inputs.args = '-Fourier -twopass'
+#     >>> volreg.inputs.zpad = 4
+#     >>> volreg.inputs.outputtype = 'NIFTI'
+#     >>> volreg.cmdline  # doctest: +ELLIPSIS
+#     '3dvolreg -Fourier -twopass -1Dfile functional.1D -1Dmatrix_save functional.aff12.1D -prefix functional_volreg.nii -zpad 4 -maxdisp1D functional_md.1D functional.nii'
+#     >>> res = volreg.run()  # doctest: +SKIP
+# 
+#     >>> from nipype.interfaces import afni
+#     >>> volreg = afni.Volreg()
+#     >>> volreg.inputs.in_file = 'functional.nii'
+#     >>> volreg.inputs.interp = 'cubic'
+#     >>> volreg.inputs.verbose = True
+#     >>> volreg.inputs.zpad = 1
+#     >>> volreg.inputs.basefile = 'functional.nii'
+#     >>> volreg.inputs.out_file = 'rm.epi.volreg.r1'
+#     >>> volreg.inputs.oned_file = 'dfile.r1.1D'
+#     >>> volreg.inputs.oned_matrix_save = 'mat.r1.tshift+orig.1D'
+#     >>> volreg.cmdline
+#     '3dvolreg -cubic -1Dfile dfile.r1.1D -1Dmatrix_save mat.r1.tshift+orig.1D -prefix rm.epi.volreg.r1 -verbose -base functional.nii -zpad 1 -maxdisp1D functional_md.1D functional.nii'
+#     >>> res = volreg.run()  # doctest: +SKIP
+# 
+#     
+task_name: Volreg
+nipype_name: Volreg
+nipype_module: nipype.interfaces.afni.preprocess
+inputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    basefile: medimage/nifti1
+    # type=file|default=<undefined>: base file for registration
+    in_file: medimage/nifti1
+    # type=file|default=<undefined>: input file to 3dvolreg
+    md1d_file: Path
+    # type=file: max displacement info file
+    # type=file|default=<undefined>: max displacement output file
+    oned_file: Path
+    # type=file: movement parameters info file
+    # type=file|default=<undefined>: 1D movement parameters output file
+    oned_matrix_save: Path
+    # type=file: matrix transformation from base to input
+    # type=file|default=<undefined>: Save the matrix transformation
+    out_file: Path
+    # type=file: registered file
+    # type=file|default=<undefined>: output image file name
+  callable_defaults:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set as the `default` method of input fields
+  metadata:
+  # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
+outputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    md1d_file: generic/file
+    # type=file: max displacement info file
+    # type=file|default=<undefined>: max displacement output file
+    oned_file: medimage-afni/oned
+    # type=file: movement parameters info file
+    # type=file|default=<undefined>: 1D movement parameters output file
+    oned_matrix_save: medimage-afni/oned
+    # type=file: matrix transformation from base to input
+    # type=file|default=<undefined>: Save the matrix transformation
+    out_file: medimage-afni/r1
+    # type=file: registered file
+    # type=file|default=<undefined>: output image file name
+  callables:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set to the `callable` attribute of output fields
+  templates:
+  # dict[str, str] - `output_file_template` values to be provided to output fields
+  requirements:
+  # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
+tests:
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    in_file:
+    # type=file|default=<undefined>: input file to 3dvolreg
+    in_weight_volume:
+    # type=traitcompound|default=None: weights for each voxel specified by a file with an optional volume number (defaults to 0)
+    out_file:
+    # type=file: registered file
+    # type=file|default=<undefined>: output image file name
+    basefile:
+    # type=file|default=<undefined>: base file for registration
+    zpad:
+    # type=int|default=0: Zeropad around the edges by 'n' voxels during rotations
+    md1d_file:
+    # type=file: max displacement info file
+    # type=file|default=<undefined>: max displacement output file
+    oned_file:
+    # type=file: movement parameters info file
+    # type=file|default=<undefined>: 1D movement parameters output file
+    verbose:
+    # type=bool|default=False: more detailed description of the process
+    timeshift:
+    # type=bool|default=False: time shift to mean slice time offset
+    copyorigin:
+    # type=bool|default=False: copy base file origin coords to output
+    oned_matrix_save:
+    # type=file: matrix transformation from base to input
+    # type=file|default=<undefined>: Save the matrix transformation
+    interp:
+    # type=enum|default='Fourier'|allowed['Fourier','cubic','heptic','linear','quintic']: spatial interpolation methods [default = heptic]
+    num_threads:
+    # type=int|default=1: set number of threads
+    outputtype:
+    # type=enum|default='AFNI'|allowed['AFNI','NIFTI','NIFTI_GZ']: AFNI output filetype
+    args:
+    # type=str|default='': Additional parameters to the command
+    environ:
+    # type=dict|default={}: Environment variables
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    in_file:
+    # type=file|default=<undefined>: input file to 3dvolreg
+    args: '"-Fourier -twopass"'
+    # type=str|default='': Additional parameters to the command
+    zpad: '4'
+    # type=int|default=0: Zeropad around the edges by 'n' voxels during rotations
+    outputtype: '"NIFTI"'
+    # type=enum|default='AFNI'|allowed['AFNI','NIFTI','NIFTI_GZ']: AFNI output filetype
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    in_file:
+    # type=file|default=<undefined>: input file to 3dvolreg
+    interp: '"cubic"'
+    # type=enum|default='Fourier'|allowed['Fourier','cubic','heptic','linear','quintic']: spatial interpolation methods [default = heptic]
+    verbose: 'True'
+    # type=bool|default=False: more detailed description of the process
+    zpad: '1'
+    # type=int|default=0: Zeropad around the edges by 'n' voxels during rotations
+    basefile:
+    # type=file|default=<undefined>: base file for registration
+    out_file: '"rm.epi.volreg.r1"'
+    # type=file: registered file
+    # type=file|default=<undefined>: output image file name
+    oned_file: '"dfile.r1.1D"'
+    # type=file: movement parameters info file
+    # type=file|default=<undefined>: 1D movement parameters output file
+    oned_matrix_save: '"mat.r1.tshift+orig.1D"'
+    # type=file: matrix transformation from base to input
+    # type=file|default=<undefined>: Save the matrix transformation
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+doctests:
+- cmdline: 3dvolreg -Fourier -twopass -1Dfile functional.1D -1Dmatrix_save functional.aff12.1D -prefix functional_volreg.nii -zpad 4 -maxdisp1D functional_md.1D functional.nii
+  # str - the expected cmdline output
+  inputs:
+  # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
+  # If the field is of file-format type and the value is None, then the
+  # '.mock()' method of the corresponding class is used instead.
+    in_file:
+    # type=file|default=<undefined>: input file to 3dvolreg
+    args: '"-Fourier -twopass"'
+    # type=str|default='': Additional parameters to the command
+    zpad: '4'
+    # type=int|default=0: Zeropad around the edges by 'n' voxels during rotations
+    outputtype: '"NIFTI"'
+    # type=enum|default='AFNI'|allowed['AFNI','NIFTI','NIFTI_GZ']: AFNI output filetype
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  directive:
+  # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS
+- cmdline: 3dvolreg -cubic -1Dfile dfile.r1.1D -1Dmatrix_save mat.r1.tshift+orig.1D -prefix rm.epi.volreg.r1 -verbose -base functional.nii -zpad 1 -maxdisp1D functional_md.1D functional.nii
+  # str - the expected cmdline output
+  inputs:
+  # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
+  # If the field is of file-format type and the value is None, then the
+  # '.mock()' method of the corresponding class is used instead.
+    in_file:
+    # type=file|default=<undefined>: input file to 3dvolreg
+    interp: '"cubic"'
+    # type=enum|default='Fourier'|allowed['Fourier','cubic','heptic','linear','quintic']: spatial interpolation methods [default = heptic]
+    verbose: 'True'
+    # type=bool|default=False: more detailed description of the process
+    zpad: '1'
+    # type=int|default=0: Zeropad around the edges by 'n' voxels during rotations
+    basefile:
+    # type=file|default=<undefined>: base file for registration
+    out_file: '"rm.epi.volreg.r1"'
+    # type=file: registered file
+    # type=file|default=<undefined>: output image file name
+    oned_file: '"dfile.r1.1D"'
+    # type=file: movement parameters info file
+    # type=file|default=<undefined>: 1D movement parameters output file
+    oned_matrix_save: '"mat.r1.tshift+orig.1D"'
+    # type=file: matrix transformation from base to input
+    # type=file|default=<undefined>: Save the matrix transformation
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  directive:
+  # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

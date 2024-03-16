@@ -1,0 +1,224 @@
+# This file is used to manually specify the semi-automatic conversion of
+# 'nipype.interfaces.afni.preprocess.AlignEpiAnatPy' from Nipype to Pydra.
+#
+# Please fill-in/edit the fields below where appropriate
+#
+# Docs
+# ----
+# Align EPI to anatomical datasets or vice versa.
+# 
+#     This Python script computes the alignment between two datasets, typically
+#     an EPI and an anatomical structural dataset, and applies the resulting
+#     transformation to one or the other to bring them into alignment.
+# 
+#     This script computes the transforms needed to align EPI and
+#     anatomical datasets using a cost function designed for this purpose. The
+#     script combines multiple transformations, thereby minimizing the amount of
+#     interpolation applied to the data.
+# 
+#     Basic Usage::
+# 
+#         align_epi_anat.py -anat anat+orig -epi epi+orig -epi_base 5
+# 
+#     The user must provide :abbr:`EPI (echo-planar imaging)` and anatomical datasets
+#     and specify the EPI sub-brick to use as a base in the alignment.
+# 
+#     Internally, the script always aligns the anatomical to the EPI dataset,
+#     and the resulting transformation is saved to a 1D file.
+#     As a user option, the inverse of this transformation may be applied to the
+#     EPI dataset in order to align it to the anatomical data instead.
+# 
+#     This program generates several kinds of output in the form of datasets
+#     and transformation matrices which can be applied to other datasets if
+#     needed. Time-series volume registration, oblique data transformations and
+#     Talairach (standard template) transformations will be combined as needed
+#     and requested (with options to turn on and off each of the steps) in
+#     order to create the aligned datasets.
+# 
+#     Examples
+#     --------
+#     >>> from nipype.interfaces import afni
+#     >>> al_ea = afni.AlignEpiAnatPy()
+#     >>> al_ea.inputs.anat = "structural.nii"
+#     >>> al_ea.inputs.in_file = "functional.nii"
+#     >>> al_ea.inputs.epi_base = 0
+#     >>> al_ea.inputs.epi_strip = '3dAutomask'
+#     >>> al_ea.inputs.volreg = 'off'
+#     >>> al_ea.inputs.tshift = 'off'
+#     >>> al_ea.inputs.save_skullstrip = True
+#     >>> al_ea.cmdline # doctest: +ELLIPSIS
+#     'python2 ...align_epi_anat.py -anat structural.nii -epi_base 0 -epi_strip 3dAutomask -epi functional.nii -save_skullstrip -suffix _al -tshift off -volreg off'
+#     >>> res = allineate.run()  # doctest: +SKIP
+# 
+#     See Also
+#     --------
+#     For complete details, see the `align_epi_anat.py documentation.
+#     <https://afni.nimh.nih.gov/pub/dist/doc/program_help/align_epi_anat.py.html>`__.
+# 
+#     
+task_name: AlignEpiAnatPy
+nipype_name: AlignEpiAnatPy
+nipype_module: nipype.interfaces.afni.preprocess
+inputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    anat: medimage/nifti1
+    # type=file|default=<undefined>: name of structural dataset
+    in_file: medimage/nifti1
+    # type=file|default=<undefined>: EPI dataset to align
+  callable_defaults:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set as the `default` method of input fields
+  metadata:
+  # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
+outputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    anat_al_mat: generic/file
+    # type=file: matrix to align anatomy to the EPI
+    anat_al_orig: generic/file
+    # type=file: A version of the anatomy that is aligned to the EPI
+    epi_al_mat: generic/file
+    # type=file: matrix to align EPI to anatomy
+    epi_al_orig: generic/file
+    # type=file: A version of the EPI dataset aligned to the anatomy
+    epi_al_tlrc_mat: generic/file
+    # type=file: matrix to volume register and align epito anatomy and put into standard space
+    epi_reg_al_mat: generic/file
+    # type=file: matrix to volume register and align epi to anatomy
+    epi_tlrc_al: generic/file
+    # type=file: A version of the EPI dataset aligned to a standard template
+    epi_vr_al_mat: generic/file
+    # type=file: matrix to volume register EPI
+    epi_vr_motion: generic/file
+    # type=file: motion parameters from EPI time-seriesregistration (tsh included in name if slicetiming correction is also included).
+    skullstrip: generic/file
+    # type=file: skull-stripped (not aligned) volume
+  callables:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set to the `callable` attribute of output fields
+  templates:
+  # dict[str, str] - `output_file_template` values to be provided to output fields
+  requirements:
+  # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
+tests:
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    in_file:
+    # type=file|default=<undefined>: EPI dataset to align
+    anat:
+    # type=file|default=<undefined>: name of structural dataset
+    epi_base:
+    # type=traitcompound|default=None: the epi base used in alignmentshould be one of (0/mean/median/max/subbrick#)
+    anat2epi:
+    # type=bool|default=False: align anatomical to EPI dataset (default)
+    epi2anat:
+    # type=bool|default=False: align EPI to anatomical dataset
+    save_skullstrip:
+    # type=bool|default=False: save skull-stripped (not aligned)
+    suffix:
+    # type=str|default='_al': append suffix to the original anat/epi dataset to usein the resulting dataset names (default is "_al")
+    epi_strip:
+    # type=enum|default='3dSkullStrip'|allowed['3dAutomask','3dSkullStrip','None']: method to mask brain in EPI datashould be one of[3dSkullStrip]/3dAutomask/None)
+    volreg:
+    # type=enum|default='on'|allowed['off','on']: do volume registration on EPI dataset before alignmentshould be 'on' or 'off', defaults to 'on'
+    tshift:
+    # type=enum|default='on'|allowed['off','on']: do time shifting of EPI dataset before alignmentshould be 'on' or 'off', defaults to 'on'
+    outputtype:
+    # type=enum|default='AFNI'|allowed['AFNI','NIFTI','NIFTI_GZ']: AFNI output filetype
+    py27_path:
+    # type=traitcompound|default='python2': 
+    args:
+    # type=str|default='': Additional parameters to the command
+    environ:
+    # type=dict|default={}: Environment variables
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    anat:
+    # type=file|default=<undefined>: name of structural dataset
+    in_file:
+    # type=file|default=<undefined>: EPI dataset to align
+    epi_base: '0'
+    # type=traitcompound|default=None: the epi base used in alignmentshould be one of (0/mean/median/max/subbrick#)
+    epi_strip: '"3dAutomask"'
+    # type=enum|default='3dSkullStrip'|allowed['3dAutomask','3dSkullStrip','None']: method to mask brain in EPI datashould be one of[3dSkullStrip]/3dAutomask/None)
+    volreg: '"off"'
+    # type=enum|default='on'|allowed['off','on']: do volume registration on EPI dataset before alignmentshould be 'on' or 'off', defaults to 'on'
+    tshift: '"off"'
+    # type=enum|default='on'|allowed['off','on']: do time shifting of EPI dataset before alignmentshould be 'on' or 'off', defaults to 'on'
+    save_skullstrip: 'True'
+    # type=bool|default=False: save skull-stripped (not aligned)
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+doctests:
+- cmdline: python2 ...align_epi_anat.py -anat structural.nii -epi_base 0 -epi_strip 3dAutomask -epi functional.nii -save_skullstrip -suffix _al -tshift off -volreg off
+  # str - the expected cmdline output
+  inputs:
+  # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
+  # If the field is of file-format type and the value is None, then the
+  # '.mock()' method of the corresponding class is used instead.
+    anat:
+    # type=file|default=<undefined>: name of structural dataset
+    in_file:
+    # type=file|default=<undefined>: EPI dataset to align
+    epi_base: '0'
+    # type=traitcompound|default=None: the epi base used in alignmentshould be one of (0/mean/median/max/subbrick#)
+    epi_strip: '"3dAutomask"'
+    # type=enum|default='3dSkullStrip'|allowed['3dAutomask','3dSkullStrip','None']: method to mask brain in EPI datashould be one of[3dSkullStrip]/3dAutomask/None)
+    volreg: '"off"'
+    # type=enum|default='on'|allowed['off','on']: do volume registration on EPI dataset before alignmentshould be 'on' or 'off', defaults to 'on'
+    tshift: '"off"'
+    # type=enum|default='on'|allowed['off','on']: do time shifting of EPI dataset before alignmentshould be 'on' or 'off', defaults to 'on'
+    save_skullstrip: 'True'
+    # type=bool|default=False: save skull-stripped (not aligned)
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  directive:
+  # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

@@ -1,0 +1,172 @@
+# This file is used to manually specify the semi-automatic conversion of
+# 'nipype.interfaces.freesurfer.utils.SurfaceSmooth' from Nipype to Pydra.
+#
+# Please fill-in/edit the fields below where appropriate
+#
+# Docs
+# ----
+# Smooth a surface image with mri_surf2surf.
+# 
+#     The surface is smoothed by an iterative process of averaging the
+#     value at each vertex with those of its adjacent neighbors. You may supply
+#     either the number of iterations to run or a desired effective FWHM of the
+#     smoothing process.  If the latter, the underlying program will calculate
+#     the correct number of iterations internally.
+# 
+#     See Also
+#     --------
+#     `nipype.interfaces.freesurfer.utils.SmoothTessellation`_ interface for
+#     smoothing a tessellated surface (e.g. in gifti or .stl)
+# 
+#     Examples
+#     --------
+#     >>> import nipype.interfaces.freesurfer as fs
+#     >>> smoother = fs.SurfaceSmooth()
+#     >>> smoother.inputs.in_file = "lh.cope1.mgz"
+#     >>> smoother.inputs.subject_id = "subj_1"
+#     >>> smoother.inputs.hemi = "lh"
+#     >>> smoother.inputs.fwhm = 5
+#     >>> smoother.cmdline # doctest: +ELLIPSIS
+#     'mri_surf2surf --cortex --fwhm 5.0000 --hemi lh --sval lh.cope1.mgz --tval ...lh.cope1_smooth5.mgz --s subj_1'
+#     >>> smoother.run() # doctest: +SKIP
+# 
+#     
+task_name: SurfaceSmooth
+nipype_name: SurfaceSmooth
+nipype_module: nipype.interfaces.freesurfer.utils
+inputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    in_file: medimage/mgh-gz
+    # type=file|default=<undefined>: source surface file
+    out_file: Path
+    # type=file: smoothed surface file
+    # type=file|default=<undefined>: surface file to write
+    subjects_dir: generic/directory
+    # type=directory|default=<undefined>: subjects directory
+  callable_defaults:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set as the `default` method of input fields
+  metadata:
+  # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
+outputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    out_file: generic/file
+    # type=file: smoothed surface file
+    # type=file|default=<undefined>: surface file to write
+  callables:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set to the `callable` attribute of output fields
+  templates:
+  # dict[str, str] - `output_file_template` values to be provided to output fields
+    out_file: out_file
+    # type=file: smoothed surface file
+    # type=file|default=<undefined>: surface file to write
+  requirements:
+  # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
+tests:
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    in_file:
+    # type=file|default=<undefined>: source surface file
+    subject_id:
+    # type=string|default='': subject id of surface file
+    hemi:
+    # type=enum|default='lh'|allowed['lh','rh']: hemisphere to operate on
+    fwhm:
+    # type=float|default=0.0: effective FWHM of the smoothing process
+    smooth_iters:
+    # type=int|default=0: iterations of the smoothing process
+    cortex:
+    # type=bool|default=True: only smooth within ``$hemi.cortex.label``
+    reshape:
+    # type=bool|default=False: reshape surface vector to fit in non-mgh format
+    out_file:
+    # type=file: smoothed surface file
+    # type=file|default=<undefined>: surface file to write
+    subjects_dir:
+    # type=directory|default=<undefined>: subjects directory
+    args:
+    # type=str|default='': Additional parameters to the command
+    environ:
+    # type=dict|default={}: Environment variables
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    in_file:
+    # type=file|default=<undefined>: source surface file
+    subject_id: '"subj_1"'
+    # type=string|default='': subject id of surface file
+    hemi: '"lh"'
+    # type=enum|default='lh'|allowed['lh','rh']: hemisphere to operate on
+    fwhm: '5'
+    # type=float|default=0.0: effective FWHM of the smoothing process
+  imports: &id001
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  - module: nipype.interfaces.freesurfer as fs
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+doctests:
+- cmdline: mri_surf2surf --cortex --fwhm 5.0000 --hemi lh --sval lh.cope1.mgz --tval ...lh.cope1_smooth5.mgz --s subj_1
+  # str - the expected cmdline output
+  inputs:
+  # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
+  # If the field is of file-format type and the value is None, then the
+  # '.mock()' method of the corresponding class is used instead.
+    in_file:
+    # type=file|default=<undefined>: source surface file
+    subject_id: '"subj_1"'
+    # type=string|default='': subject id of surface file
+    hemi: '"lh"'
+    # type=enum|default='lh'|allowed['lh','rh']: hemisphere to operate on
+    fwhm: '5'
+    # type=float|default=0.0: effective FWHM of the smoothing process
+  imports: *id001
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  directive:
+  # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

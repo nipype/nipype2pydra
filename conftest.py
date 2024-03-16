@@ -4,23 +4,17 @@ import traceback
 import tempfile
 import pytest
 from click.testing import CliRunner
-from fileformats.generic import File
 
 
 PKG_DIR = Path(__file__).parent
 EXAMPLE_SPECS_DIR = PKG_DIR / "example-specs"
-EXAMPLE_TASKS_DIR = EXAMPLE_SPECS_DIR / "task"
+EXAMPLE_TASKS_DIR = EXAMPLE_SPECS_DIR / "task" / "nipype"
 EXAMPLE_WORKFLOWS_DIR = EXAMPLE_SPECS_DIR / "workflow"
 
 
 @pytest.fixture
 def gen_test_conftest():
     return PKG_DIR / "scripts" / "pkg_gen" / "resources" / "conftest.py"
-
-
-@pytest.fixture(params=[str(p.stem) for p in (EXAMPLE_TASKS_DIR).glob("*.yaml")])
-def task_spec_file(request):
-    return (EXAMPLE_TASKS_DIR / request.param).with_suffix(".yaml")
 
 
 @pytest.fixture(params=[str(p.stem) for p in EXAMPLE_WORKFLOWS_DIR.glob("*.yaml")])
@@ -32,6 +26,13 @@ def workflow_spec_file(request):
 def work_dir():
     work_dir = tempfile.mkdtemp()
     return Path(work_dir)
+
+
+@pytest.fixture
+def outputs_dir():
+    outputs_dir = PKG_DIR / "outputs" / "workflows"
+    outputs_dir.mkdir(parents=True, exist_ok=True)
+    return outputs_dir
 
 
 @pytest.fixture
@@ -55,6 +56,11 @@ if os.getenv("_PYTEST_RAISE", "0") != "0":
     @pytest.hookimpl(tryfirst=True)
     def pytest_internalerror(excinfo):
         raise excinfo.value
+
+    def pytest_configure(config):
+        config.option.capture = 'no'  # allow print statements to show up in the console    
+        config.option.log_cli = True  # show log messages in the console
+        config.option.log_level = "INFO"  # set the log level to INFO
 
     CATCH_CLI_EXCEPTIONS = False
 else:

@@ -1,0 +1,176 @@
+# This file is used to manually specify the semi-automatic conversion of
+# 'nipype.interfaces.freesurfer.model.Concatenate' from Nipype to Pydra.
+#
+# Please fill-in/edit the fields below where appropriate
+#
+# Docs
+# ----
+# Use Freesurfer mri_concat to combine several input volumes
+#     into one output volume.  Can concatenate by frames, or compute
+#     a variety of statistics on the input volumes.
+# 
+#     Examples
+#     --------
+#     Combine two input volumes into one volume with two frames
+# 
+#     >>> concat = Concatenate()
+#     >>> concat.inputs.in_files = ['cont1.nii', 'cont2.nii']
+#     >>> concat.inputs.concatenated_file = 'bar.nii'
+#     >>> concat.cmdline
+#     'mri_concat --o bar.nii --i cont1.nii --i cont2.nii'
+# 
+#     
+task_name: Concatenate
+nipype_name: Concatenate
+nipype_module: nipype.interfaces.freesurfer.model
+inputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    concatenated_file: Path
+    # type=file: Path/name of the output volume
+    # type=file|default=<undefined>: Output volume
+    in_files: medimage/nifti1+list-of
+    # type=inputmultiobject|default=[]: Individual volumes to be concatenated
+    mask_file: generic/file
+    # type=file|default=<undefined>: Mask input with a volume
+    multiply_matrix_file: generic/file
+    # type=file|default=<undefined>: Multiply input by an ascii matrix in file
+    subjects_dir: generic/directory
+    # type=directory|default=<undefined>: subjects directory
+  callable_defaults:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set as the `default` method of input fields
+  metadata:
+  # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
+outputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    concatenated_file: medimage/nifti1
+    # type=file: Path/name of the output volume
+    # type=file|default=<undefined>: Output volume
+  callables:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set to the `callable` attribute of output fields
+  templates:
+  # dict[str, str] - `output_file_template` values to be provided to output fields
+    concatenated_file: '"bar.nii"'
+    # type=file: Path/name of the output volume
+    # type=file|default=<undefined>: Output volume
+  requirements:
+  # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
+tests:
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    in_files:
+    # type=inputmultiobject|default=[]: Individual volumes to be concatenated
+    concatenated_file:
+    # type=file: Path/name of the output volume
+    # type=file|default=<undefined>: Output volume
+    sign:
+    # type=enum|default='abs'|allowed['abs','neg','pos']: Take only pos or neg voxles from input, or take abs
+    stats:
+    # type=enum|default='sum'|allowed['max','mean','min','std','sum','var']: Compute the sum, var, std, max, min or mean of the input volumes
+    paired_stats:
+    # type=enum|default='sum'|allowed['avg','diff','diff-norm','diff-norm1','diff-norm2','sum']: Compute paired sum, avg, or diff
+    gmean:
+    # type=int|default=0: create matrix to average Ng groups, Nper=Ntot/Ng
+    mean_div_n:
+    # type=bool|default=False: compute mean/nframes (good for var)
+    multiply_by:
+    # type=float|default=0.0: Multiply input volume by some amount
+    add_val:
+    # type=float|default=0.0: Add some amount to the input volume
+    multiply_matrix_file:
+    # type=file|default=<undefined>: Multiply input by an ascii matrix in file
+    combine:
+    # type=bool|default=False: Combine non-zero values into single frame volume
+    keep_dtype:
+    # type=bool|default=False: Keep voxelwise precision type (default is float
+    max_bonfcor:
+    # type=bool|default=False: Compute max and bonferroni correct (assumes -log10(ps))
+    max_index:
+    # type=bool|default=False: Compute the index of max voxel in concatenated volumes
+    mask_file:
+    # type=file|default=<undefined>: Mask input with a volume
+    vote:
+    # type=bool|default=False: Most frequent value at each voxel and fraction of occurrences
+    sort:
+    # type=bool|default=False: Sort each voxel by ascending frame value
+    subjects_dir:
+    # type=directory|default=<undefined>: subjects directory
+    args:
+    # type=str|default='': Additional parameters to the command
+    environ:
+    # type=dict|default={}: Environment variables
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    in_files:
+    # type=inputmultiobject|default=[]: Individual volumes to be concatenated
+    concatenated_file: '"bar.nii"'
+    # type=file: Path/name of the output volume
+    # type=file|default=<undefined>: Output volume
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+doctests:
+- cmdline: mri_concat --o bar.nii --i cont1.nii --i cont2.nii
+  # str - the expected cmdline output
+  inputs:
+  # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
+  # If the field is of file-format type and the value is None, then the
+  # '.mock()' method of the corresponding class is used instead.
+    in_files:
+    # type=inputmultiobject|default=[]: Individual volumes to be concatenated
+    concatenated_file: '"bar.nii"'
+    # type=file: Path/name of the output volume
+    # type=file|default=<undefined>: Output volume
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  directive:
+  # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

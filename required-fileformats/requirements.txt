@@ -1,0 +1,4 @@
+-e ./afni
+-e ./ants
+-e ./freesurfer
+-e ./fsl

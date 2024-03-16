@@ -1,0 +1,230 @@
+packages:
+- amico
+- anatomical
+- ants
+- bids
+- confounds
+- connectivity
+- converters
+- denoise
+- dipy
+- dsi_studio
+- dwi_merge
+- eddy
+- fmap
+- freesurfer
+- gradients
+- images
+- ingress
+- itk
+- mrtrix
+- nilearn
+- niworkflows
+# - pyafq
+- reports
+- shoreline
+- surf
+- tortoise
+interfaces:
+  amico:
+  - AmicoReconInterface
+  - NODDI
+  anatomical:
+  - CalculateSOP
+  - CustomApplyMask
+  - DesaturateSkull
+  - DiceOverlap
+  - FakeSegmentation
+  - GetTemplate
+  - QsiprepAnatomicalIngress
+  ants:
+  - ANTsBBR
+  - ConvertTransformFile
+  - GetImageType
+  - ImageMath
+  - MultivariateTemplateConstruction2
+  - N3BiasFieldCorrection
+  bids:
+  - BIDSDataGrabber
+  - BIDSFreeSurferDir
+  - BIDSInfo
+  - DerivativesDataSink
+  - DerivativesMaybeDataSink
+  - QsiReconIngress
+  - ReadSidecarJSON
+  - ReconDerivativesDataSink
+  confounds:
+  - DMRISummary
+  - GatherConfounds
+  connectivity:
+  - Controllability
+  converters:
+  - DSIStudioTrkToTck
+  - FIBGZtoFOD
+  - FODtoFIBGZ
+  - NODDItoFIBGZ
+  denoise:
+  - SeriesPreprocReport
+  - SeriesPreprocReport
+  - SeriesPreprocReport
+  - SeriesPreprocReport
+  dipy:
+  - BrainSuiteShoreReconstruction
+  - DipyReconInterface
+  - HistEQ
+  - KurtosisReconstruction
+  - MAPMRIReconstruction
+  - MedianOtsu
+  - Patch2Self
+  - TensorReconstruction
+  dsi_studio:
+  - AggregateAutoTrackResults
+  - AutoTrack
+  - AutoTrackInit
+  - DSIStudioAtlasGraph
+  - DSIStudioBTable
+  - DSIStudioConnectivityMatrix
+  - DSIStudioCreateSrc
+  - DSIStudioDTIReconstruction
+  - DSIStudioExport
+  - DSIStudioFibQC
+  - DSIStudioGQIReconstruction
+  - DSIStudioMergeQC
+  - DSIStudioQC
+  - DSIStudioReconstruction
+  - DSIStudioSrcQC
+  - DSIStudioTracking
+  - FixDSIStudioExportHeader
+  dwi_merge:
+  - AveragePEPairs
+  - MergeDWIs
+  - MergeFinalConfounds
+  - SplitResampledDWIs
+  - StackConfounds
+  eddy:
+  - Eddy2SPMMotion
+  - ExtendedEddy
+  - GatherEddyInputs
+  fmap:
+  - ApplyScalingImages
+  - B0RPEFieldmap
+  - FieldToHz
+  - FieldToRadS
+  - PEPOLARReport
+  - Phasediff2Fieldmap
+  - Phases2Fieldmap
+  freesurfer:
+  - FSDetectInputs
+  - FSInjectBrainExtracted
+  - FixHeaderSynthStrip
+  - MakeMidthickness
+  - MedialNaNs
+  - PatchedBBRegisterRPT
+  - PatchedConcatenateLTA
+  - PatchedLTAConvert
+  - PatchedMRICoregRPT
+  - PatchedRobustRegister
+  - PrepareSynthStripGrid
+  - RefineBrainMask
+  - StructuralReference
+  - SynthSeg
+  - SynthStrip
+  gradients:
+  - CombineMotions
+  - ComposeTransforms
+  - ExtractB0s
+  - GradientRotation
+  - LocalGradientRotation
+  - MatchTransforms
+  - RemoveDuplicates
+  - SliceQC
+  - SplitIntramodalTransform
+  images:
+  - ChooseInterpolator
+  - Conform
+  - ConformDwi
+  - ExtractWM
+  - IntraModalMerge
+  - NiftiInfo
+  - SplitDWIsBvals
+  - SplitDWIsFSL
+  - TSplit
+  - ValidateImage
+  ingress:
+  - QsiReconIngress
+  itk:
+  - ACPCReport
+  - AffineToRigid
+  - DisassembleTransform
+  - MultiApplyTransforms
+  mrtrix:
+  - BuildConnectome
+  - CompressConnectome2Tck
+  - Connectome2Tck
+  - DWIBiasCorrect
+  - DWIDenoise
+  - Dwi2Response
+  - EstimateFOD
+  - GenerateMasked5tt
+  - GlobalTractography
+  - ITKTransformConvert
+  - MRDeGibbs
+  - MRTrixAtlasGraph
+  - MRTrixGradientTable
+  - MRTrixIngress
+  - MTNormalize
+  - SIFT2
+  - SS3TBase
+  - SS3TDwi2Response
+  - SS3TEstimateFOD
+  - TckGen
+  - TransformHeader
+  nilearn:
+  - EnhanceAndSkullstripB0
+  - EnhanceB0
+  - MaskB0Series
+  - MaskEPI
+  - Merge
+  niworkflows:
+  - ANTSRegistrationRPT
+  pyafq:
+  - PyAFQRecon
+  reports:
+  - AboutSummary
+  - CLIReconPeaksReport
+  - ConnectivityReport
+  - DiffusionSummary
+  - GradientPlot
+  - InteractiveReport
+  - SeriesQC
+  - SubjectSummary
+  - SummaryInterface
+  - SummaryInterface
+  - TopupSummary
+  shoreline:
+  - B0Mean
+  - CalculateCNR
+  - ExtractDWIsForModel
+  - GroupImages
+  - IterationSummary
+  - ReorderOutputs
+  - SHORELineReport
+  - SignalPrediction
+  surf:
+  - GiftiNameSource
+  - GiftiSetAnatomicalStructure
+  - NormalizeSurf
+  tortoise:
+  - DRBUDDI
+  - DRBUDDIAggregateOutputs
+  - GatherDRBUDDIInputs
+  - Gibbs
+  - TORTOISECommandLine
+  utils:
+  - AddTPMs
+  - AddTSVHeader
+  - ConcatAffines
+  - GetConnectivityAtlases
+  - JoinTSVColumns
+  - TPM2ROI
+  - TestInput

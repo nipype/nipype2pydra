@@ -1,0 +1,211 @@
+# This file is used to manually specify the semi-automatic conversion of
+# 'nipype.interfaces.freesurfer.utils.VolumeMask' from Nipype to Pydra.
+#
+# Please fill-in/edit the fields below where appropriate
+#
+# Docs
+# ----
+# 
+#     Computes a volume mask, at the same resolution as the
+#     <subject>/mri/brain.mgz.  The volume mask contains 4 values: LH_WM
+#     (default 10), LH_GM (default 100), RH_WM (default 20), RH_GM (default
+#     200).
+#     The algorithm uses the 4 surfaces situated in <subject>/surf/
+#     [lh|rh].[white|pial] and labels voxels based on the
+#     signed-distance function from the surface.
+# 
+#     Examples
+#     ========
+#     >>> from nipype.interfaces.freesurfer import VolumeMask
+#     >>> volmask = VolumeMask()
+#     >>> volmask.inputs.left_whitelabel = 2
+#     >>> volmask.inputs.left_ribbonlabel = 3
+#     >>> volmask.inputs.right_whitelabel = 41
+#     >>> volmask.inputs.right_ribbonlabel = 42
+#     >>> volmask.inputs.lh_pial = 'lh.pial'
+#     >>> volmask.inputs.rh_pial = 'lh.pial'
+#     >>> volmask.inputs.lh_white = 'lh.pial'
+#     >>> volmask.inputs.rh_white = 'lh.pial'
+#     >>> volmask.inputs.subject_id = '10335'
+#     >>> volmask.inputs.save_ribbon = True
+#     >>> volmask.cmdline
+#     'mris_volmask --label_left_ribbon 3 --label_left_white 2 --label_right_ribbon 42 --label_right_white 41 --save_ribbon 10335'
+#     
+task_name: VolumeMask
+nipype_name: VolumeMask
+nipype_module: nipype.interfaces.freesurfer.utils
+inputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    aseg: generic/file
+    # type=file|default=<undefined>: Implicit aseg.mgz segmentation. Specify a different aseg by using the 'in_aseg' input.
+    in_aseg: generic/file
+    # type=file|default=<undefined>: Input aseg file for VolumeMask
+    lh_pial: medimage-freesurfer/pial
+    # type=file|default=<undefined>: Implicit input left pial surface
+    lh_white: medimage-freesurfer/pial
+    # type=file|default=<undefined>: Implicit input left white matter surface
+    rh_pial: medimage-freesurfer/pial
+    # type=file|default=<undefined>: Implicit input right pial surface
+    rh_white: medimage-freesurfer/pial
+    # type=file|default=<undefined>: Implicit input right white matter surface
+    subjects_dir: generic/directory
+    # type=directory|default=<undefined>: subjects directory
+  callable_defaults:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set as the `default` method of input fields
+  metadata:
+  # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
+outputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    lh_ribbon: generic/file
+    # type=file: Output left cortical ribbon mask
+    out_ribbon: generic/file
+    # type=file: Output cortical ribbon mask
+    rh_ribbon: generic/file
+    # type=file: Output right cortical ribbon mask
+  callables:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set to the `callable` attribute of output fields
+  templates:
+  # dict[str, str] - `output_file_template` values to be provided to output fields
+  requirements:
+  # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
+tests:
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    left_whitelabel:
+    # type=int|default=0: Left white matter label
+    left_ribbonlabel:
+    # type=int|default=0: Left cortical ribbon label
+    right_whitelabel:
+    # type=int|default=0: Right white matter label
+    right_ribbonlabel:
+    # type=int|default=0: Right cortical ribbon label
+    lh_pial:
+    # type=file|default=<undefined>: Implicit input left pial surface
+    rh_pial:
+    # type=file|default=<undefined>: Implicit input right pial surface
+    lh_white:
+    # type=file|default=<undefined>: Implicit input left white matter surface
+    rh_white:
+    # type=file|default=<undefined>: Implicit input right white matter surface
+    aseg:
+    # type=file|default=<undefined>: Implicit aseg.mgz segmentation. Specify a different aseg by using the 'in_aseg' input.
+    subject_id:
+    # type=string|default='subject_id': Subject being processed
+    in_aseg:
+    # type=file|default=<undefined>: Input aseg file for VolumeMask
+    save_ribbon:
+    # type=bool|default=False: option to save just the ribbon for the hemispheres in the format ?h.ribbon.mgz
+    copy_inputs:
+    # type=bool|default=False: If running as a node, set this to True.This will copy the implicit input files to the node directory.
+    subjects_dir:
+    # type=directory|default=<undefined>: subjects directory
+    args:
+    # type=str|default='': Additional parameters to the command
+    environ:
+    # type=dict|default={}: Environment variables
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    left_whitelabel: '2'
+    # type=int|default=0: Left white matter label
+    left_ribbonlabel: '3'
+    # type=int|default=0: Left cortical ribbon label
+    right_whitelabel: '41'
+    # type=int|default=0: Right white matter label
+    right_ribbonlabel: '42'
+    # type=int|default=0: Right cortical ribbon label
+    lh_pial:
+    # type=file|default=<undefined>: Implicit input left pial surface
+    rh_pial:
+    # type=file|default=<undefined>: Implicit input right pial surface
+    lh_white:
+    # type=file|default=<undefined>: Implicit input left white matter surface
+    rh_white:
+    # type=file|default=<undefined>: Implicit input right white matter surface
+    subject_id: '"10335"'
+    # type=string|default='subject_id': Subject being processed
+    save_ribbon: 'True'
+    # type=bool|default=False: option to save just the ribbon for the hemispheres in the format ?h.ribbon.mgz
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+doctests:
+- cmdline: mris_volmask --label_left_ribbon 3 --label_left_white 2 --label_right_ribbon 42 --label_right_white 41 --save_ribbon 10335
+  # str - the expected cmdline output
+  inputs:
+  # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
+  # If the field is of file-format type and the value is None, then the
+  # '.mock()' method of the corresponding class is used instead.
+    left_whitelabel: '2'
+    # type=int|default=0: Left white matter label
+    left_ribbonlabel: '3'
+    # type=int|default=0: Left cortical ribbon label
+    right_whitelabel: '41'
+    # type=int|default=0: Right white matter label
+    right_ribbonlabel: '42'
+    # type=int|default=0: Right cortical ribbon label
+    lh_pial:
+    # type=file|default=<undefined>: Implicit input left pial surface
+    rh_pial:
+    # type=file|default=<undefined>: Implicit input right pial surface
+    lh_white:
+    # type=file|default=<undefined>: Implicit input left white matter surface
+    rh_white:
+    # type=file|default=<undefined>: Implicit input right white matter surface
+    subject_id: '"10335"'
+    # type=string|default='subject_id': Subject being processed
+    save_ribbon: 'True'
+    # type=bool|default=False: option to save just the ribbon for the hemispheres in the format ?h.ribbon.mgz
+  imports:
+  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  directive:
+  # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS
