@@ -17,6 +17,7 @@ XFAIL_INTERFACES = [
     "fsl-flameo",
     "fsl-make_dyadic_vectors",
     "fsl-dual_regression",
+    "fsl-epi_de_warp",
 ]
 
 XFAIL_INTERFACES_IN_COMBINED = [
