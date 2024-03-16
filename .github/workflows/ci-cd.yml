@@ -100,8 +100,8 @@ jobs:
       id: deployable
       if: github.event_name == 'release'
       env:
-        PYPI_API_TOKEN: "${{ secrets.PYPI_API_TOKEN }}"
-      run: if [ -n "$PYPI_API_TOKEN" ]; then echo "DEPLOY=true" >> $GITHUB_OUTPUT; fi
+        PYPI_API_TOKEN: "${{ secrets.PYPI_TOKEN }}"
+      run: if [ -n "$PYPI_TOKEN" ]; then echo "DEPLOY=true" >> $GITHUB_OUTPUT; fi
 
     - name: Upload to PyPI
       if: steps.deployable.outputs.DEPLOY
