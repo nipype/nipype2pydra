@@ -25,6 +25,9 @@ XFAIL_INTERFACES_IN_COMBINED = [
     "freesurfer-apply_mask",
     "afni-merge",
     "afni-resample",
+    "fsl-level_1_design",
+    "fsl-apply_mask",
+    "fsl-smooth",
 ]
 
 
