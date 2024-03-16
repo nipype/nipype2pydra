@@ -13,7 +13,7 @@ import requests
 from operator import itemgetter
 import yaml
 import black.parsing
-import fileformats.core.utils
+import fileformats.core
 import fileformats.core.mixin
 from fileformats.generic import File, Directory
 from fileformats.medimage import Nifti1, NiftiGz, Bval, Bvec
@@ -261,7 +261,7 @@ class NipypeInterface:
         def type2str(tp):
             if tp in non_mime:
                 return tp.__name__
-            return fileformats.core.utils.to_mime(tp, official=False)
+            return fileformats.core.to_mime(tp, official=False)
 
         tests, doctests = self._gen_tests(
             doctest_blocks, input_types, output_types, output_templates
