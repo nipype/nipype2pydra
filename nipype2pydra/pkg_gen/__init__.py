@@ -7,13 +7,14 @@ from collections import defaultdict
 import shutil
 import string
 from pathlib import Path
+import inspect
 import attrs
 from warnings import warn
 import requests
 from operator import itemgetter
 import yaml
 import black.parsing
-import fileformats.core.utils
+import fileformats.core
 import fileformats.core.mixin
 from fileformats.generic import File, Directory
 from fileformats.medimage import Nifti1, NiftiGz, Bval, Bvec
@@ -261,7 +262,7 @@ class NipypeInterface:
         def type2str(tp):
             if tp in non_mime:
                 return tp.__name__
-            return fileformats.core.utils.to_mime(tp, official=False)
+            return fileformats.core.to_mime(tp, official=False)
 
         tests, doctests = self._gen_tests(
             doctest_blocks, input_types, output_types, output_templates
@@ -481,9 +482,10 @@ class NipypeInterface:
                     if ty.get_origin(type_) is list:
                         as_list = True
                         type_ = ty.get_args(type_)[0]
-                    if issubclass(type_, prev_type):
+                    both_classes = inspect.isclass(type_) and inspect.isclass(prev_type)
+                    if both_classes and issubclass(type_, prev_type):
                         combined = type_
-                    elif issubclass(prev_type, type_):
+                    elif both_classes and issubclass(prev_type, type_):
                         combined = prev_type
                     else:
                         if ty.get_origin(prev_type) is ty.Union:
@@ -563,6 +565,7 @@ class NipypeInterface:
 
 def download_tasks_template(output_path: Path):
     """Downloads the latest pydra-template to the output path"""
+    output_path.parent.mkdir(parents=True, exist_ok=True)
 
     release_url = (
         "https://api.github.com/repos/nipype/pydra-tasks-template/releases/latest"
