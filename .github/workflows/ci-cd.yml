@@ -31,7 +31,11 @@ jobs:
     - name: Unset header
       # checkout@v2 adds a header that makes branch protection report errors
       # because the Github action bot is not a collaborator on the repo
-      run: git config --local --unset http.https://github.com/.extraheader
+      run: |
+        git config --local --unset http.https://github.com/.extraheader
+        git config --global init.defaultBranch main
+        git config --global user.email "dummy@email.com"
+        git config --global user.name "Dummy User"
 
     - name: Fetch tags
       run: git fetch --prune --unshallow
