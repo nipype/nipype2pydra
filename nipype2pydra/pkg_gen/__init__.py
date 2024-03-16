@@ -7,6 +7,7 @@ from collections import defaultdict
 import shutil
 import string
 from pathlib import Path
+import inspect
 import attrs
 from warnings import warn
 import requests
@@ -481,9 +482,10 @@ class NipypeInterface:
                     if ty.get_origin(type_) is list:
                         as_list = True
                         type_ = ty.get_args(type_)[0]
-                    if issubclass(type_, prev_type):
+                    both_classes = inspect.isclass(type_) and inspect.isclass(prev_type)
+                    if both_classes and issubclass(type_, prev_type):
                         combined = type_
-                    elif issubclass(prev_type, type_):
+                    elif both_classes and issubclass(prev_type, type_):
                         combined = prev_type
                     else:
                         if ty.get_origin(prev_type) is ty.Union:
