@@ -157,6 +157,7 @@ class InputsConverter(SpecConverter):
     metadata: dict[str, dict[str, Any]], optional
         additional metadata to set on any of the input fields (e.g. out_file: position: 1)
     """
+
     callable_defaults: ty.Dict[str, str] = attrs.field(
         factory=dict,
         converter=default_if_none(factory=dict),  # type: ignore
@@ -403,7 +404,8 @@ class BaseTaskConverter(metaclass=ABCMeta):
         converter=from_dict_to_outputs,
     )
     callables_module: ModuleType = attrs.field(
-        converter=import_module_from_path, default=None,
+        converter=import_module_from_path,
+        default=None,
     )
     tests: ty.List[TestGenerator] = attrs.field(  # type: ignore
         factory=list, converter=from_list_to_tests
@@ -838,7 +840,9 @@ class BaseTaskConverter(metaclass=ABCMeta):
                             else:
                                 assert len(field) == 3
                                 # Attempt to pick a sensible value for field
-                                trait = self.nipype_interface.input_spec.class_traits()[nm]
+                                trait = self.nipype_interface.input_spec.class_traits()[
+                                    nm
+                                ]
                                 if isinstance(trait, traits.trait_types.Enum):
                                     value = trait.values[0]
                                 elif isinstance(trait, traits.trait_types.Range):
@@ -868,7 +872,10 @@ class BaseTaskConverter(metaclass=ABCMeta):
         imports = self.construct_imports(
             nonstd_types,
             spec_str,
-            base={"import pytest", "from nipype2pydra.testing import PassAfterTimeoutWorker"},
+            base={
+                "import pytest",
+                "from nipype2pydra.testing import PassAfterTimeoutWorker",
+            },
         )
         spec_str = "\n".join(imports) + "\n\n" + spec_str
 
@@ -946,6 +953,10 @@ class BaseTaskConverter(metaclass=ABCMeta):
     CONFTEST = """
 # For debugging in IDE's don't catch raised exceptions and let the IDE
 # break at it
+import os
+import pytest
+
+
 if os.getenv("_PYTEST_RAISE", "0") != "0":
 
     @pytest.hookimpl(tryfirst=True)
