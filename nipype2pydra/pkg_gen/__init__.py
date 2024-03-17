@@ -689,7 +689,7 @@ def initialise_task_repo(output_dir, task_template: Path, pkg: str) -> Path:
             continue
         with open(fspath) as f:
             contents = f.read()
-        contents = re.sub(r"(?<![0-9a-zA-Z])CHANGEME(?![0-9a-zA-Z])", pkg, contents)
+        contents = re.sub(r"\bCHANGEME\b", pkg, contents)
         with open(fspath, "w") as f:
             f.write(contents)
 
@@ -790,7 +790,7 @@ def extract_doctest_inputs(
 
 
 def gen_fileformats_module(pkg_formats: ty.Set[str]):
-    code_str = "from fileformats.generic import File"
+    code_str = "from ._version import __version__  # noqa: F401\nfrom fileformats.generic import File"
     for ext in pkg_formats:
         frmt = ext2format_name(ext)
         code_str += f"""
@@ -803,7 +803,8 @@ class {frmt}(File):
 
 
 def gen_fileformats_extras_module(pkg: str, pkg_formats: ty.Set[str]):
-    code_str = """from pathlib import Path
+    code_str = """from ._version import __version__  # noqa: F401
+from pathlib import Path
 import typing as ty
 from random import Random
 from fileformats.core import FileSet
