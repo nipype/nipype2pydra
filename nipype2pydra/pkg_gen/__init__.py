@@ -47,27 +47,30 @@ EXT_SPECIAL_CHARS = tuple((set(string.punctuation) - set(".-")) | set(" "))
 
 
 def ext2format_name(ext: str) -> str:
-    return escape_leading_digits(ext[1:]).capitalize()
+    return escape_leading_digits(ext[1:])
 
 
 def escape_leading_digits(name: str) -> str:
     for k, v in ESCAPE_DIGITS.items():
         if name.startswith(k):
-            name = v + name[1:]
-            return name
-    return name
+            escaped_name = v
+            if len(name) > 1:
+                escaped_name += name[1].upper()
+            escaped_name += name[2:]
+            return escaped_name
+    return name.capitalize()
 
 
 ESCAPE_DIGITS = {
-    "1": "one",
-    "2": "two",
-    "3": "three",
-    "4": "four",
-    "5": "five",
-    "6": "six",
-    "7": "seven",
-    "8": "eight",
-    "9": "nine",
+    "1": "One",
+    "2": "Two",
+    "3": "Three",
+    "4": "Four",
+    "5": "Five",
+    "6": "Six",
+    "7": "Seven",
+    "8": "Eight",
+    "9": "Nine",
 }
 
 
@@ -429,7 +432,11 @@ class NipypeInterface:
                         return File
                     possible_formats = []
                     for frmt in fileformats.core.FileSet.all_formats:
-                        if not frmt.ext or None in frmt.alternate_exts:
+                        if (
+                            not frmt.ext
+                            or None in frmt.alternate_exts
+                            or "-" in frmt.namespace
+                        ):
                             continue
                         if frmt.matching_exts(fspath):
                             possible_formats.append(frmt)
@@ -483,10 +490,18 @@ class NipypeInterface:
                         as_list = True
                         type_ = ty.get_args(type_)[0]
                     both_classes = inspect.isclass(type_) and inspect.isclass(prev_type)
-                    if both_classes and issubclass(type_, prev_type):
+                    if type_ == prev_type:
+                        combined = type_
+                    elif both_classes and issubclass(type_, prev_type):
                         combined = type_
                     elif both_classes and issubclass(prev_type, type_):
                         combined = prev_type
+                    elif (
+                        isinstance(type_, str)
+                        and prev_type is File
+                        and type_.startswith("fileformats.")
+                    ):
+                        combined = type_
                     else:
                         if ty.get_origin(prev_type) is ty.Union:
                             prev_types = ty.get_args(prev_type)
@@ -674,7 +689,7 @@ def initialise_task_repo(output_dir, task_template: Path, pkg: str) -> Path:
             continue
         with open(fspath) as f:
             contents = f.read()
-        contents = re.sub(r"(?<![0-9a-zA-Z])CHANGEME(?![0-9a-zA-Z])", pkg, contents)
+        contents = re.sub(r"\bCHANGEME\b", pkg, contents)
         with open(fspath, "w") as f:
             f.write(contents)
 
@@ -775,7 +790,7 @@ def extract_doctest_inputs(
 
 
 def gen_fileformats_module(pkg_formats: ty.Set[str]):
-    code_str = "from fileformats.generic import File"
+    code_str = "from ._version import __version__  # noqa: F401\nfrom fileformats.generic import File"
     for ext in pkg_formats:
         frmt = ext2format_name(ext)
         code_str += f"""
@@ -788,7 +803,8 @@ class {frmt}(File):
 
 
 def gen_fileformats_extras_module(pkg: str, pkg_formats: ty.Set[str]):
-    code_str = """from pathlib import Path
+    code_str = """from ._version import __version__  # noqa: F401
+from pathlib import Path
 import typing as ty
 from random import Random
 from fileformats.core import FileSet

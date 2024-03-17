@@ -62,7 +62,7 @@ outputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    out_file: medimage-freesurfer/avg_curv
+    out_file: generic/file
     # type=file: File containing a surface-worth of per-vertex values, saved in 'curvature' format.
     # type=file|default=<undefined>: File containing a surface-worth of per-vertex values, saved in 'curvature' format.
   callables:

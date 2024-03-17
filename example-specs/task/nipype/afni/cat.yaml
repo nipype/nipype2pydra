@@ -38,7 +38,7 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    in_files: medimage-afni/oned+list-of
+    in_files: medimage-afni/one-d+list-of
     # type=list|default=[]: 
     out_file: Path
     # type=file: output file
@@ -59,7 +59,7 @@ outputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    out_file: medimage-afni/oned
+    out_file: medimage-afni/one-d
     # type=file: output file
     # type=file|default='catout.1d': output (concatenated) file name
   callables:

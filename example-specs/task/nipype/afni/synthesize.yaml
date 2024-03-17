@@ -40,7 +40,7 @@ inputs:
   # passed to the field in the automatically generated unittests.
     cbucket: medimage/nifti1
     # type=file|default=<undefined>: Read the dataset output from 3dDeconvolve via the '-cbucket' option.
-    matrix: medimage-afni/oned
+    matrix: medimage-afni/one-d
     # type=file|default=<undefined>: Read the matrix output from 3dDeconvolve via the '-x1D' option.
     out_file: Path
     # type=file: output file

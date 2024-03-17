@@ -1,13 +1,13 @@
 from fileformats.generic import File
 
 
-class Oned(File):
+class OneD(File):
     ext = ".1D"
     alternate_exts = (".1d",)
     binary = True
 
 
-class Threed(File):
+class ThreeD(File):
     ext = ".3D"
     binary = True
 

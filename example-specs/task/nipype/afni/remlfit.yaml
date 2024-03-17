@@ -60,7 +60,7 @@ inputs:
     # type=file|default=<undefined>: filename of 3D mask dataset; only data time series from within the mask will be analyzed; results for voxels outside the mask will be set to zero.
     matim: generic/file
     # type=file|default=<undefined>: read a standard file as the matrix. You can use only Col as a name in GLTs with these nonstandard matrix input methods, since the other names come from the 'matrix' file. These mutually exclusive options are ignored if 'matrix' is used.
-    matrix: medimage-afni/oned
+    matrix: medimage-afni/one-d
     # type=file|default=<undefined>: the design matrix file, which should have been output from Deconvolve via the 'x1D' option
     obeta: Path
     # type=file: dataset for beta weights from the OLSQ estimation (if generated)

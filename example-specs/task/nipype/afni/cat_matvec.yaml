@@ -54,7 +54,7 @@ outputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    out_file: medimage-afni/oned
+    out_file: medimage-afni/one-d
     # type=file: output file
     # type=file|default=<undefined>: File to write concattenated matvecs to
   callables:

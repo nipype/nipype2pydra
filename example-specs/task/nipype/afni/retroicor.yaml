@@ -52,7 +52,7 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    card: medimage-afni/oned
+    card: medimage-afni/one-d
     # type=file|default=<undefined>: 1D cardiac data file for cardiac correction
     cardphase: generic/file
     # type=file|default=<undefined>: Filename for 1D cardiac phase output
@@ -61,7 +61,7 @@ inputs:
     out_file: Path
     # type=file: output file
     # type=file|default=<undefined>: output image file name
-    resp: medimage-afni/oned
+    resp: medimage-afni/one-d
     # type=file|default=<undefined>: 1D respiratory waveform data for correction
     respphase: generic/file
     # type=file|default=<undefined>: Filename for 1D resp phase output
