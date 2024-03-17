@@ -39,7 +39,7 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    ideal_file: medimage-afni/oned
+    ideal_file: medimage-afni/one-d
     # type=file|default=<undefined>: ideal time series file name
     in_file: medimage/nifti1
     # type=file|default=<undefined>: input file to 3dfim+

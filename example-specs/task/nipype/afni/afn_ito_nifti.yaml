@@ -36,7 +36,7 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    in_file: medimage-afni/threed
+    in_file: medimage-afni/three-d
     # type=file|default=<undefined>: input file to 3dAFNItoNIFTI
     out_file: Path
     # type=file: output file

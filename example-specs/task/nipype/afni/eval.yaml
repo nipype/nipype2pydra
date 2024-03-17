@@ -39,9 +39,9 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    in_file_a: medimage-afni/oned
+    in_file_a: medimage-afni/one-d
     # type=file|default=<undefined>: input file to 1deval
-    in_file_b: medimage-afni/oned
+    in_file_b: medimage-afni/one-d
     # type=file|default=<undefined>: operand file to 1deval
     in_file_c: generic/file
     # type=file|default=<undefined>: operand file to 1deval
@@ -66,7 +66,7 @@ outputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    out_file: medimage-afni/oned
+    out_file: medimage-afni/one-d
     # type=file: output file
     # type=file|default=<undefined>: output image file name
   callables:

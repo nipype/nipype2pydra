@@ -86,10 +86,10 @@ outputs:
     md1d_file: generic/file
     # type=file: max displacement info file
     # type=file|default=<undefined>: max displacement output file
-    oned_file: medimage-afni/oned
+    oned_file: medimage-afni/one-d
     # type=file: movement parameters info file
     # type=file|default=<undefined>: 1D movement parameters output file
-    oned_matrix_save: medimage-afni/oned
+    oned_matrix_save: medimage-afni/one-d
     # type=file: matrix transformation from base to input
     # type=file|default=<undefined>: Save the matrix transformation
     out_file: medimage-afni/r1

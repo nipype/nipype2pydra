@@ -39,7 +39,7 @@ inputs:
     # type=file|default=<undefined>: output filename prefix
     xset: medimage/nifti1
     # type=file|default=<undefined>: 3d+time dataset input
-    y_1d: medimage-afni/oned
+    y_1d: medimage-afni/one-d
     # type=file|default=<undefined>: 1D time series file input
   callable_defaults:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
