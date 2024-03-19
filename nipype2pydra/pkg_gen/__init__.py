@@ -715,7 +715,7 @@ def initialise_task_repo(output_dir, task_template: Path, pkg: str) -> Path:
 
     # Replace "CHANGEME" string with pkg name
     for fspath in pkg_dir.glob("**/*"):
-        if fspath.is_dir():
+        if fspath.is_dir() or fspath.suffix in (".pyc", ".pyo", ".pyd"):
             continue
         with open(fspath) as f:
             contents = f.read()
