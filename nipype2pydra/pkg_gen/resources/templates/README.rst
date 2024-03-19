@@ -71,6 +71,14 @@ Contributing to this package
 Developer installation
 ~~~~~~~~~~~~~~~~~~~~~~
 
+Install the `fileformats <https://arcanaframework.github.io/fileformats/>`__ packages
+corresponding to AFNI specific file formats
+
+
+.. code-block::
+
+   $ pip install -e ./related-packages/fileformats[dev]
+   $ pip install -e ./related-packages/fileformats-extras[dev]
 
 Install repo in developer mode from the source directory and install pre-commit to
 ensure consistent code-style and quality.
@@ -78,7 +86,7 @@ ensure consistent code-style and quality.
 .. code-block::
 
    $ pip install -e .[test,dev]
-$ pre-commit install
+   $ pre-commit install
 
 Next install the requirements for running the auto-conversion script and generate the
 Pydra task interfaces from their Nipype counterparts
@@ -93,7 +101,8 @@ The run the conversion script to convert Nipype interfaces to Pydra
 
    $ nipype-auto-conv/generate
 
-## Methodology
+Methodology
+~~~~~~~~~~~
 
 The development of this package is expected to have two phases
 

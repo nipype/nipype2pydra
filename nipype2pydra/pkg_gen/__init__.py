@@ -641,9 +641,33 @@ def initialise_task_repo(output_dir, task_template: Path, pkg: str) -> Path:
         gh_workflows_dir / "ci-cd.yaml",
     )
 
+    related_pkgs_dir = pkg_dir / "related-packages"
+    shutil.copytree(TEMPLATES_DIR / "related-packages", related_pkgs_dir)
+
     # Add modified README
     os.unlink(pkg_dir / "README.md")
-    shutil.copy(TEMPLATES_DIR / "README.rst", pkg_dir / "README.rst")
+    with open(TEMPLATES_DIR / "README.rst") as f:
+        readme_rst = f.read()
+    readme_rst = readme_rst.replace("=" * 31, "=" * (23 + len(pkg)))
+    with open(pkg_dir / "README.rst", "w") as f:
+        f.write(readme_rst)
+
+    fileformat_readme_path = related_pkgs_dir / "fileformats" / "README.rst"
+    with open(fileformat_readme_path) as f:
+        ff_readme_rst = f.read()
+    ff_readme_rst = ff_readme_rst.replace("=" * 29, "=" * (27 + len(pkg)))
+    with open(fileformat_readme_path, "w") as f:
+        f.write(ff_readme_rst)
+
+    fileformat_extras_readme_path = (
+        related_pkgs_dir / "fileformats-extras" / "README.rst"
+    )
+    with open(fileformat_extras_readme_path) as f:
+        ffe_readme_rst = f.read()
+    ffe_readme_rst = ffe_readme_rst.replace("=" * 36, "=" * (34 + len(pkg)))
+    with open(fileformat_extras_readme_path, "w") as f:
+        f.write(ffe_readme_rst)
+
     with open(pkg_dir / "pyproject.toml") as f:
         pyproject_toml = f.read()
     pyproject_toml = pyproject_toml.replace("README.md", "README.rst")
