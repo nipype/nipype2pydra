@@ -58,7 +58,7 @@ if os.getenv("_PYTEST_RAISE", "0") != "0":
         raise excinfo.value
 
     def pytest_configure(config):
-        config.option.capture = 'no'  # allow print statements to show up in the console    
+        config.option.capture = "no"  # allow print statements to show up in the console
         config.option.log_cli = True  # show log messages in the console
         config.option.log_level = "INFO"  # set the log level to INFO
 
@@ -70,8 +70,3 @@ else:
 @pytest.fixture
 def catch_cli_exceptions():
     return CATCH_CLI_EXCEPTIONS
-
-
-def show_cli_trace(result):
-    "Used in testing to show traceback of CLI output"
-    return "".join(traceback.format_exception(*result.exc_info))
