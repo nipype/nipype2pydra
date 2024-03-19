@@ -12,6 +12,7 @@ import attrs
 from warnings import warn
 import requests
 from operator import itemgetter
+from traits.trait_type import TraitType
 import yaml
 import black.parsing
 import fileformats.core
@@ -161,7 +162,12 @@ class NipypeInterface:
             if inpt_name in ("trait_added", "trait_modified"):
                 continue
             inpt_desc = inpt.desc.replace("\n", " ") if inpt.desc else ""
-            inpt_mdata = f"type={type(inpt.trait_type).__name__.lower()}|default={inpt.default!r}"
+            input_default = inpt.default
+            if isinstance(input_default, tuple) and isinstance(
+                input_default[0], TraitType
+            ):
+                input_default = None
+            inpt_mdata = f"type={type(inpt.trait_type).__name__.lower()}|default={input_default!r}"
             if isinstance(inpt.trait_type, nipype.interfaces.base.core.traits.Enum):
                 inpt_mdata += f"|allowed[{','.join(sorted(repr(v) for v in inpt.trait_type.values))}]"
             parsed.input_helps[inpt_name] = f"{inpt_mdata}: {inpt_desc}"
@@ -821,6 +827,23 @@ from fileformats.core import FileSet, SampleFileGenerator
 @FileSet.generate_sample_data.register
 def gen_sample_{frmt.lower()}_data({frmt.lower()}: {frmt}, generator: SampleFileGenerator) -> ty.Iterable[Path]:
     raise NotImplementedError
+"""
+    return code_str
+
+
+def gen_fileformats_extras_tests(pkg: str, pkg_formats: ty.Set[str]):
+    code_str = f"import pytest\nfrom fileformats.medimage_{pkg} import (\n"
+    for ext in pkg_formats:
+        frmt = ext2format_name(ext)
+        code_str += f"    {frmt},\n"
+    code_str += ")\n\n"
+    for ext in pkg_formats:
+        frmt = ext2format_name(ext)
+        code_str += f"""
+
+@pytest.mark.xfail(reason="generate_sample_data not implemented")
+def test_generate_sample_{frmt.lower()}_data():
+    assert isinstance({frmt}.sample(), {frmt})
 """
     return code_str
 

@@ -18,12 +18,17 @@ from nipype2pydra.pkg_gen import (
     NipypeInterface,
     gen_fileformats_module,
     gen_fileformats_extras_module,
+    gen_fileformats_extras_tests,
 )
 from nipype2pydra.cli.base import cli
 
 
 DEFAULT_INTERFACE_SPEC = (
-    Path(__file__).parent.parent / "pkg_gen" / "resources" / "specs" / "nipype-interfaces-to-import.yaml"
+    Path(__file__).parent.parent
+    / "pkg_gen"
+    / "resources"
+    / "specs"
+    / "nipype-interfaces-to-import.yaml"
 )
 
 
@@ -33,7 +38,11 @@ DEFAULT_INTERFACE_SPEC = (
 @click.argument("output_dir", type=click.Path(path_type=Path))
 @click.option("--work-dir", type=click.Path(path_type=Path), default=None)
 @click.option("--task-template", type=click.Path(path_type=Path), default=None)
-@click.option("--packages-to-import", type=click.Path(path_type=Path), default=DEFAULT_INTERFACE_SPEC)
+@click.option(
+    "--packages-to-import",
+    type=click.Path(path_type=Path),
+    default=DEFAULT_INTERFACE_SPEC,
+)
 @click.option("--single-interface", type=str, nargs=2, default=None)
 @click.option(
     "--example-packages",
@@ -118,9 +127,7 @@ def pkg_gen(
                 parsed = NipypeInterface.parse(nipype_interface, pkg, base_package)
 
                 spec_name = to_snake_case(interface)
-                yaml_spec = (
-                    parsed.generate_yaml_spec()
-                )
+                yaml_spec = parsed.generate_yaml_spec()
                 unmatched_formats.extend(parsed.unmatched_formats)
                 ambiguous_formats.extend(parsed.ambiguous_formats)
                 pkg_formats.update(parsed.pkg_formats)
@@ -156,6 +163,19 @@ def pkg_gen(
             "w",
         ) as f:
             f.write(gen_fileformats_extras_module(pkg, pkg_formats))
+
+        tests_dir = (
+            pkg_dir
+            / "related-packages"
+            / "fileformats-extras"
+            / "fileformats"
+            / "extras"
+            / f"medimage_{pkg}"
+            / "tests"
+        )
+        tests_dir.mkdir()
+        with open(tests_dir / "test_generate_sample_data.py", "w") as f:
+            f.write(gen_fileformats_extras_tests(pkg, pkg_formats))
 
         sp.check_call("git init", shell=True, cwd=pkg_dir)
         sp.check_call("git add --all", shell=True, cwd=pkg_dir)
