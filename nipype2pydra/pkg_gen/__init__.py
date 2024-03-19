@@ -807,7 +807,7 @@ def gen_fileformats_extras_module(pkg: str, pkg_formats: ty.Set[str]):
 from pathlib import Path
 import typing as ty
 from random import Random
-from fileformats.core import FileSet
+from fileformats.core import FileSet, SampleFileGenerator
 """
     code_str += f"from fileformats.medimage_{pkg} import (\n"
     for ext in pkg_formats:
@@ -819,7 +819,7 @@ from fileformats.core import FileSet
         code_str += f"""
 
 @FileSet.generate_sample_data.register
-def gen_sample_{frmt.lower()}_data({frmt.lower()}: {frmt}, dest_dir: Path, seed: ty.Union[int, Random] = 0, stem: ty.Optional[str] = None) -> ty.Iterable[Path]:
+def gen_sample_{frmt.lower()}_data({frmt.lower()}: {frmt}, generator: SampleFileGenerator) -> ty.Iterable[Path]:
     raise NotImplementedError
 """
     return code_str
