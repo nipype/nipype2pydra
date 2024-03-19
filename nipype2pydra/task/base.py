@@ -913,6 +913,8 @@ class BaseTaskConverter(metaclass=ABCMeta):
                 else:
                     if isinstance(val, str):
                         val = f'"{val}"'
+                if val is None and is_fileset(tp):
+                    val = f"{tp.__name__}.mock()"
                 if val is not attrs.NOTHING:
                     doctest_str += f"    >>> task.inputs.{nm} = {val}\n"
             doctest_str += "    >>> task.cmdline\n"
