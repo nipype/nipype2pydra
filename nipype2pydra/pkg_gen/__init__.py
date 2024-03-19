@@ -643,6 +643,7 @@ def initialise_task_repo(output_dir, task_template: Path, pkg: str) -> Path:
 
     related_pkgs_dir = pkg_dir / "related-packages"
     shutil.copytree(TEMPLATES_DIR / "related-packages", related_pkgs_dir)
+    os.rename(related_pkgs_dir / "conftest_.py", related_pkgs_dir / "conftest.py")
 
     # Add modified README
     os.unlink(pkg_dir / "README.md")
