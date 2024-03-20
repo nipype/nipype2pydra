@@ -12,6 +12,7 @@ import attrs
 from warnings import warn
 import requests
 from operator import itemgetter
+from traits.trait_type import TraitType
 import yaml
 import black.parsing
 import fileformats.core
@@ -161,7 +162,12 @@ class NipypeInterface:
             if inpt_name in ("trait_added", "trait_modified"):
                 continue
             inpt_desc = inpt.desc.replace("\n", " ") if inpt.desc else ""
-            inpt_mdata = f"type={type(inpt.trait_type).__name__.lower()}|default={inpt.default!r}"
+            input_default = inpt.default
+            if isinstance(input_default, tuple) and isinstance(
+                input_default[0], TraitType
+            ):
+                input_default = None
+            inpt_mdata = f"type={type(inpt.trait_type).__name__.lower()}|default={input_default!r}"
             if isinstance(inpt.trait_type, nipype.interfaces.base.core.traits.Enum):
                 inpt_mdata += f"|allowed[{','.join(sorted(repr(v) for v in inpt.trait_type.values))}]"
             parsed.input_helps[inpt_name] = f"{inpt_mdata}: {inpt_desc}"
@@ -635,9 +641,34 @@ def initialise_task_repo(output_dir, task_template: Path, pkg: str) -> Path:
         gh_workflows_dir / "ci-cd.yaml",
     )
 
+    related_pkgs_dir = pkg_dir / "related-packages"
+    shutil.copytree(TEMPLATES_DIR / "related-packages", related_pkgs_dir)
+    os.rename(related_pkgs_dir / "conftest_.py", related_pkgs_dir / "conftest.py")
+
     # Add modified README
     os.unlink(pkg_dir / "README.md")
-    shutil.copy(TEMPLATES_DIR / "README.rst", pkg_dir / "README.rst")
+    with open(TEMPLATES_DIR / "README.rst") as f:
+        readme_rst = f.read()
+    readme_rst = readme_rst.replace("=" * 31, "=" * (23 + len(pkg)))
+    with open(pkg_dir / "README.rst", "w") as f:
+        f.write(readme_rst)
+
+    fileformat_readme_path = related_pkgs_dir / "fileformats" / "README.rst"
+    with open(fileformat_readme_path) as f:
+        ff_readme_rst = f.read()
+    ff_readme_rst = ff_readme_rst.replace("=" * 29, "=" * (21 + len(pkg)))
+    with open(fileformat_readme_path, "w") as f:
+        f.write(ff_readme_rst)
+
+    fileformat_extras_readme_path = (
+        related_pkgs_dir / "fileformats-extras" / "README.rst"
+    )
+    with open(fileformat_extras_readme_path) as f:
+        ffe_readme_rst = f.read()
+    ffe_readme_rst = ffe_readme_rst.replace("=" * 36, "=" * (28 + len(pkg)))
+    with open(fileformat_extras_readme_path, "w") as f:
+        f.write(ffe_readme_rst)
+
     with open(pkg_dir / "pyproject.toml") as f:
         pyproject_toml = f.read()
     pyproject_toml = pyproject_toml.replace("README.md", "README.rst")
@@ -685,7 +716,7 @@ def initialise_task_repo(output_dir, task_template: Path, pkg: str) -> Path:
 
     # Replace "CHANGEME" string with pkg name
     for fspath in pkg_dir.glob("**/*"):
-        if fspath.is_dir():
+        if fspath.is_dir() or fspath.suffix in (".pyc", ".pyo", ".pyd"):
             continue
         with open(fspath) as f:
             contents = f.read()
@@ -807,7 +838,7 @@ def gen_fileformats_extras_module(pkg: str, pkg_formats: ty.Set[str]):
 from pathlib import Path
 import typing as ty
 from random import Random
-from fileformats.core import FileSet
+from fileformats.core import FileSet, SampleFileGenerator
 """
     code_str += f"from fileformats.medimage_{pkg} import (\n"
     for ext in pkg_formats:
@@ -819,8 +850,25 @@ from fileformats.core import FileSet
         code_str += f"""
 
 @FileSet.generate_sample_data.register
-def gen_sample_{frmt.lower()}_data({frmt.lower()}: {frmt}, dest_dir: Path, seed: ty.Union[int, Random] = 0, stem: ty.Optional[str] = None) -> ty.Iterable[Path]:
+def gen_sample_{frmt.lower()}_data({frmt.lower()}: {frmt}, generator: SampleFileGenerator) -> ty.Iterable[Path]:
     raise NotImplementedError
+"""
+    return code_str
+
+
+def gen_fileformats_extras_tests(pkg: str, pkg_formats: ty.Set[str]):
+    code_str = f"import pytest\nfrom fileformats.medimage_{pkg} import (\n"
+    for ext in pkg_formats:
+        frmt = ext2format_name(ext)
+        code_str += f"    {frmt},\n"
+    code_str += ")\n\n"
+    for ext in pkg_formats:
+        frmt = ext2format_name(ext)
+        code_str += f"""
+
+@pytest.mark.xfail(reason="generate_sample_data not implemented")
+def test_generate_sample_{frmt.lower()}_data():
+    assert isinstance({frmt}.sample(), {frmt})
 """
     return code_str
 

@@ -2,7 +2,7 @@ from importlib import import_module
 import yaml
 import pytest
 import logging
-from conftest import show_cli_trace
+from nipype2pydra.utils import show_cli_trace
 from traceback import format_exc
 from nipype2pydra.cli.task import task as task_cli
 from nipype2pydra.utils import add_to_sys_path, add_exc_note, INBUILT_NIPYPE_TRAIT_NAMES

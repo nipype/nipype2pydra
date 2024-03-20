@@ -82,7 +82,7 @@ tests:
     show_censor_count:
     # type=bool|default=False: display the total number of censored TRs  Note : if input is a valid xmat.1D dataset, then the count will come from the header.  Otherwise the input is assumed to be a binary censorfile, and zeros are simply counted.
     censor_motion:
-    # type=tuple|default=(<traits.trait_types.Float object at 0x115116ed0>, <nipype.interfaces.base.traits_extension.File object at 0x115116f90>): Tuple of motion limit and outfile prefix. need to also set set_nruns -r set_run_lengths
+    # type=tuple|default=None: Tuple of motion limit and outfile prefix. need to also set set_nruns -r set_run_lengths
     censor_prev_TR:
     # type=bool|default=False: for each censored TR, also censor previous
     show_trs_uncensored:

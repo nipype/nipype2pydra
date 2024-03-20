@@ -1,5 +1,5 @@
 from nipype2pydra.cli.pkg_gen import pkg_gen
-from conftest import show_cli_trace
+from nipype2pydra.utils import show_cli_trace
 
 
 def test_pkg_gen(cli_runner, tmp_path):
