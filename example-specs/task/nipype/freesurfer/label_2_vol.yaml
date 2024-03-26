@@ -178,11 +178,11 @@ doctests:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
   # If the field is of file-format type and the value is None, then the
   # '.mock()' method of the corresponding class is used instead.
-    label_file:
+    label_file: '"cortex.label"'
     # type=inputmultiobject|default=[]: list of label files
-    template_file:
+    template_file: '"structural.nii"'
     # type=file|default=<undefined>: output template volume
-    reg_file:
+    reg_file: '"register.dat"'
     # type=file|default=<undefined>: tkregister style matrix VolXYZ = R*LabelXYZ
     fill_thresh: '0.5'
     # type=range|default=0.0: thresh : between 0 and 1

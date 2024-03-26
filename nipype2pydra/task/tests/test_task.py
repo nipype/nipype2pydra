@@ -2,10 +2,16 @@ from importlib import import_module
 import yaml
 import pytest
 import logging
-from nipype2pydra.utils import show_cli_trace
+import io
+import contextlib
 from traceback import format_exc
 from nipype2pydra.cli.task import task as task_cli
-from nipype2pydra.utils import add_to_sys_path, add_exc_note, INBUILT_NIPYPE_TRAIT_NAMES
+from nipype2pydra.utils import (
+    add_to_sys_path,
+    add_exc_note,
+    INBUILT_NIPYPE_TRAIT_NAMES,
+    show_cli_trace,
+)
 from conftest import EXAMPLE_TASKS_DIR
 
 
@@ -120,6 +126,23 @@ def test_task_conversion(task_spec_file, cli_runner, work_dir, gen_test_conftest
                 )
             )
 
+        # Run doctests
+        # logging.info("Running doctests for %s", output_module_path)
+        # with add_to_sys_path(pkg_root):
+        #     with contextlib.redirect_stdout(io.StringIO()) as f:
+        #         exit_code = pytest.main(
+        #             [
+        #                 str(
+        #                     pkg_root.joinpath(
+        #                         *output_module_path.split(".")
+        #                     ).with_suffix(".py")
+        #                 ),
+        #                 "--doctest-modules",
+        #                 "--ignore-glob=test_*.py",
+        #             ]
+        #         )
+
+        # assert not exit_code, f.getvalue()
         # tests_fspath = pkg_root.joinpath(*output_module_path.split(".")).parent / "tests"
 
         # # logging.info("Running generated tests for %s", output_module_path)

@@ -146,9 +146,9 @@ doctests:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
   # If the field is of file-format type and the value is None, then the
   # '.mock()' method of the corresponding class is used instead.
-    xset:
+    xset: '"u_rc1s1_Template.nii"'
     # type=file|default=<undefined>: input xset
-    yset:
+    yset: '"u_rc1s2_Template.nii"'
     # type=file|default=<undefined>: input yset
     out_file: '"functional_tcorrelate.nii.gz"'
     # type=file: output file

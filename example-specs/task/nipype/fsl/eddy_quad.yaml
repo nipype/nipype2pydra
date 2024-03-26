@@ -170,7 +170,7 @@ doctests:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
   # If the field is of file-format type and the value is None, then the
   # '.mock()' method of the corresponding class is used instead.
-    param_file:
+    param_file: '"epi_acqp.txt"'
     # type=file|default=<undefined>: File containing acquisition parameters
     output_dir: '"eddy_corrected.qc"'
     # type=str|default='': Output directory - default = '<base_name>.qc'

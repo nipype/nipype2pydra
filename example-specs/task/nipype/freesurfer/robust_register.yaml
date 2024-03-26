@@ -222,9 +222,9 @@ doctests:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
   # If the field is of file-format type and the value is None, then the
   # '.mock()' method of the corresponding class is used instead.
-    source_file:
+    source_file: '"structural.nii"'
     # type=file|default=<undefined>: volume to be registered
-    target_file:
+    target_file: '"T1.nii"'
     # type=file|default=<undefined>: target volume for the registration
     auto_sens: 'True'
     # type=bool|default=False: auto-detect good sensitivity

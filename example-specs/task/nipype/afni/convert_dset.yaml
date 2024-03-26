@@ -133,7 +133,7 @@ doctests:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
   # If the field is of file-format type and the value is None, then the
   # '.mock()' method of the corresponding class is used instead.
-    in_file:
+    in_file: '"lh.pial_converted.gii"'
     # type=file|default=<undefined>: input file to ConvertDset
     out_type: '"niml_asc"'
     # type=enum|default='niml'|allowed['1D','1Dp','1Dpt','gii','gii_asc','gii_b64','gii_b64gz','niml','niml_asc','niml_bi']: output type

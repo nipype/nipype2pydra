@@ -138,9 +138,9 @@ doctests:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
   # If the field is of file-format type and the value is None, then the
   # '.mock()' method of the corresponding class is used instead.
-    xset:
+    xset: '"u_rc1s1_Template.nii"'
     # type=file|default=<undefined>: 3d+time dataset input
-    y_1d:
+    y_1d: '"seed.1D"'
     # type=file|default=<undefined>: 1D time series file input
   imports:
   # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item

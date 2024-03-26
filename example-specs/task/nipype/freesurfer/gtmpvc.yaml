@@ -345,11 +345,11 @@ doctests:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
   # If the field is of file-format type and the value is None, then the
   # '.mock()' method of the corresponding class is used instead.
-    in_file:
+    in_file: '"sub-01_ses-baseline_pet.nii.gz"'
     # type=file|default=<undefined>: input volume - source data to pvc
-    segmentation:
+    segmentation: '"gtmseg.mgz"'
     # type=file|default=<undefined>: segfile : anatomical segmentation to define regions for GTM
-    reg_file:
+    reg_file: '"sub-01_ses-baseline_pet_mean_reg.lta"'
     # type=file|default=<undefined>: LTA registration file that maps PET to anatomical
     pvc_dir: '"pvc"'
     # type=directory: output directory
@@ -379,9 +379,9 @@ doctests:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
   # If the field is of file-format type and the value is None, then the
   # '.mock()' method of the corresponding class is used instead.
-    in_file:
+    in_file: '"sub-01_ses-baseline_pet.nii.gz"'
     # type=file|default=<undefined>: input volume - source data to pvc
-    segmentation:
+    segmentation: '"gtmseg.mgz"'
     # type=file|default=<undefined>: segfile : anatomical segmentation to define regions for GTM
     regheader: 'True'
     # type=bool|default=False: assume input and seg share scanner space

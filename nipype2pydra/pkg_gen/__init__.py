@@ -549,7 +549,7 @@ class NipypeInterface:
                         DocTestGenerator,
                         {
                             "cmdline": cmdline,
-                            "inputs": copy(test_inpts),
+                            "inputs": copy(inpts),
                             "imports": imports,
                             "directive": directive,
                         },
@@ -653,6 +653,11 @@ def initialise_task_repo(output_dir, task_template: Path, pkg: str) -> Path:
     with open(pkg_dir / "README.rst", "w") as f:
         f.write(readme_rst)
 
+    with open(pkg_dir / "AUTHORS", "w") as f:
+        f.write("# Enter list of names and emails of contributors to this package")
+
+    shutil.copyfile(TEMPLATES_DIR / "NOTICE", pkg_dir / "NOTICE")
+
     fileformat_readme_path = related_pkgs_dir / "fileformats" / "README.rst"
     with open(fileformat_readme_path) as f:
         ff_readme_rst = f.read()
@@ -677,6 +682,9 @@ def initialise_task_repo(output_dir, task_template: Path, pkg: str) -> Path:
     )
     with open(pkg_dir / "pyproject.toml", "w") as f:
         f.write(pyproject_toml)
+
+    for tool_path in (TEMPLATES_DIR / "tools").iterdir():
+        shutil.copyfile(tool_path, pkg_dir / tool_path.name)
 
     # Add "pydra.tasks.<pkg>.auto to gitignore"
     with open(pkg_dir / ".gitignore", "a") as f:
@@ -720,7 +728,7 @@ def initialise_task_repo(output_dir, task_template: Path, pkg: str) -> Path:
             continue
         with open(fspath) as f:
             contents = f.read()
-        contents = re.sub(r"\bCHANGEME\b", pkg, contents)
+        contents = contents.replace("CHANGEME", pkg)
         with open(fspath, "w") as f:
             f.write(contents)
 

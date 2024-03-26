@@ -187,7 +187,7 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     subject_id: '"me"'
     # type=str|default='': freesurfer subject id
-    source_file:
+    source_file: '"structural.nii"'
     # type=file|default=<undefined>: source file to be registered
     init: '"header"'
     # type=enum|default='coreg'|allowed['best','coreg','fsl','header','rr','spm']: initialize registration with mri_coreg, spm, fsl, or header

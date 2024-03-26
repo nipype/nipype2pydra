@@ -163,9 +163,9 @@ doctests:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
   # If the field is of file-format type and the value is None, then the
   # '.mock()' method of the corresponding class is used instead.
-    in_file:
+    in_file: '"functional.nii"'
     # type=file|default=<undefined>: input file to 3dECM
-    mask:
+    mask: '"mask.nii"'
     # type=file|default=<undefined>: mask file to mask input data
     sparsity: '0.1 # keep top 0.1% of connections'
     # type=float|default=0.0: only take the top percent of connections

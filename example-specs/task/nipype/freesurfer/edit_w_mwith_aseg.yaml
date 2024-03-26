@@ -143,11 +143,11 @@ doctests:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
   # If the field is of file-format type and the value is None, then the
   # '.mock()' method of the corresponding class is used instead.
-    in_file:
+    in_file: '"T1.mgz"'
     # type=file|default=<undefined>: Input white matter segmentation file
-    brain_file:
+    brain_file: '"norm.mgz"'
     # type=file|default=<undefined>: Input brain/T1 file
-    seg_file:
+    seg_file: '"aseg.mgz"'
     # type=file|default=<undefined>: Input presurf segmentation file
     out_file: '"wm.asegedit.mgz"'
     # type=file: Output edited WM file

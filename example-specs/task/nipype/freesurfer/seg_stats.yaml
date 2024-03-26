@@ -242,7 +242,7 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     annot: ("PWS04", "lh", "aparc")
     # type=tuple|default=('', 'lh', ''): subject hemi parc : use surface parcellation
-    in_file:
+    in_file: '"functional.nii"'
     # type=file|default=<undefined>: Use the segmentation to report stats on this volume
     subjects_dir: '"."'
     # type=directory|default=<undefined>: subjects directory

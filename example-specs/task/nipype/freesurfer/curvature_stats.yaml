@@ -183,11 +183,11 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     hemisphere: '"lh"'
     # type=enum|default='lh'|allowed['lh','rh']: Hemisphere being processed
-    curvfile1:
+    curvfile1: '"lh.pial"'
     # type=file|default=<undefined>: Input file for CurvatureStats
-    curvfile2:
+    curvfile2: '"lh.pial"'
     # type=file|default=<undefined>: Input file for CurvatureStats
-    surface:
+    surface: '"lh.pial"'
     # type=file|default=<undefined>: Specify surface file for CurvatureStats
     out_file: '"lh.curv.stats"'
     # type=file: Output curvature stats file

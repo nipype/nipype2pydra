@@ -143,9 +143,9 @@ doctests:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
   # If the field is of file-format type and the value is None, then the
   # '.mock()' method of the corresponding class is used instead.
-    in_phase:
+    in_phase: '"phase.nii"'
     # type=file|default=<undefined>: Phase difference map, in SIEMENS format range from 0-4096 or 0-8192)
-    in_magnitude:
+    in_magnitude: '"magnitude.nii"'
     # type=file|default=<undefined>: Magnitude difference map, brain extracted
     output_type: '"NIFTI_GZ"'
     # type=enum|default='NIFTI'|allowed['NIFTI','NIFTI_GZ','NIFTI_PAIR','NIFTI_PAIR_GZ']: FSL output type

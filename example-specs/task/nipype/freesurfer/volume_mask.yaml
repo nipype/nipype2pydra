@@ -192,13 +192,13 @@ doctests:
     # type=int|default=0: Right white matter label
     right_ribbonlabel: '42'
     # type=int|default=0: Right cortical ribbon label
-    lh_pial:
+    lh_pial: '"lh.pial"'
     # type=file|default=<undefined>: Implicit input left pial surface
-    rh_pial:
+    rh_pial: '"lh.pial"'
     # type=file|default=<undefined>: Implicit input right pial surface
-    lh_white:
+    lh_white: '"lh.pial"'
     # type=file|default=<undefined>: Implicit input left white matter surface
-    rh_white:
+    rh_white: '"lh.pial"'
     # type=file|default=<undefined>: Implicit input right white matter surface
     subject_id: '"10335"'
     # type=string|default='subject_id': Subject being processed

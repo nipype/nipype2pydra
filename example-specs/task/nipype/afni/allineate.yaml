@@ -331,12 +331,12 @@ doctests:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
   # If the field is of file-format type and the value is None, then the
   # '.mock()' method of the corresponding class is used instead.
-    in_file:
+    in_file: '"functional.nii"'
     # type=file|default=<undefined>: input file to 3dAllineate
     out_file: '"functional_allineate.nii"'
     # type=file: output image file name
     # type=file|default=<undefined>: output file from 3dAllineate
-    in_matrix:
+    in_matrix: '"cmatrix.mat"'
     # type=file|default=<undefined>: matrix to align input file
   imports:
   # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
@@ -349,9 +349,9 @@ doctests:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
   # If the field is of file-format type and the value is None, then the
   # '.mock()' method of the corresponding class is used instead.
-    in_file:
+    in_file: '"functional.nii"'
     # type=file|default=<undefined>: input file to 3dAllineate
-    reference:
+    reference: '"structural.nii"'
     # type=file|default=<undefined>: file to be used as reference, the first volume will be used if not given the reference will be the first volume of in_file.
     allcostx: '"out.allcostX.txt"'
     # type=file: Compute and print ALL available cost functionals for the un-warped inputs
@@ -367,9 +367,9 @@ doctests:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
   # If the field is of file-format type and the value is None, then the
   # '.mock()' method of the corresponding class is used instead.
-    in_file:
+    in_file: '"functional.nii"'
     # type=file|default=<undefined>: input file to 3dAllineate
-    reference:
+    reference: '"structural.nii"'
     # type=file|default=<undefined>: file to be used as reference, the first volume will be used if not given the reference will be the first volume of in_file.
     nwarp_fixmot: '["X", "Y"]'
     # type=list|default=[]: To fix motion along directions.

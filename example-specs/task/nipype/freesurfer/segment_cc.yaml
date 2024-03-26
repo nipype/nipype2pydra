@@ -154,9 +154,9 @@ doctests:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
   # If the field is of file-format type and the value is None, then the
   # '.mock()' method of the corresponding class is used instead.
-    in_file:
+    in_file: '"aseg.mgz"'
     # type=file|default=<undefined>: Input aseg file to read from subjects directory
-    in_norm:
+    in_norm: '"norm.mgz"'
     # type=file|default=<undefined>: Required undocumented input {subject}/mri/norm.mgz
     out_rotation: '"cc.lta"'
     # type=file: Output lta rotation file

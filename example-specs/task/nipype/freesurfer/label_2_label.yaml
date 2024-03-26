@@ -179,17 +179,17 @@ doctests:
     # type=enum|default='lh'|allowed['lh','rh']: Input hemisphere
     subject_id: '"10335"'
     # type=string|default='subject_id': Target subject
-    sphere_reg:
+    sphere_reg: '"lh.pial"'
     # type=file|default=<undefined>: Implicit input <hemisphere>.sphere.reg
-    white:
+    white: '"lh.pial"'
     # type=file|default=<undefined>: Implicit input <hemisphere>.white
     source_subject: '"fsaverage"'
     # type=string|default='': Source subject name
-    source_label:
+    source_label: '"lh-pial.stl"'
     # type=file|default=<undefined>: Source label
-    source_white:
+    source_white: '"lh.pial"'
     # type=file|default=<undefined>: Implicit input <hemisphere>.white
-    source_sphere_reg:
+    source_sphere_reg: '"lh.pial"'
     # type=file|default=<undefined>: Implicit input <hemisphere>.sphere.reg
   imports:
   # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item

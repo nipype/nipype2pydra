@@ -145,7 +145,7 @@ doctests:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
   # If the field is of file-format type and the value is None, then the
   # '.mock()' method of the corresponding class is used instead.
-    in_file:
+    in_file: '"lh.white"'
     # type=file|default=<undefined>: Surface to expand
     out_name: '"graymid"'
     # type=str|default='expanded': Output surface file. If no path, uses directory of ``in_file``. If no path AND missing "lh." or "rh.", derive from ``in_file``

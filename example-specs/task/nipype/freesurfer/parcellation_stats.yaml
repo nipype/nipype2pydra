@@ -251,25 +251,25 @@ doctests:
     # type=string|default='subject_id': Subject being processed
     hemisphere: '"lh"'
     # type=enum|default='lh'|allowed['lh','rh']: Hemisphere being processed
-    wm:
+    wm: '"./../mri/wm.mgz" # doctest: +SKIP'
     # type=file|default=<undefined>: Input file must be <subject_id>/mri/wm.mgz
-    transform:
+    transform: '"./../mri/transforms/talairach.xfm" # doctest: +SKIP'
     # type=file|default=<undefined>: Input file must be <subject_id>/mri/transforms/talairach.xfm
-    brainmask:
+    brainmask: '"./../mri/brainmask.mgz" # doctest: +SKIP'
     # type=file|default=<undefined>: Input file must be <subject_id>/mri/brainmask.mgz
-    aseg:
+    aseg: '"./../mri/aseg.presurf.mgz" # doctest: +SKIP'
     # type=file|default=<undefined>: Input file must be <subject_id>/mri/aseg.presurf.mgz
-    ribbon:
+    ribbon: '"./../mri/ribbon.mgz" # doctest: +SKIP'
     # type=file|default=<undefined>: Input file must be <subject_id>/mri/ribbon.mgz
-    lh_pial:
+    lh_pial: '"lh.pial" # doctest: +SKIP'
     # type=file|default=<undefined>: Input file must be <subject_id>/surf/lh.pial
-    rh_pial:
+    rh_pial: '"lh.pial" # doctest: +SKIP'
     # type=file|default=<undefined>: Input file must be <subject_id>/surf/rh.pial
-    lh_white:
+    lh_white: '"lh.white" # doctest: +SKIP'
     # type=file|default=<undefined>: Input file must be <subject_id>/surf/lh.white
-    rh_white:
+    rh_white: '"rh.white" # doctest: +SKIP'
     # type=file|default=<undefined>: Input file must be <subject_id>/surf/rh.white
-    thickness:
+    thickness: '"lh.thickness" # doctest: +SKIP'
     # type=file|default=<undefined>: Input file must be <subject_id>/surf/?h.thickness
     surface: '"white"'
     # type=string|default='': Input surface (e.g. 'white')

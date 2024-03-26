@@ -178,11 +178,11 @@ doctests:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
   # If the field is of file-format type and the value is None, then the
   # '.mock()' method of the corresponding class is used instead.
-    in_file:
+    in_file: '"functional.nii"'
     # type=file|default=<undefined>: input time series file (4D data set)
-    mask:
+    mask: '"mask.nii"'
     # type=file|default=<undefined>: can include a whole brain mask within which to calculate correlation. Otherwise, data should be masked already
-    in_rois:
+    in_rois: '"maps.nii"'
     # type=file|default=<undefined>: input set of ROIs, each labelled with distinct integers
     ts_wb_corr: 'True'
     # type=bool|default=False: switch to create a set of whole brain correlation maps. Performs whole brain correlation for each ROI's average time series; this will automatically create a directory for each network that contains the set of whole brain correlation maps (Pearson 'r's). The directories are labelled as above for '-ts_indiv' Within each directory, the files are labelled WB_CORR_ROI_001+orig, WB_CORR_ROI_002+orig, etc., with the numbers given by the actual ROI integer labels

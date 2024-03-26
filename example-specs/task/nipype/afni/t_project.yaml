@@ -187,7 +187,7 @@ doctests:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
   # If the field is of file-format type and the value is None, then the
   # '.mock()' method of the corresponding class is used instead.
-    in_file:
+    in_file: '"functional.nii"'
     # type=file|default=<undefined>: input file to 3dTproject
     bandpass: (0.00667, 99999)
     # type=tuple|default=(0.0, 0.0): Remove all frequencies EXCEPT those in the range

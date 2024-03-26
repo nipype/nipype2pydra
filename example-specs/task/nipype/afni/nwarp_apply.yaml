@@ -146,7 +146,7 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     in_file: '"Fred+orig"'
     # type=traitcompound|default=None: the name of the dataset to be warped can be multiple datasets
-    master:
+    master: '"NWARP"'
     # type=file|default=<undefined>: the name of the master dataset, which defines the output grid
     warp: '"''Fred_WARP+tlrc Fred.Xaff12.1D''"'
     # type=string|default='': the name of the warp dataset. multiple warps can be concatenated (make sure they exist)

@@ -207,19 +207,19 @@ doctests:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
   # If the field is of file-format type and the value is None, then the
   # '.mock()' method of the corresponding class is used instead.
-    epi:
+    epi: '"epi.nii"'
     # type=file|default=<undefined>: EPI image
-    t1_head:
+    t1_head: '"T1.nii"'
     # type=file|default=<undefined>: wholehead T1 image
-    t1_brain:
+    t1_brain: '"T1_brain.nii"'
     # type=file|default=<undefined>: brain extracted T1 image
     out_base: '"epi2struct"'
     # type=string|default='epi2struct': output base name
-    fmap:
+    fmap: '"fieldmap_phase_fslprepared.nii"'
     # type=file|default=<undefined>: fieldmap image (in rad/s)
-    fmapmag:
+    fmapmag: '"fieldmap_mag.nii"'
     # type=file|default=<undefined>: fieldmap magnitude image - wholehead
-    fmapmagbrain:
+    fmapmagbrain: '"fieldmap_mag_brain.nii"'
     # type=file|default=<undefined>: fieldmap magnitude image - brain extracted
     echospacing: '0.00067'
     # type=float|default=0.0: Effective EPI echo spacing                                 (sometimes called dwell time) - in seconds

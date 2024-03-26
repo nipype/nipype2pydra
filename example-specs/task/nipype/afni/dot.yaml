@@ -161,7 +161,7 @@ doctests:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
   # If the field is of file-format type and the value is None, then the
   # '.mock()' method of the corresponding class is used instead.
-    in_files:
+    in_files: '["functional.nii[0]", "structural.nii"]'
     # type=list|default=[]: list of input files, possibly with subbrick selectors
     dodice: 'True'
     # type=bool|default=False: Return the Dice coefficient (the Sorensen-Dice index).

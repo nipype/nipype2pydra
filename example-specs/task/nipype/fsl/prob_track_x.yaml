@@ -249,13 +249,13 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     samples_base_name: '"merged"'
     # type=str|default='merged': the rootname/base_name for samples files
-    mask:
+    mask: '"mask.nii"'
     # type=file|default=<undefined>: bet binary mask file in diffusion space
     seed: '"MASK_average_thal_right.nii"'
     # type=traitcompound|default=None: seed volume(s), or voxel(s) or freesurfer label file
     mode: '"seedmask"'
     # type=enum|default='simple'|allowed['seedmask','simple','two_mask_symm']: options: simple (single seed voxel), seedmask (mask of seed voxels), twomask_symm (two bet binary masks)
-    xfm:
+    xfm: '"trans.mat"'
     # type=file|default=<undefined>: transformation matrix taking seed space to DTI space (either FLIRT matrix or FNIRT warp_field) - default is identity
     n_samples: '3'
     # type=int|default=5000: number of samples - default=5000
@@ -267,13 +267,13 @@ doctests:
     # type=bool|default=True: outputs path distributions
     os2t: 'True'
     # type=bool|default=False: Outputs seeds to targets
-    target_masks:
+    target_masks: '["targets_MASK1.nii", "targets_MASK2.nii"]'
     # type=inputmultiobject|default=[]: list of target masks - required for seeds_to_targets classification
-    thsamples:
+    thsamples: '"merged_thsamples.nii"'
     # type=inputmultiobject|default=[]: 
-    fsamples:
+    fsamples: '"merged_fsamples.nii"'
     # type=inputmultiobject|default=[]: 
-    phsamples:
+    phsamples: '"merged_phsamples.nii"'
     # type=inputmultiobject|default=[]: 
     out_dir: '"."'
     # type=directory|default=<undefined>: directory to put the final volumes in

@@ -333,9 +333,9 @@ doctests:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
   # If the field is of file-format type and the value is None, then the
   # '.mock()' method of the corresponding class is used instead.
-    in_file:
+    in_file: '"epi.nii"'
     # type=file|default=<undefined>: File containing all the images to estimate distortions for
-    in_index:
+    in_index: '"epi_index.txt"'
     # type=file|default=<undefined>: File containing indices for all volumes in --imain into --acqp and --topup
   imports:
   # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
@@ -369,7 +369,7 @@ doctests:
     # type=int|default=0: Regularisation weight for slice-to-vol movement (reasonable range 1-10)
     slice2vol_interp: '"trilinear"'
     # type=enum|default='trilinear'|allowed['spline','trilinear']: Slice-to-vol interpolation model for estimation step
-    slice_order:
+    slice_order: '"epi_slspec.txt"'
     # type=file|default='': Name of text file completely specifying slice/group acquisition
   imports:
   # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item

@@ -482,11 +482,11 @@ doctests:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
   # If the field is of file-format type and the value is None, then the
   # '.mock()' method of the corresponding class is used instead.
-    in_file:
+    in_file: '"sub-01_dir-LR_epi.nii.gz"'
     # type=file|default=<undefined>: Source image (opposite phase encoding direction than base image).
     nopadWARP: 'True'
     # type=bool|default=False: If for some reason you require the warp volume tomatch the base volume, then use this option to have the outputWARP dataset(s) truncated.
-    base_file:
+    base_file: '"sub-01_dir-RL_epi.nii.gz"'
     # type=file|default=<undefined>: Base image (opposite phase encoding direction than source image).
     plusminus: 'True'
     # type=bool|default=False: Normally, the warp displacements dis(x) are defined to match base(x) to source(x+dis(x)).  With this option, the match is between base(x-dis(x)) and source(x+dis(x)) -- the two images 'meet in the middle'.  * One goal is to mimic the warping done to MRI EPI data by   field inhomogeneities, when registering between a 'blip up'   and a 'blip down' down volume, which will have opposite   distortions. * Define Wp(x) = x+dis(x) and Wm(x) = x-dis(x).  Then since   base(Wm(x)) matches source(Wp(x)), by substituting INV(Wm(x))   wherever we see x, we have base(x) matches source(Wp(INV(Wm(x))));   that is, the warp V(x) that one would get from the 'usual' way   of running 3dQwarp is V(x) = Wp(INV(Wm(x))). * Conversely, we can calculate Wp(x) in terms of V(x) as follows:   If V(x) = x + dv(x), define Vh(x) = x + dv(x)/2;   then Wp(x) = V(INV(Vh(x))) * With the above formulas, it is possible to compute Wp(x) from   V(x) and vice-versa, using program 3dNwarpCalc.  The requisite   commands are left as an exercise for the aspiring AFNI Jedi Master. * You can use the semi-secret '-pmBASE' option to get the V(x)   warp and the source dataset warped to base space, in addition to   the Wp(x) '_PLUS' and Wm(x) '_MINUS' warps.    * Alas: -plusminus does not work with -duplo or -allineate :-(   * However, you can use -iniwarp with -plusminus :-)   * The outputs have _PLUS (from the source dataset) and _MINUS     (from the base dataset) in their filenames, in addition to     the prefix.  The -iwarp option, if present, will be ignored.  
@@ -501,9 +501,9 @@ doctests:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
   # If the field is of file-format type and the value is None, then the
   # '.mock()' method of the corresponding class is used instead.
-    in_file:
+    in_file: '"structural.nii"'
     # type=file|default=<undefined>: Source image (opposite phase encoding direction than base image).
-    base_file:
+    base_file: '"mni.nii"'
     # type=file|default=<undefined>: Base image (opposite phase encoding direction than source image).
     resample: 'True'
     # type=bool|default=False: This option simply resamples the source dataset to match the base dataset grid.  You can use this if the two datasets overlap well (as seen in the AFNI GUI), but are not on the same 3D grid.  * If they don't overlap well, allineate them first * The reampling here is done with the   'wsinc5' method, which has very little blurring artifact. * If the base and source datasets ARE on the same 3D grid,   then the -resample option will be ignored. * You CAN use -resample with these 3dQwarp options:   -plusminus  -inilev  -iniwarp  -duplo  
@@ -518,9 +518,9 @@ doctests:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
   # If the field is of file-format type and the value is None, then the
   # '.mock()' method of the corresponding class is used instead.
-    in_file:
+    in_file: '"structural.nii"'
     # type=file|default=<undefined>: Source image (opposite phase encoding direction than base image).
-    base_file:
+    base_file: '"epi.nii"'
     # type=file|default=<undefined>: Base image (opposite phase encoding direction than source image).
     out_file: '"anatSSQ.nii.gz"'
     # type=file|default=<undefined>: Sets the prefix/suffix for the output datasets.  * The source dataset is warped to match the base   and gets prefix 'ppp'. (Except if '-plusminus' is used * The final interpolation to this output dataset is   done using the 'wsinc5' method.  See the output of   3dAllineate -HELP   (in the "Modifying '-final wsinc5'" section) for   the lengthy technical details. * The 3D warp used is saved in a dataset with   prefix 'ppp_WARP' -- this dataset can be used   with 3dNwarpApply and 3dNwarpCat, for example. * To be clear, this is the warp from source dataset   coordinates to base dataset coordinates, where the   values at each base grid point are the xyz displacements   needed to move that grid point's xyz values to the   corresponding xyz values in the source dataset:   base( (x,y,z) + WARP(x,y,z) ) matches source(x,y,z)   Another way to think of this warp is that it 'pulls'   values back from source space to base space. * 3dNwarpApply would use 'ppp_WARP' to transform datasets   aligned with the source dataset to be aligned with the   base dataset.  **If you do NOT want this warp saved, use the option '-nowarp'**. (However, this warp is usually the most valuable possible output!)  * If you want to calculate and save the inverse 3D warp,   use the option '-iwarp'.  This inverse warp will then be   saved in a dataset with prefix 'ppp_WARPINV'. * This inverse warp could be used to transform data from base   space to source space, if you need to do such an operation. * You can easily compute the inverse later, say by a command like   3dNwarpCat -prefix Z_WARPINV 'INV(Z_WARP+tlrc)'   or the inverse can be computed as needed in 3dNwarpApply, like   3dNwarpApply -nwarp 'INV(Z_WARP+tlrc)' -source Dataset.nii ...  
@@ -545,9 +545,9 @@ doctests:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
   # If the field is of file-format type and the value is None, then the
   # '.mock()' method of the corresponding class is used instead.
-    in_file:
+    in_file: '"structural.nii"'
     # type=file|default=<undefined>: Source image (opposite phase encoding direction than base image).
-    base_file:
+    base_file: '"mni.nii"'
     # type=file|default=<undefined>: Base image (opposite phase encoding direction than source image).
     duplo: 'True'
     # type=bool|default=False: Start off with 1/2 scale versions of the volumes," for getting a speedy coarse first alignment."  * Then scales back up to register the full volumes."   The goal is greater speed, and it seems to help this"   positively piggish program to be more expeditious." * However, accuracy is somewhat lower with '-duplo',"   for reasons that currently elude Zhark; for this reason,"   the Emperor does not usually use '-duplo'.  
@@ -564,9 +564,9 @@ doctests:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
   # If the field is of file-format type and the value is None, then the
   # '.mock()' method of the corresponding class is used instead.
-    in_file:
+    in_file: '"structural.nii"'
     # type=file|default=<undefined>: Source image (opposite phase encoding direction than base image).
-    base_file:
+    base_file: '"mni.nii"'
     # type=file|default=<undefined>: Base image (opposite phase encoding direction than source image).
     duplo: 'True'
     # type=bool|default=False: Start off with 1/2 scale versions of the volumes," for getting a speedy coarse first alignment."  * Then scales back up to register the full volumes."   The goal is greater speed, and it seems to help this"   positively piggish program to be more expeditious." * However, accuracy is somewhat lower with '-duplo',"   for reasons that currently elude Zhark; for this reason,"   the Emperor does not usually use '-duplo'.  
@@ -587,9 +587,9 @@ doctests:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
   # If the field is of file-format type and the value is None, then the
   # '.mock()' method of the corresponding class is used instead.
-    in_file:
+    in_file: '"structural.nii"'
     # type=file|default=<undefined>: Source image (opposite phase encoding direction than base image).
-    base_file:
+    base_file: '"mni.nii"'
     # type=file|default=<undefined>: Base image (opposite phase encoding direction than source image).
     blur: '[0,2]'
     # type=list|default=[]: Gaussian blur the input images by 'bb' (FWHM) voxels before doing the alignment (the output dataset will not be blurred). The default is 2.345 (for no good reason).  * Optionally, you can provide 2 values for 'bb', and then   the first one is applied to the base volume, the second   to the source volume.   e.g., '-blur 0 3' to skip blurring the base image   (if the base is a blurry template, for example). * A negative blur radius means to use 3D median filtering,   rather than Gaussian blurring.  This type of filtering will   better preserve edges, which can be important in alignment. * If the base is a template volume that is already blurry,   you probably don't want to blur it again, but blurring   the source volume a little is probably a good idea, to   help the program avoid trying to match tiny features. * Note that -duplo will blur the volumes some extra   amount for the initial small-scale warping, to make   that phase of the program converge more rapidly.  
@@ -597,7 +597,7 @@ doctests:
     # type=file|default=<undefined>: Sets the prefix/suffix for the output datasets.  * The source dataset is warped to match the base   and gets prefix 'ppp'. (Except if '-plusminus' is used * The final interpolation to this output dataset is   done using the 'wsinc5' method.  See the output of   3dAllineate -HELP   (in the "Modifying '-final wsinc5'" section) for   the lengthy technical details. * The 3D warp used is saved in a dataset with   prefix 'ppp_WARP' -- this dataset can be used   with 3dNwarpApply and 3dNwarpCat, for example. * To be clear, this is the warp from source dataset   coordinates to base dataset coordinates, where the   values at each base grid point are the xyz displacements   needed to move that grid point's xyz values to the   corresponding xyz values in the source dataset:   base( (x,y,z) + WARP(x,y,z) ) matches source(x,y,z)   Another way to think of this warp is that it 'pulls'   values back from source space to base space. * 3dNwarpApply would use 'ppp_WARP' to transform datasets   aligned with the source dataset to be aligned with the   base dataset.  **If you do NOT want this warp saved, use the option '-nowarp'**. (However, this warp is usually the most valuable possible output!)  * If you want to calculate and save the inverse 3D warp,   use the option '-iwarp'.  This inverse warp will then be   saved in a dataset with prefix 'ppp_WARPINV'. * This inverse warp could be used to transform data from base   space to source space, if you need to do such an operation. * You can easily compute the inverse later, say by a command like   3dNwarpCat -prefix Z_WARPINV 'INV(Z_WARP+tlrc)'   or the inverse can be computed as needed in 3dNwarpApply, like   3dNwarpApply -nwarp 'INV(Z_WARP+tlrc)' -source Dataset.nii ...  
     inilev: '7'
     # type=int|default=0: The initial refinement 'level' at which to start.  * Usually used with -iniwarp; CANNOT be used with -duplo. * The combination of -inilev and -iniwarp lets you take the   results of a previous 3dQwarp run and refine them further:   Note that the source dataset in the second run is the SAME as   in the first run.  If you don't see why this is necessary,   then you probably need to seek help from an AFNI guru.  
-    iniwarp:
+    iniwarp: '["Q25_warp+tlrc.HEAD"]'
     # type=list|default=[]: A dataset with an initial nonlinear warp to use.  * If this option is not used, the initial warp is the identity. * You can specify a catenation of warps (in quotes) here, as in   program 3dNwarpApply. * As a special case, if you just input an affine matrix in a .1D   file, that will work also -- it is treated as giving the initial   warp via the string "IDENT(base_dataset) matrix_file.aff12.1D". * You CANNOT use this option with -duplo !! * -iniwarp is usually used with -inilev to re-start 3dQwarp from   a previous stopping point.  
   imports:
   # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
@@ -610,9 +610,9 @@ doctests:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
   # If the field is of file-format type and the value is None, then the
   # '.mock()' method of the corresponding class is used instead.
-    in_file:
+    in_file: '"structural.nii"'
     # type=file|default=<undefined>: Source image (opposite phase encoding direction than base image).
-    base_file:
+    base_file: '"mni.nii"'
     # type=file|default=<undefined>: Base image (opposite phase encoding direction than source image).
     allineate: 'True'
     # type=bool|default=False: This option will make 3dQwarp run 3dAllineate first, to align the source dataset to the base with an affine transformation. It will then use that alignment as a starting point for the nonlinear warping.

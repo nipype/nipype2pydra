@@ -353,23 +353,23 @@ doctests:
     # type=file|default=<undefined>: Segmentation stats summary table file
     subject_id: '"10335"'
     # type=string|default='subject_id': Subject id being processed
-    ribbon:
+    ribbon: '"wm.mgz"'
     # type=file|default=<undefined>: Input file mri/ribbon.mgz
-    transform:
+    transform: '"trans.mat"'
     # type=file|default=<undefined>: Input transform file
-    presurf_seg:
+    presurf_seg: '"wm.mgz"'
     # type=file|default=<undefined>: Input segmentation volume
-    lh_orig_nofix:
+    lh_orig_nofix: '"lh.pial"'
     # type=file|default=<undefined>: Input lh.orig.nofix
-    rh_orig_nofix:
+    rh_orig_nofix: '"lh.pial"'
     # type=file|default=<undefined>: Input rh.orig.nofix
-    lh_pial:
+    lh_pial: '"lh.pial"'
     # type=file|default=<undefined>: Input file must be <subject_id>/surf/lh.pial
-    rh_pial:
+    rh_pial: '"lh.pial"'
     # type=file|default=<undefined>: Input file must be <subject_id>/surf/rh.pial
-    lh_white:
+    lh_white: '"lh.pial"'
     # type=file|default=<undefined>: Input file must be <subject_id>/surf/lh.white
-    rh_white:
+    rh_white: '"lh.pial"'
     # type=file|default=<undefined>: Input file must be <subject_id>/surf/rh.white
     empty: 'True'
     # type=bool|default=False: Report on segmentations listed in the color table

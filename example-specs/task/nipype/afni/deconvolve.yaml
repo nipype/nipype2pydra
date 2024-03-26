@@ -248,7 +248,7 @@ doctests:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
   # If the field is of file-format type and the value is None, then the
   # '.mock()' method of the corresponding class is used instead.
-    in_files:
+    in_files: '["functional.nii", "functional2.nii"]'
     # type=inputmultiobject|default=[]: filenames of 3D+time input datasets. More than one filename can be given and the datasets will be auto-catenated in time. You can input a 1D time series file here, but the time axis should run along the ROW direction, not the COLUMN direction as in the 'input1D' option.
     out_file: '"output.nii"'
     # type=file: output statistics file

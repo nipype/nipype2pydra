@@ -272,7 +272,7 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     approach: '"tica"'
     # type=str|default='': approach for decomposition, 2D: defl, symm (default), 3D: tica (default), concat
-    in_files:
+    in_files: '["functional.nii", "functional2.nii", "functional3.nii"]'
     # type=inputmultiobject|default=[]: input file names (either single file name or a list)
     no_bet: 'True'
     # type=bool|default=False: switch off BET
@@ -284,13 +284,13 @@ doctests:
     # type=float|default=0.0: threshold for Mixture Model based inference
     out_stats: 'True'
     # type=bool|default=False: output thresholded maps and probability maps
-    t_des:
+    t_des: '"timeDesign.mat"'
     # type=file|default=<undefined>: design matrix across time-domain
-    t_con:
+    t_con: '"timeDesign.con"'
     # type=file|default=<undefined>: t-contrast matrix across time-domain
-    s_des:
+    s_des: '"subjectDesign.mat"'
     # type=file|default=<undefined>: design matrix across subject-domain
-    s_con:
+    s_con: '"subjectDesign.con"'
     # type=file|default=<undefined>: t-contrast matrix across subject-domain
     out_dir: '"groupICA.out"'
     # type=directory: 

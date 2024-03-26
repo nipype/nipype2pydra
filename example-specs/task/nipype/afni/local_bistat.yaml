@@ -155,9 +155,9 @@ doctests:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
   # If the field is of file-format type and the value is None, then the
   # '.mock()' method of the corresponding class is used instead.
-    in_file1:
+    in_file1: '"functional.nii"'
     # type=file|default=<undefined>: Filename of the first image
-    in_file2:
+    in_file2: '"structural.nii"'
     # type=file|default=<undefined>: Filename of the second image
     neighborhood: ("SPHERE", 1.2)
     # type=traitcompound|default=None: The region around each voxel that will be extracted for the statistics calculation. Possible regions are: 'SPHERE', 'RHDD' (rhombic dodecahedron), 'TOHD' (truncated octahedron) with a given radius in mm or 'RECT' (rectangular block) with dimensions to specify in mm.

@@ -149,7 +149,7 @@ doctests:
     # type=string|default='subject_id': Subject name/ID
     in_labels: '["lh.aparc.label"]'
     # type=list|default=[]: List of input label files
-    orig:
+    orig: '"lh.pial"'
     # type=file|default=<undefined>: implicit {hemisphere}.orig
     out_annot: '"test"'
     # type=string|default='': Name of the annotation to create

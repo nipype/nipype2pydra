@@ -125,7 +125,7 @@ doctests:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
   # If the field is of file-format type and the value is None, then the
   # '.mock()' method of the corresponding class is used instead.
-    in_file:
+    in_file: '"structural.nii"'
     # type=file|default=<undefined>: Original anatomical volume (+orig).The skull is removed by this scriptunless instructed otherwise (-no_ss).
     no_ss: 'True'
     # type=bool|default=False: Do not strip skull of input data set (because skull has already been removed or because template still has the skull) NOTE: The ``-no_ss`` option is not all that optional. Here is a table of when you should and should not use ``-no_ss``    +------------------+------------+---------------+   | Dataset          | Template                   |   +==================+============+===============+   |                  | w/ skull   | wo/ skull     |   +------------------+------------+---------------+   | WITH skull       | ``-no_ss`` | xxx           |   +------------------+------------+---------------+   | WITHOUT skull    | No Cigar   | ``-no_ss``    |   +------------------+------------+---------------+  Template means: Your template of choice Dset. means: Your anatomical dataset ``-no_ss`` means: Skull stripping should not be attempted on Dset xxx means: Don't put anything, the script will strip Dset No Cigar means: Don't try that combination, it makes no sense.

@@ -148,11 +148,11 @@ doctests:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
   # If the field is of file-format type and the value is None, then the
   # '.mock()' method of the corresponding class is used instead.
-    in_file:
+    in_file: '"structural.mgz"                         # doctest: +SKIP'
     # type=file|default=<undefined>: The input file
-    target:
+    target: '"mni305.cor.mgz"                          # doctest: +SKIP'
     # type=file|default=<undefined>: The target file
-    vox2vox:
+    vox2vox: '"talsrcimg_to_structural_t4_vox2vox.txt" # doctest: +SKIP'
     # type=file|default=<undefined>: The vox2vox file
   imports:
   # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item

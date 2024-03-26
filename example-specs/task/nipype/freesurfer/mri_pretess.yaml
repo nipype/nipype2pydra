@@ -145,9 +145,9 @@ doctests:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
   # If the field is of file-format type and the value is None, then the
   # '.mock()' method of the corresponding class is used instead.
-    in_filled:
+    in_filled: '"wm.mgz"'
     # type=file|default=<undefined>: filled volume, usually wm.mgz
-    in_norm:
+    in_norm: '"norm.mgz"'
     # type=file|default=<undefined>: the normalized, brain-extracted T1w image. Usually norm.mgz
     nocorners: 'True'
     # type=bool|default=False: do not remove corner configurations in addition to edge ones.

@@ -189,15 +189,15 @@ doctests:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
   # If the field is of file-format type and the value is None, then the
   # '.mock()' method of the corresponding class is used instead.
-    dwi:
+    dwi: '"diffusion.nii"'
     # type=file|default=<undefined>: diffusion weighted image data file
-    bvecs:
+    bvecs: '"bvecs"'
     # type=file|default=<undefined>: b vectors file
-    bvals:
+    bvals: '"bvals"'
     # type=file|default=<undefined>: b values file
     base_name: '"TP"'
     # type=str|default='dtifit_': base_name that all output files will start with
-    mask:
+    mask: '"mask.nii"'
     # type=file|default=<undefined>: bet binary mask file
   imports:
   # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item

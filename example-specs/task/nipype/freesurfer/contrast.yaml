@@ -168,17 +168,17 @@ doctests:
     # type=string|default='subject_id': Subject being processed
     hemisphere: '"lh"'
     # type=enum|default='lh'|allowed['lh','rh']: Hemisphere being processed
-    white:
+    white: '"lh.white" # doctest: +SKIP'
     # type=file|default=<undefined>: Input file must be <subject_id>/surf/<hemisphere>.white
-    thickness:
+    thickness: '"lh.thickness" # doctest: +SKIP'
     # type=file|default=<undefined>: Input file must be <subject_id>/surf/?h.thickness
-    annotation:
+    annotation: '"../label/lh.aparc.annot" # doctest: +SKIP'
     # type=file|default=<undefined>: Input annotation file must be <subject_id>/label/<hemisphere>.aparc.annot
-    cortex:
+    cortex: '"../label/lh.cortex.label" # doctest: +SKIP'
     # type=file|default=<undefined>: Input cortex label must be <subject_id>/label/<hemisphere>.cortex.label
-    rawavg:
+    rawavg: '"../mri/rawavg.mgz" # doctest: +SKIP'
     # type=file|default=<undefined>: Implicit input file mri/rawavg.mgz
-    orig:
+    orig: '"../mri/orig.mgz" # doctest: +SKIP'
     # type=file|default=<undefined>: Implicit input file mri/orig.mgz
   imports:
   # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item

@@ -148,9 +148,9 @@ doctests:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
   # If the field is of file-format type and the value is None, then the
   # '.mock()' method of the corresponding class is used instead.
-    t1_image:
+    t1_image: '"T1.mgz"'
     # type=file|default=<undefined>: image of T1 values
-    pd_image:
+    pd_image: '"PD.mgz"'
     # type=file|default=<undefined>: image of proton density values
     out_file: '"flash_30syn.mgz"'
     # type=file: synthesized FLASH acquisition

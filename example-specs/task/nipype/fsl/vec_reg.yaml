@@ -160,11 +160,11 @@ doctests:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
   # If the field is of file-format type and the value is None, then the
   # '.mock()' method of the corresponding class is used instead.
-    in_file:
+    in_file: '"diffusion.nii"'
     # type=file|default=<undefined>: filename for input vector or tensor field
-    affine_mat:
+    affine_mat: '"trans.mat"'
     # type=file|default=<undefined>: filename for affine transformation matrix
-    ref_vol:
+    ref_vol: '"mni.nii"'
     # type=file|default=<undefined>: filename for reference (target) volume
     out_file: '"diffusion_vreg.nii"'
     # type=file: path/name of filename for the registered vector or tensor field

@@ -176,7 +176,7 @@ doctests:
     # type=file|default=<undefined>: Output filename
     in_average: '"."'
     # type=directory|default=<undefined>: Average subject
-    in_surf:
+    in_surf: '"lh.pial"'
     # type=file|default=<undefined>: Input surface file
     hemisphere: '"lh"'
     # type=enum|default='lh'|allowed['lh','rh']: Input hemisphere

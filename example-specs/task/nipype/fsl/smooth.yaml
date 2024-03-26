@@ -199,7 +199,7 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     output_type: '"NIFTI_GZ"'
     # type=enum|default='NIFTI'|allowed['NIFTI','NIFTI_GZ','NIFTI_PAIR','NIFTI_PAIR_GZ']: FSL output type
-    in_file:
+    in_file: '"functional2.nii"'
     # type=file|default=<undefined>: 
     sigma: '8.0'
     # type=float|default=0.0: gaussian kernel sigma in mm (not voxels)
@@ -216,7 +216,7 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     output_type: '"NIFTI_GZ"'
     # type=enum|default='NIFTI'|allowed['NIFTI','NIFTI_GZ','NIFTI_PAIR','NIFTI_PAIR_GZ']: FSL output type
-    in_file:
+    in_file: '"functional2.nii"'
     # type=file|default=<undefined>: 
     fwhm: '8.0'
     # type=float|default=0.0: gaussian kernel fwhm, will be converted to sigma in mm (not voxels)
@@ -233,7 +233,7 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     output_type: '"NIFTI_GZ"'
     # type=enum|default='NIFTI'|allowed['NIFTI','NIFTI_GZ','NIFTI_PAIR','NIFTI_PAIR_GZ']: FSL output type
-    in_file:
+    in_file: '"functional2.nii"'
     # type=file|default=<undefined>: 
   imports:
   # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item

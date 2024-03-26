@@ -6,6 +6,7 @@ from pathlib import Path
 import shutil
 from importlib import import_module
 import yaml
+from tqdm import tqdm
 import nipype
 import nipype2pydra.utils
 from nipype2pydra.task import get_converter
@@ -36,7 +37,9 @@ if auto_dir.exists():
     shutil.rmtree(auto_dir)
 
 all_interfaces = []
-for fspath in sorted(SPECS_DIR.glob("**/*.yaml")):
+for fspath in tqdm(
+    sorted(SPECS_DIR.glob("**/*.yaml")), "converting interfaces from Nipype to Pydra"
+):
     with open(fspath) as f:
         spec = yaml.load(f, Loader=yaml.SafeLoader)
 
@@ -70,7 +73,9 @@ post_release = (nipype_version + nipype2pydra_version).replace(".", "")
 """
     )
 
-auto_init += "\n\n__all__ = [\n" + "\n".join(f"    \"{i}\"," for i in all_interfaces) + "\n]\n"
+auto_init += (
+    "\n\n__all__ = [\n" + "\n".join(f'    "{i}",' for i in all_interfaces) + "\n]\n"
+)
 
 with open(PKG_ROOT / "pydra" / "tasks" / PKG_NAME / "auto" / "__init__.py", "w") as f:
     f.write(auto_init)

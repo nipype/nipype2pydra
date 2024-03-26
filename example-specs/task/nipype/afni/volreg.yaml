@@ -227,7 +227,7 @@ doctests:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
   # If the field is of file-format type and the value is None, then the
   # '.mock()' method of the corresponding class is used instead.
-    in_file:
+    in_file: '"functional.nii"'
     # type=file|default=<undefined>: input file to 3dvolreg
     args: '"-Fourier -twopass"'
     # type=str|default='': Additional parameters to the command
@@ -246,7 +246,7 @@ doctests:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
   # If the field is of file-format type and the value is None, then the
   # '.mock()' method of the corresponding class is used instead.
-    in_file:
+    in_file: '"functional.nii"'
     # type=file|default=<undefined>: input file to 3dvolreg
     interp: '"cubic"'
     # type=enum|default='Fourier'|allowed['Fourier','cubic','heptic','linear','quintic']: spatial interpolation methods [default = heptic]
@@ -254,7 +254,7 @@ doctests:
     # type=bool|default=False: more detailed description of the process
     zpad: '1'
     # type=int|default=0: Zeropad around the edges by 'n' voxels during rotations
-    basefile:
+    basefile: '"functional.nii"'
     # type=file|default=<undefined>: base file for registration
     out_file: '"rm.epi.volreg.r1"'
     # type=file: registered file

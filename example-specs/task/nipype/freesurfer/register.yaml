@@ -152,13 +152,13 @@ doctests:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
   # If the field is of file-format type and the value is None, then the
   # '.mock()' method of the corresponding class is used instead.
-    in_surf:
+    in_surf: '"lh.pial"'
     # type=file|default=<undefined>: Surface to register, often {hemi}.sphere
-    in_smoothwm:
+    in_smoothwm: '"lh.pial"'
     # type=file|default=<undefined>: Undocumented input file ${SUBJECTS_DIR}/surf/{hemisphere}.smoothwm 
-    in_sulc:
+    in_sulc: '"lh.pial"'
     # type=file|default=<undefined>: Undocumented mandatory input file ${SUBJECTS_DIR}/surf/{hemisphere}.sulc 
-    target:
+    target: '"aseg.mgz"'
     # type=file|default=<undefined>: The data to register to. In normal recon-all usage, this is a template file for average surface.
     out_file: '"lh.pial.reg"'
     # type=file: Output surface file to capture registration

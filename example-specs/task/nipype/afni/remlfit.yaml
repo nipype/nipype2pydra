@@ -304,12 +304,12 @@ doctests:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
   # If the field is of file-format type and the value is None, then the
   # '.mock()' method of the corresponding class is used instead.
-    in_files:
+    in_files: '["functional.nii", "functional2.nii"]'
     # type=inputmultiobject|default=[]: Read time series dataset
     out_file: '"output.nii"'
     # type=file: dataset for beta + statistics from the REML estimation (if generated
     # type=file|default=<undefined>: output dataset for beta + statistics from the REML estimation; also contains the results of any GLT analysis requested in the Deconvolve setup, similar to the 'bucket' output from Deconvolve. This dataset does NOT get the betas (or statistics) of those regressors marked as 'baseline' in the matrix file.
-    matrix:
+    matrix: '"output.1D"'
     # type=file|default=<undefined>: the design matrix file, which should have been output from Deconvolve via the 'x1D' option
     gltsym: '[("SYM: +Lab1 -Lab2", "TestSYM"), ("timeseries.txt", "TestFile")]'
     # type=list|default=[]: read a symbolic GLT from input file and associate it with a label. As in Deconvolve, you can also use the 'SYM:' method to provide the definition of the GLT directly as a string (e.g., with 'SYM: +Label1 -Label2'). Unlike Deconvolve, you MUST specify 'SYM: ' if providing the GLT directly as a string instead of from a file

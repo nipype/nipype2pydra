@@ -160,7 +160,7 @@ doctests:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
   # If the field is of file-format type and the value is None, then the
   # '.mock()' method of the corresponding class is used instead.
-    in_file:
+    in_file: '"norm.mgz"'
     # type=file|default=<undefined>: The input volume for CARegister
     out_file: '"talairach.m3z"'
     # type=file: The output file for CARegister

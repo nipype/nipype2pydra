@@ -159,13 +159,13 @@ doctests:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
   # If the field is of file-format type and the value is None, then the
   # '.mock()' method of the corresponding class is used instead.
-    source_file:
+    source_file: '"lh.cope1.mgz"'
     # type=file|default=<undefined>: This is the source of the surface values
-    reg_file:
+    reg_file: '"register.mat"'
     # type=file|default=<undefined>: tkRAS-to-tkRAS matrix   (tkregister2 format)
     hemi: '"lh"'
     # type=str|default='': hemisphere of data
-    template_file:
+    template_file: '"cope1.nii.gz"'
     # type=file|default=<undefined>: Output template volume
     subjects_dir: '"."'
     # type=str|default='': freesurfer subjects directory defaults to $SUBJECTS_DIR

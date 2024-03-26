@@ -232,9 +232,9 @@ doctests:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
   # If the field is of file-format type and the value is None, then the
   # '.mock()' method of the corresponding class is used instead.
-    source_file:
+    source_file: '"cope1.nii.gz"'
     # type=file|default=<undefined>: volume to sample values from
-    reg_file:
+    reg_file: '"register.dat"'
     # type=file|default=<undefined>: source-to-reference registration file
     sampling_method: '"average"'
     # type=enum|default='point'|allowed['average','max','point']: how to sample -- at a point or at the max or average over a range
