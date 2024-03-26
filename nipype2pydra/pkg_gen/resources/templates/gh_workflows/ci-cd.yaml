@@ -45,7 +45,7 @@ jobs:
     - name: Run automatic Nipype > Pydra conversion
       run: ./nipype-auto-conv/generate
 
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       with:
         name: converted-nipype
         path: pydra/tasks/CHANGEME/auto
@@ -69,7 +69,7 @@ jobs:
       run: git checkout $(git tag -l | grep 'v.*' | tail -n 1 | awk -F post '{print $1}')
 
     - name: Download tasks converted from Nipype 
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: converted-nipype
         path: pydra/tasks/CHANGEME/auto
@@ -140,7 +140,7 @@ jobs:
         echo "PATH=${{ env.CHANGEME_install_dir }}/bin:$PATH" >> $GITHUB_ENV
     
     - name: Download tasks converted from Nipype 
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: converted-nipype
         path: pydra/tasks/CHANGEME/auto
@@ -291,7 +291,7 @@ jobs:
       run: git checkout ${{ steps.latest_tag.outputs.TAG }}
 
     - name: Download tasks converted from Nipype 
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: converted-nipype
         path: pydra/tasks/CHANGEME/auto
@@ -345,7 +345,7 @@ jobs:
     - name: Check distributions
       run: twine check dist/*
 
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       with:
         name: distributions
         path: dist/
