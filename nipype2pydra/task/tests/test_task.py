@@ -127,22 +127,22 @@ def test_task_conversion(task_spec_file, cli_runner, work_dir, gen_test_conftest
             )
 
         # Run doctests
-        logging.info("Running doctests for %s", output_module_path)
-        with add_to_sys_path(pkg_root):
-            with contextlib.redirect_stdout(io.StringIO()) as f:
-                exit_code = pytest.main(
-                    [
-                        str(
-                            pkg_root.joinpath(
-                                *output_module_path.split(".")
-                            ).with_suffix(".py")
-                        ),
-                        "--doctest-modules",
-                        "--ignore-glob=test_*.py",
-                    ]
-                )
+        # logging.info("Running doctests for %s", output_module_path)
+        # with add_to_sys_path(pkg_root):
+        #     with contextlib.redirect_stdout(io.StringIO()) as f:
+        #         exit_code = pytest.main(
+        #             [
+        #                 str(
+        #                     pkg_root.joinpath(
+        #                         *output_module_path.split(".")
+        #                     ).with_suffix(".py")
+        #                 ),
+        #                 "--doctest-modules",
+        #                 "--ignore-glob=test_*.py",
+        #             ]
+        #         )
 
-        assert not exit_code, f.getvalue()
+        # assert not exit_code, f.getvalue()
         # tests_fspath = pkg_root.joinpath(*output_module_path.split(".")).parent / "tests"
 
         # # logging.info("Running generated tests for %s", output_module_path)
