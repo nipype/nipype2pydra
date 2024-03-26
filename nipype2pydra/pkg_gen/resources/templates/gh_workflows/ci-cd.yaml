@@ -16,6 +16,10 @@ on:
   repository_dispatch:
     types: [create-post-release]
 
+env:
+  CHANGEME_version: <set-CHANGEME-version-here>
+  CHANGEME_install_dir:  ${{ github.workspace }}/install
+
 jobs:
 
   nipype-conv:
@@ -103,7 +107,7 @@ jobs:
 
   test:
     needs: [nipype-conv]
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         python-version: ['3.8', '3.11']
@@ -117,14 +121,23 @@ jobs:
     - name: Checkout repo
       uses: actions/checkout@v4
 
-    - name: Revert version to most recent version tag on upstream update
+    - name: Revert version to most recent version tag on Nipype or Nipype2Pydra update
       if: github.event_name == 'repository_dispatch'
       run: git checkout $(git tag -l | grep 'v.*' | tail -n 1 | awk -F post '{print $1}')
 
+    - name: Cache CHANGEME Install
+      id: cache-install
+      uses: actions/cache@v4
+      with:
+        path: ${{ env.CHANGEME_install_dir }}
+        key: CHANGEME-${{ env.CHANGEME_version }}-${{ runner.os }}
+
     - name: Install CHANGEME Package
+      if: steps.cache-install.outputs.cache-hit != 'true'
       run: |
-        echo "NOT IMPLEMENTED YET"
-        exit 1  # This is a placeholder for the actual install command
+        echo "NOT IMPLEMENTED YET (install at CHANGEME_install_dir: $CHANGEME_install_dir)"
+        exit 1  # This is a placeholder, replace this line and the one above with the installation procedure
+        echo "PATH=${{ env.CHANGEME_install_dir }}/bin:$PATH" >> $GITHUB_ENV
     
     - name: Download tasks converted from Nipype 
       uses: actions/download-artifact@v3
@@ -361,6 +374,31 @@ jobs:
         release_name: Release ${{ steps.post_release_tag.outputs.TAG }}
         draft: false
         prerelease: false        
+
+
+  report_progress:
+    needs: [deploy]
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Generate progress report
+        id: generate-report
+        run: |
+          tools/report_progress.py outputs/progress-report.json
+          echo "progress_report=$(cat outputs/progress-report.json)" >> $GITHUB_OUTPUT
+
+      - name: Report progress to Nipype2Pydra repo
+        if: github.event_name == 'release' || github.event_name == 'repository_dispatch'
+        run: >-
+          curl -XPOST -u "${{ env.POST_RELEASE_PAT }}" -H "Accept: application/vnd.github.everest-preview+json"
+          "https://api.github.com/repos/nipype/pydra-CHANGEME/dispatches"
+          -d '{
+            "event_type": "progress-report",
+            "client_payload": ${{ steps.generate-report.output.progress_report }}
+          }'
+        env:
+          PAT: ${{ env.PROGRESS_REPORT_PAT }}
+
 
 # Deploy on tags if PYPI_API_TOKEN is defined in the repository secrets.
 # Secrets are not accessible in the if: condition [0], so set an output variable [1]
