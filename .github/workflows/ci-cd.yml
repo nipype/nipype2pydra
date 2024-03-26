@@ -122,31 +122,17 @@ jobs:
       matrix:
           repo:
           - afni
-          - ants
-          - fsl
-          - freesurfer
-    env:
-      SECRET: ""
+          # - ants
+          # - fsl
+          # - freesurfer
+          # - mriqc
     steps:
-    - name: Get secret for corresponding repo
-      id: get_secret
-      run: |
-        if [ "${{ matrix.repo }}" == "afni" ]; then
-          SECRET="${{ secrets.AFNI_PAT }}"
-        elif [ "${{ matrix.repo }}" == "ants" ]; then
-          SECRET="${{ secrets.ANTS_PAT }}"
-        elif [ "${{ matrix.repo }}" == "fsl" ]; then
-          SECRET="${{ secrets.FSL_PAT }}"
-        elif [ "${{ matrix.repo }}" == "freesurfer" ]; then
-          SECRET="${{ secrets.FREESURFER_PAT }}"
-        fi
-        echo "SECRET=$SECRET" >> $GITHUB_ENV
 
     - name: Trigger post-release on downstream repos
-      if: github.event_name == 'release' && env.SECRET
+      if: github.event_name == 'release'
       run: |
-        curl -XPOST -u "${{ env.SECRET }}" -H "Accept: application/vnd.github.everest-preview+json" \
+        curl -XPOST -u "${{ env.POST_RELEASE_PAT }}" -H "Accept: application/vnd.github.everest-preview+json" \
         "https://api.github.com/repos/nipype/pydra-${{ matrix.repo }}/dispatches" \
         -d '{"event_type": "create-post-release"}'
       env:
-        PAT: ${{ env.SECRET }}
+        PAT: ${{ env.POST_RELEASE_PAT }}
