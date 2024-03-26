@@ -143,11 +143,11 @@ doctests:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
   # If the field is of file-format type and the value is None, then the
   # '.mock()' method of the corresponding class is used instead.
-    in_file:
+    in_file: '"functional.nii"'
     # type=file|default=<undefined>: image to operate on
     op_string: '"-add %s -mul -1 -div %s"'
     # type=string|default='': python formatted string of operations to perform
-    operand_files:
+    operand_files: '["functional2.nii", "functional3.nii"]'
     # type=inputmultiobject|default=[]: list of file names to plug into op string
     out_file: '"functional4.nii"'
     # type=file: image written after calculations

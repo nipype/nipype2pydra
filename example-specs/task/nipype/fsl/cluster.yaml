@@ -192,7 +192,7 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     threshold: '2.3'
     # type=float|default=0.0: threshold for input volume
-    in_file:
+    in_file: '"zstat1.nii.gz"'
     # type=file|default=<undefined>: input volume
     out_localmax_txt_file: '"stats.txt"'
     # type=traitcompound|default=None: local maxima text file

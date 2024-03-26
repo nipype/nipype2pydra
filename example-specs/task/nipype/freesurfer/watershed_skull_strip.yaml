@@ -150,11 +150,11 @@ doctests:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
   # If the field is of file-format type and the value is None, then the
   # '.mock()' method of the corresponding class is used instead.
-    in_file:
+    in_file: '"T1.mgz"'
     # type=file|default=<undefined>: input volume
     t1: 'True'
     # type=bool|default=False: specify T1 input volume (T1 grey value = 110)
-    transform:
+    transform: '"transforms/talairach_with_skull.lta"'
     # type=file|default=<undefined>: undocumented
     out_file: '"brainmask.auto.mgz"'
     # type=file: skull stripped brain volume

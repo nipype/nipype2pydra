@@ -129,7 +129,7 @@ doctests:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
   # If the field is of file-format type and the value is None, then the
   # '.mock()' method of the corresponding class is used instead.
-    in_files:
+    in_files: ldir
     # type=list|default=[]: a list of input volumes or a singleMatrixFile
     out_file: '"biggestSegmentation"'
     # type=file: output file indexed in order of input files

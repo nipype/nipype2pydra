@@ -138,7 +138,7 @@ doctests:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
   # If the field is of file-format type and the value is None, then the
   # '.mock()' method of the corresponding class is used instead.
-    in_files:
+    in_files: '["functional.nii", "functional2.nii"]'
     # type=inputmultiobject|default=[]: 
     blurfwhm: '4'
     # type=int|default=0: FWHM blur value (mm)

@@ -214,9 +214,9 @@ doctests:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
   # If the field is of file-format type and the value is None, then the
   # '.mock()' method of the corresponding class is used instead.
-    in_file:
+    in_file: '"functional.nii"'
     # type=file|default=<undefined>: input file name (text matrix or 3D/4D image file)
-    design:
+    design: '"maps.nii"'
     # type=file|default=<undefined>: file name of the GLM design matrix (text time courses for temporal regression or an image file for spatial regression)
     output_type: '"NIFTI"'
     # type=enum|default='NIFTI'|allowed['NIFTI','NIFTI_GZ','NIFTI_PAIR','NIFTI_PAIR_GZ']: FSL output type

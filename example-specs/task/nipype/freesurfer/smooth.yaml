@@ -155,12 +155,12 @@ doctests:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
   # If the field is of file-format type and the value is None, then the
   # '.mock()' method of the corresponding class is used instead.
-    in_file:
+    in_file: '"functional.nii"'
     # type=file|default=<undefined>: source volume
     smoothed_file: '"foo_out.nii"'
     # type=file: smoothed input volume
     # type=file|default=<undefined>: output volume
-    reg_file:
+    reg_file: '"register.dat"'
     # type=file|default=<undefined>: registers volume to surface anatomical 
     surface_fwhm: '10'
     # type=range|default=0.0: surface FWHM in mm

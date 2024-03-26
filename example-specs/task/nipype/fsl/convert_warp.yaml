@@ -172,9 +172,9 @@ doctests:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
   # If the field is of file-format type and the value is None, then the
   # '.mock()' method of the corresponding class is used instead.
-    warp1:
+    warp1: '"warpfield.nii"'
     # type=file|default=<undefined>: Name of file containing initial warp-fields/coefficients (follows premat). This could e.g. be a fnirt-transform from a subjects structural scan to an average of a group of subjects.
-    reference:
+    reference: '"T1.nii"'
     # type=file|default=<undefined>: Name of a file in target space of the full transform.
     relwarp: 'True'
     # type=bool|default=False: If set it indicates that the warps in --warp1/2 should be interpreted as relative. I.e. the values in --warp1/2 are displacements from the coordinates in the next space.

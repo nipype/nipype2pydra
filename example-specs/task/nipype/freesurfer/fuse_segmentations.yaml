@@ -154,11 +154,11 @@ doctests:
     out_file: '"aseg.fused.mgz"'
     # type=file: output fused segmentation file
     # type=file|default=<undefined>: output fused segmentation file
-    in_segmentations:
+    in_segmentations: '["aseg.mgz", "aseg.mgz"]'
     # type=inputmultiobject|default=[]: name of aseg file to use (default: aseg.mgz)         must include the aseg files for all the given timepoints
-    in_segmentations_noCC:
+    in_segmentations_noCC: '["aseg.mgz", "aseg.mgz"]'
     # type=inputmultiobject|default=[]: name of aseg file w/o CC labels (default: aseg.auto_noCCseg.mgz)         must include the corresponding file for all the given timepoints
-    in_norms:
+    in_norms: '["norm.mgz", "norm.mgz", "norm.mgz"]'
     # type=inputmultiobject|default=[]: -n <filename>  - name of norm file to use (default: norm.mgs)         must include the corresponding norm file for all given timepoints         as well as for the current subject
   imports:
   # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item

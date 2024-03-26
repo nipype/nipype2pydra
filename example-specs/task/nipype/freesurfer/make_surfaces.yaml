@@ -206,17 +206,17 @@ doctests:
     # type=enum|default='lh'|allowed['lh','rh']: Hemisphere being processed
     subject_id: '"10335"'
     # type=string|default='subject_id': Subject being processed
-    in_orig:
+    in_orig: '"lh.pial"'
     # type=file|default=<undefined>: Implicit input file <hemisphere>.orig
-    in_wm:
+    in_wm: '"wm.mgz"'
     # type=file|default=<undefined>: Implicit input file wm.mgz
-    in_filled:
+    in_filled: '"norm.mgz"'
     # type=file|default=<undefined>: Implicit input file filled.mgz
-    in_label:
+    in_label: '"aparc+aseg.nii"'
     # type=file|default=<undefined>: Implicit input label/<hemisphere>.aparc.annot
-    in_T1:
+    in_T1: '"T1.mgz"'
     # type=file|default=<undefined>: Input brain or T1 file
-    orig_pial:
+    orig_pial: '"lh.pial"'
     # type=file|default=<undefined>: Specify a pial surface to start with
   imports:
   # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item

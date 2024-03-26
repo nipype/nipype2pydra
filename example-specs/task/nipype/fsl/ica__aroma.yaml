@@ -182,15 +182,15 @@ doctests:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
   # If the field is of file-format type and the value is None, then the
   # '.mock()' method of the corresponding class is used instead.
-    in_file:
+    in_file: '"functional.nii"'
     # type=file|default=<undefined>: volume to be denoised
-    mat_file:
+    mat_file: '"func_to_struct.mat"'
     # type=file|default=<undefined>: path/name of the mat-file describing the affine registration (e.g. FSL FLIRT) of the functional data to structural space (.mat file)
-    fnirt_warp_file:
+    fnirt_warp_file: '"warpfield.nii"'
     # type=file|default=<undefined>: File name of the warp-file describing the non-linear registration (e.g. FSL FNIRT) of the structural data to MNI152 space (.nii.gz)
-    motion_parameters:
+    motion_parameters: '"fsl_mcflirt_movpar.txt"'
     # type=file|default=<undefined>: motion parameters file
-    mask:
+    mask: '"mask.nii.gz"'
     # type=file|default=<undefined>: path/name volume mask
     denoise_type: '"both"'
     # type=enum|default='nonaggr'|allowed['aggr','both','no','nonaggr']: Type of denoising strategy: -no: only classification, no denoising -nonaggr (default): non-aggresssive denoising, i.e. partial component regression -aggr: aggressive denoising, i.e. full component regression -both: both aggressive and non-aggressive denoising (two outputs)

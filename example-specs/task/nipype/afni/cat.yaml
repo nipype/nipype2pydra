@@ -155,7 +155,7 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     sel: '"''[0,2]''"'
     # type=str|default='': Apply the same column/row selection string to all filenames on the command line.
-    in_files:
+    in_files: '["f1.1D", "f2.1D"]'
     # type=list|default=[]: 
     out_file: '"catout.1d"'
     # type=file: output file

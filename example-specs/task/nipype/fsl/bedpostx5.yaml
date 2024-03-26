@@ -214,13 +214,13 @@ doctests:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
   # If the field is of file-format type and the value is None, then the
   # '.mock()' method of the corresponding class is used instead.
-    bvecs:
+    bvecs: '"bvecs"'
     # type=file|default=<undefined>: b vectors file
-    bvals:
+    bvals: '"bvals"'
     # type=file|default=<undefined>: b values file
-    dwi:
+    dwi: '"diffusion.nii"'
     # type=file|default=<undefined>: diffusion weighted image data file
-    mask:
+    mask: '"mask.nii"'
     # type=file|default=<undefined>: bet binary mask file
     n_fibres: '1'
     # type=range|default=2: Maximum number of fibres to fit in each voxel

@@ -141,13 +141,13 @@ doctests:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
   # If the field is of file-format type and the value is None, then the
   # '.mock()' method of the corresponding class is used instead.
-    lh_white:
+    lh_white: '"lh.pial"'
     # type=file|default=<undefined>: Implicit input file must be lh.white
-    rh_white:
+    rh_white: '"lh.pial"'
     # type=file|default=<undefined>: Implicit input file must be rh.white
     surf_directory: '"."'
     # type=directory|default='.': Directory containing lh.white and rh.white
-    aseg:
+    aseg: '"aseg.mgz"'
     # type=file|default=<undefined>: Input aseg file
   imports:
   # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item

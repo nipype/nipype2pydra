@@ -144,9 +144,9 @@ doctests:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
   # If the field is of file-format type and the value is None, then the
   # '.mock()' method of the corresponding class is used instead.
-    cbucket:
+    cbucket: '"functional.nii"'
     # type=file|default=<undefined>: Read the dataset output from 3dDeconvolve via the '-cbucket' option.
-    matrix:
+    matrix: '"output.1D"'
     # type=file|default=<undefined>: Read the matrix output from 3dDeconvolve via the '-x1D' option.
     select: '["baseline"]'
     # type=list|default=[]: A list of selected columns from the matrix (and the corresponding coefficient sub-bricks from the cbucket). Valid types include 'baseline',  'polort', 'allfunc', 'allstim', 'all', Can also provide 'something' where something matches a stim_label from 3dDeconvolve, and 'digits' where digits are the numbers of the select matrix columns by numbers (starting at 0), or number ranges of the form '3..7' and '3-7'.

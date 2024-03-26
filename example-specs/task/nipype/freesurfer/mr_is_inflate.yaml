@@ -134,7 +134,7 @@ doctests:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
   # If the field is of file-format type and the value is None, then the
   # '.mock()' method of the corresponding class is used instead.
-    in_file:
+    in_file: '"lh.pial"'
     # type=file|default=<undefined>: Input file for MRIsInflate
     no_save_sulc: 'True'
     # type=bool|default=False: Do not save sulc file as output

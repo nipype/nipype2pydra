@@ -173,11 +173,11 @@ doctests:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
   # If the field is of file-format type and the value is None, then the
   # '.mock()' method of the corresponding class is used instead.
-    epi_file:
+    epi_file: '"functional.nii"'
     # type=file|default=<undefined>: EPI volume to unwarp
-    mag_file:
+    mag_file: '"magnitude.nii"'
     # type=file|default=<undefined>: Magnitude file
-    dph_file:
+    dph_file: '"phase.nii"'
     # type=file|default=<undefined>: Phase file assumed to be scaled from 0 to 4095
     output_type: '"NIFTI_GZ"'
     # type=enum|default='NIFTI'|allowed['NIFTI','NIFTI_GZ','NIFTI_PAIR','NIFTI_PAIR_GZ']: FSL output type

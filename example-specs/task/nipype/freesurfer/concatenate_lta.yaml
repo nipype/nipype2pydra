@@ -204,7 +204,7 @@ doctests:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
   # If the field is of file-format type and the value is None, then the
   # '.mock()' method of the corresponding class is used instead.
-    in_lta1:
+    in_lta1: '"lta1.lta"'
     # type=file|default=<undefined>: maps some src1 to dst1
     in_lta2: '"lta2.lta"'
     # type=traitcompound|default=None: maps dst1(src2) to dst2

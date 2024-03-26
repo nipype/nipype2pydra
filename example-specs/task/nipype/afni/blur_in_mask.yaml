@@ -148,9 +148,9 @@ doctests:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
   # If the field is of file-format type and the value is None, then the
   # '.mock()' method of the corresponding class is used instead.
-    in_file:
+    in_file: '"functional.nii"'
     # type=file|default=<undefined>: input file to 3dSkullStrip
-    mask:
+    mask: '"mask.nii"'
     # type=file|default=<undefined>: Mask dataset, if desired.  Blurring will occur only within the mask. Voxels NOT in the mask will be set to zero in the output.
     fwhm: '5.0'
     # type=float|default=0.0: fwhm kernel size

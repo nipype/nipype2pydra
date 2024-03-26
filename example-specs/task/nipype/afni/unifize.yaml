@@ -180,7 +180,7 @@ doctests:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
   # If the field is of file-format type and the value is None, then the
   # '.mock()' method of the corresponding class is used instead.
-    in_file:
+    in_file: '"structural.nii"'
     # type=file|default=<undefined>: input file to 3dUnifize
     out_file: '"structural_unifized.nii"'
     # type=file: unifized file

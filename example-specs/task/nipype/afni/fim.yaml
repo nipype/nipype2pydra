@@ -146,9 +146,9 @@ doctests:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
   # If the field is of file-format type and the value is None, then the
   # '.mock()' method of the corresponding class is used instead.
-    in_file:
+    in_file: '"functional.nii"'
     # type=file|default=<undefined>: input file to 3dfim+
-    ideal_file:
+    ideal_file: '"seed.1D"'
     # type=file|default=<undefined>: ideal time series file name
     out_file: '"functional_corr.nii"'
     # type=file: output file

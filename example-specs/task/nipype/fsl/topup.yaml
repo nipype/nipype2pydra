@@ -211,9 +211,9 @@ doctests:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
   # If the field is of file-format type and the value is None, then the
   # '.mock()' method of the corresponding class is used instead.
-    in_file:
+    in_file: '"b0_b0rev.nii"'
     # type=file|default=<undefined>: name of 4D file with images
-    encoding_file:
+    encoding_file: '"topup_encoding.txt"'
     # type=file|default=<undefined>: name of text file with PE directions/times
     output_type: '"NIFTI_GZ"'
     # type=enum|default='NIFTI'|allowed['NIFTI','NIFTI_GZ','NIFTI_PAIR','NIFTI_PAIR_GZ']: FSL output type

@@ -161,11 +161,11 @@ doctests:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
   # If the field is of file-format type and the value is None, then the
   # '.mock()' method of the corresponding class is used instead.
-    in_orig:
+    in_orig: '"lh.orig" # doctest: +SKIP'
     # type=file|default=<undefined>: Undocumented input file <hemisphere>.orig
-    in_inflated:
+    in_inflated: '"lh.inflated" # doctest: +SKIP'
     # type=file|default=<undefined>: Undocumented input file <hemisphere>.inflated
-    sphere:
+    sphere: '"lh.qsphere.nofix" # doctest: +SKIP'
     # type=file|default=<undefined>: Sphere input file
     hemisphere: '"lh"'
     # type=string|default='': Hemisphere being processed

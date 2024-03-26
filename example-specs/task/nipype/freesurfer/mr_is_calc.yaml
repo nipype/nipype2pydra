@@ -149,9 +149,9 @@ doctests:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
   # If the field is of file-format type and the value is None, then the
   # '.mock()' method of the corresponding class is used instead.
-    in_file1:
+    in_file1: '"lh.area" # doctest: +SKIP'
     # type=file|default=<undefined>: Input file 1
-    in_file2:
+    in_file2: '"lh.area.pial" # doctest: +SKIP'
     # type=file|default=<undefined>: Input file 2
     action: '"add"'
     # type=string|default='': Action to perform on input file(s)

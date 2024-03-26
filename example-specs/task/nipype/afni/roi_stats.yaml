@@ -161,9 +161,9 @@ doctests:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
   # If the field is of file-format type and the value is None, then the
   # '.mock()' method of the corresponding class is used instead.
-    in_file:
+    in_file: '"functional.nii"'
     # type=file|default=<undefined>: input dataset
-    mask_file:
+    mask_file: '"skeleton_mask.nii.gz"'
     # type=file|default=<undefined>: input mask
     stat: '["mean", "median", "voxels"]'
     # type=inputmultiobject|default=[]: Statistics to compute. Options include:   * mean       =   Compute the mean using only non_zero voxels.                   Implies the opposite for the mean computed                   by default.  * median     =   Compute the median of nonzero voxels  * mode       =   Compute the mode of nonzero voxels.                   (integral valued sets only)  * minmax     =   Compute the min/max of nonzero voxels  * sum        =   Compute the sum using only nonzero voxels.  * voxels     =   Compute the number of nonzero voxels  * sigma      =   Compute the standard deviation of nonzero                   voxels  Statistics that include zero-valued voxels:   * zerominmax =   Compute the min/max of all voxels.  * zerosigma  =   Compute the standard deviation of all                   voxels.  * zeromedian =   Compute the median of all voxels.  * zeromode   =   Compute the mode of all voxels.  * summary    =   Only output a summary line with the grand                   mean across all briks in the input dataset.                   This option cannot be used with nomeanout.  More that one option can be specified.

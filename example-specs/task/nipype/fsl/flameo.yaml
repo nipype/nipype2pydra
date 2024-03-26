@@ -204,17 +204,17 @@ doctests:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
   # If the field is of file-format type and the value is None, then the
   # '.mock()' method of the corresponding class is used instead.
-    cope_file:
+    cope_file: '"cope.nii.gz"'
     # type=file|default=<undefined>: cope regressor data file
-    var_cope_file:
+    var_cope_file: '"varcope.nii.gz"'
     # type=file|default=<undefined>: varcope weightings data file
-    cov_split_file:
+    cov_split_file: '"cov_split.mat"'
     # type=file|default=<undefined>: ascii matrix specifying the groups the covariance is split into
-    design_file:
+    design_file: '"design.mat"'
     # type=file|default=<undefined>: design matrix file
-    t_con_file:
+    t_con_file: '"design.con"'
     # type=file|default=<undefined>: ascii matrix specifying t-contrasts
-    mask_file:
+    mask_file: '"mask.nii"'
     # type=file|default=<undefined>: mask file
     run_mode: '"fe"'
     # type=enum|default='fe'|allowed['fe','flame1','flame12','ols']: inference to perform

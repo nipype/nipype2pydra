@@ -549,7 +549,7 @@ class NipypeInterface:
                         DocTestGenerator,
                         {
                             "cmdline": cmdline,
-                            "inputs": copy(test_inpts),
+                            "inputs": copy(inpts),
                             "imports": imports,
                             "directive": directive,
                         },
@@ -720,7 +720,7 @@ def initialise_task_repo(output_dir, task_template: Path, pkg: str) -> Path:
             continue
         with open(fspath) as f:
             contents = f.read()
-        contents = re.sub(r"\bCHANGEME\b", pkg, contents)
+        contents = contents.replace("CHANGEME", pkg)
         with open(fspath, "w") as f:
             f.write(contents)
 

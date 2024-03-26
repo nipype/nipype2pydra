@@ -274,9 +274,9 @@ doctests:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
   # If the field is of file-format type and the value is None, then the
   # '.mock()' method of the corresponding class is used instead.
-    source_file:
+    source_file: '"moving1.nii"'
     # type=file|default=<undefined>: source file to be registered
-    reference_file:
+    reference_file: '"fixed1.nii"'
     # type=file|default=<undefined>: reference (target) file
     subjects_dir: '"."'
     # type=directory|default=<undefined>: FreeSurfer SUBJECTS_DIR
@@ -291,7 +291,7 @@ doctests:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
   # If the field is of file-format type and the value is None, then the
   # '.mock()' method of the corresponding class is used instead.
-    source_file:
+    source_file: '"moving1.nii"'
     # type=file|default=<undefined>: source file to be registered
     subjects_dir: '"."'
     # type=directory|default=<undefined>: FreeSurfer SUBJECTS_DIR

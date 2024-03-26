@@ -184,15 +184,15 @@ doctests:
     # type=string|default='subject_id': Subject name or ID
     hemisphere: '"lh"'
     # type=enum|default='lh'|allowed['lh','rh']: Hemisphere ('lh' or 'rh')
-    canonsurf:
+    canonsurf: '"lh.pial"'
     # type=file|default=<undefined>: Input canonical surface file
-    curv:
+    curv: '"lh.pial"'
     # type=file|default=<undefined>: implicit input {hemisphere}.curv
-    sulc:
+    sulc: '"lh.pial"'
     # type=file|default=<undefined>: implicit input {hemisphere}.sulc
-    classifier:
+    classifier: '"im1.nii" # in pracice, use .gcs extension'
     # type=file|default=<undefined>: Classifier array input file
-    smoothwm:
+    smoothwm: '"lh.pial"'
     # type=file|default=<undefined>: implicit input {hemisphere}.smoothwm
   imports:
   # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item

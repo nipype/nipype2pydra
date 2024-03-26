@@ -124,7 +124,7 @@ doctests:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
   # If the field is of file-format type and the value is None, then the
   # '.mock()' method of the corresponding class is used instead.
-    in_file:
+    in_file: '"design.txt"'
     # type=file|default=<undefined>: plain text file representing your design, contrast, or f-test matrix
     out_file: '"design.mat"'
     # type=file: matrix data in the format used by FSL tools

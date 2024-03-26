@@ -187,9 +187,9 @@ doctests:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
   # If the field is of file-format type and the value is None, then the
   # '.mock()' method of the corresponding class is used instead.
-    in_file_a:
+    in_file_a: '"im1.nii"'
     # type=file|default=<undefined>: input file to 3dMean
-    in_file_b:
+    in_file_b: '"im2.nii"'
     # type=file|default=<undefined>: another input file to 3dMean
     out_file: ' "output.nii"'
     # type=file: output file
@@ -205,7 +205,7 @@ doctests:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
   # If the field is of file-format type and the value is None, then the
   # '.mock()' method of the corresponding class is used instead.
-    in_file_a:
+    in_file_a: '"im1.nii"'
     # type=file|default=<undefined>: input file to 3dMean
     out_file: ' "output.nii"'
     # type=file: output file

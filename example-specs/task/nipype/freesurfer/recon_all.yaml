@@ -425,7 +425,7 @@ doctests:
     subjects_dir: '"."'
     # type=directory: Freesurfer subjects directory.
     # type=directory|default=<undefined>: path to subjects directory
-    T1_files:
+    T1_files: '"structural.nii"'
     # type=inputmultiobject|default=[]: name of T1 file to process
     flags: '["-cw256", "-qcache"]'
     # type=inputmultiobject|default=[]: additional parameters
@@ -476,7 +476,7 @@ doctests:
     subjects_dir: '"."'
     # type=directory: Freesurfer subjects directory.
     # type=directory|default=<undefined>: path to subjects directory
-    T1_files:
+    T1_files: '"structural.nii"'
     # type=inputmultiobject|default=[]: name of T1 file to process
     hippocampal_subfields_T1: 'False'
     # type=bool|default=False: segment hippocampal subfields using input T1 scan

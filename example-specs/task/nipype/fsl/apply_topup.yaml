@@ -159,13 +159,13 @@ doctests:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
   # If the field is of file-format type and the value is None, then the
   # '.mock()' method of the corresponding class is used instead.
-    in_files:
+    in_files: '["epi.nii", "epi_rev.nii"]'
     # type=inputmultiobject|default=[]: name of file with images
-    encoding_file:
+    encoding_file: '"topup_encoding.txt"'
     # type=file|default=<undefined>: name of text file with PE directions/times
-    in_topup_fieldcoef:
+    in_topup_fieldcoef: '"topup_fieldcoef.nii.gz"'
     # type=file|default=<undefined>: topup file containing the field coefficients
-    in_topup_movpar:
+    in_topup_movpar: '"topup_movpar.txt"'
     # type=file|default=<undefined>: topup movpar.txt file
     output_type: '"NIFTI_GZ"'
     # type=enum|default='NIFTI'|allowed['NIFTI','NIFTI_GZ','NIFTI_PAIR','NIFTI_PAIR_GZ']: FSL output type

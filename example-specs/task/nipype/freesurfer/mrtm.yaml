@@ -290,7 +290,7 @@ doctests:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
   # If the field is of file-format type and the value is None, then the
   # '.mock()' method of the corresponding class is used instead.
-    in_file:
+    in_file: '"tac.nii"'
     # type=file|default=<undefined>: input 4D file
     mrtm1: ("ref_tac.dat", "timing.dat")
     # type=tuple|default=(<undefined>, <undefined>): RefTac TimeSec : perform MRTM1 kinetic modeling

@@ -286,13 +286,13 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     seed: '"seed_source.nii.gz"'
     # type=traitcompound|default=None: seed volume(s), or voxel(s) or freesurfer label file
-    thsamples:
+    thsamples: '"merged_th1samples.nii.gz"'
     # type=inputmultiobject|default=[]: 
-    fsamples:
+    fsamples: '"merged_f1samples.nii.gz"'
     # type=inputmultiobject|default=[]: 
-    phsamples:
+    phsamples: '"merged_ph1samples.nii.gz"'
     # type=inputmultiobject|default=[]: 
-    mask:
+    mask: '"nodif_brain_mask.nii.gz"'
     # type=file|default=<undefined>: bet binary mask file in diffusion space
     out_dir: '"."'
     # type=directory|default=<undefined>: directory to put the final volumes in

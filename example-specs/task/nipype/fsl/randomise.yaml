@@ -191,13 +191,13 @@ doctests:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
   # If the field is of file-format type and the value is None, then the
   # '.mock()' method of the corresponding class is used instead.
-    in_file:
+    in_file: '"allFA.nii"'
     # type=file|default=<undefined>: 4D input file
-    mask:
+    mask: '"mask.nii"'
     # type=file|default=<undefined>: mask image
-    tcon:
+    tcon: '"design.con"'
     # type=file|default=<undefined>: t contrasts file
-    design_mat:
+    design_mat: '"design.mat"'
     # type=file|default=<undefined>: design matrix file
   imports: *id001
   # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item

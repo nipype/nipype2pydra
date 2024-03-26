@@ -244,11 +244,11 @@ doctests:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
   # If the field is of file-format type and the value is None, then the
   # '.mock()' method of the corresponding class is used instead.
-    in_file:
+    in_file: '"sub-01_dir-LR_epi.nii.gz"'
     # type=file|default=<undefined>: Source image (opposite phase encoding direction than base image).
     nopadWARP: 'True'
     # type=bool|default=False: If for some reason you require the warp volume tomatch the base volume, then use this option to have the outputWARP dataset(s) truncated.
-    base_file:
+    base_file: '"sub-01_dir-RL_epi.nii.gz"'
     # type=file|default=<undefined>: Base image (opposite phase encoding direction than source image).
   imports:
   # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item

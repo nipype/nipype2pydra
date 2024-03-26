@@ -196,9 +196,9 @@ doctests:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
   # If the field is of file-format type and the value is None, then the
   # '.mock()' method of the corresponding class is used instead.
-    in_file_a:
+    in_file_a: '"functional.nii"'
     # type=file|default=<undefined>: input file to 3dcalc
-    in_file_b:
+    in_file_b: '"functional2.nii"'
     # type=file|default=<undefined>: operand file to 3dcalc
     expr: '"a*b"'
     # type=str|default='': expr
@@ -218,7 +218,7 @@ doctests:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
   # If the field is of file-format type and the value is None, then the
   # '.mock()' method of the corresponding class is used instead.
-    in_file_a:
+    in_file_a: '"functional.nii"'
     # type=file|default=<undefined>: input file to 3dcalc
     expr: '"1"'
     # type=str|default='': expr

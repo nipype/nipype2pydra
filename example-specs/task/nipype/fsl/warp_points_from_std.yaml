@@ -148,13 +148,13 @@ doctests:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
   # If the field is of file-format type and the value is None, then the
   # '.mock()' method of the corresponding class is used instead.
-    in_coords:
+    in_coords: '"surf.txt"'
     # type=file|default=<undefined>: filename of file containing coordinates
-    img_file:
+    img_file: '"T1.nii"'
     # type=file|default=<undefined>: filename of a destination image
-    std_file:
+    std_file: '"mni.nii"'
     # type=file|default=<undefined>: filename of the image in standard space
-    warp_file:
+    warp_file: '"warpfield.nii"'
     # type=file|default=<undefined>: filename of warpfield (e.g. intermediate2dest_warp.nii.gz)
     coord_mm: 'True'
     # type=bool|default=False: all coordinates in mm
