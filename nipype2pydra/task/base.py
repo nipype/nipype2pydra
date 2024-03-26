@@ -914,14 +914,19 @@ class BaseTaskConverter(metaclass=ABCMeta):
                     if is_fileset(tp):
                         val = f"{tp.__name__}.mock({val})"
                     elif ty.get_origin(tp) is list and is_fileset(ty.get_args(tp)[0]):
-                        val = (
-                            "["
-                            + ", ".join(
-                                f'{ty.get_args(tp)[0].__name__}.mock("{v}")'
-                                for v in eval(val)
+                        try:
+                            val = eval(val)
+                        except Exception:
+                            pass
+                        else:
+                            val = (
+                                "["
+                                + ", ".join(
+                                    f'{ty.get_args(tp)[0].__name__}.mock("{v}")'
+                                    for v in val
+                                )
+                                + "]"
                             )
-                            + "]"
-                        )
                     elif tp is str and not (val.startswith("'") or val.startswith('"')):
                         val = f'"{val}"'
                 if val is None and is_fileset(tp):
