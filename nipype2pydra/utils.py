@@ -259,24 +259,27 @@ class UsedSymbols:
 
     Parameters
     -------
-    used_imports : list[str]
+    imports : list[str]
         the import statements that need to be included in the converted file
-    funcs_to_include: list[tuple[str, callable]]
-        list of objects (e.g. classes, functions and variables) that are defined
-        in neighbouring modules that need to be included in the converted file
-        (as opposed of just imported from independent packages) along with the name
-        that they were imported as and therefore should be named as in the converted
-        module
-    used_local_functions: set[callable]
+    intra_pkg_funcs: list[tuple[str, callable]]
+        list of functions that are defined in neighbouring modules that need to be
+        included in the converted file (as opposed of just imported from independent
+        packages) along with the name that they were imported as and therefore should
+        be named as in the converted module if they are included inline
+    intra_pkg_classes
+        like neigh_mod_funcs but classes
+    local_functions: set[callable]
         locally-defined functions used in the function bodies, or nested functions thereof
-    used_constants: set[tuple[str, str]]
+    local_classes : set[type]
+        like local_functions but classes
+    constants: set[tuple[str, str]]
         constants used in the function bodies, or nested functions thereof, tuples consist
         of the constant name and its definition
     """
 
     imports: ty.Set[str] = attrs.field(factory=set)
-    funcs_to_include: ty.Set[ty.Tuple[str, ty.Callable]] = attrs.field(factory=set)
-    classes_to_include: ty.List[ty.Tuple[str, ty.Callable]] = attrs.field(factory=list)
+    intra_pkg_funcs: ty.Set[ty.Tuple[str, ty.Callable]] = attrs.field(factory=set)
+    intra_pkg_classes: ty.List[ty.Tuple[str, ty.Callable]] = attrs.field(factory=list)
     local_functions: ty.Set[ty.Callable] = attrs.field(factory=set)
     local_classes: ty.List[type] = attrs.field(factory=list)
     constants: ty.Set[ty.Tuple[str, str]] = attrs.field(factory=set)
@@ -287,23 +290,21 @@ class UsedSymbols:
 
     def update(self, other: "UsedSymbols"):
         self.imports.update(other.imports)
-        self.funcs_to_include.update(other.funcs_to_include)
-        self.funcs_to_include.update((f.__name__, f) for f in other.local_functions)
-        self.classes_to_include.extend(
-            c for c in other.classes_to_include if c not in self.classes_to_include
+        self.intra_pkg_funcs.update(other.intra_pkg_funcs)
+        self.intra_pkg_funcs.update((f.__name__, f) for f in other.local_functions)
+        self.intra_pkg_classes.extend(
+            c for c in other.intra_pkg_classes if c not in self.intra_pkg_classes
         )
-        self.classes_to_include.extend(
+        self.intra_pkg_classes.extend(
             (c.__name__, c)
             for c in other.local_classes
-            if (c.__name__, c) not in self.classes_to_include
+            if (c.__name__, c) not in self.intra_pkg_classes
         )
         self.constants.update(other.constants)
 
     @classmethod
     def find(
-        cls,
-        module,
-        function_bodies: ty.List[str],
+        cls, module, function_bodies: ty.List[str], collapse_intra_pkg: bool = True
     ) -> "UsedSymbols":
         """Get the imports required for the function body
 
@@ -313,6 +314,10 @@ class UsedSymbols:
             the module containing the functions to be converted
         function_bodies: list[str]
             the source of all functions that need to be checked for used imports
+        collapse_intra_pkg : bool
+            whether functions and classes defined within the same package, but not the
+            same module, are to be included in the output module or not, i.e. whether
+            the local funcs/classes/constants they referenced need to be included also
 
         Returns
         -------
@@ -393,7 +398,7 @@ class UsedSymbols:
 
         pkg_name = module.__name__.split(".", 1)[0]
 
-        def is_pkg_import(mod_name: str) -> bool:
+        def is_intra_pkg_import(mod_name: str) -> bool:
             return mod_name.startswith(".") or mod_name.startswith(f"{pkg_name}.")
 
         # functions to copy from a relative or nipype module into the output module
@@ -416,8 +421,8 @@ class UsedSymbols:
                 if import_mod in cls.IGNORE_MODULES:
                     continue
                 if import_mod:
-                    if is_pkg_import(import_mod):
-                        to_include = True
+                    if is_intra_pkg_import(import_mod):
+                        intra_pkg = True
                         if import_mod.startswith("."):
                             match = re.match(r"(\.*)(.*)", import_mod)
                             mod_parts = module.__name__.split(".")
@@ -434,7 +439,7 @@ class UsedSymbols:
                         else:
                             assert False
                     else:
-                        to_include = False
+                        intra_pkg = False
                         mod_name = import_mod
                     mod = import_module(mod_name)
                     # Filter out any interfaces that have been dragged in
@@ -459,35 +464,38 @@ class UsedSymbols:
                     ]
                     if not used_parts:
                         continue
-                    if to_include:
+                    if intra_pkg:
                         mod_func_bodies = []
                         for used_part in used_parts:
                             atr = getattr(mod, used_part[0])
-                            # Check that it is actually a local import
+                            # Check that it is actually in the package and not imported
+                            # from another external import
                             if (
                                 inspect.isfunction(atr) or inspect.isclass(atr)
-                            ) and not is_pkg_import(atr.__module__):
+                            ) and not is_intra_pkg_import(atr.__module__):
                                 used.imports.add(
                                     f"from {atr.__module__} import "
                                     + " as ".join(used_part)
                                 )
                             elif inspect.isfunction(atr):
-                                used.funcs_to_include.add((used_part[-1], atr))
-                                mod_func_bodies.append(inspect.getsource(atr))
+                                used.intra_pkg_funcs.add((used_part[-1], atr))
+                                if collapse_intra_pkg:
+                                    mod_func_bodies.append(inspect.getsource(atr))
                             elif inspect.isclass(atr):
                                 if issubclass(atr, BaseInterface):
                                     # TODO: add warning here
                                     continue  # Don't include nipype interfaces as it gets silly
                                 # We can't use a set here because we need to preserve the order
                                 class_def = (used_part[-1], atr)
-                                if class_def not in used.classes_to_include:
-                                    used.classes_to_include.append(class_def)
+                                if class_def not in used.intra_pkg_classes:
+                                    used.intra_pkg_classes.append(class_def)
                                 class_body = extract_args(inspect.getsource(atr))[
                                     2
                                 ].split("\n", 1)[1]
-                                mod_func_bodies.append(class_body)
+                                if collapse_intra_pkg:
+                                    mod_func_bodies.append(class_body)
                         # Recursively include neighbouring objects imported in the module
-                        if mod is not builtins:
+                        if mod is not builtins and mod_func_bodies:
                             used_in_mod = cls.find(
                                 mod,
                                 function_bodies=mod_func_bodies,
@@ -635,3 +643,38 @@ def get_source_code(func_or_klass: ty.Union[ty.Callable, ty.Type]) -> str:
         f"{install_placeholder}{os.path.sep}{rel_module_path}\n"
     )
     return comment + src
+
+
+def split_source_into_statements(source_code: str) -> ty.List[str]:
+    """Splits a source code string into individual statements
+
+    Parameters
+    ----------
+    source_code: str
+        the source code to split
+
+    Returns
+    -------
+    list[str]
+        the split source code
+    """
+    source_code = source_code.replace("\\\n", " ")  # strip out line breaks
+    lines = source_code.splitlines()
+    statements = []
+    current_statement = None
+    for line in lines:
+        if current_statement or "(" in line or "[" in line:
+            if current_statement:
+                current_statement += "\n" + line
+            else:
+                current_statement = line
+            try:
+                pre, args, post = extract_args(current_statement)
+            except UnmatchedParensException:
+                continue
+            else:
+                statements.append(pre + ", ".join(args) + post)
+                current_statement = None
+        else:
+            statements.append(line)
+    return statements
