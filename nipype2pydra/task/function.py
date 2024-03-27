@@ -111,13 +111,11 @@ class FunctionTaskConverter(BaseTaskConverter):
         spec_str += "\n\n# Functions defined locally in the original module\n\n"
 
         for func in sorted(used.local_functions, key=attrgetter("__name__")):
-            spec_str += "\n\n" + cleanup_function_body(
-                get_source_code(func)
-            )
+            spec_str += "\n\n" + cleanup_function_body(get_source_code(func))
 
         spec_str += "\n\n# Functions defined in neighbouring modules that have been included inline instead of imported\n\n"
 
-        for func_name, func in sorted(used.funcs_to_include, key=itemgetter(0)):
+        for func_name, func in sorted(used.intra_pkg_funcs, key=itemgetter(0)):
             func_src = get_source_code(func)
             func_src = re.sub(
                 r"^(#[^\n]+\ndef) (\w+)(?=\()",
@@ -127,7 +125,7 @@ class FunctionTaskConverter(BaseTaskConverter):
             )
             spec_str += "\n\n" + cleanup_function_body(func_src)
 
-        for klass_name, klass in sorted(used.classes_to_include, key=itemgetter(0)):
+        for klass_name, klass in sorted(used.intra_pkg_classes, key=itemgetter(0)):
             klass_src = get_source_code(klass)
             klass_src = re.sub(
                 r"^(#[^\n]+\nclass) (\w+)(?=\()",
@@ -204,7 +202,9 @@ class FunctionTaskConverter(BaseTaskConverter):
         ), f"Found the following unrecognised outputs {unrecognised_outputs}"
         method_body = output_re.sub(r"\1", method_body)
         # Strip initialisation of outputs
-        method_body = re.sub(r"outputs = self.output_spec().*", r"outputs = {}", method_body)
+        method_body = re.sub(
+            r"outputs = self.output_spec().*", r"outputs = {}", method_body
+        )
         # Add args to the function signature of method calls
         method_re = re.compile(r"self\.(\w+)(?=\()", flags=re.MULTILINE | re.DOTALL)
         method_names = [m.__name__ for m in self.referenced_methods]

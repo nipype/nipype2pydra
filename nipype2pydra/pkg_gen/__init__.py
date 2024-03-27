@@ -1081,7 +1081,7 @@ def get_callable_sources(
             klass_src = cleanup_function_body(get_source_code(klass))
             if klass_src not in all_classes:
                 all_classes.append(klass_src)
-        for new_func_name, func in used.funcs_to_include:
+        for new_func_name, func in used.intra_pkg_funcs:
             func_src = get_source_code(func)
             location_comment, func_src = func_src.split("\n", 1)
             match = re.match(
@@ -1098,7 +1098,7 @@ def get_callable_sources(
                 + match.group(2)
             )
             all_funcs.add(cleanup_function_body(func_src))
-        for new_klass_name, klass in used.classes_to_include:
+        for new_klass_name, klass in used.intra_pkg_classes:
             klass_src = get_source_code(klass)
             location_comment, klass_src = klass_src.split("\n", 1)
             match = re.match(
