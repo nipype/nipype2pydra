@@ -113,6 +113,9 @@ class FunctionTaskConverter(BaseTaskConverter):
         for func in sorted(used.local_functions, key=attrgetter("__name__")):
             spec_str += "\n\n" + cleanup_function_body(get_source_code(func))
 
+        for klass in sorted(used.local_classes, key=attrgetter("__name__")):
+            spec_str += "\n\n" + cleanup_function_body(get_source_code(klass))
+
         spec_str += "\n\n# Functions defined in neighbouring modules that have been included inline instead of imported\n\n"
 
         for func_name, func in sorted(used.intra_pkg_funcs, key=itemgetter(0)):

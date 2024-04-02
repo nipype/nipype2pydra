@@ -3,11 +3,17 @@ from functools import cached_property
 import inspect
 import re
 import typing as ty
+from operator import attrgetter
 from copy import deepcopy
 from types import ModuleType
 from pathlib import Path
 import attrs
-from .utils import UsedSymbols, split_source_into_statements, extract_args
+from .utils import (
+    UsedSymbols,
+    split_source_into_statements,
+    extract_args,
+    cleanup_function_body,
+)
 
 
 @attrs.define
@@ -174,21 +180,32 @@ class WorkflowConverter:
         ).with_suffix(".py")
         output_module.parent.mkdir(parents=True, exist_ok=True)
 
-        code_str = self.convert_function_code(already_converted)
+        used = deepcopy(self.used_symbols)
 
-        with open(output_module, "w") as f:
-            f.write(code_str)
-
-        all_symbols = deepcopy(self.used_symbols)
-
+        other_wf_code = ""
         # Convert any nested workflows
         for name, conv in self.nested_workflows.items():
             already_converted.add(name)
             if name in self.used_symbols.local_functions:
-                code_str += "\n\n" + conv.convert_function_code(already_converted)
-                all_symbols.update(conv.used_symbols)
+                other_wf_code += "\n\n\n" + conv.convert_function_code(
+                    already_converted
+                )
+                used.update(conv.used_symbols)
             else:
                 conv.generate(package_root, already_converted=already_converted)
+
+        code_str = "\n".join(used.imports) + "\n\n"
+        code_str += self.convert_function_code(already_converted)
+        code_str += other_wf_code
+        for func in sorted(used.local_functions, key=attrgetter("__name__")):
+            code_str += "\n\n" + cleanup_function_body(inspect.getsource(func))
+
+        code_str += "\n".join(f"{n} = {d}" for n, d in used.constants)
+        for klass in sorted(used.local_classes, key=attrgetter("__name__")):
+            code_str += "\n\n" + cleanup_function_body(inspect.getsource(klass))
+
+        with open(output_module, "w") as f:
+            f.write(code_str)
 
     def convert_function_code(self, already_converted: ty.Set[str]):
         """Generate the Pydra task module
