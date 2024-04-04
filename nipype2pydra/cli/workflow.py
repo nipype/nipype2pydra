@@ -1,8 +1,9 @@
 from pathlib import Path
+from copy import copy
 import click
 import yaml
 import nipype2pydra.workflow
-from .base import cli
+from nipype2pydra.cli.base import cli
 
 
 @cli.command(
@@ -18,7 +19,7 @@ converted workflow
 """,
 )
 @click.argument("base_function", type=str)
-@click.argument("yaml-specs-dir", type=click.Directory())
+@click.argument("yaml-specs-dir", type=click.Path(path_type=Path))
 @click.argument("package-root", type=click.Path(path_type=Path))
 @click.option(
     "--output-module",
@@ -39,10 +40,13 @@ def workflow(base_function, yaml_specs_dir, package_root, output_module):
             spec = yaml.safe_load(yaml_spec)
             workflow_specs[spec["name"]] = spec
 
+    kwargs = copy(workflow_specs[base_function])
+    if output_module:
+        kwargs["output_module"] = output_module
+
     converter = nipype2pydra.workflow.WorkflowConverter(
-        output_module=output_module,
         workflow_specs=workflow_specs,
-        **workflow_specs[base_function],
+        **kwargs,
     )
     converter.generate(package_root)
 
