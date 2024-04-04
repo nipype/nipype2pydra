@@ -3,74 +3,74 @@ from nipype2pydra.utils import (
     get_source_code,
     split_source_into_statements,
 )
-from nipype2pydra.testing import test_line_number_of_function
+from nipype2pydra.testing import for_testing_line_number_of_function
 
 
-def test_split_parens_contents1():
+def test_extract_args1():
     assert extract_args(
         "def foo(a, b, c):\n    return a",
     ) == ("def foo(", ["a", "b", "c"], "):\n    return a")
 
 
-def test_split_parens_contents2():
+def test_extract_args2():
     assert extract_args(
         "foo(a, 'b, c')",
     ) == ("foo(", ["a", "'b, c'"], ")")
 
 
-def test_split_parens_contents2a():
+def test_extract_args2a():
     assert extract_args(
         'foo(a, "b, c")',
     ) == ("foo(", ["a", '"b, c"'], ")")
 
 
-def test_split_parens_contents2b():
+def test_extract_args2b():
     assert extract_args("foo(a, 'b, \"c')") == ("foo(", ["a", "'b, \"c'"], ")")
 
 
-def test_split_parens_contents3():
+def test_extract_args3():
     assert extract_args(
         "foo(a, bar(b, c))",
     ) == ("foo(", ["a", "bar(b, c)"], ")")
 
 
-def test_split_parens_contents3a():
+def test_extract_args3a():
     assert extract_args(
         "foo(a, bar[b, c])",
     ) == ("foo(", ["a", "bar[b, c]"], ")")
 
 
-def test_split_parens_contents3b():
+def test_extract_args3b():
     assert extract_args(
         "foo(a, bar([b, c]))",
     ) == ("foo(", ["a", "bar([b, c])"], ")")
 
 
-def test_split_parens_contents5():
+def test_extract_args5():
     assert extract_args(
         "foo(a, '\"b\"', c)",
     ) == ("foo(", ["a", "'\"b\"'", "c"], ")")
 
 
-def test_split_parens_contents6():
+def test_extract_args6():
     assert extract_args(
         r"foo(a, '\'b\'', c)",
     ) == ("foo(", ["a", r"'\'b\''", "c"], ")")
 
 
-def test_split_parens_contents6a():
+def test_extract_args6a():
     assert extract_args(
         r"foo(a, '\'b\', c')",
     ) == ("foo(", ["a", r"'\'b\', c'"], ")")
 
 
-def test_split_parens_contents7():
+def test_extract_args7():
     assert extract_args(
         '"""Module explanation"""\ndef foo(a, b, c)',
     ) == ('"""Module explanation"""\ndef foo(', ["a", "b", "c"], ")")
 
 
-def test_split_parens_contents8():
+def test_extract_args8():
     assert extract_args(
         """related_filetype_sets = [(".hdr", ".img", ".mat"), (".nii", ".mat"), (".BRIK", ".HEAD")]""",
     ) == (
@@ -80,7 +80,7 @@ def test_split_parens_contents8():
     )
 
 
-def test_split_parens_contents9():
+def test_extract_args9():
     assert extract_args('foo(cwd=bar("tmpdir"), basename="maskexf")') == (
         "foo(",
         ['cwd=bar("tmpdir")', 'basename="maskexf"'],
@@ -88,10 +88,39 @@ def test_split_parens_contents9():
     )
 
 
+def test_extract_args10():
+    assert extract_args('""" \\""" """') == ('""" \\""" """', None, None)
+
+
+def test_split_source_into_statements_tripple_quote():
+    stmts = split_source_into_statements(
+        '''"""This is a great function named foo you use it like
+
+    \\""" - escaped tripple quote
+
+    >>> foo(bar="wohoo", basename="to me".replace("me", "you"))
+    'woohoo you!'
+    """
+    print("\\"here\\"")
+    return bar + " " + basename + "!"'''
+    )
+    assert stmts == [
+        '''"""This is a great function named foo you use it like
+
+    \\""" - escaped tripple quote
+
+    >>> foo(bar="wohoo", basename="to me".replace("me", "you"))
+    'woohoo you!'
+    """''',
+        '    print("\\"here\\"")',
+        '    return bar + " " + basename + "!"',
+    ]
+
+
 def test_source_code():
-    assert get_source_code(test_line_number_of_function).splitlines()[:2] == [
+    assert get_source_code(for_testing_line_number_of_function).splitlines()[:2] == [
         "# Original source at L1 of <nipype2pydra-install>/testing.py",
-        "def test_line_number_of_function():",
+        "def for_testing_line_number_of_function():",
     ]
 
     # \"\"\"

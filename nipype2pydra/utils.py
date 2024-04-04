@@ -10,7 +10,10 @@ from contextlib import contextmanager
 import attrs
 from pathlib import Path
 from fileformats.core import FileSet
-from .exceptions import UnmatchedParensException
+from .exceptions import (
+    UnmatchedParensException,
+    UnmatchedQuoteException,
+)
 from nipype.interfaces.base import BaseInterface, TraitedSpec, isdefined, Undefined
 from nipype.interfaces.base import traits_extension
 
@@ -186,20 +189,23 @@ def extract_args(snippet) -> ty.Tuple[str, ty.List[str], str]:
         flags=re.MULTILINE | re.DOTALL,
     )
     quote_types = ["'", '"']
-    pre = "".join(splits[:2])
+    pre = splits[0]
     contents = []
     matching = {")": "(", "]": "["}
     open = ["(", "["]
     close = [")", "]"]
     depth = {p: 0 for p in open}
-    next_item = ""
-    if splits[1] in quote_types:
-        first = None  # which bracket/parens type was opened initially (and signifies)
-        inquote = splits[1]
-    else:
-        first = splits[1]
+    next_item = splits[1]
+    first = None
+    in_quote = None
+    in_tripple_quote = None
+    if next_item in quote_types:
+        in_quote = next_item
+    elif not next_item.startswith("\\"):  # paren/bracket
+        first = next_item
+        pre += first
+        next_item = ""
         depth[first] += 1  # Open the first bracket/parens type
-        inquote = None
     for i, s in enumerate(splits[2:], start=2):
         if not s:
             continue
@@ -207,13 +213,24 @@ def extract_args(snippet) -> ty.Tuple[str, ty.List[str], str]:
             next_item += s
             continue
         if s in quote_types:
-            if inquote is None:
-                inquote = s
-            elif inquote == s:
-                inquote = None
             next_item += s
+            tripple_quote = (
+                next_item[-3:]
+                if next_item[-3:] == s * 3
+                and not (len(next_item) >= 4 and next_item[-4] == "\\")
+                else None
+            )
+            if in_tripple_quote:
+                if in_tripple_quote == tripple_quote:
+                    in_tripple_quote = None
+            elif tripple_quote:
+                in_tripple_quote = tripple_quote
+            elif in_quote is None:
+                in_quote = s
+            elif in_quote == s:
+                in_quote = None
             continue
-        if inquote:
+        if in_quote or in_tripple_quote:
             next_item += s
             continue
         if s in open:
@@ -249,6 +266,12 @@ def extract_args(snippet) -> ty.Tuple[str, ty.List[str], str]:
                     next_item = ""
             else:
                 next_item += s
+    if in_quote or in_tripple_quote:
+        raise UnmatchedQuoteException(
+            f"Unmatched quote ({in_quote}) found in '{snippet}'"
+        )
+    if first is None:
+        return pre + next_item, None, None
     raise UnmatchedParensException(f"Unmatched parenthesis found in '{snippet}'")
 
 
@@ -324,6 +347,7 @@ class UsedSymbols:
         UsedSymbols
             a class containing the used symbols in the module
         """
+        base_pkg = module.__name__.split(".")[0]
         used = cls()
         imports = [
             "import attrs",
@@ -434,7 +458,7 @@ class UsedSymbols:
                             mod_name = ".".join(mod_parts)
                             if match.group(2):
                                 mod_name += "." + match.group(2)
-                        elif import_mod.startswith("nipype."):
+                        elif import_mod.startswith(base_pkg + "."):
                             mod_name = import_mod
                         else:
                             assert False
@@ -663,17 +687,22 @@ def split_source_into_statements(source_code: str) -> ty.List[str]:
     statements = []
     current_statement = None
     for line in lines:
-        if current_statement or "(" in line or "[" in line:
+        if current_statement or re.match(r".*[\(\[\"'].*", line):
             if current_statement:
                 current_statement += "\n" + line
             else:
                 current_statement = line
             try:
                 pre, args, post = extract_args(current_statement)
-            except UnmatchedParensException:
+            except (UnmatchedParensException, UnmatchedQuoteException):
                 continue
             else:
-                statements.append(pre + ", ".join(args) + post)
+                if args is None:
+                    assert post is None
+                    stmt = pre
+                else:
+                    stmt = pre + ", ".join(args) + post
+                statements.append(stmt)
                 current_statement = None
         else:
             statements.append(line)
