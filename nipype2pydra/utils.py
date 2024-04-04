@@ -188,6 +188,8 @@ def extract_args(snippet) -> ty.Tuple[str, ty.List[str], str]:
         snippet,
         flags=re.MULTILINE | re.DOTALL,
     )
+    if len(splits) == 1:
+        return splits[0], None, None
     quote_types = ["'", '"']
     pre = splits[0]
     contents = []
@@ -687,7 +689,10 @@ def split_source_into_statements(source_code: str) -> ty.List[str]:
     statements = []
     current_statement = None
     for line in lines:
-        if current_statement or re.match(r".*[\(\[\"'].*", line):
+        if re.match(r"\s*#.*", line):
+            if not current_statement:  # drop within-statement comments
+                statements.append(line)
+        elif current_statement or re.match(r".*[\(\[\"'].*", line):
             if current_statement:
                 current_statement += "\n" + line
             else:

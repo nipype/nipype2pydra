@@ -5,9 +5,23 @@ nipype_name: compute_iqms
 # name of the nipype module the function is found within, e.g. mriqc.workflows.anatomical.base
 nipype_module: mriqc.workflows.diffusion.base
 # The name of the global struct/dict that contains workflow inputs that are to be converted to inputs of the function along with the type of the struct, either "dict" or "class"
-input_struct:
-- config.workflow
-- class
+config_params:
+  wf:
+    varname: config.workflow
+    type: struct
+    module: mriqc
+  exec:
+    varname: config.execution
+    type: struct
+    module: mriqc
+  nipype:
+    varname: config.nipype
+    type: struct
+    module: mriqc
+  env:
+    varname: config.environment
+    type: struct
+    module: mriqc
 # Name of the node that is to be considered the input of the workflow, i.e. its outputs will be the inputs of the workflow
 inputnode: inputnode
 # Name of the node that is to be considered the output of the workflow, i.e. its inputs will be the outputs of the workflow
