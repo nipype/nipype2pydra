@@ -4,6 +4,7 @@ from types import ModuleType
 import sys
 import re
 import os
+import keyword
 import inspect
 import builtins
 from contextlib import contextmanager
@@ -372,19 +373,24 @@ class UsedSymbols:
                     block = line.strip()
                 else:
                     imports.append(line.strip())
-        # extract imported symbols from import statements
+
         symbols_re = re.compile(r"(?<!\"|')\b(\w+)\b(?!\"|')")
-        comments_re = re.compile(r"\s*#.*")
+
+        def get_symbols(fbody: str):
+            """Get the symbols used in a function body"""
+            for stmt in split_source_into_statements(fbody):
+                if stmt and not re.match(r"\s*(#|\"|')", stmt):  # skip comments/docs
+                    used_symbols.update(symbols_re.findall(stmt))
+
         used_symbols = set()
         for function_body in function_bodies:
-            # Strip comments from function body
-            function_body = comments_re.sub("", function_body)
-            used_symbols.update(symbols_re.findall(function_body))
+            get_symbols(function_body)
+
         # Keep looping through local function source until all local functions and constants
         # are added to the used symbols
-        new_symbols = True
-        while new_symbols:
-            new_symbols = False
+        prev_num_symbols = -1
+        while len(used_symbols) > prev_num_symbols:
+            prev_num_symbols = len(used_symbols)
             for local_func in local_functions:
                 if (
                     local_func.__name__ in used_symbols
@@ -392,10 +398,10 @@ class UsedSymbols:
                 ):
                     used.local_functions.add(local_func)
                     func_body = inspect.getsource(local_func)
-                    func_body = comments_re.sub("", func_body)
-                    local_func_symbols = symbols_re.findall(func_body)
-                    used_symbols.update(local_func_symbols)
-                    new_symbols = True
+                    get_symbols(func_body)
+                    # func_body = comments_re.sub("", func_body)
+                    # local_func_symbols = symbols_re.findall(func_body)
+                    # used_symbols.update(local_func_symbols)
             for local_class in local_classes:
                 if (
                     local_class.__name__ in used_symbols
@@ -407,20 +413,21 @@ class UsedSymbols:
                     class_body = inspect.getsource(local_class)
                     bases = extract_args(class_body)[1]
                     used_symbols.update(bases)
-                    class_body = comments_re.sub("", class_body)
-                    local_class_symbols = symbols_re.findall(class_body)
-                    used_symbols.update(local_class_symbols)
-                    new_symbols = True
+                    get_symbols(class_body)
+                    # class_body = comments_re.sub("", class_body)
+                    # local_class_symbols = symbols_re.findall(class_body)
+                    # used_symbols.update(local_class_symbols)
             for const_name, const_def in local_constants:
                 if (
                     const_name in used_symbols
                     and (const_name, const_def) not in used.constants
                 ):
                     used.constants.add((const_name, const_def))
-                    const_def_symbols = symbols_re.findall(const_def)
-                    used_symbols.update(const_def_symbols)
-                    new_symbols = True
-        used_symbols -= set(cls.SYMBOLS_TO_IGNORE)
+                    get_symbols(const_def)
+                    # const_def_symbols = symbols_re.findall(const_def)
+                    # used_symbols.update(const_def_symbols)
+                    # new_symbols = True
+            used_symbols -= set(cls.SYMBOLS_TO_IGNORE)
 
         pkg_name = module.__name__.split(".", 1)[0]
 
@@ -444,7 +451,7 @@ class UsedSymbols:
                 )
                 match = re.match(r"\s*from ([\w\.]+)", base_stmt)
                 import_mod = match.group(1) if match else ""
-                if import_mod in cls.IGNORE_MODULES:
+                if import_mod in cls.IGNORE_MODULES or import_mod == module.__name__:
                     continue
                 if import_mod:
                     if is_intra_pkg_import(import_mod):
@@ -533,7 +540,8 @@ class UsedSymbols:
                     used.imports.add(required_stmt)
         return used
 
-    SYMBOLS_TO_IGNORE = ["isdefined"]
+    # Nipype-specific names and Python keywords
+    SYMBOLS_TO_IGNORE = ["isdefined"] + keyword.kwlist + list(builtins.__dict__.keys())
 
 
 def get_local_functions(mod):

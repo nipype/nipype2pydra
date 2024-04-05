@@ -56,7 +56,7 @@ class ConnectionConverter:
     indent: str = attrs.field()
     workflow_converter: "WorkflowConverter" = attrs.field()
     include: bool = attrs.field(default=False)
-    wf_in_out: ty.Optional[str] = attrs.field(default=False)
+    wf_in_out: ty.Optional[str] = attrs.field(default=None)
 
     @wf_in_out.validator
     def wf_in_out_validator(self, attribute, value):
@@ -235,9 +235,10 @@ class NestedWorkflowConverter:
     def __str__(self):
         if not self.include:
             return ""
+        config_params = [f"{n}_{c}={n}_{c}" for n, c in self.nested_spec.used_configs]
         return (
             f"{self.indent}{self.varname} = {self.workflow_name}("
-            + ", ".join(self.args + self.nested_spec.used_configs)
+            + ", ".join(self.args + config_params)
             + ")"
         )
 
@@ -254,6 +255,41 @@ class ReturnConverter:
 
     def __str__(self):
         return f"{self.indent}return {', '.join(self.vars)}"
+
+
+@attrs.define
+class CommentConverter:
+
+    comment: str = attrs.field()
+    indent: str = attrs.field()
+
+    def __str__(self):
+        return f"{self.indent}# {self.comment}"
+
+
+@attrs.define
+class DocStringConverter:
+
+    docstring: str = attrs.field()
+    indent: str = attrs.field()
+
+    def __str__(self):
+        return f"{self.indent}{self.docstring}"
+
+
+@attrs.define
+class ImportConverter:
+
+    imported: ty.List[str] = attrs.field()
+    from_mod: ty.Optional[str] = attrs.field()
+    indent: str = attrs.field()
+
+    def __str__(self):
+        if self.from_mod:
+            return (
+                f"{self.indent}from {self.from_mod} import {', '.join(self.imported)}"
+            )
+        return f"{self.indent}import {', '.join(self.imported)}"
 
 
 @attrs.define
@@ -393,12 +429,6 @@ class WorkflowConverter:
             ),
         },
     )
-    # omit_interfaces: list[str] = attrs.field(
-    #     factory=list,
-    #     metadata={
-    #         "help": (""),
-    #     },
-    # )
     package_mappings: dict[str, str] = attrs.field(
         factory=dict,
         metadata={
@@ -484,13 +514,12 @@ class WorkflowConverter:
 
     @cached_property
     def used_configs(self) -> ty.List[str]:
-        return self._convert_function_code(set([self.full_name]))[1]
+        return self._converted_code[1]
 
     @cached_property
     def converted_code(self) -> ty.List[str]:
-        return self._convert_function_code(set([self.full_name]))[0]
+        return self._converted_code[0]
 
-    @cached_property
     @cached_property
     def func_src(self):
         return inspect.getsource(self.nipype_function)
@@ -573,9 +602,9 @@ class WorkflowConverter:
 
         # Get any intra-package classes and functions that need to be written
         intra_pkg_modules = defaultdict(list)
-        for intra_pkg_class in used.intra_pkg_classes + used.intra_pkg_funcs:
-            intra_pkg_modules[intra_pkg_class.__module__].append(
-                cleanup_function_body(inspect.getsource(intra_pkg_class))
+        for _, intra_pkg_obj in used.intra_pkg_classes + list(used.intra_pkg_funcs):
+            intra_pkg_modules[intra_pkg_obj.__module__].append(
+                cleanup_function_body(inspect.getsource(intra_pkg_obj))
             )
 
         # Convert any nested workflows
@@ -622,8 +651,9 @@ class WorkflowConverter:
             f.write(code_str)
 
     @cached_property
-    def _convert_function_code(self) -> ty.Tuple[str, ty.List[str]]:
-        """Generate the Pydra task module
+    def _converted_code(self) -> ty.Tuple[str, ty.List[str]]:
+        """Convert the Nipype workflow function to a Pydra workflow function and determine
+        the configuration parameters that are used
 
         Returns
         -------
@@ -637,9 +667,7 @@ class WorkflowConverter:
         return_types = post[1:].split(":", 1)[0]  # Get the return type
 
         # Parse the statements in the function body into converter objects and strings
-        parsed_statements, workflow_name, self.nodes = self._parse_statements(
-            self.func_body
-        )
+        parsed_statements, workflow_name = self._parse_statements(self.func_body)
 
         # Mark the nodes and connections that are to be included in the workflow, starting
         # from the designated input node (doesn't have to be the first node in the function body,
@@ -681,7 +709,16 @@ class WorkflowConverter:
             for conn in output_node.in_conns:
                 conn.wf_in_out = "out"
 
-        code_str = (
+        code_str = ""
+        # Write out the preamble (e.g. docstring, comments, etc..)
+        while parsed_statements and isinstance(
+            parsed_statements[0],
+            (DocStringConverter, CommentConverter, ImportConverter),
+        ):
+            code_str += str(parsed_statements.pop(0)) + "\n"
+
+        # Initialise the workflow object
+        code_str += (
             f'    {self.workflow_variable} = Workflow(name="{workflow_name}")\n\n'
         )
 
@@ -711,7 +748,9 @@ class WorkflowConverter:
         for nested_workflow in self.nested_workflows.values():
             used_configs.update(nested_workflow.used_configs)
 
-        config_sig = [f"{n}_{c}={self.config_defaults[n][c]}" for n, c in used_configs]
+        config_sig = [
+            f"{n}_{c}={self.config_defaults[n][c]!r}" for n, c in used_configs
+        ]
 
         # construct code string with modified signature
         signature = preamble + ", ".join(func_args + config_sig) + ")"
@@ -729,9 +768,9 @@ class WorkflowConverter:
             ty.Union[str, NodeConverter, ConnectionConverter, NestedWorkflowConverter]
         ],
         str,
-        ty.Dict[str, NodeConverter],
     ]:
         """Parses the statements in the function body into converter objects and strings
+        also populates the `self.nodes` attribute
 
         Parameters
         ----------
@@ -744,18 +783,39 @@ class WorkflowConverter:
             the parsed statements
         workflow_name : str
             the name of the workflow
-        nodes : dict[str, NodeConverter]
-            the nodes in the workflow
         """
 
         statements = split_source_into_statements(func_body)
 
         parsed = []
-        nodes = {}
         workflow_name = None
         for statement in statements:
-            if re.match(r"^\s*#", statement):  # comments
-                parsed.append(statement)
+            if not statement.strip():
+                continue
+            if match := re.match(r"^(\s*)#\s*(.*)", statement):  # comments
+                parsed.append(
+                    CommentConverter(comment=match.group(2), indent=match.group(1))
+                )
+            elif match := re.match(
+                r"^(\s*)(?='|\")(.*)", statement, flags=re.MULTILINE | re.DOTALL
+            ):  # docstrings
+                parsed.append(
+                    DocStringConverter(docstring=match.group(2), indent=match.group(1))
+                )
+            elif match := re.match(
+                r"^(\s*)(from[\w \.]+)?\bimport\b([\w \.\,\(\)]+)$",
+                statement,
+                flags=re.MULTILINE,
+            ):
+                indent = match.group(1)
+                from_mod = match.group(2)[len("from ") :] if match.group(2) else None
+                imported_str = match.group(3)
+                if imported_str.startswith("("):
+                    imported_str = imported_str[1:-1]
+                imported = [i.strip() for i in imported_str.split(",")]
+                parsed.append(
+                    ImportConverter(imported=imported, from_mod=from_mod, indent=indent)
+                )
             elif match := re.match(
                 r"\s+(?:"
                 + self.workflow_variable
@@ -781,7 +841,7 @@ class WorkflowConverter:
                     iterables = []
 
                 splits = node_kwargs["iterfield"] if match.group(3) else None
-                node_converter = nodes[varname] = NodeConverter(
+                node_converter = self.nodes[varname] = NodeConverter(
                     name=node_kwargs["name"][1:-1],
                     interface=intf_name[:-1],
                     args=intf_args,
@@ -805,7 +865,7 @@ class WorkflowConverter:
                     args=extract_args(statement)[1],
                     indent=indent,
                 )
-                nodes[varname] = nested_workflow_converter
+                self.nodes[varname] = nested_workflow_converter
                 parsed.append(nested_workflow_converter)
 
             elif match := re.match(
@@ -842,8 +902,8 @@ class WorkflowConverter:
                         )
                         if not conn_converter.lzouttable:
                             parsed.append(conn_converter)
-                        nodes[src].out_conns.append(conn_converter)
-                        nodes[tgt].in_conns.append(conn_converter)
+                        self.nodes[src].out_conns.append(conn_converter)
+                        self.nodes[tgt].in_conns.append(conn_converter)
             elif match := re.match(r"(\s*)return (.*)", statement):
                 parsed.append(
                     ReturnConverter(vars=match.group(2), indent=match.group(1))
@@ -856,7 +916,7 @@ class WorkflowConverter:
                 "Did not detect worklow name in statements:\n\n" + "\n".join(statements)
             )
 
-        return parsed, workflow_name, nodes
+        return parsed, workflow_name
 
     def _write_intra_pkg_modules(self, package_root: Path, intra_pkg_modules: dict):
         """Writes the intra-package modules to the package root
@@ -869,29 +929,29 @@ class WorkflowConverter:
             the intra-package modules to write
         """
         for mod_name, func_bodies in intra_pkg_modules.items():
-            mod_path = package_root.joinpath(*mod_name.split(".")) + ".py"
+            mod_path = package_root.joinpath(*mod_name.split(".")).with_suffix(".py")
             mod_path.parent.mkdir(parents=True, exist_ok=True)
             mod = import_module(mod_name)
-            intra_pkg_used = UsedSymbols.find(mod, func_bodies)
-            intra_mod_code_str = "\n".join(intra_pkg_used.imports) + "\n"
-            intra_mod_code_str += "\n\n".join(func_bodies)
-            intra_mod_code_str += "\n".join(
-                f"{n} = {d}" for n, d in intra_pkg_used.constants
-            )
-            for klass in sorted(
-                intra_pkg_used.local_classes, key=attrgetter("__name__")
-            ):
-                intra_mod_code_str += "\n\n" + cleanup_function_body(
-                    inspect.getsource(klass)
+            used = UsedSymbols.find(mod, func_bodies)
+            code_str = "\n".join(used.imports) + "\n"
+            code_str += "\n\n".join(func_bodies)
+            code_str += "\n".join(f"{n} = {d}" for n, d in used.constants)
+            for klass in sorted(used.local_classes, key=attrgetter("__name__")):
+                code_str += "\n\n" + cleanup_function_body(inspect.getsource(klass))
+            for func in sorted(used.local_functions, key=attrgetter("__name__")):
+                code_str += "\n\n" + cleanup_function_body(inspect.getsource(func))
+            try:
+                code_str = black.format_file_contents(
+                    code_str, fast=False, mode=black.FileMode()
                 )
-            for func in sorted(
-                intra_pkg_used.local_functions, key=attrgetter("__name__")
-            ):
-                intra_mod_code_str += "\n\n" + cleanup_function_body(
-                    inspect.getsource(func)
+            except Exception as e:
+                with open("/Users/tclose/Desktop/gen-code.py", "w") as f:
+                    f.write(code_str)
+                raise RuntimeError(
+                    f"Black could not parse generated code: {e}\n\n{code_str}"
                 )
             with open(mod_path, "w") as f:
-                f.write(intra_mod_code_str)
+                f.write(code_str)
 
 
 def match_kwargs(args: ty.List[str], sig: ty.List[str]) -> ty.Dict[str, str]:
