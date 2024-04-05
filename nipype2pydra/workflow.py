@@ -5,6 +5,7 @@ import re
 import typing as ty
 from operator import attrgetter
 from copy import copy
+from collections import defaultdict
 from types import ModuleType
 from pathlib import Path
 import black.parsing
@@ -55,7 +56,12 @@ class ConnectionConverter:
     indent: str = attrs.field()
     workflow_converter: "WorkflowConverter" = attrs.field()
     include: bool = attrs.field(default=False)
-    lzin: bool = attrs.field(default=False)
+    wf_in_out: ty.Optional[str] = attrs.field(default=False)
+
+    @wf_in_out.validator
+    def wf_in_out_validator(self, attribute, value):
+        if value not in ["in", "out", None]:
+            raise ValueError(f"wf_in_out must be 'in', 'out' or None, not {value}")
 
     @cached_property
     def source(self):
@@ -83,7 +89,9 @@ class ConnectionConverter:
         if not self.include:
             return ""
         code_str = ""
-        if isinstance(self.source_out, VarField):
+        if self.wf_in_out == "in":
+            src = f"{self.workflow_variable}.lzin.{self.source_out}"
+        elif isinstance(self.source_out, VarField):
             src = f"getattr({self.workflow_variable}.outputs.{self.source_name}, {self.source_out})"
         elif isinstance(self.source_out, DelayedVarField):
             task_name = f"{self.source_name}_{self.source_out.varname}"
@@ -98,7 +106,18 @@ class ConnectionConverter:
             src = f"{self.workflow_variable}.{task_name}.lzout.out"
         else:
             src = f"{self.workflow_variable}.{self.source_name}.lzout.{self.source_out}"
-        if isinstance(self.target_in, VarField):
+        if self.wf_in_out == "out":
+            target_str = (
+                str(self.target_in)
+                if isinstance(self.target_in, VarField)
+                else f'"{self.target_in}"'
+            )
+            code_str += (
+                f"    {self.workflow_variable}.set_output([({target_str}, "
+                f"{self.workflow_variable}.{self.source_name}.lzout."
+                f"{self.source_out})])\n"
+            )
+        elif isinstance(self.target_in, VarField):
             code_str += f"{self.indent}setattr({self.workflow_variable}.inputs.{self.target_name}, {src})"
         else:
             code_str += (
@@ -225,6 +244,16 @@ class NestedWorkflowConverter:
     @cached_property
     def conditional(self):
         return self.indent != 4
+
+
+@attrs.define
+class ReturnConverter:
+
+    vars: ty.List[str] = attrs.field(converter=lambda s: s.split(", "))
+    indent: str = attrs.field()
+
+    def __str__(self):
+        return f"{self.indent}return {', '.join(self.vars)}"
 
 
 @attrs.define
@@ -433,25 +462,11 @@ class WorkflowConverter:
         )
 
     @cached_property
-    def config_params_regexes(self) -> ty.Dict[str, re.Pattern]:
-        regexes = {}
-        for name, config_params in self.config_params.items():
-            if config_params.type == "struct":
-                regex = re.compile(r"\b" + config_params.varname + r"\.(\w+)\b")
-            elif config_params.type == "dict":
-                regex = re.compile(
-                    r"\b" + config_params.varname + r"\[(?:'|\")([^\]]+)(?:'|\")]"
-                )
-            else:
-                assert False
-            regexes[name] = regex
-        return regexes
-
-    @cached_property
     def config_defaults(self) -> ty.Dict[str, ty.Dict[str, str]]:
         defaults = {}
         for name, config_params in self.config_params.items():
             params = config_params.module
+            defaults[name] = {}
             for part in config_params.varname.split("."):
                 params = getattr(params, part)
             if config_params.type == "struct":
@@ -459,23 +474,23 @@ class WorkflowConverter:
                     a: getattr(params, a)
                     for a in dir(params)
                     if not inspect.isfunction(getattr(params, a))
+                    and not a.startswith("_")
                 }
             elif config_params.type == "dict":
-                defaults[name] = params
+                defaults[name] = copy(params)
             else:
                 assert False, f"Unrecognised config_params type {config_params.type}"
         return defaults
 
     @cached_property
     def used_configs(self) -> ty.List[str]:
-        used_configs = []
-        for name, regex in self.config_params_regexes.items():
-            configs = sorted(set(regex.findall(self.func_body)))
-            used_configs.extend(
-                f"{name}_{g}={self.config_defaults[name][g]!r}" for g in configs
-            )
-        return used_configs
+        return self._convert_function_code(set([self.full_name]))[1]
 
+    @cached_property
+    def converted_code(self) -> ty.List[str]:
+        return self._convert_function_code(set([self.full_name]))[0]
+
+    @cached_property
     @cached_property
     def func_src(self):
         return inspect.getsource(self.nipype_function)
@@ -509,8 +524,13 @@ class WorkflowConverter:
             if name in potential_funcs
         }
 
-    def generate(self, package_root: Path, already_converted: ty.Set[str] = None):
-        """Generate the Pydra task module
+    def generate(
+        self,
+        package_root: Path,
+        already_converted: ty.Set[str] = None,
+        additional_funcs: ty.List[str] = None,
+    ):
+        """Generates and writes the converted package to the specified package root
 
         Parameters
         ----------
@@ -518,11 +538,17 @@ class WorkflowConverter:
             the root directory of the package to write the module to
         already_converted : set[str], optional
             names of the workflows that have already converted workflows
+        additional_funcs : list[str], optional
+            additional functions to write to the module required as dependencies of
+            workflows in other modules
         """
 
         if already_converted is None:
             already_converted = set()
         already_converted.add(self.full_name)
+
+        if additional_funcs is None:
+            additional_funcs = []
 
         output_module = package_root.joinpath(
             *self.output_module.split(".")
@@ -538,29 +564,43 @@ class WorkflowConverter:
             constants=copy(self.used_symbols.constants),
         )
 
-        other_wf_code = ""
+        # Start writing output module with used imports and converted function body of
+        # main workflow
+        code_str = (
+            "\n".join(used.imports) + "\n" + "from pydra.engine import Workflow\n\n"
+        )
+        code_str += self.converted_code
+
+        # Get any intra-package classes and functions that need to be written
+        intra_pkg_modules = defaultdict(list)
+        for intra_pkg_class in used.intra_pkg_classes + used.intra_pkg_funcs:
+            intra_pkg_modules[intra_pkg_class.__module__].append(
+                cleanup_function_body(inspect.getsource(intra_pkg_class))
+            )
+
         # Convert any nested workflows
         for name, conv in self.nested_workflows.items():
             if conv.full_name in already_converted:
                 continue
             already_converted.add(conv.full_name)
             if name in self.used_symbols.local_functions:
-                other_wf_code += "\n\n\n" + conv.convert_function_code(
-                    already_converted
-                )
+                code_str += "\n\n\n" + conv.converted_code
                 used.update(conv.used_symbols)
             else:
-                conv.generate(package_root, already_converted=already_converted)
+                conv.generate(
+                    package_root,
+                    already_converted=already_converted,
+                    additional_funcs=intra_pkg_modules[conv.output_module],
+                )
+                del intra_pkg_modules[conv.output_module]
 
-        code_str = (
-            "\n".join(used.imports) + "\n" + "from pydra.engine import Workflow\n\n"
-        )
-        code_str += self.convert_function_code(already_converted)
-        code_str += other_wf_code
+        # Write any additional functions in other modules in the package
+        self._write_intra_pkg_modules(package_root, intra_pkg_modules)
+
+        # Add any local functions, constants and classes
         for func in sorted(used.local_functions, key=attrgetter("__name__")):
-            if func.__name__ in already_converted:
-                continue
-            code_str += "\n\n" + cleanup_function_body(inspect.getsource(func))
+            if func.__name__ not in already_converted:
+                code_str += "\n\n" + cleanup_function_body(inspect.getsource(func))
 
         code_str += "\n".join(f"{n} = {d}" for n, d in used.constants)
         for klass in sorted(used.local_classes, key=attrgetter("__name__")):
@@ -581,43 +621,141 @@ class WorkflowConverter:
         with open(output_module, "w") as f:
             f.write(code_str)
 
-    def convert_function_code(self, already_converted: ty.Set[str]):
+    @cached_property
+    def _convert_function_code(self) -> ty.Tuple[str, ty.List[str]]:
         """Generate the Pydra task module
-
-        Parameters
-        ----------
-        already_converted : set[str]
-            names of the workflows that have already converted workflows
 
         Returns
         -------
         function_code : str
             the converted function code
+        used_configs : list[str]
+            the names of the used configs
         """
 
         preamble, func_args, post = extract_args(self.func_src)
         return_types = post[1:].split(":", 1)[0]  # Get the return type
 
+        # Parse the statements in the function body into converter objects and strings
+        parsed_statements, workflow_name, self.nodes = self._parse_statements(
+            self.func_body
+        )
+
+        # Mark the nodes and connections that are to be included in the workflow, starting
+        # from the designated input node (doesn't have to be the first node in the function body,
+        # i.e. the input node can be after the data grabbing steps)
+        try:
+            input_node = self.nodes[self.inputnode]
+        except KeyError:
+            raise ValueError(
+                f"Unrecognised input node '{self.inputnode}', not in {list(self.nodes)} "
+                f"for {self.full_name}"
+            )
+
+        node_stack = [input_node]
+        included = []
+        while node_stack:
+            node = node_stack.pop()
+            node.include = True
+            included.append(node)
+            for conn in node.out_conns:
+                conn.include = True
+                if conn.target not in included:
+                    node_stack.append(conn.target)
+
+        nodes_to_exclude = [nm for nm, nd in self.nodes.items() if not nd.include]
+
+        input_node.include = False
+        for conn in input_node.out_conns:
+            conn.wf_in_out = "in"
+
+        if self.outputnode:
+            try:
+                output_node = self.nodes[self.outputnode]
+            except KeyError:
+                raise ValueError(
+                    f"Unrecognised output node '{self.outputnode}', not in "
+                    f"{list(self.nodes)} for {self.full_name}"
+                )
+            output_node.include = False
+            for conn in output_node.in_conns:
+                conn.wf_in_out = "out"
+
+        code_str = (
+            f'    {self.workflow_variable} = Workflow(name="{workflow_name}")\n\n'
+        )
+
+        # Write out the statements to the code string
+        for statement in parsed_statements:
+            if isinstance(statement, str):
+                if not re.match(
+                    r"\s*(" + "|".join(nodes_to_exclude) + r")(\.\w+)*\s*=", statement
+                ):
+                    code_str += statement + "\n"
+            else:
+                code_str += str(statement) + "\n"
+
+        used_configs = set()
+        for config_name, config_param in self.config_params.items():
+            if config_param.type == "dict":
+                config_regex = re.compile(
+                    r"\b" + config_name + r"\[(?:'|\")([^\]]+)(?:'|\")\]\b"
+                )
+            else:
+                config_regex = re.compile(r"\b" + config_param.varname + r"\.(\w+)\b")
+            used_configs.update(
+                (config_name, m) for m in config_regex.findall(code_str)
+            )
+            code_str = config_regex.sub(config_name + r"_\1", code_str)
+
+        for nested_workflow in self.nested_workflows.values():
+            used_configs.update(nested_workflow.used_configs)
+
+        config_sig = [f"{n}_{c}={self.config_defaults[n][c]}" for n, c in used_configs]
+
         # construct code string with modified signature
-        code_str = preamble + ", ".join(func_args + self.used_configs) + ")"
+        signature = preamble + ", ".join(func_args + config_sig) + ")"
         if return_types:
-            code_str += f" -> {return_types}"
-        code_str += ":\n\n"
+            signature += f" -> {return_types}"
+        code_str = signature + ":\n\n" + code_str
 
-        converted_body = self.func_body
-        for config_name, config_regex in self.config_params_regexes.items():
-            converted_body = config_regex.sub(config_name + r"_\1", converted_body)
-        if self.other_mappings:
-            for orig, new in self.other_mappings.items():
-                converted_body = re.sub(r"\b" + orig + r"\b", new, converted_body)
+        if not isinstance(parsed_statements[-1], ReturnConverter):
+            code_str += f"\n    return {self.workflow_variable}"
 
-        statements = split_source_into_statements(converted_body)
+        return code_str, used_configs
 
-        converted_statements = []
+    def _parse_statements(self, func_body: str) -> ty.Tuple[
+        ty.List[
+            ty.Union[str, NodeConverter, ConnectionConverter, NestedWorkflowConverter]
+        ],
+        str,
+        ty.Dict[str, NodeConverter],
+    ]:
+        """Parses the statements in the function body into converter objects and strings
+
+        Parameters
+        ----------
+        func_body : str
+            the function body to parse
+
+        Returns
+        -------
+        parsed : list[Union[str, NodeConverter, ConnectionConverter, NestedWorkflowConverter]]
+            the parsed statements
+        workflow_name : str
+            the name of the workflow
+        nodes : dict[str, NodeConverter]
+            the nodes in the workflow
+        """
+
+        statements = split_source_into_statements(func_body)
+
+        parsed = []
+        nodes = {}
         workflow_name = None
         for statement in statements:
             if re.match(r"^\s*#", statement):  # comments
-                converted_statements.append(statement)
+                parsed.append(statement)
             elif match := re.match(
                 r"\s+(?:"
                 + self.workflow_variable
@@ -643,7 +781,7 @@ class WorkflowConverter:
                     iterables = []
 
                 splits = node_kwargs["iterfield"] if match.group(3) else None
-                node_converter = self.nodes[varname] = NodeConverter(
+                node_converter = nodes[varname] = NodeConverter(
                     name=node_kwargs["name"][1:-1],
                     interface=intf_name[:-1],
                     args=intf_args,
@@ -653,7 +791,7 @@ class WorkflowConverter:
                     workflow_converter=self,
                     indent=indent,
                 )
-                converted_statements.append(node_converter)
+                parsed.append(node_converter)
             elif match := re.match(  #
                 r"(\s+)(\w+) = (" + "|".join(self.nested_workflows) + r")\(",
                 statement,
@@ -664,11 +802,11 @@ class WorkflowConverter:
                     varname=varname,
                     workflow_name=workflow_name,
                     nested_spec=self.nested_workflows[workflow_name],
-                    args=args,
+                    args=extract_args(statement)[1],
                     indent=indent,
                 )
-                self.nodes[varname] = nested_workflow_converter
-                converted_statements.append(nested_workflow_converter)
+                nodes[varname] = nested_workflow_converter
+                parsed.append(nested_workflow_converter)
 
             elif match := re.match(
                 r"(\s*)" + self.workflow_variable + r"\.connect\(",
@@ -703,73 +841,57 @@ class WorkflowConverter:
                             workflow_converter=self,
                         )
                         if not conn_converter.lzouttable:
-                            converted_statements.append(conn_converter)
-                        self.nodes[src].out_conns.append(conn_converter)
-                        self.nodes[tgt].in_conns.append(conn_converter)
+                            parsed.append(conn_converter)
+                        nodes[src].out_conns.append(conn_converter)
+                        nodes[tgt].in_conns.append(conn_converter)
+            elif match := re.match(r"(\s*)return (.*)", statement):
+                parsed.append(
+                    ReturnConverter(vars=match.group(2), indent=match.group(1))
+                )
             else:
-                converted_statements.append(statement)
+                parsed.append(statement)
 
         if workflow_name is None:
             raise ValueError(
                 "Did not detect worklow name in statements:\n\n" + "\n".join(statements)
             )
-        try:
-            input_node = self.nodes[self.inputnode]
-        except KeyError:
-            raise ValueError(
-                f"Unrecognised input node '{self.inputnode}', not in {list(self.nodes)} "
-                f"for {self.full_name}"
+
+        return parsed, workflow_name, nodes
+
+    def _write_intra_pkg_modules(self, package_root: Path, intra_pkg_modules: dict):
+        """Writes the intra-package modules to the package root
+
+        Parameters
+        ----------
+        package_root : Path
+            the root directory of the package to write the module to
+        intra_pkg_modules : dict
+            the intra-package modules to write
+        """
+        for mod_name, func_bodies in intra_pkg_modules.items():
+            mod_path = package_root.joinpath(*mod_name.split(".")) + ".py"
+            mod_path.parent.mkdir(parents=True, exist_ok=True)
+            mod = import_module(mod_name)
+            intra_pkg_used = UsedSymbols.find(mod, func_bodies)
+            intra_mod_code_str = "\n".join(intra_pkg_used.imports) + "\n"
+            intra_mod_code_str += "\n\n".join(func_bodies)
+            intra_mod_code_str += "\n".join(
+                f"{n} = {d}" for n, d in intra_pkg_used.constants
             )
-
-        if self.outputnode:
-            try:
-                output_node = self.nodes[self.outputnode]
-            except KeyError:
-                raise ValueError(
-                    f"Unrecognised output node '{self.outputnode}', not in {list(self.nodes)} "
-                    f"for {self.full_name}"
+            for klass in sorted(
+                intra_pkg_used.local_classes, key=attrgetter("__name__")
+            ):
+                intra_mod_code_str += "\n\n" + cleanup_function_body(
+                    inspect.getsource(klass)
                 )
-        else:
-            output_node = None
-
-        node_stack = [input_node]
-        included = []
-        while node_stack:
-            node = node_stack.pop()
-            node.include = True
-            included.append(node)
-            for conn in node.out_conns:
-                conn.include = True
-                if conn.target not in included:
-                    node_stack.append(conn.target)
-
-        input_node.include = False
-        for conn in input_node.out_conns:
-            conn.lzin = True
-        if output_node:
-            output_node.include = False
-            for conn in output_node.in_conns:
-                conn.include = False
-
-        code_str += (
-            f'    {self.workflow_variable} = Workflow(name="{workflow_name}")\n\n'
-        )
-
-        # Write out the statements to the code string
-        for statement in converted_statements:
-            code_str += str(statement) + "\n"
-
-        if output_node:
-            for conn in output_node.in_conns:
-                if conn.source.include:
-                    code_str += (
-                        f'    {self.workflow_variable}.set_output([("{conn.target_in}", '
-                        f"{self.workflow_variable}.{conn.source_name}.lzout.{conn.source_out})])\n"
-                    )
-
-        code_str += f"\n    return {self.workflow_variable}"
-
-        return code_str
+            for func in sorted(
+                intra_pkg_used.local_functions, key=attrgetter("__name__")
+            ):
+                intra_mod_code_str += "\n\n" + cleanup_function_body(
+                    inspect.getsource(func)
+                )
+            with open(mod_path, "w") as f:
+                f.write(intra_mod_code_str)
 
 
 def match_kwargs(args: ty.List[str], sig: ty.List[str]) -> ty.Dict[str, str]:
