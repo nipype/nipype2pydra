@@ -2,6 +2,7 @@ from nipype2pydra.utils import (
     extract_args,
     get_source_code,
     split_source_into_statements,
+    get_relative_package,
 )
 from nipype2pydra.testing import for_testing_line_number_of_function
 
@@ -419,3 +420,14 @@ EXAMPLE_SOURCE_CODE_SPLIT = [
 def test_split_into_statements():
     stmts = split_source_into_statements(EXAMPLE_SOURCE_CODE)
     assert stmts == EXAMPLE_SOURCE_CODE_SPLIT
+
+
+def test_relative_package1():
+    assert get_relative_package("mriqc.workflows.shared", "mriqc.utils") == "..utils"
+
+
+def test_relative_package2():
+    assert (
+        get_relative_package("mriqc.utils", "mriqc.workflows.shared")
+        == ".workflows.shared"
+    )

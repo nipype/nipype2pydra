@@ -330,7 +330,11 @@ class UsedSymbols:
 
     @classmethod
     def find(
-        cls, module, function_bodies: ty.List[str], collapse_intra_pkg: bool = True
+        cls,
+        module,
+        function_bodies: ty.List[str],
+        collapse_intra_pkg: bool = True,
+        pull_out_inline_imports: bool = True,
     ) -> "UsedSymbols":
         """Get the imports required for the function body
 
@@ -344,6 +348,9 @@ class UsedSymbols:
             whether functions and classes defined within the same package, but not the
             same module, are to be included in the output module or not, i.e. whether
             the local funcs/classes/constants they referenced need to be included also
+        pull_out_inline_imports : bool, optional
+            whether to pull out imports that are inline in the function bodies
+            or not, by default True
 
         Returns
         -------
@@ -368,11 +375,15 @@ class UsedSymbols:
                 if ")" in line:
                     imports.append(block)
                     block = ""
-            elif re.match(r"^\s*(from[\w \.]+)?import\b[\w \.\,\(\)]+$", line):
-                if "(" in line and ")" not in line:
-                    block = line.strip()
-                else:
-                    imports.append(line.strip())
+            elif match := re.match(
+                r"^(\s*)(from[\w \.]+)?import\b[\w \.\,\(\)]+$", line
+            ):
+                indent = match.group(1)
+                if not indent or pull_out_inline_imports:
+                    if "(" in line and ")" not in line:
+                        block = line.strip()
+                    else:
+                        imports.append(line.strip())
 
         symbols_re = re.compile(r"(?<!\"|')\b(\w+)\b(?!\"|')")
 
@@ -720,3 +731,38 @@ def split_source_into_statements(source_code: str) -> ty.List[str]:
         else:
             statements.append(line)
     return statements
+
+
+def get_relative_package(
+    target: ty.Union[ModuleType, str],
+    reference: ty.Union[ModuleType, str],
+) -> str:
+    """Get the relative package path from one module to another
+
+    Parameters
+    ----------
+    target : ModuleType
+        the module to get the relative path to
+    reference : ModuleType
+        the module to get the relative path from
+
+    Returns
+    -------
+    str
+        the relative package path
+    """
+    if isinstance(target, ModuleType):
+        target = target.__name__
+    if isinstance(reference, ModuleType):
+        reference = reference.__name__
+    ref_parts = reference.split(".")
+    target_parts = target.split(".")
+    common = 0
+    for mod, targ in zip(ref_parts, target_parts):
+        if mod == targ:
+            common += 1
+        else:
+            break
+    if common == 0:
+        return target
+    return ".".join([""] * (len(ref_parts) - common) + target_parts[common:])

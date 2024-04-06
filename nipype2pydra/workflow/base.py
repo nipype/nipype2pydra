@@ -5,322 +5,34 @@ import re
 import typing as ty
 from operator import attrgetter
 from copy import copy
+import logging
 from collections import defaultdict
 from types import ModuleType
 from pathlib import Path
 import black.parsing
 import attrs
-from .utils import (
+from ..utils import (
     UsedSymbols,
     split_source_into_statements,
     extract_args,
     cleanup_function_body,
+    get_relative_package,
+)
+from .components import (
+    NodeConverter,
+    ConnectionConverter,
+    NestedWorkflowConverter,
+    ConfigParamsConverter,
+    ImportConverter,
+    CommentConverter,
+    DocStringConverter,
+    ReturnConverter,
+    IterableConverter,
+    DelayedVarField,
+    NodeAssignmentConverter,
 )
 
-
-class VarField(str):
-    pass
-
-
-@attrs.define
-class DelayedVarField:
-
-    varname: str = attrs.field(
-        converter=lambda s: s[1:-1] if s.startswith("'") or s.startswith('"') else s
-    )
-    callable: ty.Callable = attrs.field()
-
-
-def field_converter(field: str) -> ty.Union[str, VarField]:
-    if isinstance(field, DelayedVarField):
-        return field
-    match = re.match(r"('|\")?(\w+)('|\")?", field)
-    if len(match.groups()) == 3:
-        return VarField(match.group(2))
-    elif len(match.groups()) == 1:
-        field = match.group(1)
-        if field.startswith("inputnode."):
-            field = field[: len("inputnode.")]
-            return field
-    else:
-        raise ValueError(f"Could not parse field {field}, unmatched quotes")
-
-
-@attrs.define
-class ConnectionConverter:
-
-    source_name: str
-    target_name: str
-    source_out: ty.Union[str, VarField] = attrs.field(converter=field_converter)
-    target_in: ty.Union[str, VarField] = attrs.field(converter=field_converter)
-    indent: str = attrs.field()
-    workflow_converter: "WorkflowConverter" = attrs.field()
-    include: bool = attrs.field(default=False)
-    wf_in_out: ty.Optional[str] = attrs.field(default=None)
-
-    @wf_in_out.validator
-    def wf_in_out_validator(self, attribute, value):
-        if value not in ["in", "out", None]:
-            raise ValueError(f"wf_in_out must be 'in', 'out' or None, not {value}")
-
-    @cached_property
-    def source(self):
-        return self.workflow_converter.nodes[self.source_name]
-
-    @cached_property
-    def target(self):
-        return self.workflow_converter.nodes[self.target_name]
-
-    @cached_property
-    def conditional(self):
-        return len(self.indent) != 4
-
-    @cached_property
-    def lzouttable(self) -> bool:
-        return not (
-            self.conditional or self.source.conditional or self.target.conditional
-        ) and (isinstance(self.source_out, str) and isinstance(self.target_in, str))
-
-    @cached_property
-    def workflow_variable(self):
-        return self.workflow_converter.workflow_variable
-
-    def __str__(self):
-        if not self.include:
-            return ""
-        code_str = ""
-        if self.wf_in_out == "in":
-            src = f"{self.workflow_variable}.lzin.{self.source_out}"
-        elif isinstance(self.source_out, VarField):
-            src = f"getattr({self.workflow_variable}.outputs.{self.source_name}, {self.source_out})"
-        elif isinstance(self.source_out, DelayedVarField):
-            task_name = f"{self.source_name}_{self.source_out.varname}"
-            intf_name = f"{task_name}_callable"
-            code_str += (
-                f"\n{self.indent}@pydra.task.mark\n"
-                f"{self.indent}def {intf_name}(in_: str):\n"
-                f"{self.indent}    return {self.source_out.callable}(in_)\n\n"
-                f"{self.indent}{self.workflow_variable}.add("
-                f'{intf_name}(in_={self.workflow_variable}.{self.source_name}.lzout.{self.source_out.varname}, name="{task_name}"))\n\n'
-            )
-            src = f"{self.workflow_variable}.{task_name}.lzout.out"
-        else:
-            src = f"{self.workflow_variable}.{self.source_name}.lzout.{self.source_out}"
-        if self.wf_in_out == "out":
-            target_str = (
-                str(self.target_in)
-                if isinstance(self.target_in, VarField)
-                else f'"{self.target_in}"'
-            )
-            code_str += (
-                f"    {self.workflow_variable}.set_output([({target_str}, "
-                f"{self.workflow_variable}.{self.source_name}.lzout."
-                f"{self.source_out})])\n"
-            )
-        elif isinstance(self.target_in, VarField):
-            code_str += f"{self.indent}setattr({self.workflow_variable}.inputs.{self.target_name}, {src})"
-        else:
-            code_str += (
-                f"{self.indent}{self.target_name}.inputs.{self.target_in} = {src}"
-            )
-        return code_str
-
-
-@attrs.define
-class IterableConverter:
-
-    fieldname: str = attrs.field(converter=field_converter)
-    variable: str = attrs.field()
-
-
-@attrs.define
-class NodeConverter:
-
-    name: str
-    interface: str
-    args: ty.List[str]
-    iterables: ty.List[IterableConverter]
-    itersource: ty.Optional[str]
-    indent: str
-    workflow_converter: "WorkflowConverter"
-    splits: ty.List[str] = attrs.field(
-        converter=attrs.converters.default_if_none(factory=list), factory=list
-    )
-    in_conns: ty.List[ConnectionConverter] = attrs.field(factory=list)
-    out_conns: ty.List[ConnectionConverter] = attrs.field(factory=list)
-    include: bool = attrs.field(default=False)
-
-    @property
-    def inputs(self):
-        return [c.target_in for c in self.in_conns]
-
-    def __str__(self):
-        if not self.include:
-            return ""
-        code_str = f"{self.indent}{self.workflow_variable}.add("
-        split_args = None
-        if self.args is not None:
-            split_args = [a for a in self.args if a.split("=", 1)[0] in self.splits]
-            nonsplit_args = [
-                a for a in self.args if a.split("=", 1)[0] not in self.splits
-            ]
-            code_str += f"{self.interface}(" + ", ".join(
-                nonsplit_args
-                + [
-                    (
-                        f"{conn.target_in}="
-                        f"{self.workflow_variable}.{conn.source_name}.lzout.{conn.source_out}"
-                    )
-                    for conn in self.in_conns
-                    if conn.lzouttable
-                ]
-            )
-            if self.args:
-                code_str += ", "
-            code_str += f'name="{self.name}")'
-        code_str += ")"
-        if split_args:
-            code_str += (
-                f"{self.indent}{self.workflow_variable}.{self.name}.split("
-                + ", ".join(split_args)
-                + ")"
-            )
-        if self.iterables:
-            raise NotImplementedError(
-                f"iterables not yet implemented (see {self.name} node) in "
-                f"{self.workflow_converter.name} workflow"
-            )
-        if self.itersource:
-            raise NotImplementedError(
-                f"itersource not yet implemented (see {self.name} node) in "
-                f"{self.workflow_converter.name} workflow"
-            )
-        return code_str
-
-    @cached_property
-    def conditional(self):
-        return self.indent != 4
-
-    @cached_property
-    def workflow_variable(self):
-        return self.workflow_converter.workflow_variable
-
-    SIGNATURE = [
-        "interface",
-        "name",
-        "iterables",
-        "itersource",
-        "iterfield",
-        "synchronize",
-        "overwrite",
-        "needed_outputs",
-        "run_without_submitting",
-        "n_procs",
-        "mem_gb",
-    ]
-
-
-@attrs.define
-class NestedWorkflowConverter:
-
-    varname: str
-    workflow_name: str
-    nested_spec: "WorkflowConverter"
-    indent: str
-    args: ty.List[str]
-    include: bool = attrs.field(default=False)
-    in_conns: ty.List[ConnectionConverter] = attrs.field(factory=list)
-    out_conns: ty.List[ConnectionConverter] = attrs.field(factory=list)
-
-    def __str__(self):
-        if not self.include:
-            return ""
-        config_params = [f"{n}_{c}={n}_{c}" for n, c in self.nested_spec.used_configs]
-        return (
-            f"{self.indent}{self.varname} = {self.workflow_name}("
-            + ", ".join(self.args + config_params)
-            + ")"
-        )
-
-    @cached_property
-    def conditional(self):
-        return self.indent != 4
-
-
-@attrs.define
-class ReturnConverter:
-
-    vars: ty.List[str] = attrs.field(converter=lambda s: s.split(", "))
-    indent: str = attrs.field()
-
-    def __str__(self):
-        return f"{self.indent}return {', '.join(self.vars)}"
-
-
-@attrs.define
-class CommentConverter:
-
-    comment: str = attrs.field()
-    indent: str = attrs.field()
-
-    def __str__(self):
-        return f"{self.indent}# {self.comment}"
-
-
-@attrs.define
-class DocStringConverter:
-
-    docstring: str = attrs.field()
-    indent: str = attrs.field()
-
-    def __str__(self):
-        return f"{self.indent}{self.docstring}"
-
-
-@attrs.define
-class ImportConverter:
-
-    imported: ty.List[str] = attrs.field()
-    from_mod: ty.Optional[str] = attrs.field()
-    indent: str = attrs.field()
-
-    def __str__(self):
-        if self.from_mod:
-            return (
-                f"{self.indent}from {self.from_mod} import {', '.join(self.imported)}"
-            )
-        return f"{self.indent}import {', '.join(self.imported)}"
-
-
-@attrs.define
-class ConfigParamsConverter:
-
-    varname: str = attrs.field(
-        metadata={
-            "help": (
-                "name dict/struct that contains the workflow inputs, e.g. config.workflow.*"
-            ),
-        }
-    )
-    type: str = attrs.field(
-        metadata={
-            "help": (
-                "name of the nipype module the function is found within, "
-                "e.g. mriqc.workflows.anatomical.base"
-            ),
-        },
-        validator=attrs.validators.in_(["dict", "struct"]),
-    )
-
-    module: str = attrs.field(
-        converter=lambda m: import_module(m) if not isinstance(m, ModuleType) else m,
-        metadata={
-            "help": (
-                "name of the nipype module the function is found within, "
-                "e.g. mriqc.workflows.anatomical.base"
-            ),
-        },
-    )
+logger = logging.getLogger(__name__)
 
 
 @attrs.define
@@ -341,9 +53,9 @@ class WorkflowConverter:
     config_params: tuple[str, str], optional
         a globally accessible structure containing inputs to the workflow, e.g. config.workflow.*
         tuple consists of the name of the input and the type of the input
-    inputnode : str, optional
+    input_nodes : ty.Dict[str], optional
         the name of the workflow's input node (to be mapped to lzin), by default 'inputnode'
-    outputnode : str, optional
+    output_nodes :  ty.Dict[str], optional
         the name of the workflow's output node (to be mapped to lzout), by default 'outputnode'
     workflow_specs : dict[str, dict]
         The specs of potentially nested workflows functions that may be called within
@@ -377,6 +89,24 @@ class WorkflowConverter:
             ),
         },
     )
+    input_nodes: ty.Dict[str, str] = attrs.field(
+        converter=dict,
+        metadata={
+            "help": (
+                "Name of the node that is to be considered the input of the workflow, "
+                "i.e. its outputs will be the inputs of the workflow"
+            ),
+        },
+    )
+    output_nodes: ty.Dict[str, str] = attrs.field(
+        converter=dict,
+        metadata={
+            "help": (
+                "Name of the node that is to be considered the output of the workflow, "
+                "i.e. its inputs will be the outputs of the workflow"
+            ),
+        },
+    )
     output_module: str = attrs.field(
         metadata={
             "help": (
@@ -399,24 +129,6 @@ class WorkflowConverter:
                 "The name of the global struct/dict that contains workflow inputs "
                 "that are to be converted to inputs of the function along with the type "
                 'of the struct, either "dict" or "class"'
-            ),
-        },
-    )
-    inputnode: str = attrs.field(
-        default="inputnode",
-        metadata={
-            "help": (
-                "Name of the node that is to be considered the input of the workflow, "
-                "i.e. its outputs will be the inputs of the workflow"
-            ),
-        },
-    )
-    outputnode: str = attrs.field(
-        default="outputnode",
-        metadata={
-            "help": (
-                "Name of the node that is to be considered the output of the workflow, "
-                "i.e. its inputs will be the outputs of the workflow"
             ),
         },
     )
@@ -454,6 +166,13 @@ class WorkflowConverter:
     def _output_module_default(self):
         return f"pydra.tasks.{self.nipype_module.__name__}"
 
+    def get_output_module_path(self, package_root: Path):
+        output_module_path = package_root.joinpath(
+            *self.output_module.split(".")
+        ).with_suffix(".py")
+        output_module_path.parent.mkdir(parents=True, exist_ok=True)
+        return output_module_path
+
     @workflow_variable.default
     def workflow_variable_default(self):
         returns = set(
@@ -488,7 +207,9 @@ class WorkflowConverter:
     @cached_property
     def used_symbols(self) -> UsedSymbols:
         return UsedSymbols.find(
-            self.nipype_module, [self.func_body], collapse_intra_pkg=False
+            self.nipype_module,
+            [self.func_body],
+            collapse_intra_pkg=False,
         )
 
     @cached_property
@@ -521,6 +242,10 @@ class WorkflowConverter:
         return self._converted_code[0]
 
     @cached_property
+    def inline_imports(self) -> ty.List[str]:
+        return [s for s in self.converted_code if isinstance(s, ImportConverter)]
+
+    @cached_property
     def func_src(self):
         return inspect.getsource(self.nipype_function)
 
@@ -536,18 +261,8 @@ class WorkflowConverter:
         ]
         return {
             name: WorkflowConverter(
-                name=name,
-                nipype_name=spec["nipype_name"],
-                nipype_module=spec["nipype_module"],
-                output_module=self.output_module,
-                config_params=spec["config_params"],
-                inputnode=spec["inputnode"],
-                outputnode=spec["outputnode"],
                 workflow_specs=self.workflow_specs,
-                # omit_interfaces=self.omit_interfaces,
-                package_mappings=spec["package_mappings"],
-                other_mappings=spec["other_mappings"],
-                workflow_variable=spec["workflow_variable"],
+                **spec,
             )
             for name, spec in self.workflow_specs.items()
             if name in potential_funcs
@@ -578,11 +293,6 @@ class WorkflowConverter:
 
         if additional_funcs is None:
             additional_funcs = []
-
-        output_module = package_root.joinpath(
-            *self.output_module.split(".")
-        ).with_suffix(".py")
-        output_module.parent.mkdir(parents=True, exist_ok=True)
 
         used = UsedSymbols(
             imports=copy(self.used_symbols.imports),
@@ -647,7 +357,7 @@ class WorkflowConverter:
                 f"Black could not parse generated code: {e}\n\n{code_str}"
             )
 
-        with open(output_module, "w") as f:
+        with open(self.get_output_module_path(package_root), "w") as f:
             f.write(code_str)
 
     @cached_property
@@ -672,15 +382,26 @@ class WorkflowConverter:
         # Mark the nodes and connections that are to be included in the workflow, starting
         # from the designated input node (doesn't have to be the first node in the function body,
         # i.e. the input node can be after the data grabbing steps)
-        try:
-            input_node = self.nodes[self.inputnode]
-        except KeyError:
+        node_stack = []
+        missing = []
+        for prefix, input_node_name in self.input_nodes.items():
+            try:
+                input_node = self.nodes[input_node_name]
+            except KeyError:
+                missing.append(input_node_name)
+            else:
+                input_node.include = False
+                for conn in input_node.out_conns:
+                    conn.wf_in_out = "in"
+                node_stack.append(input_node)
+        if missing:
             raise ValueError(
-                f"Unrecognised input node '{self.inputnode}', not in {list(self.nodes)} "
+                f"Unrecognised input nodes {missing}, not in {list(self.nodes)} "
                 f"for {self.full_name}"
             )
 
-        node_stack = [input_node]
+        # Walk through the DAG and include all nodes and connections that are connected to
+        # the input nodes and their connections up until the output nodes
         included = []
         while node_stack:
             node = node_stack.pop()
@@ -688,26 +409,27 @@ class WorkflowConverter:
             included.append(node)
             for conn in node.out_conns:
                 conn.include = True
-                if conn.target not in included:
+                if (
+                    conn.target not in included
+                    and conn.target_name not in self.output_nodes
+                ):
                     node_stack.append(conn.target)
 
-        nodes_to_exclude = [nm for nm, nd in self.nodes.items() if not nd.include]
-
-        input_node.include = False
-        for conn in input_node.out_conns:
-            conn.wf_in_out = "in"
-
-        if self.outputnode:
+        missing = []
+        for prefix, output_node_name in self.output_nodes.items():
             try:
-                output_node = self.nodes[self.outputnode]
+                output_node = self.nodes[output_node_name]
             except KeyError:
-                raise ValueError(
-                    f"Unrecognised output node '{self.outputnode}', not in "
-                    f"{list(self.nodes)} for {self.full_name}"
-                )
-            output_node.include = False
-            for conn in output_node.in_conns:
-                conn.wf_in_out = "out"
+                missing.append(output_node_name)
+            else:
+                output_node.include = False
+                for conn in output_node.in_conns:
+                    conn.wf_in_out = "out"
+        if missing:
+            raise ValueError(
+                f"Unrecognised output node {missing}, not in "
+                f"{list(self.nodes)} for {self.full_name}"
+            )
 
         code_str = ""
         # Write out the preamble (e.g. docstring, comments, etc..)
@@ -718,19 +440,11 @@ class WorkflowConverter:
             code_str += str(parsed_statements.pop(0)) + "\n"
 
         # Initialise the workflow object
-        code_str += (
-            f'    {self.workflow_variable} = Workflow(name="{workflow_name}")\n\n'
-        )
+        code_str += f"    {self.workflow_variable} = Workflow(name={workflow_name})\n\n"
 
         # Write out the statements to the code string
         for statement in parsed_statements:
-            if isinstance(statement, str):
-                if not re.match(
-                    r"\s*(" + "|".join(nodes_to_exclude) + r")(\.\w+)*\s*=", statement
-                ):
-                    code_str += statement + "\n"
-            else:
-                code_str += str(statement) + "\n"
+            code_str += str(statement) + "\n"
 
         used_configs = set()
         for config_name, config_param in self.config_params.items():
@@ -753,7 +467,7 @@ class WorkflowConverter:
         ]
 
         # construct code string with modified signature
-        signature = preamble + ", ".join(func_args + config_sig) + ")"
+        signature = preamble + ", ".join(sorted(func_args + config_sig)) + ")"
         if return_types:
             signature += f" -> {return_types}"
         code_str = signature + ":\n\n" + code_str
@@ -819,7 +533,7 @@ class WorkflowConverter:
             elif match := re.match(
                 r"\s+(?:"
                 + self.workflow_variable
-                + r")\s*=.*\bWorkflow\(.*name\s*=\s*([^,\)]+)",
+                + r")\s*=.*\bWorkflow\(.*name\s*=\s*([^,=\)]+)",
                 statement,
                 flags=re.MULTILINE,
             ):
@@ -842,7 +556,7 @@ class WorkflowConverter:
 
                 splits = node_kwargs["iterfield"] if match.group(3) else None
                 node_converter = self.nodes[varname] = NodeConverter(
-                    name=node_kwargs["name"][1:-1],
+                    name=varname,
                     interface=intf_name[:-1],
                     args=intf_args,
                     iterables=iterables,
@@ -864,6 +578,7 @@ class WorkflowConverter:
                     nested_spec=self.nested_workflows[workflow_name],
                     args=extract_args(statement)[1],
                     indent=indent,
+                    workflow_converter=self,
                 )
                 self.nodes[varname] = nested_workflow_converter
                 parsed.append(nested_workflow_converter)
@@ -909,7 +624,23 @@ class WorkflowConverter:
                     ReturnConverter(vars=match.group(2), indent=match.group(1))
                 )
             else:
-                parsed.append(statement)
+                # Match assignments to node attributes
+                match = re.match(
+                    r"(\s*)(" + "|".join(self.nodes) + r")\b([\w\.]+)\s*=\s*(.*)",
+                    statement,
+                    flags=re.MULTILINE | re.DOTALL,
+                )
+                if self.nodes and match:
+                    parsed.append(
+                        NodeAssignmentConverter(
+                            node=self.nodes[match.group(2)],
+                            attribute=match.group(3),
+                            value=match.group(4),
+                            indent=match.group(1),
+                        )
+                    )
+                else:
+                    parsed.append(statement)
 
         if workflow_name is None:
             raise ValueError(
@@ -928,11 +659,15 @@ class WorkflowConverter:
         intra_pkg_modules : dict
             the intra-package modules to write
         """
+        output_module_path = self.get_output_module_path(package_root)
         for mod_name, func_bodies in intra_pkg_modules.items():
-            mod_path = package_root.joinpath(*mod_name.split(".")).with_suffix(".py")
+            relative_mod = get_relative_package(mod_name, self.nipype_module)
+            mod_path = output_module_path.parent.joinpath(
+                *(p if p else ".." for p in relative_mod[1:].split("."))
+            ).with_suffix(".py")
             mod_path.parent.mkdir(parents=True, exist_ok=True)
             mod = import_module(mod_name)
-            used = UsedSymbols.find(mod, func_bodies)
+            used = UsedSymbols.find(mod, func_bodies, pull_out_inline_imports=False)
             code_str = "\n".join(used.imports) + "\n"
             code_str += "\n\n".join(func_bodies)
             code_str += "\n".join(f"{n} = {d}" for n, d in used.constants)

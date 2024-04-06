@@ -23,9 +23,12 @@ config_params:
     type: struct
     module: mriqc
 # Name of the node that is to be considered the input of the workflow, i.e. its outputs will be the inputs of the workflow
-inputnode: datalad_get
+input_nodes:
+  "": inputnode
+  data: datalad_get
 # Name of the node that is to be considered the output of the workflow, i.e. its inputs will be the outputs of the workflow
-outputnode: outputnode
+output_nodes:
+  "": outputnode
 # mappings between nipype packages and their pydra equivalents
 package_mappings:
 # mappings between nipype objects/classes and their pydra equivalents
