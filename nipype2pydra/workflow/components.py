@@ -23,7 +23,7 @@ class VarField:
 
 
 @attrs.define
-class DelayedVarField(VarField):
+class DynamicField(VarField):
 
     varname: str = attrs.field(
         converter=lambda s: s[1:-1] if s.startswith("'") or s.startswith('"') else s
@@ -48,7 +48,7 @@ class NestedVarField:
 
 
 def field_converter(field: str) -> ty.Union[str, VarField]:
-    if isinstance(field, DelayedVarField):
+    if isinstance(field, DynamicField):
         return field
     match = re.match(r"('|\")?([\w\.]+)\1?", field)
     if not match:
@@ -96,7 +96,7 @@ class ConnectionConverter:
         return (
             not (self.conditional or self.source.conditional)
             and not isinstance(self.target_in, VarField)
-            and not isinstance(self.source_out, DelayedVarField)
+            and not isinstance(self.source_out, DynamicField)
         )
 
     @cached_property
@@ -113,7 +113,7 @@ class ConnectionConverter:
             src = f"{self.workflow_variable}.lzin.{self.source_out}"
         else:
             src = f"{self.workflow_variable}.{self.source_name}.lzout.{self.source_out}"
-        if isinstance(self.source_out, DelayedVarField):
+        if isinstance(self.source_out, DynamicField):
             task_name = f"{self.source_name}_{self.source_out.varname}"
             intf_name = f"{task_name}_callable"
             code_str += (
@@ -360,4 +360,7 @@ class NodeAssignmentConverter:
     def __str__(self):
         if not self.node.include:
             return ""
-        return f"{self.indent}{self.node.workflow_variable}.{self.node.name}{self.attribute} = {self.value}"
+        return (
+            f"{self.indent}{self.node.workflow_variable}.{self.node.name}{self.attribute}"
+            f"= {self.value}"
+        )

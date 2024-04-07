@@ -766,3 +766,32 @@ def get_relative_package(
     if common == 0:
         return target
     return ".".join([""] * (len(ref_parts) - common) + target_parts[common:])
+
+
+def join_relative_package(base_package: str, relative_package: str) -> str:
+    """Join a base package with a relative package path
+
+    Parameters
+    ----------
+    base_package : str
+        the base package to join with
+    relative_package : str
+        the relative package path to join
+
+    Returns
+    -------
+    str
+        the joined package path
+    """
+    parts = base_package.split(".")
+    rel_pkg_parts = relative_package.split(".")
+    preceding = True
+    for part in rel_pkg_parts:
+        if part == "":  # preceding "." in relative path
+            if not preceding:
+                raise ValueError(f"Invalid relative package path {relative_package}")
+            parts.pop()
+        else:
+            preceding = False
+            parts.append(part)
+    return ".".join(parts)

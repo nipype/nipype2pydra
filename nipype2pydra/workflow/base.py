@@ -17,6 +17,7 @@ from ..utils import (
     extract_args,
     cleanup_function_body,
     get_relative_package,
+    join_relative_package,
 )
 from .components import (
     NodeConverter,
@@ -28,7 +29,7 @@ from .components import (
     DocStringConverter,
     ReturnConverter,
     IterableConverter,
-    DelayedVarField,
+    DynamicField,
     NodeAssignmentConverter,
 )
 
@@ -311,9 +312,9 @@ class WorkflowConverter:
         code_str += self.converted_code
 
         # Get any intra-package classes and functions that need to be written
-        intra_pkg_modules = defaultdict(list)
+        intra_pkg_modules = defaultdict(set)
         for _, intra_pkg_obj in used.intra_pkg_classes + list(used.intra_pkg_funcs):
-            intra_pkg_modules[intra_pkg_obj.__module__].append(
+            intra_pkg_modules[self.to_output_module_path(intra_pkg_obj.__module__)].add(
                 cleanup_function_body(inspect.getsource(intra_pkg_obj))
             )
 
@@ -606,7 +607,7 @@ class WorkflowConverter:
                         out, in_ = extract_args(field_conn)[1]
                         pre, args, post = extract_args(out)
                         if args is not None:
-                            out = DelayedVarField(*args)
+                            out = DynamicField(*args)
                         conn_converter = ConnectionConverter(
                             source_name=src,
                             target_name=tgt,
@@ -649,28 +650,26 @@ class WorkflowConverter:
 
         return parsed, workflow_name
 
-    def _write_intra_pkg_modules(self, package_root: Path, intra_pkg_modules: dict):
+    def _write_intra_pkg_modules(
+        self, package_root: Path, intra_pkg_modules: ty.Dict[str, ty.Set[str]]
+    ):
         """Writes the intra-package modules to the package root
 
         Parameters
         ----------
         package_root : Path
             the root directory of the package to write the module to
-        intra_pkg_modules : dict
+        intra_pkg_modules : dict[str, set[str]
             the intra-package modules to write
         """
-        output_module_path = self.get_output_module_path(package_root)
         for mod_name, func_bodies in intra_pkg_modules.items():
-            relative_mod = get_relative_package(mod_name, self.nipype_module)
-            mod_path = output_module_path.parent.joinpath(
-                *(p if p else ".." for p in relative_mod[1:].split("."))
-            ).with_suffix(".py")
+            mod_path = package_root.joinpath(*mod_name.split(".")).with_suffix(".py")
             mod_path.parent.mkdir(parents=True, exist_ok=True)
-            mod = import_module(mod_name)
+            mod = import_module(self.from_output_module_path(mod_name))
             used = UsedSymbols.find(mod, func_bodies, pull_out_inline_imports=False)
             code_str = "\n".join(used.imports) + "\n"
-            code_str += "\n\n".join(func_bodies)
-            code_str += "\n".join(f"{n} = {d}" for n, d in used.constants)
+            code_str += "\n".join(f"{n} = {d}" for n, d in sorted(used.constants))
+            code_str += "\n\n".join(sorted(func_bodies))
             for klass in sorted(used.local_classes, key=attrgetter("__name__")):
                 code_str += "\n\n" + cleanup_function_body(inspect.getsource(klass))
             for func in sorted(used.local_functions, key=attrgetter("__name__")):
@@ -687,6 +686,37 @@ class WorkflowConverter:
                 )
             with open(mod_path, "w") as f:
                 f.write(code_str)
+
+    def to_output_module_path(self, nipype_module_path: str) -> str:
+        """Converts an original Nipype module path to a Pydra module path
+
+        Parameters
+        ----------
+        nipype_module_path : str
+            the original Nipype module path
+
+        Returns
+        -------
+        str
+            the Pydra module path
+        """
+        return join_relative_package(
+            self.output_module,
+            get_relative_package(nipype_module_path, self.nipype_module),
+        )
+
+    def from_output_module_path(self, pydra_module_path: str) -> str:
+        """Converts an original Nipype module path to a Pydra module path
+
+        Parameters
+        ----------
+        pydra_module_path : str
+            the original Pydra module path
+        """
+        return join_relative_package(
+            self.nipype_module.__name__,
+            get_relative_package(pydra_module_path, self.output_module),
+        )
 
 
 def match_kwargs(args: ty.List[str], sig: ty.List[str]) -> ty.Dict[str, str]:
