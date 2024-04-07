@@ -307,7 +307,9 @@ class WorkflowConverter:
         # Start writing output module with used imports and converted function body of
         # main workflow
         code_str = (
-            "\n".join(used.imports) + "\n" + "from pydra.engine import Workflow\n\n"
+            "\n".join(used.imports)
+            + "\nimport pydra.task\n"
+            + "from pydra.engine import Workflow\n\n"
         )
         code_str += self.converted_code
 
@@ -318,12 +320,14 @@ class WorkflowConverter:
                 cleanup_function_body(inspect.getsource(intra_pkg_obj))
             )
 
+        local_func_names = {f.__name__ for f in used.local_functions}
+
         # Convert any nested workflows
         for name, conv in self.nested_workflows.items():
             if conv.full_name in already_converted:
                 continue
             already_converted.add(conv.full_name)
-            if name in self.used_symbols.local_functions:
+            if name in local_func_names:
                 code_str += "\n\n\n" + conv.converted_code
                 used.update(conv.used_symbols)
             else:
@@ -339,7 +343,7 @@ class WorkflowConverter:
 
         # Add any local functions, constants and classes
         for func in sorted(used.local_functions, key=attrgetter("__name__")):
-            if func.__name__ not in already_converted:
+            if func.__module__ + "." + func.__name__ not in already_converted:
                 code_str += "\n\n" + cleanup_function_body(inspect.getsource(func))
 
         code_str += "\n".join(f"{n} = {d}" for n, d in used.constants)
