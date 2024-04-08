@@ -35,3 +35,5 @@ package_mappings:
 other_mappings:
 # name of the workflow variable that is returned
 workflow_variable: workflow
+external_nested_workflows:
+  - init_rodent_brain_extraction_wf
