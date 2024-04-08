@@ -317,9 +317,8 @@ class WorkflowConverter:
         intra_pkg_modules = defaultdict(set)
         for _, intra_pkg_obj in used.intra_pkg_classes + list(used.intra_pkg_funcs):
             intra_pkg_modules[self.to_output_module_path(intra_pkg_obj.__module__)].add(
-                cleanup_function_body(inspect.getsource(intra_pkg_obj))
+                intra_pkg_obj
             )
-
         local_func_names = {f.__name__ for f in used.local_functions}
 
         # Convert any nested workflows
@@ -666,18 +665,22 @@ class WorkflowConverter:
         intra_pkg_modules : dict[str, set[str]
             the intra-package modules to write
         """
-        for mod_name, func_bodies in intra_pkg_modules.items():
+        for mod_name, funcs in intra_pkg_modules.items():
             mod_path = package_root.joinpath(*mod_name.split(".")).with_suffix(".py")
             mod_path.parent.mkdir(parents=True, exist_ok=True)
             mod = import_module(self.from_output_module_path(mod_name))
-            used = UsedSymbols.find(mod, func_bodies, pull_out_inline_imports=False)
+            used = UsedSymbols.find(mod, funcs, pull_out_inline_imports=False)
             code_str = "\n".join(used.imports) + "\n"
             code_str += "\n".join(f"{n} = {d}" for n, d in sorted(used.constants))
-            code_str += "\n\n".join(sorted(func_bodies))
+            code_str += "\n\n".join(
+                sorted(cleanup_function_body(inspect.getsource(f)) for f in funcs)
+            )
             for klass in sorted(used.local_classes, key=attrgetter("__name__")):
-                code_str += "\n\n" + cleanup_function_body(inspect.getsource(klass))
+                if klass not in funcs:
+                    code_str += "\n\n" + cleanup_function_body(inspect.getsource(klass))
             for func in sorted(used.local_functions, key=attrgetter("__name__")):
-                code_str += "\n\n" + cleanup_function_body(inspect.getsource(func))
+                if func not in funcs:
+                    code_str += "\n\n" + cleanup_function_body(inspect.getsource(func))
             try:
                 code_str = black.format_file_contents(
                     code_str, fast=False, mode=black.FileMode()

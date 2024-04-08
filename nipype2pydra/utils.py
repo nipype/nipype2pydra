@@ -332,7 +332,7 @@ class UsedSymbols:
     def find(
         cls,
         module,
-        function_bodies: ty.List[str],
+        function_bodies: ty.List[ty.Union[str, ty.Callable, ty.Type]],
         collapse_intra_pkg: bool = True,
         pull_out_inline_imports: bool = True,
     ) -> "UsedSymbols":
@@ -342,8 +342,9 @@ class UsedSymbols:
         ----------
         module: ModuleType
             the module containing the functions to be converted
-        function_bodies: list[str]
-            the source of all functions that need to be checked for used imports
+        function_bodies: list[str | callable | type]
+            the source of all functions/classes (or the functions/classes themselves)
+            that need to be checked for used imports
         collapse_intra_pkg : bool
             whether functions and classes defined within the same package, but not the
             same module, are to be included in the output module or not, i.e. whether
@@ -395,6 +396,8 @@ class UsedSymbols:
 
         used_symbols = set()
         for function_body in function_bodies:
+            if inspect.isfunction(function_body) or inspect.isclass(function_body):
+                function_body = inspect.getsource(function_body)
             get_symbols(function_body)
 
         # Keep looping through local function source until all local functions and constants
