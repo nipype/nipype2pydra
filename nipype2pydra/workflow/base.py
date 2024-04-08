@@ -386,18 +386,24 @@ class WorkflowConverter:
         # Mark the nodes and connections that are to be included in the workflow, starting
         # from the designated input node (doesn't have to be the first node in the function body,
         # i.e. the input node can be after the data grabbing steps)
-        node_stack = []
         missing = []
+        input_spec = set()
+        input_nodes = []
         for prefix, input_node_name in self.input_nodes.items():
             try:
                 input_node = self.nodes[input_node_name]
             except KeyError:
                 missing.append(input_node_name)
             else:
-                input_node.include = False
                 for conn in input_node.out_conns:
                     conn.wf_in_out = "in"
-                node_stack.append(input_node)
+                    src_out = (
+                        conn.source_out
+                        if not isinstance(conn.source_out, DynamicField)
+                        else conn.source_out.varname
+                    )
+                    input_spec.add(src_out)
+                input_nodes.append(input_node)
         if missing:
             raise ValueError(
                 f"Unrecognised input nodes {missing}, not in {list(self.nodes)} "
@@ -407,16 +413,17 @@ class WorkflowConverter:
         # Walk through the DAG and include all nodes and connections that are connected to
         # the input nodes and their connections up until the output nodes
         included = []
+        node_stack = copy(input_nodes)
         while node_stack:
             node = node_stack.pop()
-            node.include = True
-            included.append(node)
             for conn in node.out_conns:
                 conn.include = True
                 if (
-                    conn.target not in included
-                    and conn.target_name not in self.output_nodes
+                    conn.target not in (included + input_nodes)
+                    and conn.target_name not in self.output_nodes.values()
                 ):
+                    included.append(conn.target)
+                    conn.target.include = True
                     node_stack.append(conn.target)
 
         missing = []
@@ -426,7 +433,6 @@ class WorkflowConverter:
             except KeyError:
                 missing.append(output_node_name)
             else:
-                output_node.include = False
                 for conn in output_node.in_conns:
                     conn.wf_in_out = "out"
         if missing:
@@ -444,7 +450,12 @@ class WorkflowConverter:
             code_str += str(parsed_statements.pop(0)) + "\n"
 
         # Initialise the workflow object
-        code_str += f"    {self.workflow_variable} = Workflow(name={workflow_name})\n\n"
+        code_str += (
+            f"    {self.workflow_variable} = Workflow("
+            f'name={workflow_name}, input_spec=["'
+            + '", "'.join(sorted(input_spec))
+            + '"])\n\n'
+        )
 
         # Write out the statements to the code string
         for statement in parsed_statements:
@@ -559,9 +570,11 @@ class WorkflowConverter:
                     iterables = []
 
                 splits = node_kwargs["iterfield"] if match.group(3) else None
+                if intf_name.endswith("("):  # strip trailing parenthesis
+                    intf_name = intf_name[:-1]
                 node_converter = self.nodes[varname] = NodeConverter(
                     name=varname,
-                    interface=intf_name[:-1],
+                    interface=intf_name,
                     args=intf_args,
                     iterables=iterables,
                     itersource=node_kwargs.get("itersource"),
@@ -575,11 +588,11 @@ class WorkflowConverter:
                 statement,
                 flags=re.MULTILINE,
             ):
-                indent, varname, workflow_name = match.groups()
+                indent, varname, wf_name = match.groups()
                 nested_workflow_converter = NestedWorkflowConverter(
                     varname=varname,
-                    workflow_name=workflow_name,
-                    nested_spec=self.nested_workflows[workflow_name],
+                    workflow_name=wf_name,
+                    nested_spec=self.nested_workflows[wf_name],
                     args=extract_args(statement)[1],
                     indent=indent,
                     workflow_converter=self,
@@ -619,6 +632,10 @@ class WorkflowConverter:
                             indent=indent,
                             workflow_converter=self,
                         )
+                        try:
+                            conn_converter.lzouttable
+                        except AttributeError:
+                            conn_converter.lzouttable
                         if not conn_converter.lzouttable:
                             parsed.append(conn_converter)
                         self.nodes[src].out_conns.append(conn_converter)

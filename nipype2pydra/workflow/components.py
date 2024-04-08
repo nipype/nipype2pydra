@@ -97,6 +97,7 @@ class ConnectionConverter:
             not (self.conditional or self.source.conditional)
             and not isinstance(self.target_in, VarField)
             and not isinstance(self.source_out, DynamicField)
+            and self.source.index < self.target.index
         )
 
     @cached_property
@@ -129,7 +130,7 @@ class ConnectionConverter:
 
         # Set src lazy field to target input
         if self.wf_in_out == "out":
-            code_str += f"{self.indent}{self.workflow_variable}.set_output([({self.target_in!r}, {src}])\n"
+            code_str += f"{self.indent}{self.workflow_variable}.set_output([({self.target_in!r}, {src})])"
         elif isinstance(self.target_in, VarField):
             code_str += f"{self.indent}setattr({self.workflow_variable}.{self.target_name}.inputs, {self.target_in}, {src})"
         else:
@@ -160,6 +161,11 @@ class NodeConverter:
     in_conns: ty.List[ConnectionConverter] = attrs.field(factory=list)
     out_conns: ty.List[ConnectionConverter] = attrs.field(factory=list)
     include: bool = attrs.field(default=False)
+    index: int = attrs.field()
+
+    @index.default
+    def _index_default(self):
+        return len(self.workflow_converter.nodes)
 
     @property
     def inputs(self):
@@ -174,14 +180,19 @@ class NodeConverter:
         if self.args is not None:
             split_args = [a for a in self.args if a.split("=", 1)[0] in self.splits]
             args.extend(a for a in self.args if a.split("=", 1)[0] not in self.splits)
-        args.extend(
-            (
-                f"{conn.target_in}="
-                f"{self.workflow_variable}.{conn.source_name}.lzout.{conn.source_out}"
-            )
-            for conn in self.in_conns
-            if conn.lzouttable
-        )
+        for conn in self.in_conns:
+            if not conn.include or not conn.lzouttable:
+                continue
+            if conn.wf_in_out == "in":
+                arg = (
+                    f"{conn.source_out}={self.workflow_variable}.lzin.{conn.source_out}"
+                )
+            else:
+                arg = (
+                    f"{conn.target_in}={self.workflow_variable}."
+                    f"{conn.source_name}.lzout.{conn.source_out}"
+                )
+            args.append(arg)
         code_str += f"{self.interface}(" + ", ".join(args)
         if args:
             code_str += ", "
@@ -240,19 +251,31 @@ class NestedWorkflowConverter:
     include: bool = attrs.field(default=False)
     in_conns: ty.List[ConnectionConverter] = attrs.field(factory=list)
     out_conns: ty.List[ConnectionConverter] = attrs.field(factory=list)
+    index: int = attrs.field()
+
+    @index.default
+    def _index_default(self):
+        return len(self.workflow_converter.nodes)
 
     def __str__(self):
         if not self.include:
             return ""
         config_params = [f"{n}_{c}={n}_{c}" for n, c in self.nested_spec.used_configs]
-        args_str = ", ".join(
-            (
-                f"{conn.target_in}={self.workflow_variable}."
-                f"{conn.source_name}.lzout.{conn.source_out}"
-            )
-            for conn in self.in_conns
-            if conn.lzouttable
-        )
+        args = []
+        for conn in self.in_conns:
+            if not conn.include or not conn.lzouttable:
+                continue
+            if conn.wf_in_out == "in":
+                arg = (
+                    f"{conn.source_out}={self.workflow_variable}.lzin.{conn.source_out}"
+                )
+            else:
+                arg = (
+                    f"{conn.target_in}={self.workflow_variable}."
+                    f"{conn.source_name}.lzout.{conn.source_out}"
+                )
+            args.append(arg)
+        args_str = ", ".join(args)
         if args_str:
             args_str += ", "
         args_str += f"name='{self.varname}'"
