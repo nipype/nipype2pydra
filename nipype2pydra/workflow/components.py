@@ -80,11 +80,11 @@ class ConnectionConverter:
             raise ValueError(f"wf_in_out must be 'in', 'out' or None, not {value}")
 
     @cached_property
-    def source(self):
+    def sources(self):
         return self.workflow_converter.nodes[self.source_name]
 
     @cached_property
-    def target(self):
+    def targets(self):
         return self.workflow_converter.nodes[self.target_name]
 
     @cached_property
@@ -94,10 +94,10 @@ class ConnectionConverter:
     @property
     def lzouttable(self) -> bool:
         return (
-            not (self.conditional or self.source.conditional)
+            not (self.conditional or any(s.conditional for s in self.sources))
             and not isinstance(self.target_in, VarField)
             and not isinstance(self.source_out, DynamicField)
-            and self.source.index < self.target.index
+            and all(all(s.index < t.index for t in self.targets) for s in self.sources)
         )
 
     @cached_property
@@ -244,7 +244,7 @@ class NestedWorkflowConverter:
 
     varname: str
     workflow_name: str
-    nested_spec: "WorkflowConverter"
+    nested_spec: ty.Optional["WorkflowConverter"]
     indent: str
     args: ty.List[str]
     workflow_converter: "WorkflowConverter" = attrs.field()
@@ -260,7 +260,12 @@ class NestedWorkflowConverter:
     def __str__(self):
         if not self.include:
             return ""
-        config_params = [f"{n}_{c}={n}_{c}" for n, c in self.nested_spec.used_configs]
+        if self.nested_spec:
+            config_params = [
+                f"{n}_{c}={n}_{c}" for n, c in self.nested_spec.used_configs
+            ]
+        else:
+            config_params = []
         args = []
         for conn in self.in_conns:
             if not conn.include or not conn.lzouttable:
@@ -375,15 +380,16 @@ class ConfigParamsConverter:
 @attrs.define
 class NodeAssignmentConverter:
 
-    node: NodeConverter = attrs.field()
+    nodes: ty.List[NodeConverter] = attrs.field()
     attribute: str = attrs.field()
     value: str = attrs.field()
     indent: str = attrs.field()
 
     def __str__(self):
-        if not self.node.include:
+        if not any(n.include for n in self.nodes):
             return ""
-        return (
-            f"{self.indent}{self.node.workflow_variable}.{self.node.name}{self.attribute}"
-            f"= {self.value}"
-        )
+        node_name = self.nodes[0].name
+        workflow_variable = self.nodes[0].workflow_variable
+        assert (n.name == node_name for n in self.nodes)
+        assert (n.workflow_variable == workflow_variable for n in self.nodes)
+        return f"{self.indent}{workflow_variable}.{node_name}{self.attribute} = {self.value}"
