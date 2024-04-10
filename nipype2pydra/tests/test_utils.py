@@ -95,6 +95,39 @@ def test_extract_args10():
     assert extract_args('""" \\""" """') == ('""" \\""" """', None, None)
 
 
+def test_extract_args11():
+    assert (
+        extract_args(
+            """NUMPY_DTYPE = {
+    1: np.uint8,
+    2: np.uint8,
+    4: np.uint16,
+    8: np.uint32,
+    64: np.float32,
+    256: np.uint8,
+    1024: np.uint32,
+    1280: np.uint32,
+    1536: np.float32,
+}"""
+        )
+        == (
+            "NUMPY_DTYPE = {",
+            [
+                "1: np.uint8",
+                "2: np.uint8",
+                "4: np.uint16",
+                "8: np.uint32",
+                "64: np.float32",
+                "256: np.uint8",
+                "1024: np.uint32",
+                "1280: np.uint32",
+                "1536: np.float32",
+            ],
+            "}",
+        )
+    )
+
+
 def test_split_source_into_statements_tripple_quote():
     stmts = split_source_into_statements(
         '''"""This is a great function named foo you use it like
@@ -126,22 +159,21 @@ def test_source_code():
         "def for_testing_line_number_of_function():",
     ]
 
-    # \"\"\"
-    # One-subject-one-session-one-run pipeline to extract the NR-IQMs from
-    # anatomical images
-
-    # .. workflow::
-
-    #     import os.path as op
-    #     from mriqc.workflows.anatomical.base import anat_qc_workflow
-    #     from mriqc.testing import mock_config
-    #     with mock_config():
-    #         wf = anat_qc_workflow()
-
-    # \"\"\"
-
 
 EXAMPLE_SOURCE_CODE = """
+    \"\"\"
+    One-subject-one-session-one-run pipeline to extract the NR-IQMs from
+    anatomical images
+
+    .. workflow::
+
+        import os.path as op
+        from mriqc.workflows.anatomical.base import anat_qc_workflow
+        from mriqc.testing import mock_config
+        with mock_config():
+            wf = anat_qc_workflow()
+
+    \"\"\"
     from mriqc.workflows.shared import synthstrip_wf
 
     dataset = config.workflow.inputs.get('t1w', []) + config.workflow.inputs.get('t2w', [])
@@ -280,66 +312,75 @@ EXAMPLE_SOURCE_CODE = """
 
 
 EXAMPLE_SOURCE_CODE_SPLIT = [
-    # """    \"\"\"
-    # One-subject-one-session-one-run pipeline to extract the NR-IQMs from
-    # anatomical images
-    # .. workflow::
-    #     import os.path as op
-    #     from mriqc.workflows.anatomical.base import anat_qc_workflow
-    #     from mriqc.testing import mock_config
-    #     with mock_config():
-    #         wf = anat_qc_workflow()
-    # \"\"\"""",
     "",
-    "    from mriqc.workflows.shared import synthstrip_wf",
+    """    \"\"\"
+    One-subject-one-session-one-run pipeline to extract the NR-IQMs from
+    anatomical images
+
+    .. workflow::
+
+        import os.path as op
+        from mriqc.workflows.anatomical.base import anat_qc_workflow
+        from mriqc.testing import mock_config
+        with mock_config():
+            wf = anat_qc_workflow()
+
+    \"\"\"""",
+    """    from mriqc.workflows.shared import synthstrip_wf""",
     "",
-    "    dataset = config.workflow.inputs.get('t1w', []) + config.workflow.inputs.get('t2w', [])",
+    """    dataset = config.workflow.inputs.get('t1w', []) + config.workflow.inputs.get('t2w', [])""",
     "",
-    """    message = BUILDING_WORKFLOW.format(modality='anatomical', detail=(
+    """    message = BUILDING_WORKFLOW.format(
+        modality='anatomical',
+        detail=(
             f'for {len(dataset)} NIfTI files.'
             if len(dataset) > 2
             else f"({' and '.join('<%s>' % v for v in dataset)})."
-        ))""",
-    "    config.loggers.workflow.info(message)",
+        ),
+    )""",
+    """    config.loggers.workflow.info(message)""",
     "",
-    "    # Initialize workflow",
-    "    workflow = pe.Workflow(name=name)",
+    """    # Initialize workflow""",
+    """    workflow = pe.Workflow(name=name)""",
     "",
-    "    # Define workflow, inputs and outputs",
-    "    # 0. Get data",
-    "    inputnode = pe.Node(niu.IdentityInterface(fields=['in_file']), name='inputnode')",
-    "    inputnode.iterables = [('in_file', dataset)]",
+    """    # Define workflow, inputs and outputs""",
+    """    # 0. Get data""",
+    """    inputnode = pe.Node(niu.IdentityInterface(fields=['in_file']), name='inputnode')""",
+    """    inputnode.iterables = [('in_file', dataset)]""",
     "",
-    """    datalad_get = pe.Node(DataladIdentityInterface(fields=['in_file'], dataset_path=config.execution.bids_dir), name='datalad_get')""",
+    """    datalad_get = pe.Node(
+        DataladIdentityInterface(fields=['in_file'], dataset_path=config.execution.bids_dir),
+        name='datalad_get',
+    )""",
     "",
-    "    outputnode = pe.Node(niu.IdentityInterface(fields=['out_json']), name='outputnode')",
+    """    outputnode = pe.Node(niu.IdentityInterface(fields=['out_json']), name='outputnode')""",
     "",
-    "    # 1. Reorient anatomical image",
-    "    to_ras = pe.Node(ConformImage(check_dtype=False), name='conform')",
-    "    # 2. species specific skull-stripping",
-    "    if config.workflow.species.lower() == 'human':",
-    "        skull_stripping = synthstrip_wf(omp_nthreads=config.nipype.omp_nthreads)",
-    "        ss_bias_field = 'outputnode.bias_image'",
-    "    else:",
-    "        from nirodents.workflows.brainextraction import init_rodent_brain_extraction_wf",
+    """    # 1. Reorient anatomical image""",
+    """    to_ras = pe.Node(ConformImage(check_dtype=False), name='conform')""",
+    """    # 2. species specific skull-stripping""",
+    """    if config.workflow.species.lower() == 'human':""",
+    """        skull_stripping = synthstrip_wf(omp_nthreads=config.nipype.omp_nthreads)""",
+    """        ss_bias_field = 'outputnode.bias_image'""",
+    """    else:""",
+    """        from nirodents.workflows.brainextraction import init_rodent_brain_extraction_wf""",
     "",
-    "        skull_stripping = init_rodent_brain_extraction_wf(template_id=config.workflow.template_id)",
-    "        ss_bias_field = 'final_n4.bias_image'",
-    "    # 3. Head mask",
-    "    hmsk = headmsk_wf(omp_nthreads=config.nipype.omp_nthreads)",
-    "    # 4. Spatial Normalization, using ANTs",
-    "    norm = spatial_normalization()",
-    "    # 5. Air mask (with and without artifacts)",
-    "    amw = airmsk_wf()",
-    "    # 6. Brain tissue segmentation",
-    "    bts = init_brain_tissue_segmentation()",
-    "    # 7. Compute IQMs",
-    "    iqmswf = compute_iqms()",
-    "    # Reports",
-    "    anat_report_wf = init_anat_report_wf()",
+    """        skull_stripping = init_rodent_brain_extraction_wf(template_id=config.workflow.template_id)""",
+    """        ss_bias_field = 'final_n4.bias_image'""",
+    """    # 3. Head mask""",
+    """    hmsk = headmsk_wf(omp_nthreads=config.nipype.omp_nthreads)""",
+    """    # 4. Spatial Normalization, using ANTs""",
+    """    norm = spatial_normalization()""",
+    """    # 5. Air mask (with and without artifacts)""",
+    """    amw = airmsk_wf()""",
+    """    # 6. Brain tissue segmentation""",
+    """    bts = init_brain_tissue_segmentation()""",
+    """    # 7. Compute IQMs""",
+    """    iqmswf = compute_iqms()""",
+    """    # Reports""",
+    """    anat_report_wf = init_anat_report_wf()""",
     "",
-    "    # Connect all nodes",
-    "    # fmt: off",
+    """    # Connect all nodes""",
+    """    # fmt: off""",
     """    workflow.connect([
         (inputnode, datalad_get, [('in_file', 'in_file')]),
         (inputnode, anat_report_wf, [
@@ -395,17 +436,20 @@ EXAMPLE_SOURCE_CODE_SPLIT = [
         (iqmswf, anat_report_wf, [('outputnode.out_file', 'inputnode.in_iqms')]),
         (iqmswf, outputnode, [('outputnode.out_file', 'out_json')]),
     ])""",
-    "    # fmt: on",
+    """    # fmt: on""",
     "",
-    "    # Upload metrics",
-    "    if not config.execution.no_sub:",
-    "        from mriqc.interfaces.webapi import UploadIQMs",
+    """    # Upload metrics""",
+    """    if not config.execution.no_sub:""",
+    """        from mriqc.interfaces.webapi import UploadIQMs""",
     "",
-    """        upldwf = pe.Node(UploadIQMs(
+    """        upldwf = pe.Node(
+            UploadIQMs(
                 endpoint=config.execution.webapi_url,
                 auth_token=config.execution.webapi_token,
                 strict=config.execution.upload_strict,
-            ), name='UploadMetrics')""",
+            ),
+            name='UploadMetrics',
+        )""",
     "",
     "        # fmt: off",
     """        workflow.connect([
@@ -413,9 +457,9 @@ EXAMPLE_SOURCE_CODE_SPLIT = [
             (upldwf, anat_report_wf, [('api_id', 'inputnode.api_id')]),
         ])""",
     "",
-    "    # fmt: on",
+    """    # fmt: on""",
     "",
-    "    return workflow",
+    """    return workflow""",
 ]
 
 
@@ -483,7 +527,7 @@ def test_import_statement4():
     assert str(parsed) == import_str
     assert "a_wf" in parsed
     assert "synthstrip_wf" in parsed
-    reduced = parsed.filter(["a_wf"])
+    reduced = parsed.only_include(["a_wf"])
     assert list(reduced) == ["a_wf"]
 
 

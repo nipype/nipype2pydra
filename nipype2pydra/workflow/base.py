@@ -16,8 +16,6 @@ from ..utils import (
     split_source_into_statements,
     extract_args,
     cleanup_function_body,
-    get_relative_package,
-    join_relative_package,
     ImportStatement,
 )
 from .components import (
@@ -316,7 +314,7 @@ class WorkflowConverter:
         # Start writing output module with used imports and converted function body of
         # main workflow
         code_str = (
-            "\n".join(used.imports)
+            "\n".join(str(i) for i in used.imports if not i.indent)
             + "\nimport pydra.task\n"
             + "from pydra.engine import Workflow\n\n"
         )
@@ -699,8 +697,10 @@ class WorkflowConverter:
             mod_path.parent.mkdir(parents=True, exist_ok=True)
             mod = import_module(self.from_output_module_path(mod_name))
             used = UsedSymbols.find(mod, funcs, pull_out_inline_imports=False)
-            code_str = "\n".join(used.imports) + "\n"
-            code_str += "\n".join(f"{n} = {d}" for n, d in sorted(used.constants))
+            code_str = "\n".join(str(i) for i in used.imports if not i.indent) + "\n\n"
+            code_str += (
+                "\n".join(f"{n} = {d}" for n, d in sorted(used.constants)) + "\n\n"
+            )
             code_str += "\n\n".join(
                 sorted(cleanup_function_body(inspect.getsource(f)) for f in funcs)
             )
@@ -736,9 +736,11 @@ class WorkflowConverter:
         str
             the Pydra module path
         """
-        return join_relative_package(
+        return ImportStatement.join_relative_package(
             self.output_module,
-            get_relative_package(nipype_module_path, self.nipype_module),
+            ImportStatement.get_relative_package(
+                nipype_module_path, self.nipype_module
+            ),
         )
 
     def from_output_module_path(self, pydra_module_path: str) -> str:
@@ -749,9 +751,9 @@ class WorkflowConverter:
         pydra_module_path : str
             the original Pydra module path
         """
-        return join_relative_package(
+        return ImportStatement.join_relative_package(
             self.nipype_module.__name__,
-            get_relative_package(pydra_module_path, self.output_module),
+            ImportStatement.get_relative_package(pydra_module_path, self.output_module),
         )
 
 

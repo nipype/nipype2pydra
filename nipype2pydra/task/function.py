@@ -5,6 +5,7 @@ from operator import attrgetter, itemgetter
 from functools import cached_property
 import itertools
 import attrs
+from nipype.interfaces.base import BaseInterface, TraitedSpec
 from .base import BaseTaskConverter
 from ..utils import (
     extract_args,
@@ -69,6 +70,7 @@ class FunctionTaskConverter(BaseTaskConverter):
                     self.referenced_local_functions, self.referenced_methods
                 )
             ],
+            filter_classes=(BaseInterface, TraitedSpec),
         )
 
         spec_str = "\n".join(f"{n} = {d}" for n, d in used.constants)

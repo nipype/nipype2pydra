@@ -76,7 +76,12 @@ class Imported:
     def object(self) -> object:
         """Import and return the actual object being imported in the statement"""
         if self.statement.from_:
-            return getattr(self.statement.module, self.name)
+            try:
+                return getattr(self.statement.module, self.name)
+            except AttributeError:
+                raise ImportError(
+                    f"Did not find {self.name} object in {self.statement.module_name} module"
+                ) from None
         else:
             return import_module(self.name)
 
@@ -151,6 +156,9 @@ class ImportStatement:
     def __iter__(self):
         return iter(self.imported)
 
+    def __bool__(self):
+        return bool(self.imported)
+
     def keys(self):
         return self.imported.keys()
 
@@ -198,14 +206,16 @@ class ImportStatement:
         """
         if isinstance(relative_to, ModuleType):
             relative_to = relative_to.__name__
-        match = cls.match_re.match(stmt)
+        match = cls.match_re.match(stmt.replace("\n", " "))
         import_str = match.group(3).strip()
         if import_str.startswith("("):
             assert import_str.endswith(")")
-            import_str = import_str[1:-1]
+            import_str = import_str[1:-1].strip()
+            if import_str.endswith(","):
+                import_str = import_str[:-1]
         imported = {}
         for obj in re.split(r" *, *", import_str):
-            parts = re.split(r" +as +", obj)
+            parts = [p.strip() for p in re.split(r" +as +", obj)]
             if len(parts) > 1:
                 imported[parts[1]] = Imported(name=parts[0], alias=parts[1])
             else:
@@ -257,11 +267,17 @@ class ImportStatement:
     def matches(self, stmt: str) -> bool:
         return bool(self.match_re.match(stmt))
 
+    def drop(self, imported: ty.Union[str, Imported]):
+        """Drop an object from the import statement"""
+        if isinstance(imported, Imported):
+            imported = imported.local_name
+        del self.imported[imported]
+
     @property
     def is_relative(self) -> bool:
         return self.from_ and self.from_.startswith(".")
 
-    def filter(self, aliases: ty.Iterable[str]) -> ty.Optional["ImportStatement"]:
+    def only_include(self, aliases: ty.Iterable[str]) -> ty.Optional["ImportStatement"]:
         """Filter the import statement to only include ones that are present in the
         given aliases
 
@@ -585,7 +601,7 @@ def extract_args(snippet) -> ty.Tuple[str, ty.List[str], str]:
         if the first parenthesis/bracket in the snippet is unmatched
     """
     splits = re.split(
-        r"(\(|\)|\[|\]|\{\|\}|'|\"|\\\(|\\\)|\\\[|\\\]|\\'|\\\")",
+        r"(\(|\)|\[|\]|\{|\}|'|\"|\\\(|\\\)|\\\[|\\\]|\\'|\\\")",
         snippet,
         flags=re.MULTILINE | re.DOTALL,
     )
@@ -730,6 +746,13 @@ class UsedSymbols:
         )
         self.constants.update(other.constants)
 
+    DEFAULT_FILTERED_OBJECTS = (
+        Undefined,
+        isdefined,
+        traits_extension.File,
+        traits_extension.Directory,
+    )
+
     @classmethod
     def find(
         cls,
@@ -737,6 +760,8 @@ class UsedSymbols:
         function_bodies: ty.List[ty.Union[str, ty.Callable, ty.Type]],
         collapse_intra_pkg: bool = True,
         pull_out_inline_imports: bool = True,
+        filter_objs: ty.Sequence = DEFAULT_FILTERED_OBJECTS,
+        filter_classes: ty.Optional[ty.List[ty.Type]] = None,
     ) -> "UsedSymbols":
         """Get the imports and local functions/classes/constants referenced in the
         provided function bodies, and those nested within them
@@ -755,6 +780,16 @@ class UsedSymbols:
         pull_out_inline_imports : bool, optional
             whether to pull out imports that are inline in the function bodies
             or not, by default True
+        filtered_classes : list[type], optional
+            a list of classes (including subclasses) to filter out from the used symbols,
+            by default None
+        filtered_objs : list[type], optional
+            a list of objects (including subclasses) to filter out from the used symbols,
+            by default (Undefined,
+                            isdefined,
+                            traits_extension.File,
+                            traits_extension.Directory,
+                        )
 
         Returns
         -------
@@ -838,58 +873,73 @@ class UsedSymbols:
 
         # functions to copy from a relative or nipype module into the output module
         for stmt in imports:
-            stmt = stmt.filter(used_symbols)
+            stmt = stmt.only_include(used_symbols)
             # Skip if no required symbols are in the import statement
             if not stmt:
                 continue
             # Filter out Nipype specific modules and the module itself
             if stmt.module_name in cls.IGNORE_MODULES + [module.__name__]:
                 continue
-            # Filter out any interfaces that have been dragged in
-            filtered = []
-            for imported in stmt.values():
-                if not (
-                    inspect.isclass(imported.object)
-                    and issubclass(imported.object, (BaseInterface, TraitedSpec))
-                    or imported.object
-                    in (
-                        Undefined,
-                        isdefined,
-                        traits_extension.File,
-                        traits_extension.Directory,
-                    )
-                ):
-                    filtered.append(imported.local_name)
-            if not filtered:
-                continue
-            stmt = stmt.filter(filtered)
-            if not stmt.in_package(base_pkg):
-                used.imports.add(stmt)
-            else:
-                inlined_objects = []
+            # Filter out Nipype specific classes that are relevant in Pydra
+            if filter_classes or filter_objs:
+                to_include = []
                 for imported in stmt.values():
+                    try:
+                        obj = imported.object
+                    except ImportError:
+                        logger.warning(
+                            (
+                                "Could not import %s from %s, unable to check whether "
+                                "it is is present in list of classes %s or objects %s "
+                                "to be filtered out"
+                            ),
+                            imported.name,
+                            imported.statement.module_name,
+                            filter_classes,
+                            filter_objs,
+                        )
+                        continue
+                    if filter_classes and inspect.isclass(obj):
+                        if issubclass(obj, filter_classes):
+                            continue
+                    elif filter_objs and obj in filter_objs:
+                        continue
+                    to_include.append(imported.local_name)
+                if not to_include:
+                    continue
+                stmt = stmt.only_include(to_include)
+            if stmt.in_package(base_pkg):
+                inlined_objects = []
+                for imported in list(stmt.values()):
                     if not imported.in_package(base_pkg):
                         # Case where an object is a nested import from a different package
                         # which is imported from a neighbouring module
                         used.imports.add(imported.as_independent_statement())
-                        continue
+                        stmt.drop(imported)
                     elif inspect.isfunction(imported.object):
                         used.intra_pkg_funcs.add((imported.local_name, imported.object))
                         if collapse_intra_pkg:
+                            # Recursively include objects imported in the module
+                            # by the inlined function
                             inlined_objects.append(imported.object)
                     elif inspect.isclass(imported.object):
-                        if issubclass(imported.object, BaseInterface):
-                            # TODO: add warning here
-                            continue  # Don't include nipype interfaces as it gets silly
-                        # We can't use a set here because we need to preserve the order
                         class_def = (imported.local_name, imported.object)
+                        # Add the class to the intra_pkg_classes list if it is not
+                        # already there. NB: we can't use a set for intra_pkg_classes
+                        # like we did for functions here because we need to preserve the
+                        # order the classes are defined in the module in case one inherits
+                        # from the other
                         if class_def not in used.intra_pkg_classes:
                             used.intra_pkg_classes.append(class_def)
-                        class_body = extract_args(inspect.getsource(imported.object))[
-                            2
-                        ].split("\n", 1)[1]
                         if collapse_intra_pkg:
-                            inlined_objects.append(class_body)
+                            # Recursively include objects imported in the module
+                            # by the inlined class
+                            inlined_objects.append(
+                                extract_args(inspect.getsource(imported.object))[
+                                    2
+                                ].split("\n", 1)[1]
+                            )
+
                 # Recursively include neighbouring objects imported in the module
                 if inlined_objects:
                     used_in_mod = cls.find(
@@ -897,6 +947,7 @@ class UsedSymbols:
                         function_bodies=inlined_objects,
                     )
                     used.update(used_in_mod)
+            used.imports.add(stmt)
         return used
 
     # Nipype-specific names and Python keywords
@@ -933,13 +984,14 @@ def get_local_constants(mod):
     local_vars = []
     for attr_name, following in zip(parts[1::2], parts[2::2]):
         first_line = following.splitlines()[0]
-        if ("(" in first_line and ")" not in first_line) or (
-            "[" in first_line and "]" not in first_line
-        ):
+        if re.match(r".*(\[|\(|\{)", first_line):
             pre, args, post = extract_args(following)
-            local_vars.append(
-                (attr_name, pre + re.sub(r"\n *", "", ", ".join(args)) + post[0])
-            )
+            if args:
+                local_vars.append(
+                    (attr_name, pre + re.sub(r"\n *", "", ", ".join(args)) + post[0])
+                )
+            else:
+                local_vars.append((attr_name, first_line))
         else:
             local_vars.append((attr_name, first_line))
     return local_vars

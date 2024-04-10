@@ -23,6 +23,7 @@ from fileformats.application import Dicom, Xml
 from fileformats.text import TextFile
 from fileformats.datascience import TextMatrix, DatFile
 import nipype.interfaces.base.core
+from nipype.interfaces.base import BaseInterface, TraitedSpec
 from nipype2pydra.task import (
     InputsConverter,
     OutputsConverter,
@@ -1073,7 +1074,9 @@ def get_callable_sources(
     all_constants = set()
     for mod_name, methods in grouped_methods.items():
         mod = import_module(mod_name)
-        used = UsedSymbols.find(mod, methods)
+        used = UsedSymbols.find(
+            mod, methods, filter_classes=(BaseInterface, TraitedSpec)
+        )
         all_funcs.update(methods)
         for func in used.local_functions:
             all_funcs.add(cleanup_function_body(get_source_code(func)))
