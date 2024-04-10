@@ -144,7 +144,7 @@ class FunctionTaskConverter(BaseTaskConverter):
             include_task=False,
             base=base_imports + list(used.imports) + list(additional_imports),
         )
-        spec_str = "\n".join(imports) + "\n\n" + spec_str
+        spec_str = "\n".join(str(i) for i in imports) + "\n\n" + spec_str
 
         return spec_str
 

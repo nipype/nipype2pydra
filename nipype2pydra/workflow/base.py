@@ -18,13 +18,13 @@ from ..utils import (
     cleanup_function_body,
     get_relative_package,
     join_relative_package,
+    ImportStatement,
 )
 from .components import (
     NodeConverter,
     ConnectionConverter,
     NestedWorkflowConverter,
     ConfigParamsConverter,
-    ImportConverter,
     CommentConverter,
     DocStringConverter,
     ReturnConverter,
@@ -253,7 +253,7 @@ class WorkflowConverter:
 
     @cached_property
     def inline_imports(self) -> ty.List[str]:
-        return [s for s in self.converted_code if isinstance(s, ImportConverter)]
+        return [s for s in self.converted_code if isinstance(s, ImportStatement)]
 
     @cached_property
     def func_src(self):
@@ -458,7 +458,7 @@ class WorkflowConverter:
         # Write out the preamble (e.g. docstring, comments, etc..)
         while parsed_statements and isinstance(
             parsed_statements[0],
-            (DocStringConverter, CommentConverter, ImportConverter),
+            (DocStringConverter, CommentConverter, ImportStatement),
         ):
             code_str += str(parsed_statements.pop(0)) + "\n"
 
@@ -544,20 +544,8 @@ class WorkflowConverter:
                 parsed.append(
                     DocStringConverter(docstring=match.group(2), indent=match.group(1))
                 )
-            elif match := re.match(
-                r"^(\s*)(from[\w \.]+)?\bimport\b([\w \.\,\(\)]+)$",
-                statement,
-                flags=re.MULTILINE,
-            ):
-                indent = match.group(1)
-                from_mod = match.group(2)[len("from ") :] if match.group(2) else None
-                imported_str = match.group(3)
-                if imported_str.startswith("("):
-                    imported_str = imported_str[1:-1]
-                imported = [i.strip() for i in imported_str.split(",")]
-                parsed.append(
-                    ImportConverter(imported=imported, from_mod=from_mod, indent=indent)
-                )
+            elif ImportStatement.matches(statement):
+                parsed.append(ImportStatement.parse(statement))
             elif match := re.match(
                 r"\s+(?:"
                 + self.workflow_variable

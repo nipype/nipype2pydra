@@ -332,21 +332,6 @@ class DocStringConverter:
 
 
 @attrs.define
-class ImportConverter:
-
-    imported: ty.List[str] = attrs.field()
-    from_mod: ty.Optional[str] = attrs.field()
-    indent: str = attrs.field()
-
-    def __str__(self):
-        if self.from_mod:
-            return (
-                f"{self.indent}from {self.from_mod} import {', '.join(self.imported)}"
-            )
-        return f"{self.indent}import {', '.join(self.imported)}"
-
-
-@attrs.define
 class ConfigParamsConverter:
 
     varname: str = attrs.field(

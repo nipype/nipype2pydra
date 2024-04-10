@@ -36,6 +36,7 @@ from nipype2pydra.utils import (
     cleanup_function_body,
     insert_args_in_signature,
     INBUILT_NIPYPE_TRAIT_NAMES,
+    ImportStatement,
 )
 from nipype2pydra.exceptions import UnmatchedParensException
 
@@ -363,11 +364,10 @@ class NipypeInterface:
             re.match(r"\battrs\b", s, flags=re.MULTILINE)
             for s in (list(funcs) + classes)
         ):
-            imports.add("import attrs")
-        obj_imports = set(i for i in imports if i.startswith("from"))
-        mod_imports = imports - obj_imports
-        callables_str += "\n".join(sorted(mod_imports)) + "\n"
-        callables_str += "\n".join(sorted(obj_imports)) + "\n\n"
+            imports.add(ImportStatement.parse("import attrs"))
+        callables_str += (
+            "\n".join(str(i) for i in sorted(imports) if not i.indent) + "\n"
+        )
 
         # Create separate default function for each input field with genfile, which
         # reference the magic "_gen_filename" method

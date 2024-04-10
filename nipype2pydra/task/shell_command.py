@@ -33,7 +33,9 @@ class ShellCommandTaskConverter(BaseTaskConverter):
 
         def unwrap_field_type(t):
             if issubclass(t, WithClassifiers) and t.is_classified:
-                unwraped_classifiers = ", ".join(unwrap_field_type(c) for c in t.classifiers)
+                unwraped_classifiers = ", ".join(
+                    unwrap_field_type(c) for c in t.classifiers
+                )
                 return f"{t.unclassified.__name__}[{unwraped_classifiers}]"
             return t.__name__
 
@@ -44,7 +46,9 @@ class ShellCommandTaskConverter(BaseTaskConverter):
             for el in spec_fields:
                 el = list(el)
                 field_type = el[1]
-                if inspect.isclass(field_type) and issubclass(field_type, WithClassifiers):
+                if inspect.isclass(field_type) and issubclass(
+                    field_type, WithClassifiers
+                ):
                     field_type_str = unwrap_field_type(field_type)
                 else:
                     field_type_str = str(field_type)
@@ -53,7 +57,9 @@ class ShellCommandTaskConverter(BaseTaskConverter):
                     else:
                         # Alter modules in type string to match those that will be imported
                         field_type_str = field_type_str.replace("typing", "ty")
-                        field_type_str = re.sub(r"(\w+\.)+(?<!ty\.)(\w+)", r"\2", field_type_str)
+                        field_type_str = re.sub(
+                            r"(\w+\.)+(?<!ty\.)(\w+)", r"\2", field_type_str
+                        )
                 if field_type_str == "File":
                     nonstd_types.add(File)
                 elif field_type_str == "Directory":
@@ -89,6 +95,6 @@ class ShellCommandTaskConverter(BaseTaskConverter):
             include_task=False,
             base=base_imports,
         )
-        spec_str = "\n".join(imports) + "\n\n" + spec_str
+        spec_str = "\n".join(str(i) for i in imports) + "\n\n" + spec_str
 
         return spec_str

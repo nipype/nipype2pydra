@@ -1,8 +1,10 @@
+import nipype2pydra.utils
 from nipype2pydra.utils import (
     extract_args,
     get_source_code,
     split_source_into_statements,
-    get_relative_package,
+    ImportStatement,
+    Imported,
 )
 from nipype2pydra.testing import for_testing_line_number_of_function
 
@@ -423,11 +425,78 @@ def test_split_into_statements():
 
 
 def test_relative_package1():
-    assert get_relative_package("mriqc.workflows.shared", "mriqc.utils") == "..utils"
+    assert (
+        ImportStatement.get_relative_package("mriqc.utils", "mriqc.workflows.shared")
+        == "..utils"
+    )
 
 
 def test_relative_package2():
     assert (
-        get_relative_package("mriqc.utils", "mriqc.workflows.shared")
+        ImportStatement.get_relative_package("mriqc.workflows.shared", "mriqc.utils")
         == ".workflows.shared"
     )
+
+
+def test_import_statement1():
+    import_str = "from mriqc.workflows.shared import synthstrip_wf"
+    assert ImportStatement.matches(import_str)
+    parsed = ImportStatement.parse(import_str)
+    assert not parsed.conditional
+    assert parsed.indent == ""
+    assert parsed.from_ == "mriqc.workflows.shared"
+    assert parsed["synthstrip_wf"] == Imported("synthstrip_wf")
+    assert str(parsed) == import_str
+
+
+def test_import_statement2():
+    import_str = "import mriqc.workflows.shared"
+    assert ImportStatement.matches(import_str)
+    parsed = ImportStatement.parse(import_str)
+    assert not parsed.conditional
+    assert parsed.indent == ""
+    assert parsed.from_ is None
+    assert parsed["mriqc.workflows.shared"] == Imported("mriqc.workflows.shared")
+    assert str(parsed) == import_str
+
+
+def test_import_statement3():
+    import_str = "    import mriqc.workflows.shared as mriqc_shared"
+    assert ImportStatement.matches(import_str)
+    parsed = ImportStatement.parse(import_str)
+    assert parsed.conditional
+    assert parsed.indent == "    "
+    assert parsed.from_ is None
+    assert parsed["mriqc_shared"] == Imported("mriqc.workflows.shared", "mriqc_shared")
+    assert str(parsed) == import_str
+
+
+def test_import_statement4():
+    import_str = "from mriqc.workflows.shared import another_wf as a_wf, synthstrip_wf"
+    assert ImportStatement.matches(import_str)
+    parsed = ImportStatement.parse(import_str)
+    assert not parsed.conditional
+    assert parsed.indent == ""
+    assert parsed.from_ == "mriqc.workflows.shared"
+    assert parsed["synthstrip_wf"] == Imported("synthstrip_wf")
+    assert parsed["a_wf"] == Imported("another_wf", "a_wf")
+    assert str(parsed) == import_str
+    assert "a_wf" in parsed
+    assert "synthstrip_wf" in parsed
+    reduced = parsed.filter(["a_wf"])
+    assert list(reduced) == ["a_wf"]
+
+
+def test_import_statement_get_object1():
+    import_str = "from nipype2pydra.utils import ImportStatement, Imported as imp"
+    parsed = ImportStatement.parse(import_str)
+    assert parsed["imp"].object is Imported
+    assert parsed["ImportStatement"].object is ImportStatement
+    assert str(parsed) == import_str
+
+
+def test_import_statement_get_object2():
+    import_str = "import nipype2pydra.utils as ut"
+    parsed = ImportStatement.parse(import_str)
+    assert parsed["ut"].object is nipype2pydra.utils
+    assert str(parsed) == import_str

@@ -16,7 +16,7 @@ import nipype.interfaces.base
 from nipype.interfaces.base import traits_extension
 from pydra.engine import specs
 from pydra.engine.helpers import ensure_list
-from ..utils import import_module_from_path, is_fileset, to_snake_case
+from ..utils import import_module_from_path, is_fileset, to_snake_case, ImportStatement
 from fileformats.core import from_mime
 from fileformats.core.mixin import WithClassifiers
 from fileformats.generic import File
@@ -98,18 +98,27 @@ def types_converter(types: ty.Dict[str, ty.Union[str, type]]) -> ty.Dict[str, ty
 
 
 @attrs.define
-class ImportStatement:
+class ExplicitImport:
     module: str
     name: ty.Optional[str] = None
     alias: ty.Optional[str] = None
 
+    def to_statement(self):
+        if self.name:
+            stmt = f"from {self.module} import {self.name}"
+        else:
+            stmt = f"import {self.module}"
+        if self.alias:
+            stmt += f" as {self.alias}"
+        return ImportStatement.parse(stmt)
+
 
 def from_list_to_imports(
-    obj: ty.Union[ty.List[ImportStatement], list]
-) -> ty.List[ImportStatement]:
+    obj: ty.Union[ty.List[ExplicitImport], list]
+) -> ty.List[ExplicitImport]:
     if obj is None:
         return []
-    return [from_dict_converter(t, ImportStatement) for t in obj]
+    return [from_dict_converter(t, ExplicitImport) for t in obj]
 
 
 @attrs.define
@@ -258,7 +267,7 @@ class TestGenerator:
                 (if not specified, will try to choose a sensible value)"""
         },
     )
-    imports: ty.List[ImportStatement] = attrs.field(
+    imports: ty.List[ExplicitImport] = attrs.field(
         factory=list,
         converter=from_list_to_imports,
         metadata={
@@ -320,7 +329,7 @@ class DocTestGenerator:
                 '.mock()' method of the corresponding class is used instead."""
         },
     )
-    imports: ty.List[ImportStatement] = attrs.field(
+    imports: ty.List[ExplicitImport] = attrs.field(
         factory=list,
         converter=from_list_to_imports,
         metadata={
@@ -743,51 +752,21 @@ class BaseTaskConverter(metaclass=ABCMeta):
         self, nonstd_types: ty.List[type], spec_str="", base=(), include_task=True
     ) -> ty.List[str]:
         """Constructs a list of imports to include at start of file"""
-        stmts: ty.Dict[str, str] = {}
-
-        def add_import(stmt):
-            if stmt == "from nipype import logging":
-                return
-            match = re.match(r".*\s+as\s+(\w+)\s*", stmt)
-            if not match:
-                match = re.match(r".*import\s+([\w\., ]+)\s*$", stmt)
-            if not match:
-                raise ValueError(f"Unrecognised import statment {stmt}")
-            token = match.group(1)
-            try:
-                prev_stmt = stmts[token]
-            except KeyError:
-                pass
-            else:
-                if prev_stmt != stmt:
-                    logger.warning(
-                        f"Cannot add import statement {stmt} as it clashes with "
-                        f"previous import {prev_stmt}"
-                    )
-            stmts[token] = stmt
-
-        for b in base:
-            add_import(b)
+        stmts = [
+            b if isinstance(b, ImportStatement) else ImportStatement.parse(b)
+            for b in base
+        ]
 
         if re.match(r".*(?<!\w)ty\.", spec_str, flags=re.MULTILINE | re.DOTALL):
-            add_import("import typing as ty")
+            stmts.append(ImportStatement.parse("import typing as ty"))
         if re.match(r".*\bPath\b", spec_str, flags=re.MULTILINE | re.DOTALL):
-            add_import("from pathlib import Path")
+            stmts.append(ImportStatement.parse("from pathlib import Path"))
         if re.match(r".*\blogging\b", spec_str, flags=re.MULTILINE | re.DOTALL):
-            add_import("import logging")
+            stmts.append(ImportStatement.parse("import logging"))
         for test in self.tests:
-            for stmt in test.imports:
-                if "nipype" in stmt.module:
-                    continue
-                if stmt.name is None:
-                    add_import(f"import {stmt.module}")
-                else:
-                    nm = (
-                        stmt.name
-                        if stmt.alias is None
-                        else f"{stmt.name} as {stmt.alias}"
-                    )
-                    add_import(f"from {stmt.module} import {nm}")
+            for explicit_import in test.imports:
+                if not explicit_import.module.startswith("nipype"):
+                    stmts.append(explicit_import.to_statement())
 
         def unwrap_nested_type(t: type) -> ty.List[type]:
             if issubclass(t, WithClassifiers) and t.is_classified:
@@ -798,11 +777,15 @@ class BaseTaskConverter(metaclass=ABCMeta):
             return [t]
 
         for tp in itertools.chain(*(unwrap_nested_type(t) for t in nonstd_types)):
-            add_import(f"from {tp.__module__} import {tp.__name__}")
+            stmts.append(ImportStatement.from_object(tp))
         if include_task:
-            add_import(f"from {self.output_module} import {self.task_name}")
+            stmts.append(
+                ImportStatement.parse(
+                    f"from {self.output_module} import {self.task_name}"
+                )
+            )
 
-        return sorted(stmts.values())
+        return ImportStatement.collate(stmts)
 
     def write_tests(self, filename_test, input_fields, nonstd_types, run=False):
         spec_str = ""
@@ -876,7 +859,7 @@ class BaseTaskConverter(metaclass=ABCMeta):
                 "from nipype2pydra.testing import PassAfterTimeoutWorker",
             },
         )
-        spec_str = "\n".join(imports) + "\n\n" + spec_str
+        spec_str = "\n".join(str(i) for i in imports) + "\n\n" + spec_str
 
         try:
             spec_str_black = black.format_file_contents(
@@ -938,7 +921,12 @@ class BaseTaskConverter(metaclass=ABCMeta):
 
         imports = self.construct_imports(nonstd_types, doctest_str)
         if imports:
-            doctest_str = "    >>> " + "\n    >>> ".join(imports) + "\n\n" + doctest_str
+            doctest_str = (
+                "    >>> "
+                + "\n    >>> ".join(str(i) for i in imports)
+                + "\n\n"
+                + doctest_str
+            )
 
         return "    Examples\n    -------\n\n" + doctest_str
 
