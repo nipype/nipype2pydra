@@ -10,6 +10,7 @@ import inspect
 import black
 import traits.trait_types
 import json
+from functools import cached_property
 import attrs
 from attrs.converters import default_if_none
 import nipype.interfaces.base
@@ -375,7 +376,7 @@ def from_list_to_doctests(
     return [from_dict_converter(t, DocTestGenerator) for t in obj]
 
 
-@attrs.define
+@attrs.define(slots=False)
 class BaseTaskConverter(metaclass=ABCMeta):
     """Specifies how the semi-automatic conversion from Nipype to Pydra should
     be performed
@@ -463,12 +464,20 @@ class BaseTaskConverter(metaclass=ABCMeta):
             else None
         )
 
-    def generate(self, package_root: Path):
-        """creating pydra input/output spec from nipype specs
-        if write is True, a pydra Task class will be written to the file together with tests
-        """
-        input_fields, inp_templates = self.convert_input_fields()
-        output_fields = self.convert_output_spec(fields_from_template=inp_templates)
+    @cached_property
+    def input_fields(self):
+        return self._convert_input_fields[0]
+
+    @cached_property
+    def input_templates(self):
+        return self._convert_input_fields[1]
+
+    @cached_property
+    def output_fields(self):
+        return self.convert_output_spec(fields_from_template=self.input_templates)
+
+    @cached_property
+    def nonstd_types(self):
 
         nonstd_types = set()
 
@@ -479,11 +488,31 @@ class BaseTaskConverter(metaclass=ABCMeta):
             elif tp.__module__ not in ["builtins", "pathlib", "typing"]:
                 nonstd_types.add(tp)
 
-        for f in input_fields:
+        for f in self.input_fields:
             add_nonstd_types(f[1])
 
-        for f in output_fields:
+        for f in self.output_fields:
             add_nonstd_types(f[1])
+        return nonstd_types
+
+    @cached_property
+    def converted_code(self):
+        """writing pydra task to the dile based on the input and output spec"""
+
+        spec_str = self.generate_code_str(
+            self.input_fields, self.nonstd_types, self.output_fields
+        )
+
+        spec_str = black.format_file_contents(
+            spec_str, fast=False, mode=black.FileMode()
+        )
+
+        return spec_str
+
+    def write(self, package_root: Path):
+        """creating pydra input/output spec from nipype specs
+        if write is True, a pydra Task class will be written to the file together with tests
+        """
 
         output_file = (
             Path(package_root)
@@ -493,22 +522,21 @@ class BaseTaskConverter(metaclass=ABCMeta):
         testdir = output_file.parent / "tests"
         testdir.mkdir(parents=True, exist_ok=True)
 
-        self.write_task(
-            output_file,
-            input_fields=input_fields,
-            output_fields=output_fields,
-            nonstd_types=nonstd_types,
-        )
+        with open(output_file, "w") as f:
+            f.write(self.converted_code)
 
         filename_test = testdir / f"test_{self.task_name.lower()}.py"
-        # filename_test_run = testdir / f"test_run_{self.task_name.lower()}.py"
-        self.write_tests(
-            filename_test,
-            input_fields=input_fields,
-            nonstd_types=nonstd_types,
-        )
 
-    def convert_input_fields(self):
+        with open(filename_test, "w") as f:
+            f.write(self.converted_test_code)
+
+        conftest_fspath = filename_test.parent / "conftest.py"
+        if not conftest_fspath.exists():
+            with open(conftest_fspath, "w") as f:
+                f.write(self.CONFTEST)
+
+    @cached_property
+    def _convert_input_fields(self):
         """creating fields list for pydra input spec"""
         pydra_fields_dict = {}
         position_dict = {}
@@ -730,28 +758,8 @@ class BaseTaskConverter(metaclass=ABCMeta):
             new_argstr = new_argstr.replace(key, r"{" + repl + r"}", 1)
         return new_argstr
 
-    def write_task(self, filename, input_fields, nonstd_types, output_fields):
-        """writing pydra task to the dile based on the input and output spec"""
-
-        spec_str = self.generate_task_str(
-            filename, input_fields, nonstd_types, output_fields
-        )
-
-        spec_str = black.format_file_contents(
-            spec_str, fast=False, mode=black.FileMode()
-        )
-
-        # # FIXME: bit of a hack, should make sure that multi-input/output objects
-        # #        are referenced properly without this substitution
-        # spec_str = re.sub(
-        #     r"(?<!specs\.|mport )Multi(Input|Output)", r"specs.Multi\1", spec_str
-        # )
-
-        with open(filename, "w") as f:
-            f.write(spec_str)
-
     @abstractmethod
-    def generate_task_str(self, filename, input_fields, nonstd_types, output_fields):
+    def generate_code_str(self, input_fields, nonstd_types, output_fields):
         raise NotImplementedError
 
     def construct_imports(
@@ -788,7 +796,8 @@ class BaseTaskConverter(metaclass=ABCMeta):
 
         return ImportStatement.collate(stmts)
 
-    def write_tests(self, filename_test, input_fields, nonstd_types, run=False):
+    @cached_property
+    def converted_test_code(self):
         spec_str = ""
         for i, test in enumerate(self.tests, start=1):
             if test.xfail:
@@ -796,7 +805,7 @@ class BaseTaskConverter(metaclass=ABCMeta):
             # spec_str += f"@pass_after_timeout(seconds={test.timeout})\n"
             spec_str += f"def test_{self.task_name.lower()}_{i}():\n"
             spec_str += f"    task = {self.task_name}()\n"
-            for i, field in enumerate(input_fields):
+            for i, field in enumerate(self.input_fields):
                 nm, tp = field[:2]
                 # Try to get a sensible value for the traits value
                 try:
@@ -853,7 +862,7 @@ class BaseTaskConverter(metaclass=ABCMeta):
             spec_str += "\n\n\n"
 
         imports = self.construct_imports(
-            nonstd_types,
+            self.nonstd_types,
             spec_str,
             base={
                 "import pytest",
@@ -870,14 +879,7 @@ class BaseTaskConverter(metaclass=ABCMeta):
             raise RuntimeError(
                 f"Black could not parse generated code: {e}\n\n{spec_str}"
             )
-
-        with open(filename_test, "w") as f:
-            f.write(spec_str_black)
-
-        conftest_fspath = filename_test.parent / "conftest.py"
-        if not conftest_fspath.exists():
-            with open(conftest_fspath, "w") as f:
-                f.write(self.CONFTEST)
+        return spec_str_black
 
     def create_doctests(self, input_fields, nonstd_types):
         """adding doctests to the interfaces"""

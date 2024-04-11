@@ -73,7 +73,7 @@ def workflow(
         interface_specs=interface_specs,
         **kwargs,
     )
-    converter.generate(package_root)
+    converter.write(package_root)
 
 
 if __name__ == "__main__":

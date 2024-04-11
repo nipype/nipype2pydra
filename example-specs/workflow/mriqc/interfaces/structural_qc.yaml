@@ -1,0 +1,153 @@
+# This file is used to manually specify the semi-automatic conversion of
+# 'mriqc.interfaces.anatomical.StructuralQC' from Nipype to Pydra.
+#
+# Please fill-in/edit the fields below where appropriate
+#
+# Docs
+# ----
+# 
+#     Computes anatomical :abbr:`QC (Quality Control)` measures on the
+#     structural image given as input
+# 
+#     
+task_name: StructuralQC
+nipype_name: StructuralQC
+nipype_module: mriqc.interfaces.anatomical
+inputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    air_msk: generic/file
+    # type=file|default=<undefined>: air mask
+    artifact_msk: generic/file
+    # type=file|default=<undefined>: air mask
+    head_msk: generic/file
+    # type=file|default=<undefined>: head mask
+    in_bias: generic/file
+    # type=file|default=<undefined>: bias file
+    in_file: generic/file
+    # type=file|default=<undefined>: file to be plotted
+    in_noinu: generic/file
+    # type=file|default=<undefined>: image after INU correction
+    in_pvms: generic/file+list-of
+    # type=inputmultiobject|default=[]: partial volume maps from FSL FAST
+    in_segm: generic/file
+    # type=file|default=<undefined>: segmentation file from FSL FAST
+    in_tpms: generic/file+list-of
+    # type=inputmultiobject|default=[]: tissue probability maps from FSL FAST
+    mni_tpms: generic/file+list-of
+    # type=inputmultiobject|default=[]: tissue probability maps from FSL FAST
+    rot_msk: generic/file
+    # type=file|default=<undefined>: rotation mask
+  callable_defaults:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set as the `default` method of input fields
+  metadata:
+  # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
+outputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    out_noisefit: generic/file
+    # type=file: plot of background noise and chi fitting
+  callables:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set to the `callable` attribute of output fields
+    cjv: cjv_callable
+    # type=float: 
+    cnr: cnr_callable
+    # type=float: 
+    efc: efc_callable
+    # type=float: 
+    fber: fber_callable
+    # type=float: 
+    fwhm: fwhm_callable
+    # type=dict: full width half-maximum measure
+    icvs: icvs_callable
+    # type=dict: intracranial volume (ICV) fractions
+    inu: inu_callable
+    # type=dict: summary statistics of the bias field
+    out_qc: out_qc_callable
+    # type=dict: output flattened dictionary with all measures
+    qi_1: qi_1_callable
+    # type=float: 
+    rpve: rpve_callable
+    # type=dict: partial volume fractions
+    size: size_callable
+    # type=dict: image sizes
+    snr: snr_callable
+    # type=dict: 
+    snrd: snrd_callable
+    # type=dict: 
+    spacing: spacing_callable
+    # type=dict: image sizes
+    summary: summary_callable
+    # type=dict: summary statistics per tissue
+    tpm_overlap: tpm_overlap_callable
+    # type=dict: 
+    wm2max: wm2max_callable
+    # type=float: 
+  templates:
+  # dict[str, str] - `output_file_template` values to be provided to output fields
+  requirements:
+  # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
+tests:
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    in_file:
+    # type=file|default=<undefined>: file to be plotted
+    in_noinu:
+    # type=file|default=<undefined>: image after INU correction
+    in_segm:
+    # type=file|default=<undefined>: segmentation file from FSL FAST
+    in_bias:
+    # type=file|default=<undefined>: bias file
+    head_msk:
+    # type=file|default=<undefined>: head mask
+    air_msk:
+    # type=file|default=<undefined>: air mask
+    rot_msk:
+    # type=file|default=<undefined>: rotation mask
+    artifact_msk:
+    # type=file|default=<undefined>: air mask
+    in_pvms:
+    # type=inputmultiobject|default=[]: partial volume maps from FSL FAST
+    in_tpms:
+    # type=inputmultiobject|default=[]: tissue probability maps from FSL FAST
+    mni_tpms:
+    # type=inputmultiobject|default=[]: tissue probability maps from FSL FAST
+    in_fwhm:
+    # type=list|default=[]: smoothness estimated with AFNI
+    human:
+    # type=bool|default=True: human workflow
+  imports:
+  # list[nipype2pydra.task.base.explicitimport] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+doctests: []

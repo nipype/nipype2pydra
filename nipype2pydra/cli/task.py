@@ -15,7 +15,7 @@ https://github.com/nipype/nipype2pydra/tree/main/example-specs for examples
 
 PACKAGE_ROOT is the path to the root directory of the package in which to generate the
 converted module file
-"""
+""",
 )
 @click.argument("yaml-spec", type=click.File())
 @click.argument("package-root", type=Path)
@@ -49,7 +49,7 @@ def task(yaml_spec, package_root, callables, output_module):
     converter = nipype2pydra.task.get_converter(
         output_module=output_module, callables_module=callables, **spec
     )
-    converter.generate(package_root)
+    converter.write(package_root)
 
 
 if __name__ == "__main__":
@@ -71,4 +71,4 @@ if __name__ == "__main__":
         + nipype2pydra.utils.to_snake_case(spec["task_name"]),
         **spec,
     )
-    converter.generate(outputs_path)
+    converter.write(outputs_path)

@@ -1,49 +1,92 @@
 packages:
-- anatomical
-- bids
-- common
-- data_types
-- datalad
-- diffusion
-- functional
-- reports
-- synthstrip
-- tests
-- transitional
-- webapi
+  - anatomical
+  - bids
+  - common
+  - data_types
+  - datalad
+  - diffusion
+  - functional
+  - reports
+  - synthstrip
+  - tests
+  - transitional
+  - webapi
 interfaces:
-  anatomical:
-  - ArtifactMask
-  - ComputeQI2
-  - Harmonize
-  - RotationMask   
-  - StructuralQC  
-  bids:
-  - IQMFileSink
-  common:
-  - EnsureSize
-  - ConformImage
-  datalad:
-  - DataladIdentityInterface
   diffusion:
-  - ReadDWIMetadata
-  - WeightedStat
-  - NumberOfShells
-  - ExtractB0
-  - CorrectSignalDrift
-  - SplitShells
-  - FilterShells
-  - DipyDTI
-  functional:
-  - FunctionalQC
-  - Spikes
-  - SelectEcho
-  - GatherTimeseries
-  reports:
-  - AddProvenance
-  synthstrip:
-  - SynthStrip
-  transitional:
-  - GCOR
+    - DiffusionQC
+    - ReadDWIMetadata
+    - WeightedStat
+    - NumberOfShells
+    - ExtractOrientations
+    - CorrectSignalDrift
+    - SplitShells
+    - FilterShells
+    - DiffusionModel
+    - CCSegmentation
+    - SpikingVoxelsMask
+    - PIESNO
+    - RotateVectors
+  bids:
+    - IQMFileSink
+  __init__:
+    - DerivativesDataSink
   webapi:
-  - UploadIQMs
+    - UploadIQMs
+  datalad:
+    - DataladIdentityInterface
+  transitional:
+    - GCOR
+  common/ensure_size:
+    - EnsureSize
+  common/conform_image:
+    - ConformImage
+  functional:
+    - FunctionalQC
+    - Spikes
+    - SelectEcho
+    - GatherTimeseries
+  reports:
+    - AddProvenance
+  anatomical:
+    - StructuralQC
+    - ArtifactMask
+    - ComputeQI2
+    - Harmonize
+    - RotationMask
+  synthstrip:
+    - SynthStrip
+  # anatomical:
+  #   - ArtifactMask
+  #   - ComputeQI2
+  #   - Harmonize
+  #   - RotationMask
+  #   - StructuralQC
+  # bids:
+  #   - IQMFileSink
+  # common:
+  #   - EnsureSize
+  #   - ConformImage
+  # datalad:
+  #   - DataladIdentityInterface
+  # diffusion:
+  #   - ReadDWIMetadata
+  #   - WeightedStat
+  #   - NumberOfShells
+  #   # - ExtractB0
+  #   - CorrectSignalDrift
+  #   - SplitShells
+  #   - FilterShells
+  #   - DipyDTI
+  # functional:
+  #   - FunctionalQC
+  #   - Spikes
+  #   - SelectEcho
+  #   - GatherTimeseries
+  # reports:
+  #   - AddProvenance
+  # synthstrip:
+  #   - SynthStrip
+  # transitional:
+  #   - GCOR
+  # webapi:
+  #   - UploadIQMs

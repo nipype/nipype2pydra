@@ -21,7 +21,7 @@ from ..utils import (
 @attrs.define(slots=False)
 class FunctionTaskConverter(BaseTaskConverter):
 
-    def generate_task_str(self, filename, input_fields, nonstd_types, output_fields):
+    def generate_code_str(self, input_fields, nonstd_types, output_fields):
         """writing pydra task to the dile based on the input and output spec"""
 
         base_imports = [

@@ -58,7 +58,7 @@ for fspath in tqdm(
         callables_module=callables,  # type: ignore
         **spec,
     )
-    converter.generate(PKG_ROOT)
+    converter.write(PKG_ROOT)
     auto_init += f"from .{module_name} import {converter.task_name}\n"
     all_interfaces.append(converter.task_name)
 
