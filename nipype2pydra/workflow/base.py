@@ -17,6 +17,7 @@ from ..utils import (
     extract_args,
     cleanup_function_body,
     ImportStatement,
+    parse_imports,
 )
 from .components import (
     NodeConverter,
@@ -59,11 +60,12 @@ class WorkflowConverter:
     workflow_specs : dict[str, dict]
         The specs of potentially nested workflows functions that may be called within
         the workflow function
-    package_mappings : dict[str, str]
+    package_translations : list[tuple[str, str]]
         packages that should be mapped to a new location (typically Nipype based deps
-        such as niworkflows)
-    other_mappings: dict[str, str]
-        other name mappings between
+        such as niworkflows). Regular expressions are supported
+    find_replace: dict[str, str]
+        Generic regular expression substitutions to be run over the code before
+        it is processed
     workflow_variable: str, optional
         the variable name that the workflow function returns, by default detected from the
         return statement. If multiple return statements are found, this must be specified
@@ -131,7 +133,7 @@ class WorkflowConverter:
             ),
         },
     )
-    workflow_specs: dict[str, dict] = attrs.field(
+    workflow_specs: ty.Dict[str, dict] = attrs.field(
         factory=dict,
         metadata={
             "help": (
@@ -140,17 +142,29 @@ class WorkflowConverter:
             ),
         },
     )
-    package_mappings: dict[str, str] = attrs.field(
-        factory=dict,
-        metadata={
-            "help": ("mappings between nipype packages and their pydra equivalents"),
-        },
-    )
-    other_mappings: dict[str, str] = attrs.field(
+    interface_specs: ty.Dict[str, dict] = attrs.field(
         factory=dict,
         metadata={
             "help": (
-                "mappings between nipype objects/classes and their pydra equivalents"
+                "interface specifications for the tasks defined within the workflow package"
+            ),
+        },
+    )
+    package_translations: ty.List[ty.Tuple[str, str]] = attrs.field(
+        factory=list,
+        metadata={
+            "help": (
+                "Mappings between nipype packages and their pydra equivalents. Regular "
+                "expressions are supported"
+            ),
+        },
+    )
+    find_replace: ty.List[ty.Tuple[str, str]] = attrs.field(
+        factory=list,
+        metadata={
+            "help": (
+                "Generic regular expression substitutions to be run over the code before "
+                "it is processed"
             ),
         },
     )
@@ -218,6 +232,7 @@ class WorkflowConverter:
             self.nipype_module,
             [self.func_body],
             collapse_intra_pkg=False,
+            translations=self.package_translations,
         )
 
     @cached_property
@@ -345,7 +360,9 @@ class WorkflowConverter:
                 del intra_pkg_modules[conv.output_module]
 
         # Write any additional functions in other modules in the package
-        self._write_intra_pkg_modules(package_root, intra_pkg_modules)
+        self._write_intra_pkg_modules(
+            package_root, intra_pkg_modules, self.package_translations
+        )
 
         # Add any local functions, constants and classes
         for func in sorted(used.local_functions, key=attrgetter("__name__")):
@@ -543,7 +560,7 @@ class WorkflowConverter:
                     DocStringConverter(docstring=match.group(2), indent=match.group(1))
                 )
             elif ImportStatement.matches(statement):
-                parsed.append(ImportStatement.parse(statement))
+                parsed.extend(parse_imports(statement))
             elif match := re.match(
                 r"\s+(?:"
                 + self.workflow_variable
@@ -681,7 +698,10 @@ class WorkflowConverter:
         return parsed, workflow_name
 
     def _write_intra_pkg_modules(
-        self, package_root: Path, intra_pkg_modules: ty.Dict[str, ty.Set[str]]
+        self,
+        package_root: Path,
+        intra_pkg_modules: ty.Dict[str, ty.Set[str]],
+        translations: ty.List[ty.Tuple[str, str]],
     ):
         """Writes the intra-package modules to the package root
 
@@ -696,7 +716,12 @@ class WorkflowConverter:
             mod_path = package_root.joinpath(*mod_name.split(".")).with_suffix(".py")
             mod_path.parent.mkdir(parents=True, exist_ok=True)
             mod = import_module(self.from_output_module_path(mod_name))
-            used = UsedSymbols.find(mod, funcs, pull_out_inline_imports=False)
+            used = UsedSymbols.find(
+                mod,
+                funcs,
+                pull_out_inline_imports=False,
+                translations=translations,
+            )
             code_str = "\n".join(str(i) for i in used.imports if not i.indent) + "\n\n"
             code_str += (
                 "\n".join(f"{n} = {d}" for n, d in sorted(used.constants)) + "\n\n"

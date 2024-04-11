@@ -5,6 +5,7 @@ from nipype2pydra.utils import (
     split_source_into_statements,
     ImportStatement,
     Imported,
+    parse_imports,
 )
 from nipype2pydra.testing import for_testing_line_number_of_function
 
@@ -485,7 +486,7 @@ def test_relative_package2():
 def test_import_statement1():
     import_str = "from mriqc.workflows.shared import synthstrip_wf"
     assert ImportStatement.matches(import_str)
-    parsed = ImportStatement.parse(import_str)
+    parsed = parse_imports(import_str)[0]
     assert not parsed.conditional
     assert parsed.indent == ""
     assert parsed.from_ == "mriqc.workflows.shared"
@@ -496,7 +497,7 @@ def test_import_statement1():
 def test_import_statement2():
     import_str = "import mriqc.workflows.shared"
     assert ImportStatement.matches(import_str)
-    parsed = ImportStatement.parse(import_str)
+    parsed = parse_imports(import_str)[0]
     assert not parsed.conditional
     assert parsed.indent == ""
     assert parsed.from_ is None
@@ -507,7 +508,7 @@ def test_import_statement2():
 def test_import_statement3():
     import_str = "    import mriqc.workflows.shared as mriqc_shared"
     assert ImportStatement.matches(import_str)
-    parsed = ImportStatement.parse(import_str)
+    parsed = parse_imports(import_str)[0]
     assert parsed.conditional
     assert parsed.indent == "    "
     assert parsed.from_ is None
@@ -518,7 +519,7 @@ def test_import_statement3():
 def test_import_statement4():
     import_str = "from mriqc.workflows.shared import another_wf as a_wf, synthstrip_wf"
     assert ImportStatement.matches(import_str)
-    parsed = ImportStatement.parse(import_str)
+    parsed = parse_imports(import_str)[0]
     assert not parsed.conditional
     assert parsed.indent == ""
     assert parsed.from_ == "mriqc.workflows.shared"
@@ -533,7 +534,7 @@ def test_import_statement4():
 
 def test_import_statement_get_object1():
     import_str = "from nipype2pydra.utils import ImportStatement, Imported as imp"
-    parsed = ImportStatement.parse(import_str)
+    parsed = parse_imports(import_str)[0]
     assert parsed["imp"].object is Imported
     assert parsed["ImportStatement"].object is ImportStatement
     assert str(parsed) == import_str
@@ -541,6 +542,6 @@ def test_import_statement_get_object1():
 
 def test_import_statement_get_object2():
     import_str = "import nipype2pydra.utils as ut"
-    parsed = ImportStatement.parse(import_str)
+    parsed = parse_imports(import_str)[0]
     assert parsed["ut"].object is nipype2pydra.utils
     assert str(parsed) == import_str

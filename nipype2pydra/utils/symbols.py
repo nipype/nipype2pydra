@@ -8,7 +8,7 @@ import attrs
 from nipype.interfaces.base import BaseInterface, TraitedSpec, isdefined, Undefined
 from nipype.interfaces.base import traits_extension
 from .misc import split_source_into_statements, extract_args
-from .imports import ImportStatement
+from .imports import ImportStatement, parse_imports
 
 
 logger = getLogger("nipype2pydra")
@@ -80,6 +80,7 @@ class UsedSymbols:
         pull_out_inline_imports: bool = True,
         filter_objs: ty.Sequence = DEFAULT_FILTERED_OBJECTS,
         filter_classes: ty.Optional[ty.List[ty.Type]] = None,
+        translations: ty.Sequence[ty.Tuple[str, str]] = None,
     ) -> "UsedSymbols":
         """Get the imports and local functions/classes/constants referenced in the
         provided function bodies, and those nested within them
@@ -108,6 +109,10 @@ class UsedSymbols:
                             traits_extension.File,
                             traits_extension.Directory,
                         )
+        translations : list[tuple[str, str]], optional
+            a list of tuples where the first element is the name of the symbol to be
+            replaced and the second element is the name of the symbol to replace it with,
+            regex supported, by default None
 
         Returns
         -------
@@ -120,11 +125,13 @@ class UsedSymbols:
         local_constants = get_local_constants(module)
         local_classes = get_local_classes(module)
         module_statements = split_source_into_statements(source_code)
-        imports: ty.List[ImportStatement] = [
-            ImportStatement.parse("import attrs"),
-            ImportStatement.parse("from fileformats.generic import File, Directory"),
-            ImportStatement.parse("import logging"),
-        ]  # attrs is included in imports in case we reference attrs.NOTHING
+        imports: ty.List[ImportStatement] = parse_imports(
+            [
+                "import attrs",  # attrs is included in imports in case we reference attrs.NOTHING
+                "from fileformats.generic import File, Directory",
+                "import logging",
+            ]
+        )
         global_scope = True
         for stmt in module_statements:
             if not pull_out_inline_imports:
@@ -137,7 +144,7 @@ class UsedSymbols:
                     else:
                         continue
             if ImportStatement.matches(stmt):
-                imports.append(ImportStatement.parse(stmt, relative_to=module))
+                imports.extend(parse_imports(stmt, relative_to=module))
         symbols_re = re.compile(r"(?<!\"|')\b(\w+)\b(?!\"|')")
 
         def get_symbols(func: ty.Union[str, ty.Callable, ty.Type]):
@@ -263,6 +270,7 @@ class UsedSymbols:
                     used_in_mod = cls.find(
                         stmt.module,
                         function_bodies=inlined_objects,
+                        translations=translations,
                     )
                     used.update(used_in_mod)
             used.imports.add(stmt)

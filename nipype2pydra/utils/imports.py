@@ -79,10 +79,22 @@ class Imported:
 
     def as_independent_statement(self) -> "ImportStatement":
         """Return a new import statement that only includes this object as an import"""
-        statement_cpy = deepcopy(self.statement)
-        statement_cpy.imported = {self.alias: self}
-        statement_cpy.from_ = self.module_name
-        return statement_cpy
+        stmt_cpy = deepcopy(self.statement)
+        stmt_cpy.imported = {self.alias: self}
+        if self.module_name != stmt_cpy.from_:
+            stmt_cpy.from_ = self.module_name
+            if (
+                stmt_cpy.translation
+                and stmt_cpy.from_.split(".")[0] != self.module_name.split(".")[0]
+            ):
+                stmt_cpy.translation = None
+                logger.warning(
+                    "Dropping translation from '%s' to '%s' for %s import",
+                    stmt_cpy.translation,
+                    stmt_cpy.from_,
+                    self.name,
+                )
+        return stmt_cpy
 
 
 @attrs.define
@@ -98,14 +110,19 @@ class ImportStatement:
         the objects being imported
     from_ : str, optional
         the module being imported from, by default None
+    relative_to : str, optional
+        the module to resolve relative imports against, by default None
+    translation : str, optional
+        the translation to apply to the import statement, by default None
     """
 
     indent: str = attrs.field()
     imported: ty.Dict[str, Imported] = attrs.field(
         converter=lambda d: dict(sorted(d.items(), key=itemgetter(0)))
     )
-    relative_to: ty.Optional[str] = attrs.field(default=None)
     from_: ty.Optional[str] = attrs.field(default=None)
+    relative_to: ty.Optional[str] = attrs.field(default=None)
+    translation: ty.Optional[str] = attrs.field(default=None)
 
     def __hash__(self):
         return hash(str(self))
@@ -146,10 +163,17 @@ class ImportStatement:
     )
 
     def __str__(self):
-        imported_str = ", ".join(str(i) for i in self.imported.values())
         if self.from_:
-            return f"{self.indent}from {self.from_} import {imported_str}"
-        return f"{self.indent}import {imported_str}"
+            imported_str = ", ".join(str(i) for i in self.imported.values())
+            module = self.translation if self.translation else self.from_
+            stmt_str = f"{self.indent}from {module} import {imported_str}"
+        elif self.translation:
+            stmt_str = f"{self.indent}import {self.translation}"
+            if self.sole_imported.alias:
+                stmt_str += f" as {self.sole_imported.alias}"
+        else:
+            stmt_str = f"{self.indent}import {self.sole_imported}"
+        return stmt_str
 
     def __lt__(self, other: "ImportStatement") -> bool:
         """Used for sorting imports"""
@@ -163,50 +187,16 @@ class ImportStatement:
             assert not other.from_
             return False
 
-    @classmethod
-    def parse(
-        cls, stmt: str, relative_to: ty.Union[str, ModuleType, None] = None
-    ) -> "ImportStatement":
-        """Parse an import statement from a string
-
-        Parameters
-        ----------
-        stmt : str
-            the import statement to parse
-        relative_to : str | ModuleType
-            the module to resolve relative imports against
-        """
-        if isinstance(relative_to, ModuleType):
-            relative_to = relative_to.__name__
-        match = cls.match_re.match(stmt.replace("\n", " "))
-        import_str = match.group(3).strip()
-        if import_str.startswith("("):
-            assert import_str.endswith(")")
-            import_str = import_str[1:-1].strip()
-            if import_str.endswith(","):
-                import_str = import_str[:-1]
-        imported = {}
-        for obj in re.split(r" *, *", import_str):
-            parts = [p.strip() for p in re.split(r" +as +", obj)]
-            if len(parts) > 1:
-                imported[parts[1]] = Imported(name=parts[0], alias=parts[1])
-            else:
-                imported[obj] = Imported(name=obj)
-        if match.group(2):
-            from_ = match.group(2)[len("from ") :].strip()
-            if from_.startswith(".") and relative_to is None:
-                raise ValueError(
-                    f"Relative import statement '{stmt}' without relative_to module "
-                    "provided"
-                )
-        else:
-            from_ = None
-        return ImportStatement(
-            indent=match.group(1),
-            from_=from_,
-            relative_to=relative_to,
-            imported=imported,
-        )
+    @property
+    def sole_imported(self) -> Imported:
+        """Get the sole imported object in the statement"""
+        if self.from_:
+            raise ValueError(
+                f"'from <module> import ...' statements ('{self!r}') do not "
+                "necessarily have a sole import"
+            )
+        assert len(self.imported) == 1
+        return next(iter(self.imported.values()))
 
     @classmethod
     def from_object(cls, obj) -> "ImportStatement":
@@ -222,7 +212,7 @@ class ImportStatement:
     @property
     def module_name(self) -> str:
         if not self.from_:
-            return next(iter(self.imported.values())).name
+            return self.sole_imported.name
         if self.is_relative:
             return self.join_relative_package(self.relative_to, self.from_)
         return self.from_
@@ -271,9 +261,7 @@ class ImportStatement:
     def in_package(self, pkg: str) -> bool:
         """Check if the import is relative to the given package"""
         if not self.from_:
-            assert len(self.imported) == 1
-            imported = next(iter(self.imported.values()))
-            module = imported.name
+            module = self.sole_imported.name
         else:
             module = self.from_
         pkg = pkg + "." if pkg else ""
@@ -426,3 +414,80 @@ class ImportStatement:
         return sorted(
             list(from_stmts.values()) + list(mod_stmts), key=attrgetter("module_name")
         )
+
+
+def parse_imports(
+    stmts: ty.Union[str, ty.Sequence[str]],
+    relative_to: ty.Union[str, ModuleType, None] = None,
+    translations: ty.Sequence[ty.Tuple[str, str]] = (),
+) -> ty.List["ImportStatement"]:
+    """Parse an import statement from a string
+
+    Parameters
+    ----------
+    stmt : str
+        the import statement to parse
+    relative_to : str | ModuleType
+        the module to resolve relative imports against
+    translations : list[tuple[str, str]]
+        the package translations to apply to the imports
+
+    Returns
+    -------
+
+    """
+    if isinstance(stmts, str):
+        stmts = [stmts]
+    if isinstance(relative_to, ModuleType):
+        relative_to = relative_to.__name__
+
+    def translate(module_name: str) -> ty.Optional[str]:
+        for from_pkg, to_pkg in translations:
+            if re.match(from_pkg, module_name):
+                return re.sub(from_pkg, to_pkg, module_name, count=1)
+        return None
+
+    parsed = []
+    for stmt in stmts:
+        if isinstance(stmt, ImportStatement):
+            parsed.append(stmt)
+            continue
+        match = ImportStatement.match_re.match(stmt.replace("\n", " "))
+        import_str = match.group(3).strip()
+        if import_str.startswith("("):
+            assert import_str.endswith(")")
+            import_str = import_str[1:-1].strip()
+            if import_str.endswith(","):
+                import_str = import_str[:-1]
+        imported = {}
+        for obj in re.split(r" *, *", import_str):
+            parts = [p.strip() for p in re.split(r" +as +", obj)]
+            if len(parts) > 1:
+                imported[parts[1]] = Imported(name=parts[0], alias=parts[1])
+            else:
+                imported[obj] = Imported(name=obj)
+        if match.group(2):
+            from_ = match.group(2)[len("from ") :].strip()
+            if from_.startswith(".") and relative_to is None:
+                raise ValueError(
+                    f"Relative import statement '{stmt}' without relative_to module "
+                    "provided"
+                )
+            parsed.append(
+                ImportStatement(
+                    indent=match.group(1),
+                    from_=from_,
+                    relative_to=relative_to,
+                    imported=imported,
+                )
+            )
+        else:
+            # Break up multiple comma separate imports into separate statements if not
+            # in "from <module> import..." syntax
+            for imp in imported.values():
+                parsed.append(
+                    ImportStatement(
+                        indent=match.group(1), imported={imp.local_name: imp}
+                    )
+                )
+    return parsed

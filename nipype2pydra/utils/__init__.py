@@ -12,6 +12,12 @@ from .misc import (
     insert_args_in_signature,  # noqa: F401
     get_source_code,  # noqa: F401
     split_source_into_statements,  # noqa: F401
+    INBUILT_NIPYPE_TRAIT_NAMES,  # noqa: F401
 )
-from .imports import ImportStatement, Imported  # noqa: F401
-from .symbols import UsedSymbols  # noqa: F401
+from .imports import ImportStatement, Imported, parse_imports  # noqa: F401
+from .symbols import (
+    UsedSymbols,  # noqa: F401
+    get_local_functions,  # noqa: F401
+    get_local_classes,  # noqa: F401
+    get_local_constants,  # noqa: F401
+)

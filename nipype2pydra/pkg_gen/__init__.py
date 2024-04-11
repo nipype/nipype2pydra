@@ -38,6 +38,7 @@ from nipype2pydra.utils import (
     insert_args_in_signature,
     INBUILT_NIPYPE_TRAIT_NAMES,
     ImportStatement,
+    parse_imports,
 )
 from nipype2pydra.exceptions import UnmatchedParensException
 
@@ -365,7 +366,7 @@ class NipypeInterface:
             re.match(r"\battrs\b", s, flags=re.MULTILINE)
             for s in (list(funcs) + classes)
         ):
-            imports.add(ImportStatement.parse("import attrs"))
+            imports.add(parse_imports("import attrs"))
         callables_str += (
             "\n".join(str(i) for i in sorted(imports) if not i.indent) + "\n"
         )

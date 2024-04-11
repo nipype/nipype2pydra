@@ -16,7 +16,13 @@ import nipype.interfaces.base
 from nipype.interfaces.base import traits_extension
 from pydra.engine import specs
 from pydra.engine.helpers import ensure_list
-from ..utils import import_module_from_path, is_fileset, to_snake_case, ImportStatement
+from ..utils import (
+    import_module_from_path,
+    is_fileset,
+    to_snake_case,
+    parse_imports,
+    ImportStatement,
+)
 from fileformats.core import from_mime
 from fileformats.core.mixin import WithClassifiers
 from fileformats.generic import File
@@ -110,7 +116,7 @@ class ExplicitImport:
             stmt = f"import {self.module}"
         if self.alias:
             stmt += f" as {self.alias}"
-        return ImportStatement.parse(stmt)
+        return parse_imports(stmt)[0]
 
 
 def from_list_to_imports(
@@ -752,17 +758,14 @@ class BaseTaskConverter(metaclass=ABCMeta):
         self, nonstd_types: ty.List[type], spec_str="", base=(), include_task=True
     ) -> ty.List[str]:
         """Constructs a list of imports to include at start of file"""
-        stmts = [
-            b if isinstance(b, ImportStatement) else ImportStatement.parse(b)
-            for b in base
-        ]
+        stmts = parse_imports(base)
 
         if re.match(r".*(?<!\w)ty\.", spec_str, flags=re.MULTILINE | re.DOTALL):
-            stmts.append(ImportStatement.parse("import typing as ty"))
+            stmts.extend(parse_imports("import typing as ty"))
         if re.match(r".*\bPath\b", spec_str, flags=re.MULTILINE | re.DOTALL):
-            stmts.append(ImportStatement.parse("from pathlib import Path"))
+            stmts.extend(parse_imports("from pathlib import Path"))
         if re.match(r".*\blogging\b", spec_str, flags=re.MULTILINE | re.DOTALL):
-            stmts.append(ImportStatement.parse("import logging"))
+            stmts.extend(parse_imports("import logging"))
         for test in self.tests:
             for explicit_import in test.imports:
                 if not explicit_import.module.startswith("nipype"):
@@ -779,10 +782,8 @@ class BaseTaskConverter(metaclass=ABCMeta):
         for tp in itertools.chain(*(unwrap_nested_type(t) for t in nonstd_types)):
             stmts.append(ImportStatement.from_object(tp))
         if include_task:
-            stmts.append(
-                ImportStatement.parse(
-                    f"from {self.output_module} import {self.task_name}"
-                )
+            stmts.extend(
+                parse_imports(f"from {self.output_module} import {self.task_name}")
             )
 
         return ImportStatement.collate(stmts)

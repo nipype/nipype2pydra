@@ -19,7 +19,7 @@ converted workflow
 """,
 )
 @click.argument("base_function", type=str)
-@click.argument("yaml-specs-dir", type=click.Path(path_type=Path))
+@click.argument("yaml-specs-dir", type=click.Path(path_type=Path, exists=True))
 @click.argument("package-root", type=click.Path(path_type=Path))
 @click.option(
     "--output-module",
@@ -32,7 +32,24 @@ converted workflow
         "source function will be used instead"
     ),
 )
-def workflow(base_function, yaml_specs_dir, package_root, output_module):
+@click.option(
+    "--interfaces-dir",
+    "-i",
+    type=click.Path(path_type=Path, exists=True),
+    default=None,
+    help=(
+        "the path to the YAML file containing the interface specs for the tasks in the workflow. "
+        "If not provided, then the interface specs are assumed to be defined in the "
+        "workflow YAML specs"
+    ),
+)
+def workflow(
+    base_function: str,
+    yaml_specs_dir: Path,
+    package_root: Path,
+    output_module: str,
+    interfaces_dir: Path,
+) -> None:
 
     workflow_specs = {}
     for fspath in yaml_specs_dir.glob("*.yaml"):
@@ -40,12 +57,20 @@ def workflow(base_function, yaml_specs_dir, package_root, output_module):
             spec = yaml.safe_load(yaml_spec)
             workflow_specs[spec["name"]] = spec
 
+    interface_specs = {}
+    if interfaces_dir:
+        for fspath in interfaces_dir.glob("*.yaml"):
+            with open(fspath, "r") as yaml_spec:
+                spec = yaml.safe_load(yaml_spec)
+                interface_specs[spec["name"]] = spec
+
     kwargs = copy(workflow_specs[base_function])
     if output_module:
         kwargs["output_module"] = output_module
 
     converter = nipype2pydra.workflow.WorkflowConverter(
         workflow_specs=workflow_specs,
+        interface_specs=interface_specs,
         **kwargs,
     )
     converter.generate(package_root)
