@@ -157,6 +157,16 @@ class ImportStatement:
     def items(self):
         return self.imported.items()
 
+    def in_global_scope(self) -> "ImportStatement":
+        """Return a new import statement that is in the global scope"""
+        return ImportStatement(
+            indent="",
+            imported=self.imported,
+            from_=self.from_,
+            relative_to=self.relative_to,
+            translation=self.translation,
+        )
+
     match_re = re.compile(
         r"^(\s*)(from[\w \.]+)?import\b([\w \n\.\,\(\)]+)$",
         flags=re.MULTILINE | re.DOTALL,
@@ -335,7 +345,10 @@ class ImportStatement:
                 break
         if common == 0:
             return target
-        return ".".join([""] * (len(ref_parts) - common) + target_parts[common:])
+        relpath = ".".join([""] * (len(ref_parts) - common) + target_parts[common:])
+        if not relpath.startswith("."):
+            relpath = "." + relpath
+        return relpath
 
     @classmethod
     def join_relative_package(cls, base_package: str, relative_package: str) -> str:
@@ -347,6 +360,8 @@ class ImportStatement:
             the base package to join with
         relative_package : str
             the relative package path to join
+        base_is_module : bool
+            whether the base package is actually module instead of a package
 
         Returns
         -------

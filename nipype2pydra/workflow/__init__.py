@@ -1,1 +1,1 @@
-from .base import WorkflowConverter  # noqa: F401
+from .base import WorkflowConverter, PackageConverter  # noqa: F401

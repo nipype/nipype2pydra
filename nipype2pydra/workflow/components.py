@@ -361,6 +361,13 @@ class ConfigParamsConverter:
         },
     )
 
+    defaults: ty.Dict[str, str] = attrs.field(
+        factory=dict,
+        metadata={
+            "help": "default values for the config parameters",
+        },
+    )
+
 
 @attrs.define
 class NodeAssignmentConverter:

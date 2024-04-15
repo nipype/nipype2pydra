@@ -22,6 +22,7 @@ from ..utils import (
     is_fileset,
     to_snake_case,
     parse_imports,
+    add_exc_note,
     ImportStatement,
 )
 from fileformats.core import from_mime
@@ -503,9 +504,16 @@ class BaseTaskConverter(metaclass=ABCMeta):
             self.input_fields, self.nonstd_types, self.output_fields
         )
 
-        spec_str = black.format_file_contents(
-            spec_str, fast=False, mode=black.FileMode()
-        )
+        try:
+            spec_str = black.format_file_contents(
+                spec_str, fast=False, mode=black.FileMode()
+            )
+        except black.InvalidInput as e:
+            with open("/Users/tclose/Desktop/gen-code.py", "w") as f:
+                f.write(spec_str)
+            raise RuntimeError(
+                f"Black could not parse generated code: {e}\n\n{spec_str}"
+            )
 
         return spec_str
 
@@ -794,7 +802,7 @@ class BaseTaskConverter(metaclass=ABCMeta):
                 parse_imports(f"from {self.output_module} import {self.task_name}")
             )
 
-        return ImportStatement.collate(stmts)
+        return ImportStatement.collate(s.in_global_scope() for s in stmts)
 
     @cached_property
     def converted_test_code(self):

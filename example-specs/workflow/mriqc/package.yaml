@@ -1,0 +1,26 @@
+# name of the converted workflow constructor function
+name: pydra.tasks.mriqc
+# name of the nipype workflow constructor
+nipype_name: mriqc
+# The name of the global struct/dict that contains workflow inputs that are to be converted to inputs of the function along with the type of the struct, either "dict" or "class"
+config_params:
+  wf:
+    varname: config.workflow
+    type: struct
+    module: mriqc
+    defaults:
+      work_dir: Path.cwd()
+  exec:
+    varname: config.execution
+    type: struct
+    module: mriqc
+  nipype:
+    varname: config.nipype
+    type: struct
+    module: mriqc
+  env:
+    varname: config.environment
+    type: struct
+    module: mriqc
+# mappings between nipype packages and their pydra equivalents
+import_translations:

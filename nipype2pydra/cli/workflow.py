@@ -1,8 +1,10 @@
 from pathlib import Path
-from copy import copy
+import typing as ty
 import click
 import yaml
-import nipype2pydra.workflow
+from nipype2pydra.workflow import WorkflowConverter, PackageConverter
+from nipype2pydra import task
+from nipype2pydra.utils import to_snake_case
 from nipype2pydra.cli.base import cli
 
 
@@ -18,62 +20,59 @@ PACKAGE_ROOT is the path to the root directory of the packages in which to gener
 converted workflow
 """,
 )
-@click.argument("base_function", type=str)
-@click.argument("yaml-specs-dir", type=click.Path(path_type=Path, exists=True))
-@click.argument("package-root", type=click.Path(path_type=Path))
-@click.option(
-    "--output-module",
-    "-m",
-    type=str,
-    default=None,
-    help=(
-        "the output module to store the converted task into relative to the `pydra.tasks` "
-        "package. If not provided, then the path relative to base package in the "
-        "source function will be used instead"
-    ),
-)
-@click.option(
-    "--interfaces-dir",
-    "-i",
-    type=click.Path(path_type=Path, exists=True),
-    default=None,
-    help=(
-        "the path to the YAML file containing the interface specs for the tasks in the workflow. "
-        "If not provided, then the interface specs are assumed to be defined in the "
-        "workflow YAML specs"
-    ),
-)
+@click.argument("specs_dir", type=click.Path(path_type=Path, exists=True))
+@click.argument("package_root", type=click.Path(path_type=Path, exists=True))
+@click.argument("workflow_functions", type=str, nargs=-1)
 def workflow(
-    base_function: str,
-    yaml_specs_dir: Path,
+    specs_dir: Path,
     package_root: Path,
-    output_module: str,
-    interfaces_dir: Path,
+    workflow_functions: ty.List[str],
 ) -> None:
 
     workflow_specs = {}
-    for fspath in yaml_specs_dir.glob("*.yaml"):
-        with open(fspath, "r") as yaml_spec:
-            spec = yaml.safe_load(yaml_spec)
+    for fspath in (specs_dir / "workflows").glob("*.yaml"):
+        with open(fspath, "r") as f:
+            spec = yaml.safe_load(f)
             workflow_specs[spec["name"]] = spec
 
     interface_specs = {}
-    if interfaces_dir:
-        for fspath in interfaces_dir.glob("*.yaml"):
-            with open(fspath, "r") as yaml_spec:
-                spec = yaml.safe_load(yaml_spec)
-                interface_specs[spec["name"]] = spec
+    interface_spec_callables = {}
+    interfaces_dir = specs_dir / "interfaces"
+    for fspath in interfaces_dir.glob("*.yaml"):
+        with open(fspath, "r") as f:
+            spec = yaml.safe_load(f)
+            interface_specs[spec["task_name"]] = spec
+        interface_spec_callables[spec["task_name"]] = fspath.parent / (
+            fspath.name[: -len(".yaml")] + "_callables.py"
+        )
 
-    kwargs = copy(workflow_specs[base_function])
-    if output_module:
-        kwargs["output_module"] = output_module
+    with open(specs_dir / "package.yaml", "r") as f:
+        spec = yaml.safe_load(f)
 
-    converter = nipype2pydra.workflow.WorkflowConverter(
-        workflow_specs=workflow_specs,
-        interface_specs=interface_specs,
-        **kwargs,
+    converter = PackageConverter(
+        workflows=workflow_specs,
+        interfaces=interface_specs,
+        **spec,
     )
-    converter.write(package_root)
+
+    converter.interfaces = {
+        n: task.get_converter(
+            output_module=(
+                converter.translate_submodule(c["nipype_module"])
+                + "."
+                + to_snake_case(c["task_name"])
+            ),
+            callables_module=interface_spec_callables[n],
+            **c,
+        )
+        for n, c in interface_specs.items()
+    }
+
+    converter.workflows = {
+        n: WorkflowConverter(package=converter, **c) for n, c in workflow_specs.items()
+    }
+
+    converter.write(package_root, workflow_functions)
 
 
 if __name__ == "__main__":

@@ -39,6 +39,203 @@ logger = logging.getLogger(__name__)
 
 
 @attrs.define
+class PackageConverter:
+    """
+    workflows : dict[str, WorkflowConverter]
+        The specs of potentially nested workflows functions that may be called within
+        the workflow function
+    import_translations : list[tuple[str, str]]
+        packages that should be mapped to a new location (typically Nipype based deps
+        such as niworkflows). Regular expressions are supported
+    """
+
+    name: str = attrs.field(
+        metadata={
+            "help": ("name of the package to generate, e.g. pydra.tasks.mriqc"),
+        },
+    )
+    nipype_name: str = attrs.field(
+        metadata={
+            "help": ("name of the nipype package to generate from (e.g. mriqc)"),
+        },
+    )
+    config_params: ty.Dict[str, ConfigParamsConverter] = attrs.field(
+        converter=lambda dct: {
+            n: (
+                ConfigParamsConverter(**c)
+                if not isinstance(c, ConfigParamsConverter)
+                else c
+            )
+            for n, c in dct.items()
+        },
+        factory=dict,
+        metadata={
+            "help": (
+                "The name of the global struct/dict that contains workflow inputs "
+                "that are to be converted to inputs of the function along with the type "
+                'of the struct, either "dict" or "class"'
+            ),
+        },
+    )
+    workflows: ty.Dict[str, "WorkflowConverter"] = attrs.field(
+        factory=dict,
+        metadata={
+            "help": (
+                "workflow specifications of other workflow functions in the package, which "
+                "could be potentially nested within the workflow"
+            ),
+        },
+    )
+    interfaces: ty.Dict[str, task.base.BaseTaskConverter] = attrs.field(
+        factory=dict,
+        metadata={
+            "help": (
+                "interface specifications for the tasks defined within the workflow package"
+            ),
+        },
+    )
+    import_translations: ty.List[ty.Tuple[str, str]] = attrs.field(
+        factory=list,
+        metadata={
+            "help": (
+                "Mappings between nipype packages and their pydra equivalents. Regular "
+                "expressions are supported"
+            ),
+        },
+    )
+
+    def write(self, package_root: Path, workflows: ty.List[str] = None):
+        """Writes the package to the specified package root"""
+
+        if not workflows:
+            workflows = list(self.workflows)
+
+        already_converted = set()
+        intra_pkg_modules = defaultdict(set)
+        for workflow_name in workflows:
+            self.workflows[workflow_name].write(
+                package_root,
+                already_converted=already_converted,
+                intra_pkg_modules=intra_pkg_modules,
+            )
+
+        # Write any additional functions in other modules in the package
+        self._write_intra_pkg_modules(
+            package_root, intra_pkg_modules, self.import_translations
+        )
+
+    def translate_submodule(self, nipype_module_name: str) -> str:
+        """Translates a module name from the Nipype package to the Pydra package"""
+        relpath = ImportStatement.get_relative_package(
+            nipype_module_name, self.nipype_name
+        )
+        if relpath == self.nipype_name:
+            raise ValueError(
+                f"Module {nipype_module_name} is not in the nipype package {self.nipype_name}"
+            )
+        return ImportStatement.join_relative_package(self.name + ".__init__", relpath)
+
+    def untranslate_submodule(self, pydra_module_name: str) -> str:
+        """Translates a module name from the Nipype package to the Pydra package"""
+        relpath = ImportStatement.get_relative_package(pydra_module_name, self.name)
+        if relpath == self.nipype_name:
+            raise ValueError(
+                f"Module {pydra_module_name} is not in the nipype package {self.name}"
+            )
+        return ImportStatement.join_relative_package(
+            self.nipype_name + ".__init__", relpath
+        )
+
+    def _write_intra_pkg_modules(
+        self,
+        package_root: Path,
+        intra_pkg_modules: ty.Dict[str, ty.Set[str]],
+        translations: ty.List[ty.Tuple[str, str]],
+    ):
+        """Writes the intra-package modules to the package root
+
+        Parameters
+        ----------
+        package_root : Path
+            the root directory of the package to write the module to
+        intra_pkg_modules : dict[str, set[str]
+            the intra-package modules to write
+        """
+        for mod_name, objs in intra_pkg_modules.items():
+            mod_path = package_root.joinpath(*mod_name.split("."))
+            mod_path.parent.mkdir(parents=True, exist_ok=True)
+            mod = import_module(self.untranslate_submodule(mod_name))
+
+            interfaces = [
+                o for o in objs if inspect.isclass(o) and issubclass(o, BaseInterface)
+            ]
+            other_objs = [o for o in objs if o not in interfaces]
+
+            if interfaces:
+                mod_path.mkdir(parents=True, exist_ok=True)
+                for interface in interfaces:
+                    task_converter = self.interfaces[interface.__name__]
+                    task_converter.write(package_root)
+                with open(mod_path.joinpath("__init__.py"), "w") as f:
+                    f.write(
+                        "\n".join(
+                            f"from .{o.__name__} import {o.__name__}"
+                            for o in interfaces
+                        )
+                    )
+                    if other_objs:
+                        f.write(
+                            "\nfrom .other import ("
+                            + ", ".join(o.__name__ for o in other_objs + ")")
+                        )
+
+            if other_objs:
+                used = UsedSymbols.find(
+                    mod,
+                    other_objs,
+                    pull_out_inline_imports=False,
+                    translations=translations,
+                )
+                code_str = (
+                    "\n".join(str(i) for i in used.imports if not i.indent) + "\n\n"
+                )
+                code_str += (
+                    "\n".join(f"{n} = {d}" for n, d in sorted(used.constants)) + "\n\n"
+                )
+                code_str += "\n\n".join(
+                    sorted(cleanup_function_body(inspect.getsource(f)) for f in objs)
+                )
+                for klass in sorted(used.local_classes, key=attrgetter("__name__")):
+                    if klass not in objs:
+                        code_str += "\n\n" + cleanup_function_body(
+                            inspect.getsource(klass)
+                        )
+                for func in sorted(used.local_functions, key=attrgetter("__name__")):
+                    if func not in objs:
+                        code_str += "\n\n" + cleanup_function_body(
+                            inspect.getsource(func)
+                        )
+                try:
+                    code_str = black.format_file_contents(
+                        code_str, fast=False, mode=black.FileMode()
+                    )
+                except Exception as e:
+                    with open("/Users/tclose/Desktop/gen-code.py", "w") as f:
+                        f.write(code_str)
+                    raise RuntimeError(
+                        f"Black could not parse generated code: {e}\n\n{code_str}"
+                    )
+                if interfaces:
+                    # Write into package with __init__.py
+                    with open(mod_path.joinpath("other").with_suffix(".py"), "w") as f:
+                        f.write(code_str)
+                else:
+                    # Write as a standalone module
+                    with open(mod_path.with_suffix(".py"), "w") as f:
+                        f.write(code_str)
+
+
+@attrs.define
 class WorkflowConverter:
     """Specifies how the semi-automatic conversion from Nipype to Pydra should
     be performed
@@ -51,8 +248,6 @@ class WorkflowConverter:
         the name of the task in the nipype module, defaults to the output task_name
     nipype_module: str or ModuleType
         the nipype module or module path containing the Nipype interface
-    output_module: str
-        the output module to store the converted task into relative to the `pydra.tasks` package
     config_params: tuple[str, str], optional
         a globally accessible structure containing inputs to the workflow, e.g. config.workflow.*
         tuple consists of the name of the input and the type of the input
@@ -60,12 +255,6 @@ class WorkflowConverter:
         the name of the workflow's input node (to be mapped to lzin), by default 'inputnode'
     output_nodes :  ty.Dict[str], optional
         the name of the workflow's output node (to be mapped to lzout), by default 'outputnode'
-    workflow_specs : dict[str, dict]
-        The specs of potentially nested workflows functions that may be called within
-        the workflow function
-    package_translations : list[tuple[str, str]]
-        packages that should be mapped to a new location (typically Nipype based deps
-        such as niworkflows). Regular expressions are supported
     find_replace: dict[str, str]
         Generic regular expression substitutions to be run over the code before
         it is processed
@@ -111,57 +300,6 @@ class WorkflowConverter:
             ),
         },
     )
-    output_module: str = attrs.field(
-        metadata={
-            "help": (
-                "name of the output module in which to write the workflow function"
-            ),
-        },
-    )
-    config_params: ty.Dict[str, ConfigParamsConverter] = attrs.field(
-        converter=lambda dct: {
-            n: (
-                ConfigParamsConverter(**c)
-                if not isinstance(c, ConfigParamsConverter)
-                else c
-            )
-            for n, c in dct.items()
-        },
-        factory=dict,
-        metadata={
-            "help": (
-                "The name of the global struct/dict that contains workflow inputs "
-                "that are to be converted to inputs of the function along with the type "
-                'of the struct, either "dict" or "class"'
-            ),
-        },
-    )
-    workflow_specs: ty.Dict[str, dict] = attrs.field(
-        factory=dict,
-        metadata={
-            "help": (
-                "workflow specifications of other workflow functions in the package, which "
-                "could be potentially nested within the workflow"
-            ),
-        },
-    )
-    interface_specs: ty.Dict[str, dict] = attrs.field(
-        factory=dict,
-        metadata={
-            "help": (
-                "interface specifications for the tasks defined within the workflow package"
-            ),
-        },
-    )
-    package_translations: ty.List[ty.Tuple[str, str]] = attrs.field(
-        factory=list,
-        metadata={
-            "help": (
-                "Mappings between nipype packages and their pydra equivalents. Regular "
-                "expressions are supported"
-            ),
-        },
-    )
     find_replace: ty.List[ty.Tuple[str, str]] = attrs.field(
         factory=list,
         metadata={
@@ -176,6 +314,12 @@ class WorkflowConverter:
             "help": ("name of the workflow variable that is returned"),
         },
     )
+    package: PackageConverter = attrs.field(
+        default=None,
+        metadata={
+            "help": ("the package converter that the workflow is associated with"),
+        },
+    )
     external_nested_workflows: ty.List[str] = attrs.field(
         metadata={
             "help": (
@@ -185,11 +329,19 @@ class WorkflowConverter:
         },
         factory=list,
     )
+
     nodes: ty.Dict[str, ty.List[NodeConverter]] = attrs.field(factory=dict)
 
-    @output_module.default
-    def _output_module_default(self):
-        return f"pydra.tasks.{self.nipype_module.__name__}"
+    @nipype_module.validator
+    def _nipype_module_validator(self, _, value):
+        if not self.nipype_module_name.startswith(self.package.nipype_name + "."):
+            raise ValueError(
+                f"Workflow {self.name} is not in the nipype package {self.package.nipype_name}"
+            )
+
+    @property
+    def output_module(self):
+        return self.package.translate_submodule(self.nipype_module_name)
 
     def get_output_module_path(self, package_root: Path):
         output_module_path = package_root.joinpath(
@@ -235,13 +387,13 @@ class WorkflowConverter:
             self.nipype_module,
             [self.func_body],
             collapse_intra_pkg=False,
-            translations=self.package_translations,
+            translations=self.package.import_translations,
         )
 
     @cached_property
     def config_defaults(self) -> ty.Dict[str, ty.Dict[str, str]]:
         defaults = {}
-        for name, config_params in self.config_params.items():
+        for name, config_params in self.package.config_params.items():
             params = config_params.module
             defaults[name] = {}
             for part in config_params.varname.split("."):
@@ -286,11 +438,8 @@ class WorkflowConverter:
             f.__name__ for f in self.used_symbols.local_functions
         ]
         return {
-            name: WorkflowConverter(
-                workflow_specs=self.workflow_specs,
-                **spec,
-            )
-            for name, spec in self.workflow_specs.items()
+            name: workflow
+            for name, workflow in self.package.workflows.items()
             if name in potential_funcs
         }
 
@@ -299,6 +448,8 @@ class WorkflowConverter:
         package_root: Path,
         already_converted: ty.Set[str] = None,
         additional_funcs: ty.List[str] = None,
+        intra_pkg_modules: ty.Dict[str, ty.Set[str]] = None,
+        nested: bool = False,
     ):
         """Generates and writes the converted package to the specified package root
 
@@ -315,6 +466,8 @@ class WorkflowConverter:
 
         if already_converted is None:
             already_converted = set()
+        if intra_pkg_modules is None:
+            intra_pkg_modules = defaultdict(set)
         already_converted.add(self.full_name)
 
         if additional_funcs is None:
@@ -339,7 +492,7 @@ class WorkflowConverter:
         code_str += self.converted_code
 
         # Get any intra-package classes and functions that need to be written
-        intra_pkg_modules = defaultdict(set)
+
         for _, intra_pkg_obj in used.intra_pkg_classes + list(used.intra_pkg_funcs):
             intra_pkg_modules[self.to_output_module_path(intra_pkg_obj.__module__)].add(
                 intra_pkg_obj
@@ -360,12 +513,6 @@ class WorkflowConverter:
                     already_converted=already_converted,
                     additional_funcs=intra_pkg_modules[conv.output_module],
                 )
-                del intra_pkg_modules[conv.output_module]
-
-        # Write any additional functions in other modules in the package
-        self._write_intra_pkg_modules(
-            package_root, intra_pkg_modules, self.package_translations
-        )
 
         # Add any local functions, constants and classes
         for func in sorted(used.local_functions, key=attrgetter("__name__")):
@@ -493,7 +640,7 @@ class WorkflowConverter:
             code_str += str(statement) + "\n"
 
         used_configs = set()
-        for config_name, config_param in self.config_params.items():
+        for config_name, config_param in self.package.config_params.items():
             if config_param.type == "dict":
                 config_regex = re.compile(
                     r"\b" + config_name + r"\[(?:'|\")([^\]]+)(?:'|\")\]\b"
@@ -699,101 +846,6 @@ class WorkflowConverter:
             )
 
         return parsed, workflow_name
-
-    def _write_intra_pkg_modules(
-        self,
-        package_root: Path,
-        intra_pkg_modules: ty.Dict[str, ty.Set[str]],
-        translations: ty.List[ty.Tuple[str, str]],
-    ):
-        """Writes the intra-package modules to the package root
-
-        Parameters
-        ----------
-        package_root : Path
-            the root directory of the package to write the module to
-        intra_pkg_modules : dict[str, set[str]
-            the intra-package modules to write
-        """
-        for mod_name, objs in intra_pkg_modules.items():
-            mod_path = package_root.joinpath(*mod_name.split(".")).with_suffix(".py")
-            mod_path.parent.mkdir(parents=True, exist_ok=True)
-            mod = import_module(self.from_output_module_path(mod_name))
-
-            interfaces = [
-                o for o in objs if inspect.isclass(o) and issubclass(o, BaseInterface)
-            ]
-            other_objs = [o for o in objs if o not in interfaces]
-
-            if interfaces:
-                mod_path.mkdir()
-                for interface in interfaces:
-                    task_converter = task.get_converter(
-                        output_module=mod_name
-                        + "."
-                        + to_snake_case(interface.__name__),
-                        **self.interface_specs[
-                            f"{interface.__module__}.{interface.__name__}"
-                        ],
-                    )
-                    task_converter.write(package_root)
-                with open(mod_path.joinpath("__init__.py"), "w") as f:
-                    f.write(
-                        "\n".join(
-                            f"from .{o.__name__} import {o.__name__}"
-                            for o in interfaces
-                        )
-                    )
-                    if other_objs:
-                        f.write(
-                            "\nfrom .other import ("
-                            + ", ".join(o.__name__ for o in other_objs + ")")
-                        )
-
-            if other_objs:
-                used = UsedSymbols.find(
-                    mod,
-                    other_objs,
-                    pull_out_inline_imports=False,
-                    translations=translations,
-                )
-                code_str = (
-                    "\n".join(str(i) for i in used.imports if not i.indent) + "\n\n"
-                )
-                code_str += (
-                    "\n".join(f"{n} = {d}" for n, d in sorted(used.constants)) + "\n\n"
-                )
-                code_str += "\n\n".join(
-                    sorted(cleanup_function_body(inspect.getsource(f)) for f in objs)
-                )
-                for klass in sorted(used.local_classes, key=attrgetter("__name__")):
-                    if klass not in objs:
-                        code_str += "\n\n" + cleanup_function_body(
-                            inspect.getsource(klass)
-                        )
-                for func in sorted(used.local_functions, key=attrgetter("__name__")):
-                    if func not in objs:
-                        code_str += "\n\n" + cleanup_function_body(
-                            inspect.getsource(func)
-                        )
-                try:
-                    code_str = black.format_file_contents(
-                        code_str, fast=False, mode=black.FileMode()
-                    )
-                except Exception as e:
-                    with open("/Users/tclose/Desktop/gen-code.py", "w") as f:
-                        f.write(code_str)
-                    raise RuntimeError(
-                        f"Black could not parse generated code: {e}\n\n{code_str}"
-                    )
-                if interfaces:
-                    # Write into package with __init__.py
-                    with open(mod_path.joinpath("other").with_suffix(".py"), "w") as f:
-                        f.write(code_str)
-                else:
-                    # Write as a standalone module
-                    with open(mod_path, "w") as f:
-                        f.write(code_str)
 
     def to_output_module_path(self, nipype_module_path: str) -> str:
         """Converts an original Nipype module path to a Pydra module path
