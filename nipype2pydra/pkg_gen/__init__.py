@@ -368,7 +368,7 @@ class NipypeInterface:
         ):
             imports.add(parse_imports("import attrs"))
         callables_str += (
-            "\n".join(str(i) for i in sorted(imports) if not i.indent) + "\n"
+            "\n".join(str(i.absolute()) for i in sorted(imports) if not i.indent) + "\n"
         )
 
         # Create separate default function for each input field with genfile, which

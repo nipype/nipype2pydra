@@ -167,6 +167,21 @@ class ImportStatement:
             translation=self.translation,
         )
 
+    def absolute(self) -> "ImportStatement":
+        """Return a new import statement that is absolute"""
+        from_ = (
+            self.join_relative_package(self.relative_to, self.from_)
+            if self.from_
+            else None
+        )
+        return ImportStatement(
+            indent=self.indent,
+            imported=self.imported,
+            from_=from_,
+            relative_to=None,
+            translation=self.translation,
+        )
+
     match_re = re.compile(
         r"^(\s*)(from[\w \.]+)?import\b([\w \n\.\,\(\)]+)$",
         flags=re.MULTILINE | re.DOTALL,
