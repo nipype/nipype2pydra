@@ -39,7 +39,6 @@ mriqc:
     - mriqc.workflows.anatomical.base.init_brain_tissue_segmentation
     - mriqc.workflows.anatomical.base.spatial_normalization
     - mriqc.workflows.anatomical.output.init_anat_report_wf
-    - mriqc.workflows.core.init_mriqc_wf
     - mriqc.workflows.diffusion.base.compute_iqms
     - mriqc.workflows.diffusion.base.dmri_qc_workflow
     - mriqc.workflows.diffusion.base.epi_mni_align

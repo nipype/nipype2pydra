@@ -179,41 +179,43 @@ def pkg_gen(
                 with open(callables_fspath, "w") as f:
                     f.write(parsed.generate_callables(nipype_interface))
 
-            with open(
-                pkg_dir
-                / "related-packages"
-                / "fileformats"
-                / "fileformats"
-                / f"medimage_{pkg}"
-                / "__init__.py",
-                "w",
-            ) as f:
-                f.write(gen_fileformats_module(pkg_formats))
+            if interface_only_pkg:
+                with open(
+                    pkg_dir
+                    / "related-packages"
+                    / "fileformats"
+                    / "fileformats"
+                    / f"medimage_{pkg}"
+                    / "__init__.py",
+                    "w",
+                ) as f:
+                    f.write(gen_fileformats_module(pkg_formats))
 
-            with open(
-                pkg_dir
-                / "related-packages"
-                / "fileformats-extras"
-                / "fileformats"
-                / "extras"
-                / f"medimage_{pkg}"
-                / "__init__.py",
-                "w",
-            ) as f:
-                f.write(gen_fileformats_extras_module(pkg, pkg_formats))
+                with open(
+                    pkg_dir
+                    / "related-packages"
+                    / "fileformats-extras"
+                    / "fileformats"
+                    / "extras"
+                    / f"medimage_{pkg}"
+                    / "__init__.py",
+                    "w",
+                ) as f:
+                    f.write(gen_fileformats_extras_module(pkg, pkg_formats))
 
-            tests_dir = (
-                pkg_dir
-                / "related-packages"
-                / "fileformats-extras"
-                / "fileformats"
-                / "extras"
-                / f"medimage_{pkg}"
-                / "tests"
-            )
-            tests_dir.mkdir()
-            with open(tests_dir / "test_generate_sample_data.py", "w") as f:
-                f.write(gen_fileformats_extras_tests(pkg, pkg_formats))
+                tests_dir = (
+                    pkg_dir
+                    / "related-packages"
+                    / "fileformats-extras"
+                    / "fileformats"
+                    / "extras"
+                    / f"medimage_{pkg}"
+                    / "tests"
+                )
+                tests_dir.mkdir()
+
+                with open(tests_dir / "test_generate_sample_data.py", "w") as f:
+                    f.write(gen_fileformats_extras_tests(pkg, pkg_formats))
 
             if example_packages and not single_interface:
                 with open(example_packages) as f:

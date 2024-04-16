@@ -128,10 +128,15 @@ class WorkflowConverter:
                 "and need to be imported"
             ),
         },
+        converter=attrs.converters.default_if_none(factory=list),
         factory=list,
     )
 
     nodes: ty.Dict[str, ty.List[NodeConverter]] = attrs.field(factory=dict)
+
+    def __attrs_post_init__(self):
+        if self.workflow_variable is None:
+            self.workflow_variable = self.workflow_variable_default()
 
     @nipype_module.validator
     def _nipype_module_validator(self, _, value):
@@ -236,7 +241,7 @@ class WorkflowConverter:
 
     @cached_property
     def nested_workflows(self):
-        potential_funcs = [f[0] for f in self.used_symbols.intra_pkg_funcs] + [
+        potential_funcs = [f[1].__name__ for f in self.used_symbols.intra_pkg_funcs] + [
             f.__name__ for f in self.used_symbols.local_functions
         ]
         return {
@@ -244,6 +249,19 @@ class WorkflowConverter:
             for name, workflow in self.package.workflows.items()
             if name in potential_funcs
         }
+
+    @cached_property
+    def nested_workflow_symbols(self) -> ty.List[str]:
+        """Returns the symbols that are used in the body of the workflow that are also
+        workflows"""
+        symbols = []
+        for alias, func in self.used_symbols.intra_pkg_funcs:
+            if func.__name__ in self.nested_workflows:
+                symbols.append(alias)
+        for func in self.used_symbols.local_functions:
+            if func.__name__ in self.nested_workflows:
+                symbols.append(func.__name__)
+        return symbols + self.external_nested_workflows
 
     def write(
         self,
@@ -556,9 +574,7 @@ class WorkflowConverter:
                     self.nodes[varname] = [node_converter]
                 parsed.append(node_converter)
             elif match := re.match(  #
-                r"(\s+)(\w+) = ("
-                + "|".join(list(self.nested_workflows) + self.external_nested_workflows)
-                + r")\(",
+                r"(\s+)(\w+) = (" + "|".join(self.nested_workflow_symbols) + r")\(",
                 statement,
                 flags=re.MULTILINE,
             ):

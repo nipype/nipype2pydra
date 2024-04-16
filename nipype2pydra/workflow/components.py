@@ -1,9 +1,6 @@
-from importlib import import_module
 from functools import cached_property
-
 import re
 import typing as ty
-from types import ModuleType
 import attrs
 
 if ty.TYPE_CHECKING:
@@ -329,7 +326,6 @@ class DocStringConverter:
 
     def __str__(self):
         return f"{self.indent}{self.docstring}"
-
 
 
 @attrs.define
