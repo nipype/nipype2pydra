@@ -21,7 +21,8 @@ from nipype2pydra.pkg_gen import (
     gen_fileformats_extras_tests,
 )
 from nipype2pydra.cli.base import cli
-from nipype2pydra.workflow import PackageConverter, WorkflowConverter
+from nipype2pydra.package import PackageConverter
+from nipype2pydra.workflow import WorkflowConverter
 
 
 @cli.command(
@@ -121,6 +122,7 @@ def pkg_gen(
 
         if "workflows" in spec and not single_interface:
             workflows_spec_dir = spec_dir / "workflows"
+            workflows_spec_dir.mkdir(parents=True, exist_ok=True)
             for wf_path in spec["workflows"]:
                 parts = wf_path.split(".")
                 wf_name = parts[-1]
@@ -134,6 +136,7 @@ def pkg_gen(
 
         if "interfaces" in spec:
             interfaces_spec_dir = spec_dir / "interfaces"
+            interfaces_spec_dir.mkdir(parents=True, exist_ok=True)
             # Loop through all nipype modules and create specs for their auto-conversion
             if single_interface:
                 interfaces = [single_interface]

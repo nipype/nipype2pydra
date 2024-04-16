@@ -2,19 +2,18 @@ from pathlib import Path
 import typing as ty
 import click
 import yaml
-from nipype2pydra.workflow import WorkflowConverter, PackageConverter
+from nipype2pydra.workflow import WorkflowConverter
+from nipype2pydra.package import PackageConverter
 from nipype2pydra import task
 from nipype2pydra.utils import to_snake_case
 from nipype2pydra.cli.base import cli
 
 
 @cli.command(
-    name="workflow",
+    name="convert",
     help="""Port Nipype task interface code to Pydra
 
-BASE_FUNCTION is the name of the function that constructs the workflow, which is to be imported
-
-YAML_SPECS_DIR is a directory pointing to YAML specs for each of the workflows in the package to be imported
+SPECS_DIR is a directory pointing to YAML specs for each of the workflows in the package to be imported
 
 PACKAGE_ROOT is the path to the root directory of the packages in which to generate the
 converted workflow
@@ -23,7 +22,7 @@ converted workflow
 @click.argument("specs_dir", type=click.Path(path_type=Path, exists=True))
 @click.argument("package_root", type=click.Path(path_type=Path, exists=True))
 @click.argument("workflow_functions", type=str, nargs=-1)
-def workflow(
+def convert(
     specs_dir: Path,
     package_root: Path,
     workflow_functions: ty.List[str],
@@ -78,4 +77,4 @@ def workflow(
 if __name__ == "__main__":
     import sys
 
-    workflow(sys.argv[1:])
+    convert(sys.argv[1:])

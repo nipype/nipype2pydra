@@ -5,6 +5,7 @@ imported.
 >>> import pydra.engine
 >>> import pydra.tasks.CHANGEME
 """
+
 from warnings import warn
 from pathlib import Path
 
@@ -17,21 +18,22 @@ except ImportError:
         "pydra-CHANGEME has not been properly installed, please run "
         f"`pip install -e {str(pkg_path)}` to install a development version"
     )
-if "nipype" not in __version__:
+if "post" not in __version__:
     try:
-        from .auto._version import nipype_version, nipype2pydra_version
+        from ._post_release import post_release
     except ImportError:
+        try:
+            # For interface-only packages
+            from .auto._post_release import post_release
+        except ImportError:
+            pass
         warn(
             "Nipype interfaces haven't been automatically converted from their specs in "
             f"`nipype-auto-conv`. Please run `{str(pkg_path / 'nipype-auto-conv' / 'generate')}` "
             "to generated the converted Nipype interfaces in pydra.tasks.CHANGEME.auto"
         )
     else:
-        n_ver = nipype_version.replace(".", "_")
-        n2p_ver = nipype2pydra_version.replace(".", "_")
-        __version__ += (
-            "_" if "+" in __version__ else "+"
-        ) + f"nipype{n_ver}_nipype2pydra{n2p_ver}"
+        __version__ += "post" + post_release
 
 
 __all__ = ["__version__"]

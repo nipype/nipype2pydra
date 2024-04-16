@@ -622,7 +622,9 @@ def download_tasks_template(output_path: Path):
         )
 
 
-def initialise_task_repo(output_dir, task_template: Path, pkg: str) -> Path:
+def initialise_task_repo(
+    output_dir, task_template: Path, pkg: str, interface_only: bool
+) -> Path:
     """Copy the task template to the output directory and customise it for the given
     package name and return the created package directory"""
 
@@ -637,7 +639,8 @@ def initialise_task_repo(output_dir, task_template: Path, pkg: str) -> Path:
     auto_conv_dir = pkg_dir / "nipype-auto-conv"
     specs_dir = auto_conv_dir / "specs"
     specs_dir.mkdir(parents=True)
-    shutil.copy(TEMPLATES_DIR / "nipype-auto-convert.py", auto_conv_dir / "generate")
+    with open(auto_conv_dir / "generate", "w") as f:
+        f.write("nipype2pydra convert specs/package.yaml ..\n")
     os.chmod(auto_conv_dir / "generate", 0o755)  # make executable
     shutil.copy(
         TEMPLATES_DIR / "nipype-auto-convert-requirements.txt",
@@ -647,8 +650,9 @@ def initialise_task_repo(output_dir, task_template: Path, pkg: str) -> Path:
     # Setup GitHub workflows
     gh_workflows_dir = pkg_dir / ".github" / "workflows"
     gh_workflows_dir.mkdir(parents=True, exist_ok=True)
+    ci_cd = "ci-cd-interface.yaml" if interface_only else "ci-cd-workflow.yaml"
     shutil.copy(
-        TEMPLATES_DIR / "gh_workflows" / "ci-cd.yaml",
+        TEMPLATES_DIR / "gh_workflows" / ci_cd.yaml,
         gh_workflows_dir / "ci-cd.yaml",
     )
 
@@ -730,7 +734,7 @@ def initialise_task_repo(output_dir, task_template: Path, pkg: str) -> Path:
 
     # Add in modified __init__.py
     shutil.copy(
-        TEMPLATES_DIR / "pkg_init.py", pkg_dir / "pydra" / "tasks" / pkg / "__init__.py"
+        TEMPLATES_DIR / "init.py", pkg_dir / "pydra" / "tasks" / pkg / "__init__.py"
     )
 
     # Replace "CHANGEME" string with pkg name

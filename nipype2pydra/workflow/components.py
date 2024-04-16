@@ -331,43 +331,6 @@ class DocStringConverter:
         return f"{self.indent}{self.docstring}"
 
 
-@attrs.define
-class ConfigParamsConverter:
-
-    varname: str = attrs.field(
-        metadata={
-            "help": (
-                "name dict/struct that contains the workflow inputs, e.g. config.workflow.*"
-            ),
-        }
-    )
-    type: str = attrs.field(
-        metadata={
-            "help": (
-                "name of the nipype module the function is found within, "
-                "e.g. mriqc.workflows.anatomical.base"
-            ),
-        },
-        validator=attrs.validators.in_(["dict", "struct"]),
-    )
-
-    module: str = attrs.field(
-        converter=lambda m: import_module(m) if not isinstance(m, ModuleType) else m,
-        metadata={
-            "help": (
-                "name of the nipype module the function is found within, "
-                "e.g. mriqc.workflows.anatomical.base"
-            ),
-        },
-    )
-
-    defaults: ty.Dict[str, str] = attrs.field(
-        factory=dict,
-        metadata={
-            "help": "default values for the config parameters",
-        },
-    )
-
 
 @attrs.define
 class NodeAssignmentConverter:
