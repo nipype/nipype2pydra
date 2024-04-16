@@ -196,7 +196,7 @@ class PackageConverter:
                 package_root, intra_pkg_modules, self.import_translations
             )
 
-            self.write_version_file(mod_dir / "_post_release.py")
+            self.write_post_release_file(mod_dir / "_post_release.py")
 
     def translate_submodule(
         self, nipype_module_name: str, sub_pkg: ty.Optional[str] = None
@@ -358,9 +358,13 @@ class PackageConverter:
     def write_post_release_file(self, fspath: Path):
 
         if ".dev" in self.nipype_package.__version__:
-            raise RuntimeError(
-                f"Cannot use a development version of {self.nipype_name} "
-                f"({self.nipype_package.__version__})"
+            logger.warning(
+                (
+                    "using development version of nipype2pydra (%s), "
+                    "development component will be dropped in %s package version"
+                ),
+                self.nipype_name,
+                self.nipype_package.__version__,
             )
 
         if ".dev" in nipype2pydra.__version__:

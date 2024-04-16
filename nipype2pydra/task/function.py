@@ -84,11 +84,13 @@ class FunctionTaskConverter(BaseTaskConverter):
         spec_str += "}})\n"
         spec_str += f"def {self.task_name}("
         spec_str += ", ".join(f"{i[0]}: {i[1]}" for i in input_fields_str)
-        spec_str += ") -> "
-        if len(output_type_names) > 1:
-            spec_str += "ty.Tuple[" + ", ".join(output_type_names) + "]"
-        else:
-            spec_str += output_type_names[0]
+        spec_str += ")"
+        if output_type_names:
+            spec_str += "-> "
+            if len(output_type_names) > 1:
+                spec_str += "ty.Tuple[" + ", ".join(output_type_names) + "]"
+            else:
+                spec_str += output_type_names[0]
         spec_str += ':\n    """\n'
         spec_str += self.create_doctests(
             input_fields=input_fields, nonstd_types=nonstd_types
@@ -189,7 +191,7 @@ class FunctionTaskConverter(BaseTaskConverter):
         self, method_body: str, input_names: ty.List[str], output_names: ty.List[str]
     ) -> str:
         # Replace self.inputs.<name> with <name> in the function body
-        input_re = re.compile(r"self\.inputs\.(\w+)")
+        input_re = re.compile(r"self\.inputs\.(?!get\b)(\w+)")
         unrecognised_inputs = set(
             m for m in input_re.findall(method_body) if m not in input_names
         )
@@ -225,19 +227,16 @@ class FunctionTaskConverter(BaseTaskConverter):
             # Assign additional return values (which were previously saved to member
             # attributes) to new variables from the method call
             if self.method_returns[name]:
-                match = re.match(
-                    r".*\n *([a-zA-Z0-9\,\. ]+ *=)? *$",
-                    new_body,
-                    flags=re.MULTILINE | re.DOTALL,
-                )
+                last_line = new_body.splitlines()[-1]
+                match = re.match(r" *([a-zA-Z0-9\,\.\_ ]+ *=)? *$", last_line)
                 if match:
                     if match.group(1):
                         new_body_lines = new_body.splitlines()
                         new_body = "\n".join(new_body_lines[:-1])
                         last_line = new_body_lines[-1]
                         new_body += "\n" + re.sub(
-                            r"^ *([a-zA-Z0-9\,\. ]+) *= *$",
-                            r"\1, =" + ",".join(self.method_returns[name]),
+                            r"^( *)([a-zA-Z0-9\,\.\_ ]+) *= *$",
+                            r"\1\2, " + ",".join(self.method_returns[name]) + " = ",
                             last_line,
                             flags=re.MULTILINE,
                         )
@@ -390,13 +389,17 @@ class FunctionTaskConverter(BaseTaskConverter):
 
     @cached_property
     def return_value(self):
-        return_line = (
-            inspect.getsource(self.nipype_interface._list_outputs)
-            .strip()
-            .split("\n")[-1]
-        )
-        match = re.match(r"\s*return(.*)", return_line)
-        return match.group(1).strip()
+        def get_return_line(func):
+            return_line = inspect.getsource(func).strip().split("\n")[-1]
+            match = re.match(r"\s*return(.*)", return_line)
+            if not match:
+                raise ValueError("Could not find return line in _list_outputs")
+            return match.group(1).strip()
+
+        try:
+            return get_return_line(self.nipype_interface._list_outputs)
+        except ValueError:
+            return get_return_line(self.nipype_interface._outputs)
 
     @cached_property
     def methods(self):

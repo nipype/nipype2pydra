@@ -1,6 +1,7 @@
 import typing as ty
 import re
 import keyword
+import types
 import inspect
 import builtins
 from logging import getLogger
@@ -50,6 +51,8 @@ class UsedSymbols:
         "traits.trait_handlers",  # Old traits module, pre v6.0
     ]
 
+    _cache = {}
+
     def update(self, other: "UsedSymbols"):
         self.imports.update(other.imports)
         self.intra_pkg_funcs.update(other.intra_pkg_funcs)
@@ -74,7 +77,7 @@ class UsedSymbols:
     @classmethod
     def find(
         cls,
-        module,
+        module: types.ModuleType,
         function_bodies: ty.List[ty.Union[str, ty.Callable, ty.Type]],
         collapse_intra_pkg: bool = True,
         pull_out_inline_imports: bool = True,
@@ -119,6 +122,20 @@ class UsedSymbols:
         UsedSymbols
             a class containing the used symbols in the module
         """
+        cache_key = (
+            module.__name__,
+            tuple(f.__name__ if not isinstance(f, str) else f for f in function_bodies),
+            collapse_intra_pkg,
+            pull_out_inline_imports,
+            tuple(filter_objs) if filter_objs else None,
+            tuple(filter_classes) if filter_classes else None,
+            tuple(translations) if translations else None,
+        )
+        try:
+            return cls._cache[cache_key]
+        except KeyError:
+            pass
+
         used = cls()
         source_code = inspect.getsource(module)
         local_functions = get_local_functions(module)
@@ -274,6 +291,7 @@ class UsedSymbols:
                     )
                     used.update(used_in_mod)
             used.imports.add(stmt)
+        cls._cache[cache_key] = used
         return used
 
     # Nipype-specific names and Python keywords
