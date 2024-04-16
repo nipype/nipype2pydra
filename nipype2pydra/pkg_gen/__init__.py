@@ -37,7 +37,6 @@ from nipype2pydra.utils import (
     cleanup_function_body,
     insert_args_in_signature,
     INBUILT_NIPYPE_TRAIT_NAMES,
-    ImportStatement,
     parse_imports,
 )
 from nipype2pydra.exceptions import UnmatchedParensException
@@ -127,10 +126,15 @@ class NipypeInterface:
 # {doc_string}\n"""
         ).replace("        #", "#")
 
+        if base_package:
+            module = nipype_interface.__module__[len(base_package) + 1 :]
+        else:
+            module = nipype_interface.__module__
+
         parsed = cls(
             name=nipype_interface.__name__,
             doc_str=nipype_interface.__doc__ if nipype_interface.__doc__ else "",
-            module=nipype_interface.__module__[len(base_package) + 1 :],
+            module=module,
             pkg=pkg,
             base_package=base_package,
             preamble=preamble,
@@ -285,10 +289,15 @@ class NipypeInterface:
         output_types = dict(sorted(output_types.items(), key=itemgetter(0)))
         output_templates = dict(sorted(output_templates.items(), key=itemgetter(0)))
 
+        if self.base_package:
+            nipype_module = self.base_package + "." + self.module
+        else:
+            nipype_module = self.module
+
         spec_stub = {
             "task_name": self.name,
             "nipype_name": self.name,
-            "nipype_module": self.base_package + "." + self.module,
+            "nipype_module": nipype_module,
             "inputs": self._fields_stub(
                 "inputs",
                 InputsConverter,

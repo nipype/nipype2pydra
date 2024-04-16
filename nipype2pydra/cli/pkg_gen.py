@@ -21,29 +21,23 @@ from nipype2pydra.pkg_gen import (
     gen_fileformats_extras_tests,
 )
 from nipype2pydra.cli.base import cli
-
-
-DEFAULT_INTERFACE_SPEC = (
-    Path(__file__).parent.parent
-    / "pkg_gen"
-    / "resources"
-    / "specs"
-    / "nipype-interfaces-to-import.yaml"
-)
+from nipype2pydra.workflow import PackageConverter, WorkflowConverter
 
 
 @cli.command(
-    "pkg-gen", help="Generates stub pydra packages for all nipype interfaces to import"
+    "pkg-gen",
+    help="""Generates stub pydra packages for all nipype interfaces to import
+
+SPEC_FILE is the YAML file containing the list of interfaces/workflows to import
+
+OUTPUT_DIR is the directory to write the generated packages to
+""",
 )
+@click.argument("spec_file", type=click.Path(path_type=Path))
 @click.argument("output_dir", type=click.Path(path_type=Path))
 @click.option("--work-dir", type=click.Path(path_type=Path), default=None)
 @click.option("--task-template", type=click.Path(path_type=Path), default=None)
-@click.option(
-    "--packages-to-import",
-    type=click.Path(path_type=Path),
-    default=DEFAULT_INTERFACE_SPEC,
-)
-@click.option("--single-interface", type=str, nargs=2, default=None)
+@click.option("--single-interface", type=str, default=None)
 @click.option(
     "--example-packages",
     type=click.Path(path_type=Path),
@@ -51,23 +45,47 @@ DEFAULT_INTERFACE_SPEC = (
     help="Packages to save into the example-spec directory",
 )
 @click.option(
-    "--base-package",
+    "--pkg-prefix",
     type=str,
-    default="nipype.interfaces",
-    help=("the base package which the sub-packages are relative to"),
+    default="",
+    help="The prefix to add to the package name",
+)
+@click.option(
+    "--pkg-default",
+    type=str,
+    nargs=2,
+    multiple=True,
+    metavar="<name> <value>",
+    help="name-value pairs of default values to set in the converter specs",
+)
+@click.option(
+    "--wf-default",
+    type=str,
+    nargs=2,
+    multiple=True,
+    metavar="<name> <value>",
+    help="name-value pairs of default values to set in the converter specs",
 )
 def pkg_gen(
+    spec_file: Path,
     output_dir: Path,
     work_dir: ty.Optional[Path],
     task_template: ty.Optional[Path],
-    packages_to_import: ty.Optional[Path],
-    single_interface: ty.Optional[ty.Tuple[str]],
-    base_package: str,
+    single_interface: ty.Optional[str],
     example_packages: ty.Optional[Path],
+    pkg_prefix: str,
+    pkg_default: ty.List[ty.Tuple[str, str]],
+    wf_default: ty.List[ty.Tuple[str, str]],
 ):
 
     if work_dir is None:
         work_dir = Path(tempfile.mkdtemp())
+
+    pkg_defaults = dict(pkg_default)
+    wf_defaults = dict(wf_default)
+
+    with open(spec_file) as f:
+        to_import = yaml.load(f, Loader=yaml.SafeLoader)
 
     if task_template is None:
         task_template_tar = work_dir / "task-template.tar.gz"
@@ -76,17 +94,6 @@ def pkg_gen(
         with tarfile.open(task_template_tar, "r:gz") as tar:
             tar.extractall(path=extract_dir)
         task_template = extract_dir / next(extract_dir.iterdir())
-
-    if single_interface:
-        to_import = {
-            "packages": [single_interface[0]],
-            "interfaces": {
-                single_interface[0]: [single_interface[1]],
-            },
-        }
-    else:
-        with open(packages_to_import) as f:
-            to_import = yaml.load(f, Loader=yaml.SafeLoader)
 
     # Wipe output dir
     if output_dir.exists():
@@ -98,33 +105,54 @@ def pkg_gen(
     ambiguous_formats = []
     has_doctests = set()
 
-    for pkg in to_import["packages"]:
+    for pkg, spec in to_import.items():
         pkg_dir = initialise_task_repo(output_dir, task_template, pkg)
         pkg_formats = set()
 
         spec_dir = pkg_dir / "nipype-auto-conv" / "specs"
         spec_dir.mkdir(parents=True, exist_ok=True)
 
-        # Loop through all nipype modules and create specs for their auto-conversion
-        for module, interfaces in to_import["interfaces"].items():
-            if module.split("/")[0] != pkg:
-                continue
+        with open(spec_dir / "package.yaml", "w") as f:
+            f.write(
+                PackageConverter.default_spec(
+                    "pydra.tasks." + pkg, pkg_prefix + pkg, defaults=pkg_defaults
+                )
+            )
 
-            # Loop through all interfaces in module
-            for interface in interfaces:
+        if "workflows" in spec and not single_interface:
+            workflows_spec_dir = spec_dir / "workflows"
+            for wf_path in spec["workflows"]:
+                parts = wf_path.split(".")
+                wf_name = parts[-1]
+                mod_path = ".".join(parts[:-1])
+                with open(workflows_spec_dir / (wf_path + ".yaml"), "w") as f:
+                    f.write(
+                        WorkflowConverter.default_spec(
+                            wf_name, mod_path, defaults=wf_defaults
+                        )
+                    )
 
+        if "interfaces" in spec:
+            interfaces_spec_dir = spec_dir / "interfaces"
+            # Loop through all nipype modules and create specs for their auto-conversion
+            if single_interface:
+                interfaces = [single_interface]
+            else:
+                interfaces = spec["interfaces"]
+            for interface_path in interfaces:
                 # Import interface from module
-                module_str = ".".join(module.split("/"))
-                nipype_module_str = base_package + "." + module_str
+                parts = interface_path.split(".")
+                nipype_module_str = ".".join(parts[:-1])
+                interface = parts[-1]
                 nipype_module = import_module(nipype_module_str)
                 nipype_interface = getattr(nipype_module, interface)
                 if not issubclass(
                     nipype_interface, nipype.interfaces.base.core.Interface
                 ):
-                    not_interfaces.append(f"{module}.{interface}")
+                    not_interfaces.append(interface_path)
                     continue
 
-                parsed = NipypeInterface.parse(nipype_interface, pkg, base_package)
+                parsed = NipypeInterface.parse(nipype_interface, pkg, pkg_prefix)
 
                 spec_name = to_snake_case(interface)
                 yaml_spec = parsed.generate_yaml_spec()
@@ -132,50 +160,70 @@ def pkg_gen(
                 ambiguous_formats.extend(parsed.ambiguous_formats)
                 pkg_formats.update(parsed.pkg_formats)
                 if parsed.has_doctests:
-                    has_doctests.add(f"{module_str}.{interface}")
-                with open(spec_dir / (spec_name + ".yaml"), "w") as f:
+                    has_doctests.add(interface_path)
+                with open(interfaces_spec_dir / (spec_name + ".yaml"), "w") as f:
                     f.write(yaml_spec)
 
-                callables_fspath = spec_dir / f"{spec_name}_callables.py"
+                callables_fspath = interfaces_spec_dir / f"{spec_name}_callables.py"
 
                 with open(callables_fspath, "w") as f:
                     f.write(parsed.generate_callables(nipype_interface))
 
-        with open(
-            pkg_dir
-            / "related-packages"
-            / "fileformats"
-            / "fileformats"
-            / f"medimage_{pkg}"
-            / "__init__.py",
-            "w",
-        ) as f:
-            f.write(gen_fileformats_module(pkg_formats))
+            with open(
+                pkg_dir
+                / "related-packages"
+                / "fileformats"
+                / "fileformats"
+                / f"medimage_{pkg}"
+                / "__init__.py",
+                "w",
+            ) as f:
+                f.write(gen_fileformats_module(pkg_formats))
 
-        with open(
-            pkg_dir
-            / "related-packages"
-            / "fileformats-extras"
-            / "fileformats"
-            / "extras"
-            / f"medimage_{pkg}"
-            / "__init__.py",
-            "w",
-        ) as f:
-            f.write(gen_fileformats_extras_module(pkg, pkg_formats))
+            with open(
+                pkg_dir
+                / "related-packages"
+                / "fileformats-extras"
+                / "fileformats"
+                / "extras"
+                / f"medimage_{pkg}"
+                / "__init__.py",
+                "w",
+            ) as f:
+                f.write(gen_fileformats_extras_module(pkg, pkg_formats))
 
-        tests_dir = (
-            pkg_dir
-            / "related-packages"
-            / "fileformats-extras"
-            / "fileformats"
-            / "extras"
-            / f"medimage_{pkg}"
-            / "tests"
-        )
-        tests_dir.mkdir()
-        with open(tests_dir / "test_generate_sample_data.py", "w") as f:
-            f.write(gen_fileformats_extras_tests(pkg, pkg_formats))
+            tests_dir = (
+                pkg_dir
+                / "related-packages"
+                / "fileformats-extras"
+                / "fileformats"
+                / "extras"
+                / f"medimage_{pkg}"
+                / "tests"
+            )
+            tests_dir.mkdir()
+            with open(tests_dir / "test_generate_sample_data.py", "w") as f:
+                f.write(gen_fileformats_extras_tests(pkg, pkg_formats))
+
+            if example_packages and not single_interface:
+                with open(example_packages) as f:
+                    example_pkg_names = yaml.load(f, Loader=yaml.SafeLoader)
+
+                examples_dir = (
+                    Path(__file__).parent.parent.parent / "example-specs" / "task" / pkg
+                )
+                if examples_dir.exists():
+                    shutil.rmtree(examples_dir)
+                examples_dir.mkdir()
+                for example_pkg_name in example_pkg_names:
+                    specs_dir = (
+                        output_dir
+                        / ("pydra-" + example_pkg_name)
+                        / "nipype-auto-conv"
+                        / "specs"
+                    )
+                    dest_dir = examples_dir / example_pkg_name
+                    shutil.copytree(specs_dir, dest_dir)
 
         sp.check_call("git init", shell=True, cwd=pkg_dir)
         sp.check_call("git add --all", shell=True, cwd=pkg_dir)
@@ -183,30 +231,6 @@ def pkg_gen(
             'git commit -m"initial commit of generated stubs"', shell=True, cwd=pkg_dir
         )
         sp.check_call("git tag 0.1.0", shell=True, cwd=pkg_dir)
-
-    if example_packages and not single_interface:
-        with open(example_packages) as f:
-            example_pkg_names = yaml.load(f, Loader=yaml.SafeLoader)
-
-        basepkg = base_package
-        if base_package.endswith(".interfaces"):
-            basepkg = basepkg[: -len(".interfaces")]
-
-        examples_dir = (
-            Path(__file__).parent.parent.parent / "example-specs" / "task" / basepkg
-        )
-        if examples_dir.exists():
-            shutil.rmtree(examples_dir)
-        examples_dir.mkdir()
-        for example_pkg_name in example_pkg_names:
-            specs_dir = (
-                output_dir
-                / ("pydra-" + example_pkg_name)
-                / "nipype-auto-conv"
-                / "specs"
-            )
-            dest_dir = examples_dir / example_pkg_name
-            shutil.copytree(specs_dir, dest_dir)
 
     unmatched_extensions = set(
         File.decompose_fspath(

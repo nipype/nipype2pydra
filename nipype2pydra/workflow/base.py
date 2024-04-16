@@ -11,6 +11,7 @@ from types import ModuleType
 from pathlib import Path
 import black.parsing
 import attrs
+import yaml
 from nipype.interfaces.base import BaseInterface
 from .. import task
 from ..utils import (
@@ -233,6 +234,33 @@ class PackageConverter:
                     # Write as a standalone module
                     with open(mod_path.with_suffix(".py"), "w") as f:
                         f.write(code_str)
+
+    @classmethod
+    def default_spec(
+        cls, name: str, nipype_name: str, defaults: ty.Dict[str, ty.Any]
+    ) -> str:
+        """Generates a spec for the package converter from the given function"""
+        conv = PackageConverter(
+            name=name,
+            nipype_name=nipype_name,
+            **{n: eval(v) for n, v in defaults},
+        )
+        dct = attrs.asdict(conv)
+        for k in dct:
+            if not dct[k]:
+                dct[k] = None
+        yaml_str = yaml.dump(dct, sort_keys=False)
+        for k in dct:
+            fld = getattr(attrs.fields(WorkflowConverter), k)
+            hlp = fld.metadata.get("help")
+            if hlp:
+                yaml_str = re.sub(
+                    r"^(" + k + r"):",
+                    "# " + hlp + r"\n\1:",
+                    yaml_str,
+                    flags=re.MULTILINE,
+                )
+        return yaml_str
 
 
 @attrs.define
@@ -879,6 +907,37 @@ class WorkflowConverter:
             self.nipype_module.__name__,
             ImportStatement.get_relative_package(pydra_module_path, self.output_module),
         )
+
+    @classmethod
+    def default_spec(
+        cls, name: str, nipype_module: str, defaults: ty.Dict[str, ty.Any]
+    ) -> str:
+        """Generates a spec for the workflow converter from the given function"""
+        conv = WorkflowConverter(
+            name=name,
+            nipype_name=name,
+            nipype_module=nipype_module,
+            **{n: eval(v) for n, v in defaults},
+        )
+        dct = attrs.asdict(conv)
+        dct["nipype_module"] = dct["nipype_module"].__name__
+        del dct["package"]
+        del dct["nodes"]
+        for k in dct:
+            if not dct[k]:
+                dct[k] = None
+        yaml_str = yaml.dump(dct, sort_keys=False)
+        for k in dct:
+            fld = getattr(attrs.fields(WorkflowConverter), k)
+            hlp = fld.metadata.get("help")
+            if hlp:
+                yaml_str = re.sub(
+                    r"^(" + k + r"):",
+                    "# " + hlp + r"\n\1:",
+                    yaml_str,
+                    flags=re.MULTILINE,
+                )
+        return yaml_str
 
 
 def match_kwargs(args: ty.List[str], sig: ty.List[str]) -> ty.Dict[str, str]:

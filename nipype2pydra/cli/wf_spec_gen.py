@@ -75,8 +75,6 @@ def wf_spec_gen(
                 dct = attrs.asdict(conv)
                 dct["input_struct"] = list(dct["input_struct"])
                 dct["nipype_module"] = dct["nipype_module"].__name__
-                del dct["workflow_specs"]
-                del dct["output_module"]
                 for k in dct:
                     if not dct[k]:
                         dct[k] = None
