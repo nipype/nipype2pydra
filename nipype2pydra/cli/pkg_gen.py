@@ -107,7 +107,10 @@ def pkg_gen(
     has_doctests = set()
 
     for pkg, spec in to_import.items():
-        pkg_dir = initialise_task_repo(output_dir, task_template, pkg)
+        interface_only_pkg = "workflows" not in spec
+        pkg_dir = initialise_task_repo(
+            output_dir, task_template, pkg, interface_only=interface_only_pkg
+        )
         pkg_formats = set()
 
         spec_dir = pkg_dir / "nipype-auto-conv" / "specs"
@@ -120,7 +123,7 @@ def pkg_gen(
                 )
             )
 
-        if "workflows" in spec and not single_interface:
+        if not interface_only_pkg and not single_interface:
             workflows_spec_dir = spec_dir / "workflows"
             workflows_spec_dir.mkdir(parents=True, exist_ok=True)
             for wf_path in spec["workflows"]:
@@ -155,7 +158,11 @@ def pkg_gen(
                     not_interfaces.append(interface_path)
                     continue
 
-                parsed = NipypeInterface.parse(nipype_interface, pkg, pkg_prefix)
+                parsed = NipypeInterface.parse(
+                    nipype_interface=nipype_interface,
+                    pkg=pkg,
+                    base_package=pkg_prefix,
+                )
 
                 spec_name = to_snake_case(interface)
                 yaml_spec = parsed.generate_yaml_spec()

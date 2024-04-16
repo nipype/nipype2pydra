@@ -54,13 +54,18 @@ def convert(
         **spec,
     )
 
+    interfaces_only_pkg = not workflow_specs
+
+    def get_output_module(module: str, task_name: str) -> str:
+        output_module = converter.translate_submodule(
+            module, sub_pkg="auto" if interfaces_only_pkg else None
+        )
+        output_module += "." + to_snake_case(task_name)
+        return output_module
+
     converter.interfaces = {
         n: task.get_converter(
-            output_module=(
-                converter.translate_submodule(c["nipype_module"])
-                + "."
-                + to_snake_case(c["task_name"])
-            ),
+            output_module=get_output_module(c["nipype_module"], c["task_name"]),
             callables_module=interface_spec_callables[n],
             **c,
         )

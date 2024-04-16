@@ -108,7 +108,10 @@ class NipypeInterface:
 
     @classmethod
     def parse(
-        cls, nipype_interface: type, pkg: str, base_package: str
+        cls,
+        nipype_interface: type,
+        pkg: str,
+        base_package: str,
     ) -> "NipypeInterface":
         """Generate preamble comments at start of file with args and doc strings"""
 
@@ -125,6 +128,8 @@ class NipypeInterface:
 # ----
 # {doc_string}\n"""
         ).replace("        #", "#")
+
+        base_package = base_package.rstrip(".")
 
         if base_package:
             module = nipype_interface.__module__[len(base_package) + 1 :]
@@ -413,6 +418,8 @@ class NipypeInterface:
                 callables_str, fast=False, mode=black.FileMode()
             )
         except black.parsing.InvalidInput as e:
+            with open("/Users/tclose/Desktop/gen-code.py", "w") as f:
+                f.write(callables_str)
             raise RuntimeError(
                 f"Black could not parse generated code: {e}\n\n{callables_str}"
             )
@@ -640,7 +647,12 @@ def initialise_task_repo(
     specs_dir = auto_conv_dir / "specs"
     specs_dir.mkdir(parents=True)
     with open(auto_conv_dir / "generate", "w") as f:
-        f.write("nipype2pydra convert specs/package.yaml ..\n")
+        f.write(
+            """#!/usr/bin/env bash
+conv_dir=$(dirname $0)
+nipype2pydra convert $conv_dir/specs $conv_dir/..
+"""
+        )
     os.chmod(auto_conv_dir / "generate", 0o755)  # make executable
     shutil.copy(
         TEMPLATES_DIR / "nipype-auto-convert-requirements.txt",
@@ -652,7 +664,7 @@ def initialise_task_repo(
     gh_workflows_dir.mkdir(parents=True, exist_ok=True)
     ci_cd = "ci-cd-interface.yaml" if interface_only else "ci-cd-workflow.yaml"
     shutil.copy(
-        TEMPLATES_DIR / "gh_workflows" / ci_cd.yaml,
+        TEMPLATES_DIR / "gh_workflows" / ci_cd,
         gh_workflows_dir / "ci-cd.yaml",
     )
 
@@ -705,37 +717,47 @@ def initialise_task_repo(
     with open(pkg_dir / ".gitignore", "a") as f:
         f.write(f"\n/pydra/tasks/{pkg}/auto" f"\n/pydra/tasks/{pkg}/_version.py\n")
 
+    python_pkg_dir = pkg_dir / "pydra" / "tasks" / pkg
+
     # rename tasks directory
-    (pkg_dir / "pydra" / "tasks" / "CHANGEME").rename(pkg_dir / "pydra" / "tasks" / pkg)
-    (
-        pkg_dir
-        / "related-packages"
-        / "fileformats"
-        / "fileformats"
-        / "medimage_CHANGEME"
-    ).rename(
-        pkg_dir / "related-packages" / "fileformats" / "fileformats" / f"medimage_{pkg}"
-    )
-    (
-        pkg_dir
-        / "related-packages"
-        / "fileformats-extras"
-        / "fileformats"
-        / "extras"
-        / "medimage_CHANGEME"
-    ).rename(
-        pkg_dir
-        / "related-packages"
-        / "fileformats-extras"
-        / "fileformats"
-        / "extras"
-        / f"medimage_{pkg}"
-    )
+    if interface_only:
+        (pkg_dir / "pydra" / "tasks" / "CHANGEME").rename(python_pkg_dir)
+        (
+            pkg_dir
+            / "related-packages"
+            / "fileformats"
+            / "fileformats"
+            / "medimage_CHANGEME"
+        ).rename(
+            pkg_dir
+            / "related-packages"
+            / "fileformats"
+            / "fileformats"
+            / f"medimage_{pkg}"
+        )
+        (
+            pkg_dir
+            / "related-packages"
+            / "fileformats-extras"
+            / "fileformats"
+            / "extras"
+            / "medimage_CHANGEME"
+        ).rename(
+            pkg_dir
+            / "related-packages"
+            / "fileformats-extras"
+            / "fileformats"
+            / "extras"
+            / f"medimage_{pkg}"
+        )
+
+    else:
+        shutil.rmtree(pkg_dir / "pydra" / "tasks" / "CHANGEME")
+        shutil.rmtree(pkg_dir / "related-packages")
+        python_pkg_dir.mkdir(parents=True)
 
     # Add in modified __init__.py
-    shutil.copy(
-        TEMPLATES_DIR / "init.py", pkg_dir / "pydra" / "tasks" / pkg / "__init__.py"
-    )
+    shutil.copy(TEMPLATES_DIR / "init.py", python_pkg_dir / "__init__.py")
 
     # Replace "CHANGEME" string with pkg name
     for fspath in pkg_dir.glob("**/*"):

@@ -306,18 +306,9 @@ def get_local_constants(mod):
     """
     source_code = inspect.getsource(mod)
     source_code = source_code.replace("\\\n", " ")
-    parts = re.split(r"^(\w+) *= *", source_code, flags=re.MULTILINE)
     local_vars = []
-    for attr_name, following in zip(parts[1::2], parts[2::2]):
-        first_line = following.splitlines()[0]
-        if re.match(r".*(\[|\(|\{)", first_line):
-            pre, args, post = extract_args(following)
-            if args:
-                local_vars.append(
-                    (attr_name, pre + re.sub(r"\n *", "", ", ".join(args)) + post[0])
-                )
-            else:
-                local_vars.append((attr_name, first_line))
-        else:
-            local_vars.append((attr_name, first_line))
+    for stmt in split_source_into_statements(source_code):
+        match = re.match(r"^(\w+) *= *(.*)", stmt, flags=re.MULTILINE | re.DOTALL)
+        if match:
+            local_vars.append(tuple(match.groups()))
     return local_vars
