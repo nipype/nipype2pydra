@@ -650,7 +650,7 @@ def initialise_task_repo(
         f.write(
             """#!/usr/bin/env bash
 conv_dir=$(dirname $0)
-nipype2pydra convert $conv_dir/specs $conv_dir/..
+nipype2pydra convert $conv_dir/specs $conv_dir/.. $@
 """
         )
     os.chmod(auto_conv_dir / "generate", 0o755)  # make executable

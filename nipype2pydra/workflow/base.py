@@ -198,6 +198,15 @@ class WorkflowConverter:
         )
 
     @cached_property
+    def converted_used_symbols(self) -> UsedSymbols:
+        return UsedSymbols.find(
+            self.nipype_module,
+            [self.converted_code],
+            collapse_intra_pkg=False,
+            translations=self.package.import_translations,
+        )
+
+    @cached_property
     def config_defaults(self) -> ty.Dict[str, ty.Dict[str, str]]:
         defaults = {}
         for name, config_params in self.package.config_params.items():
@@ -293,22 +302,11 @@ class WorkflowConverter:
         if additional_funcs is None:
             additional_funcs = []
 
-        used = UsedSymbols(
-            imports=copy(self.used_symbols.imports),
-            intra_pkg_classes=copy(self.used_symbols.intra_pkg_classes),
-            intra_pkg_funcs=copy(self.used_symbols.intra_pkg_funcs),
-            local_functions=copy(self.used_symbols.local_functions),
-            local_classes=copy(self.used_symbols.local_classes),
-            constants=copy(self.used_symbols.constants),
-        )
+        used = self.converted_used_symbols.copy()
 
         # Start writing output module with used imports and converted function body of
         # main workflow
-        code_str = (
-            "\n".join(str(i) for i in used.imports if not i.indent)
-            + "\nimport pydra.task\n"
-            + "from pydra.engine import Workflow\n\n"
-        )
+        code_str = "\n".join(str(i) for i in used.imports if not i.indent) + "\n\n"
         code_str += self.converted_code
 
         # Get any intra-package classes and functions that need to be written
@@ -580,7 +578,7 @@ class WorkflowConverter:
             ):
                 indent, varname, wf_name = match.groups()
                 nested_workflow_converter = NestedWorkflowConverter(
-                    varname=varname,
+                    name=varname,
                     workflow_name=wf_name,
                     nested_spec=self.nested_workflows.get(wf_name),
                     args=extract_args(statement)[1],

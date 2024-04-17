@@ -147,6 +147,8 @@ class UsedSymbols:
                 "import attrs",  # attrs is included in imports in case we reference attrs.NOTHING
                 "from fileformats.generic import File, Directory",
                 "import logging",
+                "import pydra.task",
+                "from pydra.engine import Workflow",
             ]
         )
         global_scope = True
@@ -293,6 +295,9 @@ class UsedSymbols:
             used.imports.add(stmt)
         cls._cache[cache_key] = used
         return used
+
+    def copy(self) -> "UsedSymbols":
+        return attrs.evolve(self)
 
     # Nipype-specific names and Python keywords
     SYMBOLS_TO_IGNORE = ["isdefined"] + keyword.kwlist + list(builtins.__dict__.keys())

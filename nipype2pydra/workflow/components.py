@@ -239,7 +239,7 @@ class NodeConverter:
 @attrs.define
 class NestedWorkflowConverter:
 
-    varname: str
+    name: str
     workflow_name: str
     nested_spec: ty.Optional["WorkflowConverter"]
     indent: str
@@ -280,7 +280,7 @@ class NestedWorkflowConverter:
         args_str = ", ".join(args)
         if args_str:
             args_str += ", "
-        args_str += f"name='{self.varname}'"
+        args_str += f"name='{self.name}'"
         return (
             f"{self.indent}{self.workflow_variable}.add({self.workflow_name}("
             + ", ".join(sorted(self.args + config_params))

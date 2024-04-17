@@ -4,6 +4,7 @@ import inspect
 from operator import attrgetter, itemgetter
 from functools import cached_property
 import itertools
+import logging
 import attrs
 from nipype.interfaces.base import BaseInterface, TraitedSpec
 from .base import BaseTaskConverter
@@ -16,6 +17,9 @@ from ..utils import (
     cleanup_function_body,
     insert_args_in_signature,
 )
+
+
+logger = logging.getLogger("nipype2pydra")
 
 
 @attrs.define(slots=False)
@@ -191,22 +195,30 @@ class FunctionTaskConverter(BaseTaskConverter):
         self, method_body: str, input_names: ty.List[str], output_names: ty.List[str]
     ) -> str:
         # Replace self.inputs.<name> with <name> in the function body
-        input_re = re.compile(r"self\.inputs\.(?!get\b)(\w+)")
+        input_re = re.compile(r"self\.inputs\.(\w+)\b(?!\()")
         unrecognised_inputs = set(
             m for m in input_re.findall(method_body) if m not in input_names
         )
-        assert (
-            not unrecognised_inputs
-        ), f"Found the following unrecognised inputs {unrecognised_inputs}"
+        if unrecognised_inputs:
+            logger.warning(
+                "Found the following unrecognised (potentially dynamic) inputs %s in "
+                "'%s' task",
+                unrecognised_inputs,
+                self.task_name,
+            )
         method_body = input_re.sub(r"\1", method_body)
 
         output_re = re.compile(self.return_value + r"\[(?:'|\")(\w+)(?:'|\")\]")
         unrecognised_outputs = set(
             m for m in output_re.findall(method_body) if m not in output_names
         )
-        assert (
-            not unrecognised_outputs
-        ), f"Found the following unrecognised outputs {unrecognised_outputs}"
+        if unrecognised_outputs:
+            logger.warning(
+                "Found the following unrecognised (potentially dynamic) outputs %s in "
+                "'%s' task",
+                unrecognised_outputs,
+                self.task_name,
+            )
         method_body = output_re.sub(r"\1", method_body)
         # Strip initialisation of outputs
         method_body = re.sub(
