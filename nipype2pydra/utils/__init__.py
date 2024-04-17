@@ -1,9 +1,9 @@
 from .misc import (
-    load_class_or_func,  # noqa: F401
     show_cli_trace,  # noqa: F401
     import_module_from_path,  # noqa: F401
     set_cwd,  # noqa: F401
     add_to_sys_path,  # noqa: F401
+    full_address,  # noqa: F401
     is_fileset,  # noqa: F401
     to_snake_case,  # noqa: F401
     add_exc_note,  # noqa: F401

@@ -3,6 +3,7 @@ import inspect
 import re
 import typing as ty
 from operator import attrgetter
+import types
 import logging
 from functools import cached_property
 from collections import defaultdict
@@ -17,6 +18,7 @@ from . import task
 from .utils import (
     UsedSymbols,
     cleanup_function_body,
+    full_address,
     ImportStatement,
 )
 import nipype2pydra.workflow
@@ -45,7 +47,9 @@ class ConfigParamsConverter:
     )
 
     module: str = attrs.field(
-        converter=lambda m: import_module(m) if not isinstance(m, ty.ModuleType) else m,
+        converter=lambda m: (
+            import_module(m) if not isinstance(m, types.ModuleType) else m
+        ),
         metadata={
             "help": (
                 "name of the nipype module the function is found within, "
@@ -243,6 +247,9 @@ class PackageConverter:
             intra_pkg_modules.items(), "writing intra-package modules"
         ):
 
+            if not objs:
+                continue
+
             if mod_name == self.name:
                 raise NotImplementedError(
                     "Cannot write the main package module as an intra-package module"
@@ -252,7 +259,7 @@ class PackageConverter:
             mod_path.parent.mkdir(parents=True, exist_ok=True)
             mod = import_module(self.untranslate_submodule(mod_name))
 
-            interfaces = [
+            assert not [
                 o for o in objs if inspect.isclass(o) and issubclass(o, BaseInterface)
             ]
             other_objs = [o for o in objs if o not in interfaces]
@@ -262,7 +269,7 @@ class PackageConverter:
                 for interface in tqdm(
                     interfaces, "converting interfaces from Nipype to Pydra syntax"
                 ):
-                    task_converter = self.interfaces[interface.__name__]
+                    task_converter = self.interfaces[full_address(interface)]
                     task_converter.write(package_root)
                 with open(mod_path.joinpath("__init__.py"), "w") as f:
                     f.write(

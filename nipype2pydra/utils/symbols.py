@@ -53,6 +53,8 @@ class UsedSymbols:
 
     _cache = {}
 
+    symbols_re = re.compile(r"(?<!\"|')\b(\w+)\b(?!\"|')")
+
     def update(self, other: "UsedSymbols"):
         self.imports.update(other.imports)
         self.intra_pkg_funcs.update(other.intra_pkg_funcs)
@@ -164,21 +166,10 @@ class UsedSymbols:
                         continue
             if ImportStatement.matches(stmt):
                 imports.extend(parse_imports(stmt, relative_to=module))
-        symbols_re = re.compile(r"(?<!\"|')\b(\w+)\b(?!\"|')")
-
-        def get_symbols(func: ty.Union[str, ty.Callable, ty.Type]):
-            """Get the symbols used in a function body"""
-            try:
-                fbody = inspect.getsource(func)
-            except TypeError:
-                fbody = func
-            for stmt in split_source_into_statements(fbody):
-                if stmt and not re.match(r"\s*(#|\"|')", stmt):  # skip comments/docs
-                    used_symbols.update(symbols_re.findall(stmt))
 
         used_symbols = set()
         for function_body in function_bodies:
-            get_symbols(function_body)
+            cls._get_symbols(function_body, used_symbols)
 
         # Keep stepping into nested referenced local function/class sources until all local
         # functions and constants that are referenced are added to the used symbols
@@ -191,7 +182,7 @@ class UsedSymbols:
                     and local_func not in used.local_functions
                 ):
                     used.local_functions.add(local_func)
-                    get_symbols(local_func)
+                    cls._get_symbols(local_func, used_symbols)
             for local_class in local_classes:
                 if (
                     local_class.__name__ in used_symbols
@@ -203,14 +194,14 @@ class UsedSymbols:
                     class_body = inspect.getsource(local_class)
                     bases = extract_args(class_body)[1]
                     used_symbols.update(bases)
-                    get_symbols(class_body)
+                    cls._get_symbols(class_body, used_symbols)
             for const_name, const_def in local_constants:
                 if (
                     const_name in used_symbols
                     and (const_name, const_def) not in used.constants
                 ):
                     used.constants.add((const_name, const_def))
-                    get_symbols(const_def)
+                    cls._get_symbols(const_def, used_symbols)
             used_symbols -= set(cls.SYMBOLS_TO_IGNORE)
 
         base_pkg = module.__name__.split(".")[0]
@@ -296,8 +287,38 @@ class UsedSymbols:
         cls._cache[cache_key] = used
         return used
 
+    @classmethod
+    def filter_imports(
+        cls, imports: ty.List[ImportStatement], source_code: str
+    ) -> ty.List[ImportStatement]:
+        """Filter out the imports that are not used in the function bodies"""
+        symbols = set()
+        cls._get_symbols(source_code, symbols)
+        symbols -= set(cls.SYMBOLS_TO_IGNORE)
+        filtered = []
+        for stmt in imports:
+            stmt = stmt.only_include(symbols)
+            if stmt:
+                filtered.append(stmt)
+        return filtered
+
     def copy(self) -> "UsedSymbols":
         return attrs.evolve(self)
+
+    @classmethod
+    def _get_symbols(
+        cls, func: ty.Union[str, ty.Callable, ty.Type], symbols: ty.Set[str]
+    ):
+        """Get the symbols used in a function body"""
+        try:
+            fbody = inspect.getsource(func)
+        except TypeError:
+            fbody = func
+        for stmt in split_source_into_statements(fbody):
+            if stmt and not re.match(
+                r"\s*(#|\"|'|from |import )", stmt
+            ):  # skip comments/docs
+                symbols.update(cls.symbols_re.findall(stmt))
 
     # Nipype-specific names and Python keywords
     SYMBOLS_TO_IGNORE = ["isdefined"] + keyword.kwlist + list(builtins.__dict__.keys())

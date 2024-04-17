@@ -17,6 +17,7 @@ from ..utils import (
     split_source_into_statements,
     extract_args,
     cleanup_function_body,
+    full_address,
     ImportStatement,
     parse_imports,
 )
@@ -198,15 +199,6 @@ class WorkflowConverter:
         )
 
     @cached_property
-    def converted_used_symbols(self) -> UsedSymbols:
-        return UsedSymbols.find(
-            self.nipype_module,
-            [self.converted_code],
-            collapse_intra_pkg=False,
-            translations=self.package.import_translations,
-        )
-
-    @cached_property
     def config_defaults(self) -> ty.Dict[str, ty.Dict[str, str]]:
         defaults = {}
         for name, config_params in self.package.config_params.items():
@@ -250,27 +242,23 @@ class WorkflowConverter:
 
     @cached_property
     def nested_workflows(self):
-        potential_funcs = [f[1].__name__ for f in self.used_symbols.intra_pkg_funcs] + [
-            f.__name__ for f in self.used_symbols.local_functions
-        ]
+        potential_funcs = {
+            full_address(f[1]): f[0] for f in self.used_symbols.intra_pkg_funcs
+        }
+        potential_funcs.update(
+            (full_address(f), f.__name__) for f in self.used_symbols.local_functions
+        )
         return {
-            name: workflow
-            for name, workflow in self.package.workflows.items()
-            if name in potential_funcs
+            potential_funcs[address]: workflow
+            for address, workflow in self.package.workflows.items()
+            if address in potential_funcs
         }
 
     @cached_property
     def nested_workflow_symbols(self) -> ty.List[str]:
         """Returns the symbols that are used in the body of the workflow that are also
         workflows"""
-        symbols = []
-        for alias, func in self.used_symbols.intra_pkg_funcs:
-            if func.__name__ in self.nested_workflows:
-                symbols.append(alias)
-        for func in self.used_symbols.local_functions:
-            if func.__name__ in self.nested_workflows:
-                symbols.append(func.__name__)
-        return symbols + self.external_nested_workflows
+        return list(self.nested_workflows) + self.external_nested_workflows
 
     def write(
         self,
@@ -302,19 +290,21 @@ class WorkflowConverter:
         if additional_funcs is None:
             additional_funcs = []
 
-        used = self.converted_used_symbols.copy()
+        used = self.used_symbols.copy()
 
         # Start writing output module with used imports and converted function body of
         # main workflow
-        code_str = "\n".join(str(i) for i in used.imports if not i.indent) + "\n\n"
-        code_str += self.converted_code
+        code_str = self.converted_code
 
         # Get any intra-package classes and functions that need to be written
 
         for _, intra_pkg_obj in used.intra_pkg_classes + list(used.intra_pkg_funcs):
-            intra_pkg_modules[self.to_output_module_path(intra_pkg_obj.__module__)].add(
-                intra_pkg_obj
-            )
+            if full_address(intra_pkg_obj) not in list(self.package.workflows) + list(
+                self.package.interfaces
+            ):
+                intra_pkg_modules[self.to_output_module_path(intra_pkg_obj.__module__)].add(
+                    intra_pkg_obj
+                )
         local_func_names = {f.__name__ for f in used.local_functions}
 
         # Convert any nested workflows
@@ -340,6 +330,14 @@ class WorkflowConverter:
         code_str += "\n".join(f"{n} = {d}" for n, d in used.constants)
         for klass in sorted(used.local_classes, key=attrgetter("__name__")):
             code_str += "\n\n" + cleanup_function_body(inspect.getsource(klass))
+
+        filtered_imports = UsedSymbols.filter_imports(used.imports, code_str)
+
+        code_str = (
+            "\n".join(str(i) for i in filtered_imports if not i.indent)
+            + "\n\n"
+            + code_str
+        )
 
         # Format the generated code with black
         try:

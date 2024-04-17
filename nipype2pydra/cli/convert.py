@@ -32,7 +32,7 @@ def convert(
     for fspath in (specs_dir / "workflows").glob("*.yaml"):
         with open(fspath, "r") as f:
             spec = yaml.safe_load(f)
-            workflow_specs[spec["name"]] = spec
+            workflow_specs[f"{spec['nipype_module']}.{spec['name']}"] = spec
 
     interface_specs = {}
     interface_spec_callables = {}
@@ -40,7 +40,7 @@ def convert(
     for fspath in interfaces_dir.glob("*.yaml"):
         with open(fspath, "r") as f:
             spec = yaml.safe_load(f)
-            interface_specs[spec["task_name"]] = spec
+            interface_specs[f"{spec['nipype_module']}.{spec['task_name']}"] = spec
         interface_spec_callables[spec["task_name"]] = fspath.parent / (
             fspath.name[: -len(".yaml")] + "_callables.py"
         )
@@ -48,11 +48,7 @@ def convert(
     with open(specs_dir / "package.yaml", "r") as f:
         spec = yaml.safe_load(f)
 
-    converter = PackageConverter(
-        workflows=workflow_specs,
-        interfaces=interface_specs,
-        **spec,
-    )
+    converter = PackageConverter(**spec)
 
     interfaces_only_pkg = not workflow_specs
 
@@ -66,7 +62,7 @@ def convert(
     converter.interfaces = {
         n: task.get_converter(
             output_module=get_output_module(c["nipype_module"], c["task_name"]),
-            callables_module=interface_spec_callables[n],
+            callables_module=interface_spec_callables[c["task_name"]],
             **c,
         )
         for n, c in interface_specs.items()

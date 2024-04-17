@@ -2,6 +2,7 @@ import traceback
 import typing as ty
 from types import ModuleType
 import sys
+import types
 import re
 import os
 import inspect
@@ -35,12 +36,6 @@ INBUILT_NIPYPE_TRAIT_NAMES = [
 ]
 
 
-def load_class_or_func(location_str):
-    module_str, name = location_str.split(":")
-    module = import_module(module_str)
-    return getattr(module, name)
-
-
 def show_cli_trace(result):
     return "".join(traceback.format_exception(*result.exc_info))
 
@@ -54,6 +49,13 @@ def import_module_from_path(module_path: ty.Union[ModuleType, Path, str]) -> Mod
         return import_module(module_path.stem)
     finally:
         sys.path.pop(0)
+
+
+def full_address(func_or_class: ty.Union[ty.Type, types.FunctionType]) -> str:
+    """Get the location of a function or class in the format `module.object_name`"""
+    if not (inspect.isclass(func_or_class) or inspect.isfunction(func_or_class)):
+        raise ValueError(f"Input must be a class or function, not {func_or_class}")
+    return f"{func_or_class.__module__}.{func_or_class.__name__}"
 
 
 @contextmanager
