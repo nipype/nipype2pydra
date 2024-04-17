@@ -308,7 +308,7 @@ class PackageConverter:
                         code_str, fast=False, mode=black.FileMode()
                     )
                 except Exception as e:
-                    with open("/Users/tclose/Desktop/gen-code.py", "w") as f:
+                    with open(Path("~/Desktop/gen-code.py").expanduser(), "w") as f:
                         f.write(code_str)
                     raise RuntimeError(
                         f"Black could not parse generated code: {e}\n\n{code_str}"

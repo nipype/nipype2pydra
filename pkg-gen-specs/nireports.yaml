@@ -1,0 +1,9 @@
+nireports:
+  interfaces:
+    - nireports.interfaces.fmri.FMRISummary
+    - nireports.interfaces.dmri.DWIHeatmap
+    - nireports.interfaces.nuisance.CompCorVariancePlot
+    - nireports.interfaces.nuisance.ConfoundsCorrelationPlot
+    - nireports.interfaces.mosaic.PlotContours
+    - nireports.interfaces.mosaic.PlotMosaic
+    - nireports.interfaces.mosaic.PlotSpikes

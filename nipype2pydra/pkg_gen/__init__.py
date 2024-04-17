@@ -418,7 +418,7 @@ class NipypeInterface:
                 callables_str, fast=False, mode=black.FileMode()
             )
         except black.parsing.InvalidInput as e:
-            with open("/Users/tclose/Desktop/gen-code.py", "w") as f:
+            with open(Path("~/Desktop/gen-code.py").expanduser(), "w") as f:
                 f.write(callables_str)
             raise RuntimeError(
                 f"Black could not parse generated code: {e}\n\n{callables_str}"

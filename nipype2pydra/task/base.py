@@ -509,7 +509,7 @@ class BaseTaskConverter(metaclass=ABCMeta):
                 spec_str, fast=False, mode=black.FileMode()
             )
         except black.InvalidInput as e:
-            with open("/Users/tclose/Desktop/gen-code.py", "w") as f:
+            with open(Path("~/Desktop/gen-code.py").expanduser(), "w") as f:
                 f.write(spec_str)
             raise RuntimeError(
                 f"Black could not parse generated code: {e}\n\n{spec_str}"
