@@ -150,13 +150,6 @@ class WorkflowConverter:
     def output_module(self):
         return self.package.translate_submodule(self.nipype_module_name)
 
-    def get_output_module_path(self, package_root: Path):
-        output_module_path = package_root.joinpath(
-            *self.output_module.split(".")
-        ).with_suffix(".py")
-        output_module_path.parent.mkdir(parents=True, exist_ok=True)
-        return output_module_path
-
     @workflow_variable.default
     def workflow_variable_default(self):
         returns = set(
@@ -325,7 +318,8 @@ class WorkflowConverter:
                 )
 
         write_to_module(
-            self.get_output_module_path(package_root),
+            package_root,
+            module_name=self.output_module,
             converted_code=code_str,
             classes=used.local_classes,
             functions=used.local_functions,

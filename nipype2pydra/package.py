@@ -272,14 +272,13 @@ class PackageConverter:
                 )
 
             mod_path = package_root.joinpath(*mod_name.split("."))
-            mod_path.parent.mkdir(parents=True, exist_ok=True)
             mod = import_module(self.untranslate_submodule(mod_name))
 
             interfaces = [o for o in objs if full_address(o) in self.interfaces]
             other_objs = [o for o in objs if o not in interfaces]
 
             if interfaces:
-                other_mod_path = mod_path / "other"
+                mod_name = mod_name + ".other"
                 init_code = ""
                 for interface in tqdm(
                     interfaces, f"Generating interfaces for {mod_name}"
@@ -293,7 +292,7 @@ class PackageConverter:
                 with open(mod_path / "__init__.py", "w") as f:
                     f.write(init_code)
             else:
-                other_mod_path = mod_path
+                other_mod_name = mod_name
 
             if other_objs:
                 used = UsedSymbols.find(
@@ -316,11 +315,12 @@ class PackageConverter:
                 ]
 
                 write_to_module(
-                    other_mod_path.with_suffix(".py"),
-                    used.imports,
-                    used.constants,
-                    classes,
-                    functions,
+                    package_root=package_root,
+                    module_name=other_mod_name,
+                    imports=used.imports,
+                    constants=used.constants,
+                    classes=classes,
+                    functions=functions,
                     find_replace=self.find_replace,
                 )
 

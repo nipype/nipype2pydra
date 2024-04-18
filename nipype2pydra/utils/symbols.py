@@ -237,8 +237,8 @@ class UsedSymbols:
                 if not to_include:
                     continue
                 stmt = stmt.only_include(to_include)
+            inlined_objects = []
             if stmt.in_package(base_pkg):
-                inlined_objects = []
                 for imported in list(stmt.values()):
                     if not imported.in_package(base_pkg):
                         # Case where an object is a nested import from a different package
@@ -268,16 +268,23 @@ class UsedSymbols:
                                     2
                                 ].split("\n", 1)[1]
                             )
-
-                # Recursively include neighbouring objects imported in the module
-                if inlined_objects:
-                    used_in_mod = cls.find(
-                        stmt.module,
-                        function_bodies=inlined_objects,
-                        translations=translations,
-                    )
-                    used.update(used_in_mod)
-            used.imports.add(stmt)
+            elif stmt.in_package("nipype") and not stmt.in_package("nipype.interfaces"):
+                for imported in list(stmt.values()):
+                    if not imported.in_package("nipype"):
+                        used.imports.add(imported.as_independent_statement())
+                    else:
+                        inlined_objects.append(imported.object)
+                    stmt.drop(imported)
+            # Recursively include neighbouring objects imported in the module
+            if inlined_objects:
+                used_in_mod = cls.find(
+                    stmt.module,
+                    function_bodies=inlined_objects,
+                    translations=translations,
+                )
+                used.update(used_in_mod)
+            if stmt:
+                used.imports.add(stmt)
         cls._cache[cache_key] = used
         return used
 

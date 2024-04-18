@@ -10,7 +10,8 @@ from .symbols import UsedSymbols
 
 
 def write_to_module(
-    module_fspath: Path,
+    package_root: Path,
+    module_name: str,
     imports: ty.List[ImportStatement],
     constants: ty.List[ty.Tuple[str, str]],
     classes: ty.List[ty.Type],
@@ -22,6 +23,8 @@ def write_to_module(
     merging with existing code if it exists"""
     existing_import_strs = []
     code_str = ""
+    module_fspath = package_root.joinpath(*module_name.split(".")).with_suffix(".py")
+    module_fspath.parent.mkdir(parents=True, exist_ok=True)
     if module_fspath.exists():
         with open(module_fspath, "r") as f:
             existing_code = f.read()
@@ -31,7 +34,7 @@ def write_to_module(
                 existing_import_strs.append(stmt)
             else:
                 code_str += "\n" + stmt
-    existing_imports = parse_imports(existing_import_strs)
+    existing_imports = parse_imports(existing_import_strs, relative_to=module_name)
 
     for const_name, const_val in sorted(constants):
         if f"\n{const_name} = " not in code_str:
