@@ -2,14 +2,12 @@ from importlib import import_module
 import inspect
 import re
 import typing as ty
-from operator import attrgetter
 import types
 import logging
 from functools import cached_property
 from collections import defaultdict
 from pathlib import Path
 import shutil
-import black.parsing
 from tqdm import tqdm
 import attrs
 import yaml
@@ -17,8 +15,7 @@ from nipype.interfaces.base import BaseInterface
 from . import task
 from .utils import (
     UsedSymbols,
-    cleanup_function_body,
-    full_address,
+    write_to_module,
     ImportStatement,
 )
 import nipype2pydra.workflow
@@ -145,6 +142,9 @@ class PackageConverter:
 
         mod_dir = package_root.joinpath(*self.name.split("."))
 
+        if mod_dir.exists():
+            shutil.rmtree(mod_dir)
+
         if self.interface_only_package:
             if workflows_to_convert:
                 raise ValueError(
@@ -262,72 +262,30 @@ class PackageConverter:
             assert not [
                 o for o in objs if inspect.isclass(o) and issubclass(o, BaseInterface)
             ]
-            other_objs = [o for o in objs if o not in interfaces]
+            used = UsedSymbols.find(
+                mod,
+                objs,
+                pull_out_inline_imports=False,
+                translations=translations,
+            )
 
-            if interfaces:
-                mod_path.mkdir(parents=True, exist_ok=True)
-                for interface in tqdm(
-                    interfaces, "converting interfaces from Nipype to Pydra syntax"
-                ):
-                    task_converter = self.interfaces[full_address(interface)]
-                    task_converter.write(package_root)
-                with open(mod_path.joinpath("__init__.py"), "w") as f:
-                    f.write(
-                        "\n".join(
-                            f"from .{o.__name__} import {o.__name__}"
-                            for o in interfaces
-                        )
-                    )
-                    if other_objs:
-                        f.write(
-                            "\nfrom .other import ("
-                            + ", ".join(o.__name__ for o in other_objs + ")")
-                        )
+            classes = used.local_classes + [
+                o for o in objs if inspect.isclass(o) and o not in used.local_classes
+            ]
 
-            if other_objs:
-                used = UsedSymbols.find(
-                    mod,
-                    other_objs,
-                    pull_out_inline_imports=False,
-                    translations=translations,
-                )
-                code_str = (
-                    "\n".join(str(i) for i in used.imports if not i.indent) + "\n\n"
-                )
-                code_str += (
-                    "\n".join(f"{n} = {d}" for n, d in sorted(used.constants)) + "\n\n"
-                )
-                code_str += "\n\n".join(
-                    sorted(cleanup_function_body(inspect.getsource(f)) for f in objs)
-                )
-                for klass in sorted(used.local_classes, key=attrgetter("__name__")):
-                    if klass not in objs:
-                        code_str += "\n\n" + cleanup_function_body(
-                            inspect.getsource(klass)
-                        )
-                for func in sorted(used.local_functions, key=attrgetter("__name__")):
-                    if func not in objs:
-                        code_str += "\n\n" + cleanup_function_body(
-                            inspect.getsource(func)
-                        )
-                try:
-                    code_str = black.format_file_contents(
-                        code_str, fast=False, mode=black.FileMode()
-                    )
-                except Exception as e:
-                    with open(Path("~/Desktop/gen-code.py").expanduser(), "w") as f:
-                        f.write(code_str)
-                    raise RuntimeError(
-                        f"Black could not parse generated code: {e}\n\n{code_str}"
-                    )
-                if interfaces:
-                    # Write into package with __init__.py
-                    with open(mod_path.joinpath("other").with_suffix(".py"), "w") as f:
-                        f.write(code_str)
-                else:
-                    # Write as a standalone module
-                    with open(mod_path.with_suffix(".py"), "w") as f:
-                        f.write(code_str)
+            functions = list(used.local_functions) + [
+                o
+                for o in objs
+                if inspect.isfunction(o) and o not in used.local_functions
+            ]
+
+            write_to_module(
+                mod_path.with_suffix(".py"),
+                used.imports,
+                used.constants,
+                classes,
+                functions,
+            )
 
     @classmethod
     def default_spec(

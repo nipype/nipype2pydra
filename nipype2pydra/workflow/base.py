@@ -16,6 +16,7 @@ from ..utils import (
     UsedSymbols,
     split_source_into_statements,
     extract_args,
+    write_to_module,
     cleanup_function_body,
     full_address,
     ImportStatement,
@@ -200,24 +201,26 @@ class WorkflowConverter:
 
     @cached_property
     def config_defaults(self) -> ty.Dict[str, ty.Dict[str, str]]:
-        defaults = {}
+        all_defaults = {}
         for name, config_params in self.package.config_params.items():
             params = config_params.module
-            defaults[name] = {}
+            all_defaults[name] = {}
             for part in config_params.varname.split("."):
                 params = getattr(params, part)
             if config_params.type == "struct":
-                defaults[name] = {
+                defaults = {
                     a: getattr(params, a)
                     for a in dir(params)
                     if not inspect.isfunction(getattr(params, a))
                     and not a.startswith("_")
                 }
             elif config_params.type == "dict":
-                defaults[name] = copy(params)
+                defaults = copy(params)
             else:
                 assert False, f"Unrecognised config_params type {config_params.type}"
-        return defaults
+            defaults.update(config_params.defaults)
+            all_defaults[name] = defaults
+        return all_defaults
 
     @cached_property
     def used_configs(self) -> ty.List[str]:
@@ -302,11 +305,11 @@ class WorkflowConverter:
             if full_address(intra_pkg_obj) not in list(self.package.workflows) + list(
                 self.package.interfaces
             ):
-                intra_pkg_modules[self.to_output_module_path(intra_pkg_obj.__module__)].add(
-                    intra_pkg_obj
-                )
-        local_func_names = {f.__name__ for f in used.local_functions}
+                intra_pkg_modules[
+                    self.to_output_module_path(intra_pkg_obj.__module__)
+                ].add(intra_pkg_obj)
 
+        local_func_names = {f.__name__ for f in used.local_functions}
         # Convert any nested workflows
         for name, conv in self.nested_workflows.items():
             if conv.full_name in already_converted:
@@ -322,37 +325,46 @@ class WorkflowConverter:
                     additional_funcs=intra_pkg_modules[conv.output_module],
                 )
 
-        # Add any local functions, constants and classes
-        for func in sorted(used.local_functions, key=attrgetter("__name__")):
-            if func.__module__ + "." + func.__name__ not in already_converted:
-                code_str += "\n\n" + cleanup_function_body(inspect.getsource(func))
-
-        code_str += "\n".join(f"{n} = {d}" for n, d in used.constants)
-        for klass in sorted(used.local_classes, key=attrgetter("__name__")):
-            code_str += "\n\n" + cleanup_function_body(inspect.getsource(klass))
-
-        filtered_imports = UsedSymbols.filter_imports(used.imports, code_str)
-
-        code_str = (
-            "\n".join(str(i) for i in filtered_imports if not i.indent)
-            + "\n\n"
-            + code_str
+        write_to_module(
+            self.get_output_module_path(package_root),
+            converted_code=code_str,
+            classes=used.local_classes,
+            functions=used.local_functions,
+            imports=used.imports,
+            constants=used.constants,
         )
 
-        # Format the generated code with black
-        try:
-            code_str = black.format_file_contents(
-                code_str, fast=False, mode=black.FileMode()
-            )
-        except Exception as e:
-            with open(Path("~/Desktop/gen-code.py").expanduser(), "w") as f:
-                f.write(code_str)
-            raise RuntimeError(
-                f"Black could not parse generated code: {e}\n\n{code_str}"
-            )
+        # # Add any local functions, constants and classes
+        # for func in sorted(used.local_functions, key=attrgetter("__name__")):
+        #     if func.__module__ + "." + func.__name__ not in already_converted:
+        #         code_str += "\n\n" + cleanup_function_body(inspect.getsource(func))
 
-        with open(self.get_output_module_path(package_root), "w") as f:
-            f.write(code_str)
+        # code_str += "\n".join(f"{n} = {d}" for n, d in used.constants)
+        # for klass in sorted(used.local_classes, key=attrgetter("__name__")):
+        #     code_str += "\n\n" + cleanup_function_body(inspect.getsource(klass))
+
+        # filtered_imports = UsedSymbols.filter_imports(used.imports, code_str)
+
+        # code_str = (
+        #     "\n".join(str(i) for i in filtered_imports if not i.indent)
+        #     + "\n\n"
+        #     + code_str
+        # )
+
+        # # Format the generated code with black
+        # try:
+        #     code_str = black.format_file_contents(
+        #         code_str, fast=False, mode=black.FileMode()
+        #     )
+        # except Exception as e:
+        #     with open(Path("~/Desktop/gen-code.py").expanduser(), "w") as f:
+        #         f.write(code_str)
+        #     raise RuntimeError(
+        #         f"Black could not parse generated code: {e}\n\n{code_str}"
+        #     )
+
+        # with open(self.get_output_module_path(package_root), "w") as f:
+        #     f.write(code_str)
 
     @cached_property
     def _converted_code(self) -> ty.Tuple[str, ty.List[str]]:
@@ -367,7 +379,7 @@ class WorkflowConverter:
             the names of the used configs
         """
 
-        preamble, func_args, post = extract_args(self.func_src)
+        declaration, func_args, post = extract_args(self.func_src)
         return_types = post[1:].split(":", 1)[0]  # Get the return type
 
         # Parse the statements in the function body into converter objects and strings
@@ -435,21 +447,21 @@ class WorkflowConverter:
                 f"{list(self.nodes)} for {self.full_name}"
             )
 
-        code_str = ""
-        # Write out the preamble (e.g. docstring, comments, etc..)
-        while parsed_statements and isinstance(
-            parsed_statements[0],
-            (DocStringConverter, CommentConverter, ImportStatement),
-        ):
-            code_str += str(parsed_statements.pop(0)) + "\n"
-
         # Initialise the workflow object
-        code_str += (
+        code_str = (
             f"    {self.workflow_variable} = Workflow("
             f'name={workflow_name}, input_spec=["'
             + '", "'.join(sorted(input_spec))
             + '"])\n\n'
         )
+
+        preamble = ""
+        # Write out the preamble (e.g. docstring, comments, etc..)
+        while parsed_statements and isinstance(
+            parsed_statements[0],
+            (DocStringConverter, CommentConverter, ImportStatement),
+        ):
+            preamble += str(parsed_statements.pop(0)) + "\n"
 
         # Write out the statements to the code string
         for statement in parsed_statements:
@@ -471,15 +483,25 @@ class WorkflowConverter:
         for nested_workflow in self.nested_workflows.values():
             used_configs.update(nested_workflow.used_configs)
 
-        config_sig = [
-            f"{n}_{c}={self.config_defaults[n][c]!r}" for n, c in used_configs
-        ]
+        config_sig = []
+        param_init = ""
+        for scope_prefix, config_name in used_configs:
+            param_name = f"{scope_prefix}_{config_name}"
+            param_default = self.config_defaults[scope_prefix][config_name]
+            if isinstance(param_default, str) and "(" in param_default:
+                # delay init of default value to function body
+                param_init += (
+                    f"    if {param_name} is None:\n"
+                    f"        {param_name} = {param_default}\n\n"
+                )
+                param_default = None
+            config_sig.append(f"{param_name}={param_default!r}")
 
         # construct code string with modified signature
-        signature = preamble + ", ".join(sorted(func_args + config_sig)) + ")"
+        signature = declaration + ", ".join(sorted(func_args + config_sig)) + ")"
         if return_types:
             signature += f" -> {return_types}"
-        code_str = signature + ":\n\n" + code_str
+        code_str = signature + ":\n\n" + preamble + param_init + code_str
 
         if not isinstance(parsed_statements[-1], ReturnConverter):
             code_str += f"\n    return {self.workflow_variable}"

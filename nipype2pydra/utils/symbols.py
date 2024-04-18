@@ -53,7 +53,7 @@ class UsedSymbols:
 
     _cache = {}
 
-    symbols_re = re.compile(r"(?<!\"|')\b(\w+)\b(?!\"|')")
+    symbols_re = re.compile(r"(?<!\"|')\b([a-zA-Z\_][\w\.]*)\b(?!\"|')")
 
     def update(self, other: "UsedSymbols"):
         self.imports.update(other.imports)
@@ -144,15 +144,7 @@ class UsedSymbols:
         local_constants = get_local_constants(module)
         local_classes = get_local_classes(module)
         module_statements = split_source_into_statements(source_code)
-        imports: ty.List[ImportStatement] = parse_imports(
-            [
-                "import attrs",  # attrs is included in imports in case we reference attrs.NOTHING
-                "from fileformats.generic import File, Directory",
-                "import logging",
-                "import pydra.task",
-                "from pydra.engine import Workflow",
-            ]
-        )
+        imports: ty.List[ImportStatement] = []
         global_scope = True
         for stmt in module_statements:
             if not pull_out_inline_imports:
@@ -297,8 +289,11 @@ class UsedSymbols:
         symbols -= set(cls.SYMBOLS_TO_IGNORE)
         filtered = []
         for stmt in imports:
-            stmt = stmt.only_include(symbols)
-            if stmt:
+            if stmt.from_:
+                stmt = stmt.only_include(symbols)
+                if stmt:
+                    filtered.append(stmt)
+            elif stmt.module_name in symbols:
                 filtered.append(stmt)
         return filtered
 
@@ -318,7 +313,14 @@ class UsedSymbols:
             if stmt and not re.match(
                 r"\s*(#|\"|'|from |import )", stmt
             ):  # skip comments/docs
-                symbols.update(cls.symbols_re.findall(stmt))
+                for sym in cls.symbols_re.findall(stmt):
+                    if "." in sym:
+                        parts = sym.split(".")
+                        symbols.update(
+                            ".".join(parts[: i + 1]) for i in range(len(parts))
+                        )
+                    else:
+                        symbols.add(sym)
 
     # Nipype-specific names and Python keywords
     SYMBOLS_TO_IGNORE = ["isdefined"] + keyword.kwlist + list(builtins.__dict__.keys())

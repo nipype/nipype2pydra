@@ -521,3 +521,15 @@ def parse_imports(
                     )
                 )
     return parsed
+
+
+GENERIC_PYDRA_IMPORTS = parse_imports(
+    [
+        "import attrs",  # attrs is included in imports in case we reference attrs.NOTHING
+        "from fileformats.generic import File, Directory",
+        "from pathlib import Path",
+        "import logging",
+        "import pydra.task",
+        "from pydra.engine import Workflow",
+    ]
+)
