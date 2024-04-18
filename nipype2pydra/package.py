@@ -11,11 +11,12 @@ import shutil
 from tqdm import tqdm
 import attrs
 import yaml
-from nipype.interfaces.base import BaseInterface
 from . import task
 from .utils import (
     UsedSymbols,
+    full_address,
     write_to_module,
+    to_snake_case,
     ImportStatement,
 )
 import nipype2pydra.workflow
@@ -274,34 +275,54 @@ class PackageConverter:
             mod_path.parent.mkdir(parents=True, exist_ok=True)
             mod = import_module(self.untranslate_submodule(mod_name))
 
-            assert not [
-                o for o in objs if inspect.isclass(o) and issubclass(o, BaseInterface)
-            ]
-            used = UsedSymbols.find(
-                mod,
-                objs,
-                pull_out_inline_imports=False,
-                translations=self.all_import_translations,
-            )
+            interfaces = [o for o in objs if full_address(o) in self.interfaces]
+            other_objs = [o for o in objs if o not in interfaces]
 
-            classes = used.local_classes + [
-                o for o in objs if inspect.isclass(o) and o not in used.local_classes
-            ]
+            if interfaces:
+                other_mod_path = mod_path / "other"
+                init_code = ""
+                for interface in tqdm(
+                    interfaces, f"Generating interfaces for {mod_name}"
+                ):
+                    intf_conv = self.interfaces[full_address(interface)]
+                    intf_mod_name = to_snake_case(intf_conv.task_name)
+                    intf_conv.write(package_root)
+                    init_code += f"from .{intf_mod_name} import {intf_conv.task_name}\n"
+                if other_objs:
+                    init_code += f"from .other import {', '.join(o.__name__ for o in other_objs)}\n"
+                with open(mod_path / "__init__.py", "w") as f:
+                    f.write(init_code)
+            else:
+                other_mod_path = mod_path
 
-            functions = list(used.local_functions) + [
-                o
-                for o in objs
-                if inspect.isfunction(o) and o not in used.local_functions
-            ]
+            if other_objs:
+                used = UsedSymbols.find(
+                    mod,
+                    other_objs,
+                    pull_out_inline_imports=False,
+                    translations=self.all_import_translations,
+                )
 
-            write_to_module(
-                mod_path.with_suffix(".py"),
-                used.imports,
-                used.constants,
-                classes,
-                functions,
-                find_replace=self.find_replace,
-            )
+                classes = used.local_classes + [
+                    o
+                    for o in other_objs
+                    if inspect.isclass(o) and o not in used.local_classes
+                ]
+
+                functions = list(used.local_functions) + [
+                    o
+                    for o in other_objs
+                    if inspect.isfunction(o) and o not in used.local_functions
+                ]
+
+                write_to_module(
+                    other_mod_path.with_suffix(".py"),
+                    used.imports,
+                    used.constants,
+                    classes,
+                    functions,
+                    find_replace=self.find_replace,
+                )
 
     @classmethod
     def default_spec(

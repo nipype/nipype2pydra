@@ -63,6 +63,7 @@ def convert(
         n: task.get_converter(
             output_module=get_output_module(c["nipype_module"], c["task_name"]),
             callables_module=interface_spec_callables[c["task_name"]],
+            package=converter,
             **c,
         )
         for n, c in interface_specs.items()

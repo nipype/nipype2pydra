@@ -457,6 +457,8 @@ def parse_imports(
     -------
 
     """
+    if translations is None:
+        translations = []
     if isinstance(stmts, str):
         stmts = [stmts]
     if isinstance(relative_to, ModuleType):

@@ -22,12 +22,12 @@ from ..utils import (
     is_fileset,
     to_snake_case,
     parse_imports,
-    add_exc_note,
     ImportStatement,
 )
 from fileformats.core import from_mime
 from fileformats.core.mixin import WithClassifiers
 from fileformats.generic import File
+import nipype2pydra.package
 
 
 T = ty.TypeVar("T")
@@ -428,6 +428,12 @@ class BaseTaskConverter(metaclass=ABCMeta):
     )
     doctests: ty.List[DocTestGenerator] = attrs.field(
         factory=list, converter=from_list_to_doctests
+    )
+    package: "nipype2pydra.package.PackageConverter" = attrs.field(
+        default=None,
+        metadata={
+            "help": ("the package converter that the workflow is associated with"),
+        },
     )
 
     def __attrs_post_init__(self):

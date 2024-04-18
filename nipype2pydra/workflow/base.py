@@ -300,9 +300,10 @@ class WorkflowConverter:
         # Get any intra-package classes and functions that need to be written
 
         for _, intra_pkg_obj in used.intra_pkg_classes + list(used.intra_pkg_funcs):
-            if full_address(intra_pkg_obj) not in list(self.package.workflows) + list(
-                self.package.interfaces
-            ):
+            if full_address(intra_pkg_obj) not in list(self.package.workflows):
+                # + list(
+                #     self.package.interfaces
+                # ):
                 intra_pkg_modules[
                     self.to_output_module_path(intra_pkg_obj.__module__)
                 ].add(intra_pkg_obj)
