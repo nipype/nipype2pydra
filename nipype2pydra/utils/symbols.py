@@ -157,7 +157,9 @@ class UsedSymbols:
                     else:
                         continue
             if ImportStatement.matches(stmt):
-                imports.extend(parse_imports(stmt, relative_to=module))
+                imports.extend(
+                    parse_imports(stmt, relative_to=module, translations=translations)
+                )
 
         used_symbols = set()
         for function_body in function_bodies:
@@ -293,7 +295,7 @@ class UsedSymbols:
                 stmt = stmt.only_include(symbols)
                 if stmt:
                     filtered.append(stmt)
-            elif stmt.module_name in symbols:
+            elif stmt.sole_imported.local_name in symbols:
                 filtered.append(stmt)
         return filtered
 

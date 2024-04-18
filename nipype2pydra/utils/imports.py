@@ -474,7 +474,13 @@ def parse_imports(
     def translate(module_name: str) -> ty.Optional[str]:
         for from_pkg, to_pkg in translations:
             if re.match(from_pkg, module_name):
-                return re.sub(from_pkg, to_pkg, module_name, count=1)
+                return re.sub(
+                    from_pkg,
+                    to_pkg,
+                    module_name,
+                    count=1,
+                    flags=re.MULTILINE | re.DOTALL,
+                )
         return None
 
     parsed = []
@@ -509,6 +515,7 @@ def parse_imports(
                     from_=from_,
                     relative_to=relative_to,
                     imported=imported,
+                    translation=translate(from_),
                 )
             )
         else:
@@ -517,7 +524,9 @@ def parse_imports(
             for imp in imported.values():
                 parsed.append(
                     ImportStatement(
-                        indent=match.group(1), imported={imp.local_name: imp}
+                        indent=match.group(1),
+                        imported={imp.local_name: imp},
+                        translation=translate(imp.name),
                     )
                 )
     return parsed

@@ -125,10 +125,21 @@ class PackageConverter:
     )
     import_translations: ty.List[ty.Tuple[str, str]] = attrs.field(
         factory=list,
+        converter=lambda lst: [tuple(i) for i in lst] if lst else [],
         metadata={
             "help": (
                 "Mappings between nipype packages and their pydra equivalents. Regular "
                 "expressions are supported"
+            ),
+        },
+    )
+    find_replace: ty.List[ty.Tuple[str, str]] = attrs.field(
+        factory=list,
+        converter=lambda lst: [tuple(i) for i in lst] if lst else [],
+        metadata={
+            "help": (
+                "Generic regular expression substitutions to be run over the code before "
+                "it is processed"
             ),
         },
     )
@@ -196,9 +207,7 @@ class PackageConverter:
                 )
 
             # Write any additional functions in other modules in the package
-            self.write_intra_pkg_modules(
-                package_root, intra_pkg_modules, self.import_translations
-            )
+            self.write_intra_pkg_modules(package_root, intra_pkg_modules)
 
             self.write_post_release_file(mod_dir / "_post_release.py")
 
@@ -232,7 +241,6 @@ class PackageConverter:
         self,
         package_root: Path,
         intra_pkg_modules: ty.Dict[str, ty.Set[str]],
-        translations: ty.List[ty.Tuple[str, str]],
     ):
         """Writes the intra-package modules to the package root
 
@@ -266,7 +274,7 @@ class PackageConverter:
                 mod,
                 objs,
                 pull_out_inline_imports=False,
-                translations=translations,
+                translations=self.import_translations,
             )
 
             classes = used.local_classes + [
@@ -285,6 +293,7 @@ class PackageConverter:
                 used.constants,
                 classes,
                 functions,
+                find_replace=self.find_replace,
             )
 
     @classmethod

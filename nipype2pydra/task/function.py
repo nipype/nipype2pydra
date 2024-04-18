@@ -75,6 +75,7 @@ class FunctionTaskConverter(BaseTaskConverter):
                 )
             ],
             filter_classes=(BaseInterface, TraitedSpec),
+            # translations=self.package.import_translations,
         )
 
         spec_str = "\n".join(f"{n} = {d}" for n, d in used.constants)

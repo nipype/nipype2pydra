@@ -3,13 +3,11 @@ from functools import cached_property
 import inspect
 import re
 import typing as ty
-from operator import attrgetter
 from copy import copy
 import logging
 from collections import defaultdict
 from types import ModuleType
 from pathlib import Path
-import black.parsing
 import attrs
 import yaml
 from ..utils import (
@@ -17,7 +15,6 @@ from ..utils import (
     split_source_into_statements,
     extract_args,
     write_to_module,
-    cleanup_function_body,
     full_address,
     ImportStatement,
     parse_imports,
@@ -105,6 +102,7 @@ class WorkflowConverter:
     )
     find_replace: ty.List[ty.Tuple[str, str]] = attrs.field(
         factory=list,
+        converter=lambda lst: [tuple(i) for i in lst] if lst else [],
         metadata={
             "help": (
                 "Generic regular expression substitutions to be run over the code before "
@@ -332,6 +330,7 @@ class WorkflowConverter:
             functions=used.local_functions,
             imports=used.imports,
             constants=used.constants,
+            find_replace=self.package.find_replace,
         )
 
         # # Add any local functions, constants and classes
@@ -506,6 +505,9 @@ class WorkflowConverter:
         if not isinstance(parsed_statements[-1], ReturnConverter):
             code_str += f"\n    return {self.workflow_variable}"
 
+        for find, replace in self.find_replace:
+            code_str = re.sub(find, replace, code_str, flags=re.MULTILINE | re.DOTALL)
+
         return code_str, used_configs
 
     def _parse_statements(self, func_body: str) -> ty.Tuple[
@@ -548,7 +550,13 @@ class WorkflowConverter:
                     DocStringConverter(docstring=match.group(2), indent=match.group(1))
                 )
             elif ImportStatement.matches(statement):
-                parsed.extend(parse_imports(statement))
+                parsed.extend(
+                    parse_imports(
+                        statement,
+                        relative_to=self.nipype_module.__name__,
+                        translations=self.package.import_translations,
+                    )
+                )
             elif match := re.match(
                 r"\s+(?:"
                 + self.workflow_variable
