@@ -194,7 +194,7 @@ class WorkflowConverter:
             self.nipype_module,
             [self.func_body],
             collapse_intra_pkg=False,
-            translations=self.package.import_translations,
+            translations=self.package.all_import_translations,
         )
 
     @cached_property
@@ -554,7 +554,7 @@ class WorkflowConverter:
                     parse_imports(
                         statement,
                         relative_to=self.nipype_module.__name__,
-                        translations=self.package.import_translations,
+                        translations=self.package.all_import_translations,
                     )
                 )
             elif match := re.match(

@@ -148,6 +148,13 @@ class PackageConverter:
     def interface_only_package(self):
         return not self.workflows
 
+    @property
+    def all_import_translations(self) -> ty.List[ty.Tuple[str, str]]:
+        return self.import_translations + [
+            (r"nipype\.interfaces\.(\w+)\b", r"pydra.tasks.\1.auto"),
+            (self.nipype_name, self.name),
+        ]
+
     def write(self, package_root: Path, workflows_to_convert: ty.List[str] = None):
         """Writes the package to the specified package root"""
 
@@ -274,7 +281,7 @@ class PackageConverter:
                 mod,
                 objs,
                 pull_out_inline_imports=False,
-                translations=self.import_translations,
+                translations=self.all_import_translations,
             )
 
             classes = used.local_classes + [

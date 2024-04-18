@@ -313,19 +313,9 @@ class ImportStatement:
         cpy = deepcopy(self)
         if not self.from_:
             return cpy
-        new_from = self.join_relative_package(
+        self.translation = self.join_relative_package(
             to_pkg, self.get_relative_package(self.module_name, from_pkg)
         )
-        if self.relative_to:
-            new_relative_to = self.join_relative_package(
-                to_pkg, self.get_relative_package(self.relative_to, from_pkg)
-            )
-            new_from = self.get_relative_package(new_from, new_relative_to)
-        else:
-            new_relative_to = None
-        cpy.from_ = new_from
-        cpy.relative_to = new_relative_to
-        return cpy
 
     @classmethod
     def get_relative_package(
