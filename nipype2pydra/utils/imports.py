@@ -281,6 +281,7 @@ class ImportStatement:
             imported=objs,
             from_=self.from_,
             relative_to=self.relative_to,
+            translation=self.translation,
         )
 
     def in_package(self, pkg: str) -> bool:
