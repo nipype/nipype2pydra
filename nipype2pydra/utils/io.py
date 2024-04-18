@@ -1,10 +1,10 @@
 import inspect
 import typing as ty
 import re
-from operator import attrgetter
+from operator import attrgetter, itemgetter
 from pathlib import Path
 import black.parsing
-from .misc import cleanup_function_body, split_source_into_statements
+from .misc import cleanup_function_body, split_source_into_statements, get_source_code
 from .imports import ImportStatement, parse_imports, GENERIC_PYDRA_IMPORTS
 from .symbols import UsedSymbols
 
@@ -12,12 +12,10 @@ from .symbols import UsedSymbols
 def write_to_module(
     package_root: Path,
     module_name: str,
-    imports: ty.List[ImportStatement],
-    constants: ty.List[ty.Tuple[str, str]],
-    classes: ty.List[ty.Type],
-    functions: ty.List[ty.Callable],
+    used: UsedSymbols,
     converted_code: ty.Optional[str] = None,
     find_replace: ty.Optional[ty.List[ty.Tuple[str, str]]] = None,
+    inline_intra_pkg: bool = False,
 ):
     """Writes the given imports, constants, classes, and functions to the file at the given path,
     merging with existing code if it exists"""
@@ -36,11 +34,11 @@ def write_to_module(
                 code_str += "\n" + stmt
     existing_imports = parse_imports(existing_import_strs, relative_to=module_name)
 
-    for const_name, const_val in sorted(constants):
+    for const_name, const_val in sorted(used.local_constants):
         if f"\n{const_name} = " not in code_str:
             code_str += f"\n{const_name} = {const_val}\n"
 
-    for klass in classes:
+    for klass in used.local_classes:
         if f"\nclass {klass.__name__}(" not in code_str:
             code_str += "\n" + cleanup_function_body(inspect.getsource(klass)) + "\n"
 
@@ -64,7 +62,7 @@ def write_to_module(
         if converted_code.strip() not in code_str:
             code_str += "\n" + converted_code + "\n"
 
-    for func in sorted(functions, key=attrgetter("__name__")):
+    for func in sorted(used.local_functions, key=attrgetter("__name__")):
         if f"\ndef {func.__name__}(" not in code_str:
             code_str += "\n" + cleanup_function_body(inspect.getsource(func)) + "\n"
 
@@ -76,16 +74,38 @@ def write_to_module(
     for find, replace in find_replace or []:
         code_str = re.sub(find, replace, code_str, flags=re.MULTILINE | re.DOTALL)
 
+    code_str += "\n\n# Intra-package imports that have been inlined in this module\n\n"
+
+    if inline_intra_pkg:
+        for func_name, func in sorted(used.intra_pkg_funcs, key=itemgetter(0)):
+            func_src = get_source_code(func)
+            func_src = re.sub(
+                r"^(#[^\n]+\ndef) (\w+)(?=\()",
+                r"\1 " + func_name,
+                func_src,
+                flags=re.MULTILINE,
+            )
+            code_str += "\n\n" + cleanup_function_body(func_src)
+
+        for klass_name, klass in sorted(used.intra_pkg_classes, key=itemgetter(0)):
+            klass_src = get_source_code(klass)
+            klass_src = re.sub(
+                r"^(#[^\n]+\nclass) (\w+)(?=\()",
+                r"\1 " + klass_name,
+                klass_src,
+                flags=re.MULTILINE,
+            )
+            code_str += "\n\n" + cleanup_function_body(klass_src)
+
     filtered_imports = UsedSymbols.filter_imports(
         ImportStatement.collate(
             existing_imports
-            + [i for i in imports if not i.indent]
+            + [i for i in used.imports if not i.indent]
             + GENERIC_PYDRA_IMPORTS
         ),
         code_str,
     )
 
-    1 + 1  # Breakpoint
     code_str = "\n".join(str(i) for i in filtered_imports) + "\n\n" + code_str
 
     try:
@@ -103,3 +123,5 @@ def write_to_module(
 
     with open(module_fspath, "w") as f:
         f.write(code_str)
+
+    return module_fspath

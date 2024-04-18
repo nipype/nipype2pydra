@@ -321,10 +321,7 @@ class WorkflowConverter:
             package_root,
             module_name=self.output_module,
             converted_code=code_str,
-            classes=used.local_classes,
-            functions=used.local_functions,
-            imports=used.imports,
-            constants=used.constants,
+            used=used,
             find_replace=self.package.find_replace,
         )
 

@@ -1,7 +1,7 @@
 import typing as ty
 import re
 import inspect
-from operator import attrgetter, itemgetter
+from operator import attrgetter
 from functools import cached_property
 import itertools
 import logging
@@ -11,7 +11,6 @@ from .base import BaseTaskConverter
 from ..utils import (
     extract_args,
     UsedSymbols,
-    get_source_code,
     get_local_functions,
     get_local_constants,
     cleanup_function_body,
@@ -25,8 +24,18 @@ logger = logging.getLogger("nipype2pydra")
 @attrs.define(slots=False)
 class FunctionTaskConverter(BaseTaskConverter):
 
-    def generate_code_str(self, input_fields, nonstd_types, output_fields):
-        """writing pydra task to the dile based on the input and output spec"""
+    def generate_code(self, input_fields, nonstd_types, output_fields) -> ty.Tuple[
+        str,
+        UsedSymbols,
+    ]:
+        """
+        Returns
+        -------
+        converted_code : str
+            the core converted code for the task
+        used_symbols: UsedSymbols
+            symbols used in the code
+        """
 
         base_imports = [
             "import pydra.mark",
@@ -117,45 +126,14 @@ class FunctionTaskConverter(BaseTaskConverter):
                 additional_imports.add(imprt)
                 spec_str = repl_spec_str
 
-        spec_str += "\n\n# Functions defined locally in the original module\n\n"
-
-        for func in sorted(used.local_functions, key=attrgetter("__name__")):
-            spec_str += "\n\n" + cleanup_function_body(get_source_code(func))
-
-        for klass in sorted(used.local_classes, key=attrgetter("__name__")):
-            spec_str += "\n\n" + cleanup_function_body(get_source_code(klass))
-
-        spec_str += "\n\n# Functions defined in neighbouring modules that have been included inline instead of imported\n\n"
-
-        for func_name, func in sorted(used.intra_pkg_funcs, key=itemgetter(0)):
-            func_src = get_source_code(func)
-            func_src = re.sub(
-                r"^(#[^\n]+\ndef) (\w+)(?=\()",
-                r"\1 " + func_name,
-                func_src,
-                flags=re.MULTILINE,
-            )
-            spec_str += "\n\n" + cleanup_function_body(func_src)
-
-        for klass_name, klass in sorted(used.intra_pkg_classes, key=itemgetter(0)):
-            klass_src = get_source_code(klass)
-            klass_src = re.sub(
-                r"^(#[^\n]+\nclass) (\w+)(?=\()",
-                r"\1 " + klass_name,
-                klass_src,
-                flags=re.MULTILINE,
-            )
-            spec_str += "\n\n" + cleanup_function_body(klass_src)
-
-        imports = self.construct_imports(
+        used.imports = self.construct_imports(
             nonstd_types,
             spec_str,
             include_task=False,
             base=base_imports + list(used.imports) + list(additional_imports),
         )
-        spec_str = "\n".join(str(i) for i in imports) + "\n\n" + spec_str
 
-        return spec_str
+        return spec_str, used
 
     def process_method(
         self,

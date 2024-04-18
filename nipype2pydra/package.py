@@ -317,11 +317,14 @@ class PackageConverter:
                 write_to_module(
                     package_root=package_root,
                     module_name=other_mod_name,
-                    imports=used.imports,
-                    constants=used.constants,
-                    classes=classes,
-                    functions=functions,
+                    used=UsedSymbols(
+                        imports=used.imports,
+                        constants=used.constants,
+                        local_classes=classes,
+                        local_functions=functions,
+                    ),
                     find_replace=self.find_replace,
+                    inline_intra_pkg=False,
                 )
 
     @classmethod

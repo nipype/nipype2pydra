@@ -22,6 +22,8 @@ from ..utils import (
     is_fileset,
     to_snake_case,
     parse_imports,
+    write_to_module,
+    UsedSymbols,
     ImportStatement,
 )
 from fileformats.core import from_mime
@@ -435,6 +437,16 @@ class BaseTaskConverter(metaclass=ABCMeta):
             "help": ("the package converter that the workflow is associated with"),
         },
     )
+    find_replace: ty.List[ty.Tuple[str, str]] = attrs.field(
+        factory=list,
+        converter=lambda lst: [tuple(i) for i in lst] if lst else [],
+        metadata={
+            "help": (
+                "Generic regular expression substitutions to be run over the code before "
+                "it is processed"
+            ),
+        },
+    )
 
     def __attrs_post_init__(self):
         if self.output_module is None:
@@ -502,49 +514,46 @@ class BaseTaskConverter(metaclass=ABCMeta):
             add_nonstd_types(f[1])
         return nonstd_types
 
-    @cached_property
+    @property
     def converted_code(self):
+        return self._converted[0]
+
+    @property
+    def used_symbols(self):
+        return self._converted[1]
+
+    @cached_property
+    def _converted(self):
         """writing pydra task to the dile based on the input and output spec"""
 
-        spec_str = self.generate_code_str(
+        return self.generate_code(
             self.input_fields, self.nonstd_types, self.output_fields
         )
-
-        try:
-            spec_str = black.format_file_contents(
-                spec_str, fast=False, mode=black.FileMode()
-            )
-        except black.InvalidInput as e:
-            with open(Path("~/Desktop/gen-code.py").expanduser(), "w") as f:
-                f.write(spec_str)
-            raise RuntimeError(
-                f"Black could not parse generated code: {e}\n\n{spec_str}"
-            )
-
-        return spec_str
 
     def write(self, package_root: Path):
         """creating pydra input/output spec from nipype specs
         if write is True, a pydra Task class will be written to the file together with tests
         """
 
-        output_file = (
-            Path(package_root)
-            .joinpath(*self.output_module.split("."))
-            .with_suffix(".py")
+        write_to_module(
+            package_root=package_root,
+            module_name=self.output_module,
+            converted_code=self.converted_code,
+            used=self.used_symbols,
+            inline_intra_pkg=True,
+            find_replace=self.find_replace,
         )
-        testdir = output_file.parent / "tests"
-        testdir.mkdir(parents=True, exist_ok=True)
 
-        with open(output_file, "w") as f:
-            f.write(self.converted_code)
+        test_module_fspath = write_to_module(
+            package_root=package_root,
+            module_name=self.output_module + f".tests.test_{self.task_name.lower()}",
+            converted_code=self.converted_test_code,
+            used=self.used_symbols_test,
+            inline_intra_pkg=True,
+            find_replace=self.find_replace,
+        )
 
-        filename_test = testdir / f"test_{self.task_name.lower()}.py"
-
-        with open(filename_test, "w") as f:
-            f.write(self.converted_test_code)
-
-        conftest_fspath = filename_test.parent / "conftest.py"
+        conftest_fspath = test_module_fspath.parent / "conftest.py"
         if not conftest_fspath.exists():
             with open(conftest_fspath, "w") as f:
                 f.write(self.CONFTEST)
@@ -773,14 +782,28 @@ class BaseTaskConverter(metaclass=ABCMeta):
         return new_argstr
 
     @abstractmethod
-    def generate_code_str(self, input_fields, nonstd_types, output_fields):
-        raise NotImplementedError
+    def generate_code(self, input_fields, nonstd_types, output_fields) -> ty.Tuple[
+        str,
+        UsedSymbols,
+    ]:
+        """
+        Returns
+        -------
+        converted_code : str
+            the core converted code for the task
+        used_symbols: UsedSymbols
+            symbols used in the code
+        """
 
     def construct_imports(
-        self, nonstd_types: ty.List[type], spec_str="", base=(), include_task=True
-    ) -> ty.List[str]:
+        self,
+        nonstd_types: ty.List[type],
+        spec_str="",
+        base=(),
+        include_task=True,
+    ) -> ty.List[ImportStatement]:
         """Constructs a list of imports to include at start of file"""
-        stmts = parse_imports(base)
+        stmts = parse_imports(base, relative_to=self.output_module)
 
         if re.match(r".*(?<!\w)ty\.", spec_str, flags=re.MULTILINE | re.DOTALL):
             stmts.extend(parse_imports("import typing as ty"))
@@ -810,8 +833,16 @@ class BaseTaskConverter(metaclass=ABCMeta):
 
         return ImportStatement.collate(s.in_global_scope() for s in stmts)
 
-    @cached_property
+    @property
     def converted_test_code(self):
+        return self._converted_test[0]
+
+    @property
+    def used_symbols_test(self):
+        return self._converted_test[1]
+
+    @cached_property
+    def _converted_test(self):
         spec_str = ""
         for i, test in enumerate(self.tests, start=1):
             if test.xfail:
@@ -885,15 +916,7 @@ class BaseTaskConverter(metaclass=ABCMeta):
         )
         spec_str = "\n".join(str(i) for i in imports) + "\n\n" + spec_str
 
-        try:
-            spec_str_black = black.format_file_contents(
-                spec_str, fast=False, mode=black.FileMode()
-            )
-        except black.parsing.InvalidInput as e:
-            raise RuntimeError(
-                f"Black could not parse generated code: {e}\n\n{spec_str}"
-            )
-        return spec_str_black
+        return spec_str, UsedSymbols(imports=imports)
 
     def create_doctests(self, input_fields, nonstd_types):
         """adding doctests to the interfaces"""

@@ -1,16 +1,28 @@
 import re
+import typing as ty
 import attrs
 import inspect
 from copy import copy
 from .base import BaseTaskConverter
+from ..utils import UsedSymbols
 from fileformats.core.mixin import WithClassifiers
 from fileformats.generic import File, Directory
 
 
 @attrs.define(slots=False)
 class ShellCommandTaskConverter(BaseTaskConverter):
-    def generate_code_str(self, input_fields, nonstd_types, output_fields):
-        """writing pydra task to the dile based on the input and output spec"""
+    def generate_code(self, input_fields, nonstd_types, output_fields) -> ty.Tuple[
+        str,
+        UsedSymbols,
+    ]:
+        """
+        Returns
+        -------
+        converted_code : str
+            the core converted code for the task
+        used_symbols: UsedSymbols
+            symbols used in the code
+        """
 
         base_imports = [
             "from pydra.engine import specs",
@@ -97,4 +109,4 @@ class ShellCommandTaskConverter(BaseTaskConverter):
         )
         spec_str = "\n".join(str(i) for i in imports) + "\n\n" + spec_str
 
-        return spec_str
+        return spec_str, UsedSymbols(imports=imports)
