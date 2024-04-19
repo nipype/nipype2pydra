@@ -88,12 +88,12 @@ class FunctionTaskConverter(BaseTaskConverter):
             collapse_intra_pkg=True,
         )
 
-        spec_str = "\n".join(f"{n} = {d}" for n, d in used.constants)
+        # spec_str = "\n".join(f"{n} = {d}" for n, d in used.constants)
 
         # Create the spec string
         # spec_str += "\n\n" + self.function_callables()
         # spec_str += "logger = getLogger(__name__)\n\n"
-        spec_str += "@pydra.mark.task\n"
+        spec_str = "@pydra.mark.task\n"
         spec_str += "@pydra.mark.annotate({'return': {"
         spec_str += ", ".join(f"'{n}': {t}" for n, t, _ in output_fields_str)
         spec_str += "}})\n"

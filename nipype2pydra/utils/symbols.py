@@ -5,6 +5,7 @@ import types
 import inspect
 import builtins
 from logging import getLogger
+from importlib import import_module
 import attrs
 from nipype.interfaces.base import BaseInterface, TraitedSpec, isdefined, Undefined
 from nipype.interfaces.base import traits_extension
@@ -55,8 +56,10 @@ class UsedSymbols:
 
     symbols_re = re.compile(r"(?<!\"|')\b([a-zA-Z\_][\w\.]*)\b(?!\"|')")
 
-    def update(self, other: "UsedSymbols"):
-        self.imports.update(other.imports)
+    def update(self, other: "UsedSymbols", absolute_imports: bool = False):
+        self.imports.update(
+            i.absolute() if absolute_imports else i for i in other.imports
+        )
         self.intra_pkg_funcs.update(other.intra_pkg_funcs)
         self.intra_pkg_funcs.update((f.__name__, f) for f in other.local_functions)
         self.intra_pkg_classes.extend(
@@ -227,6 +230,7 @@ class UsedSymbols:
                             filter_classes,
                             filter_objs,
                         )
+                        to_include.append(imported.local_name)
                         continue
                     if filter_classes and inspect.isclass(obj):
                         if issubclass(obj, filter_classes):
@@ -238,19 +242,31 @@ class UsedSymbols:
                     continue
                 stmt = stmt.only_include(to_include)
             inlined_objects = []
-            if stmt.in_package(base_pkg):
+            if stmt.in_package(base_pkg) or (
+                stmt.in_package("nipype") and not stmt.translation
+            ):
                 for imported in list(stmt.values()):
-                    if not imported.in_package(base_pkg):
+                    if not (
+                        imported.in_package(base_pkg) or imported.in_package("nipype")
+                    ) or inspect.isbuiltin(imported.object):
                         # Case where an object is a nested import from a different package
                         # which is imported from a neighbouring module
-                        used.imports.add(imported.as_independent_statement())
+                        used.imports.add(
+                            imported.as_independent_statement(resolve=True)
+                        )
                         stmt.drop(imported)
                     elif inspect.isfunction(imported.object):
                         used.intra_pkg_funcs.add((imported.local_name, imported.object))
-                        if collapse_intra_pkg:
+                        if collapse_intra_pkg or stmt.in_package("nipype"):
                             # Recursively include objects imported in the module
                             # by the inlined function
-                            inlined_objects.append(imported.object)
+                            inlined_objects.append(
+                                (
+                                    import_module(imported.object.__module__),
+                                    imported.object,
+                                )
+                            )
+                            stmt.drop(imported)
                     elif inspect.isclass(imported.object):
                         class_def = (imported.local_name, imported.object)
                         # Add the class to the intra_pkg_classes list if it is not
@@ -260,26 +276,28 @@ class UsedSymbols:
                         # from the other
                         if class_def not in used.intra_pkg_classes:
                             used.intra_pkg_classes.append(class_def)
-                        if collapse_intra_pkg:
+                        if collapse_intra_pkg or stmt.in_package("nipype"):
                             # Recursively include objects imported in the module
                             # by the inlined class
                             inlined_objects.append(
-                                extract_args(inspect.getsource(imported.object))[
-                                    2
-                                ].split("\n", 1)[1]
+                                (
+                                    import_module(imported.object.__module__),
+                                    imported.object,
+                                )
                             )
-            elif stmt.in_package("nipype") and not stmt.in_package("nipype.interfaces"):
-                for imported in list(stmt.values()):
-                    if not imported.in_package("nipype"):
-                        used.imports.add(imported.as_independent_statement())
-                    else:
-                        inlined_objects.append(imported.object)
-                    stmt.drop(imported)
+                            stmt.drop(imported)
+                    elif not inspect.ismodule(imported.object) and (
+                        collapse_intra_pkg or stmt.in_package("nipype")
+                    ):
+
+                        inlined_objects.append((stmt.module, imported.local_name))
+                        stmt.drop(imported)
+
             # Recursively include neighbouring objects imported in the module
-            if inlined_objects:
+            for from_mod, inlined_obj in inlined_objects:
                 used_in_mod = cls.find(
-                    stmt.module,
-                    function_bodies=inlined_objects,
+                    from_mod,
+                    function_bodies=[inlined_obj],
                     translations=translations,
                 )
                 used.update(used_in_mod)

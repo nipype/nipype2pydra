@@ -118,14 +118,13 @@ def write_to_module(
     for find, replace in find_replace or []:
         code_str = re.sub(find, replace, code_str, flags=re.MULTILINE | re.DOTALL)
 
-    filtered_imports = UsedSymbols.filter_imports(
-        ImportStatement.collate(
-            existing_imports
-            + [i for i in used.imports if not i.indent]
-            + GENERIC_PYDRA_IMPORTS
-        ),
-        code_str,
+    collated_imports = ImportStatement.collate(
+        existing_imports
+        + [i for i in used.imports if not i.indent]
+        + GENERIC_PYDRA_IMPORTS
     )
+
+    filtered_imports = UsedSymbols.filter_imports(collated_imports, code_str)
 
     # Strip out inlined imports
     for inlined_symbol in inlined_symbols:

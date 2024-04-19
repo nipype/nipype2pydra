@@ -107,6 +107,6 @@ class ShellCommandTaskConverter(BaseTaskConverter):
             include_task=False,
             base=base_imports,
         )
-        spec_str = "\n".join(str(i) for i in imports) + "\n\n" + spec_str
+        # spec_str = "\n".join(str(i) for i in imports) + "\n\n" + spec_str
 
         return spec_str, UsedSymbols(imports=imports)

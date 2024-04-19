@@ -325,7 +325,7 @@ def cleanup_function_body(function_body: str) -> str:
         new_function_body += pre + f"{args[0]} is not attrs.NOTHING" + post
     function_body = new_function_body
     function_body = function_body.replace("_Undefined", "attrs.NOTHING")
-    function_body = function_body.replace("Undefined", "attrs.NOTHING")
+    function_body = function_body.replace("Undefined", "type(attrs.NOTHING)")
     return function_body
 
 

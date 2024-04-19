@@ -826,7 +826,12 @@ class BaseTaskConverter(metaclass=ABCMeta):
         for test in self.tests:
             for explicit_import in test.imports:
                 if not explicit_import.module.startswith("nipype"):
-                    stmts.append(explicit_import.to_statement())
+                    stmt = explicit_import.to_statement()
+                    if self.task_name in stmt:
+                        stmt.drop(self.task_name)
+                        if not stmt:
+                            continue
+                    stmts.append(stmt)
 
         def unwrap_nested_type(t: type) -> ty.List[type]:
             if issubclass(t, WithClassifiers) and t.is_classified:
@@ -926,7 +931,6 @@ class BaseTaskConverter(metaclass=ABCMeta):
                 "from nipype2pydra.testing import PassAfterTimeoutWorker",
             },
         )
-        spec_str = "\n".join(str(i) for i in imports) + "\n\n" + spec_str
 
         return spec_str, UsedSymbols(imports=imports)
 

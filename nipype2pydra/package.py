@@ -152,7 +152,7 @@ class PackageConverter:
     @property
     def all_import_translations(self) -> ty.List[ty.Tuple[str, str]]:
         return self.import_translations + [
-            (r"nipype\.interfaces\.(\w+)\b", r"pydra.tasks.\1.auto"),
+            (r"nipype\.interfaces\.(?!base)(\w+)\b", r"pydra.tasks.\1.auto"),
             (self.nipype_name, self.name),
         ]
 

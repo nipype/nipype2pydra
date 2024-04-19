@@ -51,8 +51,13 @@ class Imported:
             try:
                 return getattr(self.statement.module, self.name)
             except AttributeError:
+                try:
+                    return import_module(self.statement.from_ + "." + self.name)
+                except ImportError:
+                    pass
                 raise ImportError(
-                    f"Did not find {self.name} object in {self.statement.module_name} module"
+                    f"Did not find {self.name} object in {self.statement.module_name} "
+                    "module"
                 ) from None
         else:
             return import_module(self.name)
@@ -74,18 +79,26 @@ class Imported:
 
     def in_package(self, pkg: str) -> bool:
         """Check if the import is relative to the given package"""
-        pkg = pkg + "." if pkg else ""
-        return self.module_name.startswith(pkg)
+        return self.module_name == pkg or self.module_name.startswith(pkg + ".")
 
-    def as_independent_statement(self) -> "ImportStatement":
-        """Return a new import statement that only includes this object as an import"""
+    def as_independent_statement(self, resolve: bool = False) -> "ImportStatement":
+        """Return a new import statement that only includes this object as an import
+
+        Parameters
+        ----------
+        resolve : bool
+        """
         stmt_cpy = deepcopy(self.statement)
-        stmt_cpy.imported = {self.alias: self}
-        if self.module_name != stmt_cpy.from_:
-            stmt_cpy.from_ = self.module_name
+        stmt_cpy.imported = {self.local_name: stmt_cpy[self.local_name]}
+        if resolve:
+            module_name = self.object.__module__
+            if inspect.isbuiltin(self.object):
+                module_name = module_name[1:]  # strip preceding '_' from builtins
+        if module_name != stmt_cpy.from_:
+            stmt_cpy.from_ = module_name
             if (
                 stmt_cpy.translation
-                and stmt_cpy.from_.split(".")[0] != self.module_name.split(".")[0]
+                and stmt_cpy.from_.split(".")[0] != module_name.split(".")[0]
             ):
                 stmt_cpy.translation = None
                 logger.warning(
@@ -228,10 +241,13 @@ class ImportStatement:
         """Create an import statement from an object"""
         if inspect.ismodule(obj):
             return ImportStatement(indent="", imported={}, from_=obj.__name__)
+        module_name = obj.__module__
+        if module_name.startswith("fileformats."):
+            module_name = ".".join(module_name.split(".")[:2])
         return ImportStatement(
             indent="",
-            from_=obj.__module__,
-            imported={object.__name__: Imported(name=obj.__name__)},
+            from_=module_name,
+            imported={obj.__name__: Imported(name=obj.__name__)},
         )
 
     @property
@@ -286,12 +302,7 @@ class ImportStatement:
 
     def in_package(self, pkg: str) -> bool:
         """Check if the import is relative to the given package"""
-        if not self.from_:
-            module = self.sole_imported.name
-        else:
-            module = self.from_
-        pkg = pkg + "." if pkg else ""
-        return module.startswith(pkg)
+        return self.module_name == pkg or self.module_name.startswith(pkg + ".")
 
     def translate_to(
         self, from_pkg: ty.Union[str, ModuleType], to_pkg: ty.Union[str, ModuleType]
@@ -411,8 +422,11 @@ class ImportStatement:
         """
         from_stmts: ty.Dict[str, ImportStatement] = {}
         mod_stmts = set()
+        conditional_stmts = []
         for stmt in statements:
-            if stmt.from_:
+            if stmt.conditional:
+                conditional_stmts.append(stmt)
+            elif stmt.from_:
                 if stmt.from_ in from_stmts:
                     prev = from_stmts[stmt.from_]
                     for imported in stmt.values():
@@ -433,7 +447,8 @@ class ImportStatement:
             else:
                 mod_stmts.add(stmt)
         return sorted(
-            list(from_stmts.values()) + list(mod_stmts), key=attrgetter("module_name")
+            list(from_stmts.values()) + list(mod_stmts) + conditional_stmts,
+            key=attrgetter("module_name"),
         )
 
 
@@ -529,6 +544,7 @@ GENERIC_PYDRA_IMPORTS = parse_imports(
     [
         "import attrs",  # attrs is included in imports in case we reference attrs.NOTHING
         "from fileformats.generic import File, Directory",
+        "from pydra.engine.specs import MultiInputObj",
         "from pathlib import Path",
         "import logging",
         "import pydra.task",

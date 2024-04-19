@@ -66,11 +66,15 @@ def convert(
     if single_interface:
         spec = interface_specs[single_interface]
         output_module = get_output_module(spec["nipype_module"], spec["task_name"])
-        output_path = package_root.joinpath(*output_module.split(".")).with_suffix(
-            ".py"
-        )
+        out_parts = output_module.split(".")
+        output_path = package_root.joinpath(*out_parts).with_suffix(".py")
+        test_output_path = package_root.joinpath(
+            *(out_parts[:-1] + ["tests", f"test_{out_parts[-1]}"])
+        ).with_suffix(".py")
         if output_path.exists():
             output_path.unlink()
+        if test_output_path.exists():
+            test_output_path.unlink()
         task.get_converter(
             output_module=output_module,
             callables_module=interface_spec_callables[spec["task_name"]],
