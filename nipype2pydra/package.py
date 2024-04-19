@@ -214,6 +214,11 @@ class PackageConverter:
                     intra_pkg_modules=intra_pkg_modules,
                 )
 
+            # FIXME: hack to remove nipype-specific functions from intra-package
+            for mod_name in list(intra_pkg_modules):
+                if mod_name.startswith("nipype"):
+                    intra_pkg_modules.pop(mod_name)
+
             # Write any additional functions in other modules in the package
             self.write_intra_pkg_modules(package_root, intra_pkg_modules)
 
@@ -278,23 +283,15 @@ class PackageConverter:
             other_objs = [o for o in objs if o not in interfaces]
 
             if interfaces:
-                mod_name = mod_name + ".other"
-                init_code = ""
                 for interface in tqdm(
                     interfaces, f"Generating interfaces for {mod_name}"
                 ):
                     intf_conv = self.interfaces[full_address(interface)]
-                    intf_mod_name = to_snake_case(intf_conv.task_name)
                     intf_conv.write(package_root)
-                    init_code += f"from .{intf_mod_name} import {intf_conv.task_name}\n"
-                if other_objs:
-                    init_code += f"from .other import {', '.join(o.__name__ for o in other_objs)}\n"
-                with open(mod_path / "__init__.py", "w") as f:
-                    f.write(init_code)
-            else:
-                other_mod_name = mod_name
 
             if other_objs:
+                if mod_path.is_dir():
+                    mod_name += ".__init__"
                 used = UsedSymbols.find(
                     mod,
                     other_objs,
@@ -316,7 +313,7 @@ class PackageConverter:
 
                 write_to_module(
                     package_root=package_root,
-                    module_name=other_mod_name,
+                    module_name=mod_name,
                     used=UsedSymbols(
                         imports=used.imports,
                         constants=used.constants,

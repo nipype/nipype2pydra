@@ -22,7 +22,11 @@ def write_to_module(
     merging with existing code if it exists"""
     existing_import_strs = []
     code_str = ""
-    module_fspath = package_root.joinpath(*module_name.split(".")).with_suffix(".py")
+    module_fspath = package_root.joinpath(*module_name.split("."))
+    if module_fspath.is_dir():
+        module_fspath = module_fspath.joinpath("__init__.py")
+    else:
+        module_fspath = module_fspath.with_suffix(".py")
     module_fspath.parent.mkdir(parents=True, exist_ok=True)
     if module_fspath.exists():
         with open(module_fspath, "r") as f:
@@ -124,7 +128,8 @@ def write_to_module(
         + GENERIC_PYDRA_IMPORTS
     )
 
-    filtered_imports = UsedSymbols.filter_imports(collated_imports, code_str)
+    if module_fspath.name != "__init__.py":
+        filtered_imports = UsedSymbols.filter_imports(collated_imports, code_str)
 
     # Strip out inlined imports
     for inlined_symbol in inlined_symbols:
