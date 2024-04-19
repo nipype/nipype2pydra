@@ -21,4 +21,4 @@ from .symbols import (
     get_local_classes,  # noqa: F401
     get_local_constants,  # noqa: F401
 )
-from .io import write_to_module  # noqa: F401
+from .io import write_to_module, write_pkg_inits  # noqa: F401

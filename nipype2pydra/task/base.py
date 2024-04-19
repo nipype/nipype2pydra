@@ -23,6 +23,7 @@ from ..utils import (
     to_snake_case,
     parse_imports,
     write_to_module,
+    write_pkg_inits,
     UsedSymbols,
     ImportStatement,
 )
@@ -544,9 +545,20 @@ class BaseTaskConverter(metaclass=ABCMeta):
             find_replace=self.find_replace,
         )
 
+        write_pkg_inits(
+            package_root,
+            self.output_module,
+            names=[self.task_name],
+            depth=len(self.package.name.split(".")),
+            # + [f.__name__ for f in self.used_symbols.local_functions]
+            # + [c.__name__ for c in self.used_symbols.local_classes],
+        )
+
         test_module_fspath = write_to_module(
             package_root=package_root,
-            module_name=self.output_module + f".tests.test_{self.task_name.lower()}",
+            module_name=ImportStatement.join_relative_package(
+                self.output_module, f".tests.test_{self.task_name.lower()}"
+            ),
             converted_code=self.converted_test_code,
             used=self.used_symbols_test,
             inline_intra_pkg=True,
@@ -831,7 +843,7 @@ class BaseTaskConverter(metaclass=ABCMeta):
                 parse_imports(f"from {self.output_module} import {self.task_name}")
             )
 
-        return ImportStatement.collate(s.in_global_scope() for s in stmts)
+        return ImportStatement.collate(stmts)
 
     @property
     def converted_test_code(self):

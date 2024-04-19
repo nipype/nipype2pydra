@@ -4,6 +4,7 @@ import re
 from operator import attrgetter, itemgetter
 from pathlib import Path
 import black.parsing
+import black.report
 from .misc import cleanup_function_body, split_source_into_statements, get_source_code
 from .imports import ImportStatement, parse_imports, GENERIC_PYDRA_IMPORTS
 from .symbols import UsedSymbols
@@ -34,7 +35,7 @@ def write_to_module(
                 code_str += "\n" + stmt
     existing_imports = parse_imports(existing_import_strs, relative_to=module_name)
 
-    for const_name, const_val in sorted(used.local_constants):
+    for const_name, const_val in sorted(used.constants):
         if f"\n{const_name} = " not in code_str:
             code_str += f"\n{const_name} = {const_val}\n"
 
@@ -71,11 +72,9 @@ def write_to_module(
     if logger_stmt not in code_str:
         code_str = logger_stmt + code_str
 
-    for find, replace in find_replace or []:
-        code_str = re.sub(find, replace, code_str, flags=re.MULTILINE | re.DOTALL)
-
     code_str += "\n\n# Intra-package imports that have been inlined in this module\n\n"
 
+    inlined_symbols = []
     if inline_intra_pkg:
         for func_name, func in sorted(used.intra_pkg_funcs, key=itemgetter(0)):
             func_src = get_source_code(func)
@@ -86,6 +85,7 @@ def write_to_module(
                 flags=re.MULTILINE,
             )
             code_str += "\n\n" + cleanup_function_body(func_src)
+            inlined_symbols.append(func_name)
 
         for klass_name, klass in sorted(used.intra_pkg_classes, key=itemgetter(0)):
             klass_src = get_source_code(klass)
@@ -96,6 +96,27 @@ def write_to_module(
                 flags=re.MULTILINE,
             )
             code_str += "\n\n" + cleanup_function_body(klass_src)
+            inlined_symbols.append(klass_name)
+
+    # We run the formatter before the find/replace so that the find/replace can be more
+    # predictable
+    try:
+        code_str = black.format_file_contents(
+            code_str, fast=False, mode=black.FileMode()
+        )
+    except black.report.NothingChanged:
+        pass
+    except Exception as e:
+        # Write to file for debugging
+        debug_file = "~/unparsable-nipype2pydra-output.py"
+        with open(Path(debug_file).expanduser(), "w") as f:
+            f.write(code_str)
+        raise RuntimeError(
+            f"Black could not parse generated code (written to {debug_file}): {e}\n\n{code_str}"
+        )
+
+    for find, replace in find_replace or []:
+        code_str = re.sub(find, replace, code_str, flags=re.MULTILINE | re.DOTALL)
 
     filtered_imports = UsedSymbols.filter_imports(
         ImportStatement.collate(
@@ -106,22 +127,89 @@ def write_to_module(
         code_str,
     )
 
-    code_str = "\n".join(str(i) for i in filtered_imports) + "\n\n" + code_str
+    # Strip out inlined imports
+    for inlined_symbol in inlined_symbols:
+        for stmt in filtered_imports:
+            if inlined_symbol in stmt:
+                stmt.drop(inlined_symbol)
+
+    import_str = "\n".join(str(i) for i in filtered_imports if i)
 
     try:
-        code_str = black.format_file_contents(
-            code_str, fast=False, mode=black.FileMode()
+        import_str = black.format_file_contents(
+            import_str,
+            fast=True,
+            mode=black.FileMode(),
         )
-    except Exception as e:
-        # Write to file for debugging
-        debug_file = "~/unparsable-nipype2pydra-output.py"
-        with open(Path(debug_file).expanduser(), "w") as f:
-            f.write(code_str)
-        raise RuntimeError(
-            f"Black could not parse generated code (written to {debug_file}): {e}\n\n{code_str}"
-        )
+    except black.report.NothingChanged:
+        pass
+
+    code_str = import_str + "\n\n" + code_str
 
     with open(module_fspath, "w") as f:
         f.write(code_str)
 
     return module_fspath
+
+
+def write_pkg_inits(
+    package_root: Path, module_name: str, depth: int, names: ty.List[str]
+):
+    """Writes __init__.py files to all directories in the given package path
+
+    Parameters
+    ----------
+    package_root : Path
+        The root directory of the package
+    module_name : str
+        The name of the module to write the imports to
+    depth : int
+        The depth of the package from the root up to which to generate __init__.py files
+        for
+    names : List[str]
+        The names to import in the __init__.py files
+    """
+    parts = module_name.split(".")
+    for i, part in enumerate(reversed(parts[depth:]), start=1):
+        mod_parts = parts[:-i]
+        parent_mod = ".".join(mod_parts)
+        init_fspath = package_root.joinpath(*mod_parts, "__init__.py")
+        code_str = ""
+        import_stmts = []
+        if init_fspath.exists():
+            with open(init_fspath, "r") as f:
+                existing_code = f.read()
+            stmts = split_source_into_statements(existing_code)
+            for stmt in stmts:
+                if ImportStatement.matches(stmt):
+                    import_stmt = parse_imports(stmt, relative_to=parent_mod)[0]
+                    if import_stmt.conditional:
+                        code_str += f"\n{stmt}"
+                    else:
+                        import_stmts.append(import_stmt)
+                else:
+                    code_str += f"\n{stmt}"
+        import_stmts.append(
+            parse_imports(
+                f"from .{part} import ({', '.join(names)})", relative_to=parent_mod
+            )[0]
+        )
+        import_stmts = sorted(ImportStatement.collate(import_stmts))
+        code_str = "\n".join(str(i) for i in import_stmts) + "\n" + code_str
+        try:
+            code_str = black.format_file_contents(
+                code_str, fast=False, mode=black.FileMode()
+            )
+        except black.report.NothingChanged:
+            pass
+        except Exception as e:
+            # Write to file for debugging
+            debug_file = "~/unparsable-nipype2pydra-output.py"
+            with open(Path(debug_file).expanduser(), "w") as f:
+                f.write(code_str)
+            raise RuntimeError(
+                f"Black could not parse generated code (written to {debug_file}): "
+                f"{e}\n\n{code_str}"
+            )
+        with open(init_fspath, "w") as f:
+            f.write(code_str)

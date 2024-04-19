@@ -320,7 +320,7 @@ class UsedSymbols:
             fbody = func
         for stmt in split_source_into_statements(fbody):
             if stmt and not re.match(
-                r"\s*(#|\"|'|from |import )", stmt
+                r"\s*(#|\"|'|from |import |r'|r\"|f'|f\")", stmt
             ):  # skip comments/docs
                 for sym in cls.symbols_re.findall(stmt):
                     if "." in sym:

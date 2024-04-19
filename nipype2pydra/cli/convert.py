@@ -22,10 +22,14 @@ converted workflow
 @click.argument("specs_dir", type=click.Path(path_type=Path, exists=True))
 @click.argument("package_root", type=click.Path(path_type=Path, exists=True))
 @click.argument("workflow_functions", type=str, nargs=-1)
+@click.option(
+    "--single-interface", type=str, help="Convert a single interface", default=None
+)
 def convert(
     specs_dir: Path,
     package_root: Path,
     workflow_functions: ty.List[str],
+    single_interface: ty.Optional[str] = None,
 ) -> None:
 
     workflow_specs = {}
@@ -58,6 +62,22 @@ def convert(
         )
         output_module += "." + to_snake_case(task_name)
         return output_module
+
+    if single_interface:
+        spec = interface_specs[single_interface]
+        output_module = get_output_module(spec["nipype_module"], spec["task_name"])
+        output_path = package_root.joinpath(*output_module.split(".")).with_suffix(
+            ".py"
+        )
+        if output_path.exists():
+            output_path.unlink()
+        task.get_converter(
+            output_module=output_module,
+            callables_module=interface_spec_callables[spec["task_name"]],
+            package=converter,
+            **spec,
+        ).write(package_root)
+        return
 
     converter.interfaces = {
         n: task.get_converter(
