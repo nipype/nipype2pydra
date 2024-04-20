@@ -298,9 +298,9 @@ def cleanup_function_body(function_body: str) -> str:
     else:
         with_signature = False
     # Detect the indentation of the source code in src and reduce it to 4 spaces
-    indents = re.findall(r"^( *)[^\s].*\n", function_body, flags=re.MULTILINE)
-    min_indent = min(len(i) for i in indents) if indents else 0
-    indent_reduction = min_indent - (0 if with_signature else 4)
+    non_empty_lines = [ln for ln in function_body.splitlines() if ln]
+    indent_size = len(re.match(r"^( *)", non_empty_lines[0]).group(1))
+    indent_reduction = indent_size - (0 if with_signature else 4)
     assert indent_reduction >= 0, (
         "Indentation reduction cannot be negative, probably didn't detect signature of "
         f"method correctly:\n{function_body}"
