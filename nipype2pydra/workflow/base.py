@@ -325,37 +325,15 @@ class WorkflowConverter:
             find_replace=self.package.find_replace,
         )
 
-        # # Add any local functions, constants and classes
-        # for func in sorted(used.local_functions, key=attrgetter("__name__")):
-        #     if func.__module__ + "." + func.__name__ not in already_converted:
-        #         code_str += "\n\n" + cleanup_function_body(inspect.getsource(func))
-
-        # code_str += "\n".join(f"{n} = {d}" for n, d in used.constants)
-        # for klass in sorted(used.local_classes, key=attrgetter("__name__")):
-        #     code_str += "\n\n" + cleanup_function_body(inspect.getsource(klass))
-
-        # filtered_imports = UsedSymbols.filter_imports(used.imports, code_str)
-
-        # code_str = (
-        #     "\n".join(str(i) for i in filtered_imports if not i.indent)
-        #     + "\n\n"
-        #     + code_str
-        # )
-
-        # # Format the generated code with black
-        # try:
-        #     code_str = black.format_file_contents(
-        #         code_str, fast=False, mode=black.FileMode()
-        #     )
-        # except Exception as e:
-        #     with open(Path("~/Desktop/gen-code.py").expanduser(), "w") as f:
-        #         f.write(code_str)
-        #     raise RuntimeError(
-        #         f"Black could not parse generated code: {e}\n\n{code_str}"
-        #     )
-
-        # with open(self.get_output_module_path(package_root), "w") as f:
-        #     f.write(code_str)
+        # Write test code
+        write_to_module(
+            package_root,
+            module_name=ImportStatement.join_relative_package(
+                self.output_module, ".tests.test_" + self.name
+            ),
+            converted_code=self.test_code,
+            used=self.test_used,
+        )
 
     @cached_property
     def _converted_code(self) -> ty.Tuple[str, ty.List[str]]:
@@ -501,6 +479,26 @@ class WorkflowConverter:
             code_str = re.sub(find, replace, code_str, flags=re.MULTILINE | re.DOTALL)
 
         return code_str, used_configs
+
+    @property
+    def test_code(self):
+        return f"""
+
+def test_{self.name}():
+    workflow = {self.name}()
+    assert isinstance(workflow, Workflow)
+"""
+
+    @property
+    def test_used(self):
+        return UsedSymbols(
+            imports=parse_imports(
+                [
+                    f"from {self.output_module} import {self.name}",
+                    "from pydra.engine import Workflow",
+                ]
+            )
+        )
 
     def _parse_statements(self, func_body: str) -> ty.Tuple[
         ty.List[

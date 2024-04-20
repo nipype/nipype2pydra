@@ -115,7 +115,7 @@ class ConnectionConverter:
             task_name = f"{self.source_name}_{self.source_out.varname}"
             intf_name = f"{task_name}_callable"
             code_str += (
-                f"\n{self.indent}@pydra.task.mark\n"
+                f"\n{self.indent}@pydra.mark.task\n"
                 f"{self.indent}def {intf_name}(in_: str):\n"
                 f"{self.indent}    return {self.source_out.callable}(in_)\n\n"
                 f"{self.indent}{self.workflow_variable}.add("

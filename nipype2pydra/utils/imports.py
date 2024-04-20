@@ -547,7 +547,7 @@ GENERIC_PYDRA_IMPORTS = parse_imports(
         "from pydra.engine.specs import MultiInputObj",
         "from pathlib import Path",
         "import logging",
-        "import pydra.task",
+        "import pydra.mark",
         "from pydra.engine import Workflow",
     ]
 )

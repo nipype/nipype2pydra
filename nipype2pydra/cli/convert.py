@@ -1,5 +1,6 @@
 from pathlib import Path
 import typing as ty
+import shutil
 import click
 import yaml
 from nipype2pydra.workflow import WorkflowConverter
@@ -17,20 +18,25 @@ SPECS_DIR is a directory pointing to YAML specs for each of the workflows in the
 
 PACKAGE_ROOT is the path to the root directory of the packages in which to generate the
 converted workflow
+
+TO_INCLUDE is the list of interfaces/workflows/functions to explicitly include in the
+conversion. If not provided, all workflows and interfaces will be included. Can also
+be the path to a file containing a list of interfaces/workflows/functions to include
 """,
 )
 @click.argument("specs_dir", type=click.Path(path_type=Path, exists=True))
 @click.argument("package_root", type=click.Path(path_type=Path, exists=True))
-@click.argument("workflow_functions", type=str, nargs=-1)
-@click.option(
-    "--single-interface", type=str, help="Convert a single interface", default=None
-)
+@click.argument("to_include", type=str, nargs=-1)
 def convert(
     specs_dir: Path,
     package_root: Path,
-    workflow_functions: ty.List[str],
-    single_interface: ty.Optional[str] = None,
+    to_include: ty.List[str],
 ) -> None:
+
+    if len(to_include) == 1:
+        if Path(to_include[0]).exists():
+            with open(to_include[0], "r") as f:
+                to_include = f.read().splitlines()
 
     workflow_specs = {}
     for fspath in (specs_dir / "workflows").glob("*.yaml"):
@@ -54,6 +60,11 @@ def convert(
 
     converter = PackageConverter(**spec)
 
+    package_dir = converter.package_dir(package_root)
+
+    if package_dir.exists():
+        shutil.rmtree(package_dir)
+
     interfaces_only_pkg = not workflow_specs
 
     def get_output_module(module: str, task_name: str) -> str:
@@ -62,26 +73,6 @@ def convert(
         )
         output_module += "." + to_snake_case(task_name)
         return output_module
-
-    if single_interface:
-        spec = interface_specs[single_interface]
-        output_module = get_output_module(spec["nipype_module"], spec["task_name"])
-        out_parts = output_module.split(".")
-        output_path = package_root.joinpath(*out_parts).with_suffix(".py")
-        test_output_path = package_root.joinpath(
-            *(out_parts[:-1] + ["tests", f"test_{out_parts[-1]}"])
-        ).with_suffix(".py")
-        if output_path.exists():
-            output_path.unlink()
-        if test_output_path.exists():
-            test_output_path.unlink()
-        task.get_converter(
-            output_module=output_module,
-            callables_module=interface_spec_callables[spec["task_name"]],
-            package=converter,
-            **spec,
-        ).write(package_root)
-        return
 
     converter.interfaces = {
         n: task.get_converter(
@@ -97,7 +88,7 @@ def convert(
         n: WorkflowConverter(package=converter, **c) for n, c in workflow_specs.items()
     }
 
-    converter.write(package_root, workflow_functions)
+    converter.write(package_root, to_include)
 
 
 if __name__ == "__main__":
