@@ -109,4 +109,6 @@ class ShellCommandTaskConverter(BaseTaskConverter):
         )
         # spec_str = "\n".join(str(i) for i in imports) + "\n\n" + spec_str
 
-        return spec_str, UsedSymbols(imports=imports)
+        return spec_str, UsedSymbols(
+            module_name=self.nipype_module.__name__, imports=imports
+        )

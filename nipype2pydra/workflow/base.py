@@ -259,9 +259,8 @@ class WorkflowConverter:
         package_root: Path,
         already_converted: ty.Set[str] = None,
         additional_funcs: ty.List[str] = None,
-        intra_pkg_modules: ty.Dict[str, ty.Set[str]] = None,
         nested: bool = False,
-    ):
+    ) -> UsedSymbols:
         """Generates and writes the converted package to the specified package root
 
         Parameters
@@ -273,33 +272,26 @@ class WorkflowConverter:
         additional_funcs : list[str], optional
             additional functions to write to the module required as dependencies of
             workflows in other modules
+
+        Returns
+        -------
+        all_used: UsedSymbols
+            all the symbols used in the workflow and its nested workflows
         """
 
         if already_converted is None:
             already_converted = set()
-        if intra_pkg_modules is None:
-            intra_pkg_modules = defaultdict(set)
         already_converted.add(self.full_name)
 
         if additional_funcs is None:
             additional_funcs = []
 
         used = self.used_symbols.copy()
+        all_used = self.used_symbols.copy()
 
         # Start writing output module with used imports and converted function body of
         # main workflow
         code_str = self.converted_code
-
-        # Get any intra-package classes and functions that need to be written
-
-        for _, intra_pkg_obj in used.intra_pkg_classes + list(used.intra_pkg_funcs):
-            if full_address(intra_pkg_obj) not in list(self.package.workflows):
-                # + list(
-                #     self.package.interfaces
-                # ):
-                intra_pkg_modules[
-                    self.to_output_module_path(intra_pkg_obj.__module__)
-                ].add(intra_pkg_obj)
 
         local_func_names = {f.__name__ for f in used.local_functions}
         # Convert any nested workflows
@@ -307,15 +299,16 @@ class WorkflowConverter:
             if conv.full_name in already_converted:
                 continue
             already_converted.add(conv.full_name)
+            all_used.update(conv.used_symbols)
             if name in local_func_names:
                 code_str += "\n\n\n" + conv.converted_code
                 used.update(conv.used_symbols)
             else:
-                conv.write(
+                conv_all_used = conv.write(
                     package_root,
                     already_converted=already_converted,
-                    additional_funcs=intra_pkg_modules[conv.output_module],
                 )
+                all_used.update(conv_all_used)
 
         write_to_module(
             package_root,
@@ -334,6 +327,9 @@ class WorkflowConverter:
             converted_code=self.test_code,
             used=self.test_used,
         )
+
+        all_used.update(self.test_used)
+        return all_used
 
     @cached_property
     def _converted_code(self) -> ty.Tuple[str, ty.List[str]]:
@@ -492,12 +488,13 @@ def test_{self.name}():
     @property
     def test_used(self):
         return UsedSymbols(
+            module_name=self.nipype_module.__name__,
             imports=parse_imports(
                 [
                     f"from {self.output_module} import {self.name}",
                     "from pydra.engine import Workflow",
                 ]
-            )
+            ),
         )
 
     def _parse_statements(self, func_body: str) -> ty.Tuple[

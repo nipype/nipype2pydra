@@ -67,11 +67,11 @@ class FunctionTaskConverter(BaseTaskConverter):
 
         # Combined src of run_interface and list_outputs
         method_body = inspect.getsource(self.nipype_interface._run_interface).strip()
-        method_body = "\n".join(method_body.split("\n")[1:-1])
+        method_body = "\n".join(method_body.split("\n")[1:])
         lo_src = inspect.getsource(self.nipype_interface._list_outputs).strip()
         lo_lines = lo_src.split("\n")
         lo_src = "\n".join(lo_lines[1:-1])
-        method_body += lo_src
+        method_body += "\n" + lo_src
         method_body = self.process_method_body(method_body, input_names, output_names)
 
         used = UsedSymbols.find(
@@ -160,11 +160,11 @@ class FunctionTaskConverter(BaseTaskConverter):
             method_body = (
                 "    " + " = ".join(return_args) + " = attrs.NOTHING\n" + method_body
             )
-            method_lines = method_body.splitlines()
+            method_lines = method_body.rstrip().splitlines()
             method_body = "\n".join(method_lines[:-1])
             last_line = method_lines[-1]
             if "return" in last_line:
-                method_body += "," + ",".join(return_args)
+                method_body += "\n" + last_line + "," + ",".join(return_args)
             else:
                 method_body += (
                     "\n" + last_line + "\n    return " + ",".join(return_args)

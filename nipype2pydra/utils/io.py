@@ -122,22 +122,22 @@ def write_to_module(
     for find, replace in find_replace or []:
         code_str = re.sub(find, replace, code_str, flags=re.MULTILINE | re.DOTALL)
 
-    collated_imports = ImportStatement.collate(
+    imports = ImportStatement.collate(
         existing_imports
         + [i for i in used.imports if not i.indent]
         + GENERIC_PYDRA_IMPORTS
     )
 
     if module_fspath.name != "__init__.py":
-        filtered_imports = UsedSymbols.filter_imports(collated_imports, code_str)
+        imports = UsedSymbols.filter_imports(imports, code_str)
 
     # Strip out inlined imports
     for inlined_symbol in inlined_symbols:
-        for stmt in filtered_imports:
+        for stmt in imports:
             if inlined_symbol in stmt:
                 stmt.drop(inlined_symbol)
 
-    import_str = "\n".join(str(i) for i in filtered_imports if i)
+    import_str = "\n".join(str(i) for i in imports if i)
 
     try:
         import_str = black.format_file_contents(

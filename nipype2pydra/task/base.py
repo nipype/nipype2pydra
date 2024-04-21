@@ -477,6 +477,10 @@ class BaseTaskConverter(metaclass=ABCMeta):
         )
 
     @property
+    def full_address(self):
+        return f"{self.nipype_module.__name__}.{self.nipype_name}"
+
+    @property
     def nipype_output_spec(self) -> nipype.interfaces.base.BaseTraitedSpec:
         return (
             self.nipype_interface.output_spec()
@@ -531,10 +535,17 @@ class BaseTaskConverter(metaclass=ABCMeta):
             self.input_fields, self.nonstd_types, self.output_fields
         )
 
-    def write(self, package_root: Path):
+    def write(
+        self,
+        package_root: Path,
+        already_converted: ty.Set[str] = None,
+        additional_funcs: ty.List[str] = None,
+    ):
         """creating pydra input/output spec from nipype specs
         if write is True, a pydra Task class will be written to the file together with tests
         """
+        if self.full_address in already_converted:
+            return
 
         write_to_module(
             package_root=package_root,
@@ -932,7 +943,7 @@ class BaseTaskConverter(metaclass=ABCMeta):
             },
         )
 
-        return spec_str, UsedSymbols(imports=imports)
+        return spec_str, UsedSymbols(module_name=self.nipype_module.__name__, imports=imports)
 
     def create_doctests(self, input_fields, nonstd_types):
         """adding doctests to the interfaces"""

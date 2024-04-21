@@ -152,6 +152,7 @@ class PackageConverter:
     def all_import_translations(self) -> ty.List[ty.Tuple[str, str]]:
         return self.import_translations + [
             (r"nipype\.interfaces\.(?!base)(\w+)\b", r"pydra.tasks.\1.auto"),
+            (r"nipype\.(.*)", self.name + r".nipype_ports.\1"),
             (self.nipype_name, self.name),
         ]
 
@@ -188,29 +189,50 @@ class PackageConverter:
                     "No interfaces or workflows were explicitly included, assuming all "
                     "are to be included"
                 )
-            interfaces_to_include = self.interfaces.values()
-            workflows_to_include = self.workflows.values()
+            interfaces_to_include = list(self.interfaces.values())
+            workflows_to_include = list(self.workflows.values())
+
+        def collect_intra_pkg_objects(used: UsedSymbols):
+            for _, klass in used.intra_pkg_classes:
+                if full_address(klass) not in list(self.interfaces):
+                    intra_pkg_modules[klass.__module__].add(klass)
+            for _, func in used.intra_pkg_funcs:
+                if full_address(func) not in list(self.workflows):
+                    intra_pkg_modules[func.__module__].add(func)
+            for const_mod_address, const_name, _ in used.intra_pkg_constants:
+                intra_pkg_modules[const_mod_address].add(const_name)
+
+        for converter in tqdm(
+            workflows_to_include, "converting workflows from Nipype to Pydra syntax"
+        ):
+            all_used = converter.write(
+                package_root,
+                already_converted=already_converted,
+            )
+            class_addrs = [full_address(c) for _, c in all_used.intra_pkg_classes]
+            included_addrs = [c.full_address for c in interfaces_to_include]
+            interfaces_to_include.extend(
+                self.interfaces[a]
+                for a in class_addrs
+                if a in self.interfaces and a not in included_addrs
+            )
+            collect_intra_pkg_objects(all_used)
 
         for converter in tqdm(
             interfaces_to_include,
             "converting interfaces from Nipype to Pydra syntax",
         ):
-            converter.write(package_root)
-
-        for converter in tqdm(
-            workflows_to_include, "converting workflows from Nipype to Pydra syntax"
-        ):
             converter.write(
                 package_root,
                 already_converted=already_converted,
-                intra_pkg_modules=intra_pkg_modules,
             )
+            collect_intra_pkg_objects(converter.used_symbols)
 
-        # FIXME: hack to remove nipype-specific functions from intra-package
-        #        these should be mapped into a separate module,
-        #        maybe pydra.tasks.<pkg>.nipype_ports or something
+        # # FIXME: hack to remove nipype-specific functions from intra-package
+        # #        these should be mapped into a separate module,
+        # #        maybe pydra.tasks.<pkg>.nipype_ports or something
         for mod_name in list(intra_pkg_modules):
-            if mod_name.startswith("nipype"):
+            if re.match(r"^nipype\.pipeline\b", mod_name):
                 intra_pkg_modules.pop(mod_name)
 
         # Write any additional functions in other modules in the package
@@ -251,6 +273,7 @@ class PackageConverter:
         self,
         package_root: Path,
         intra_pkg_modules: ty.Dict[str, ty.Set[str]],
+        already_converted: ty.Set[str] = None,
     ):
         """Writes the intra-package modules to the package root
 
@@ -260,6 +283,8 @@ class PackageConverter:
             the root directory of the package to write the module to
         intra_pkg_modules : dict[str, set[str]
             the intra-package modules to write
+        already_converted : set[str]
+            the set of modules that have already been converted
         """
         for mod_name, objs in tqdm(
             intra_pkg_modules.items(), "writing intra-package modules"
@@ -268,58 +293,71 @@ class PackageConverter:
             if not objs:
                 continue
 
+            out_mod_name = self.to_output_module_path(mod_name)
+
             if mod_name == self.name:
                 raise NotImplementedError(
                     "Cannot write the main package module as an intra-package module"
                 )
 
-            mod_path = package_root.joinpath(*mod_name.split("."))
-            mod = import_module(self.untranslate_submodule(mod_name))
+            out_mod_path = package_root.joinpath(*out_mod_name.split("."))
+            mod = import_module(mod_name)
 
-            interfaces = [o for o in objs if full_address(o) in self.interfaces]
-            other_objs = [o for o in objs if o not in interfaces]
+            if out_mod_path.is_dir():
+                mod_name += ".__init__"
+            used = UsedSymbols.find(
+                mod,
+                objs,
+                pull_out_inline_imports=False,
+                translations=self.all_import_translations,
+            )
 
-            if interfaces:
-                for interface in tqdm(
-                    interfaces, f"Generating interfaces for {mod_name}"
-                ):
-                    intf_conv = self.interfaces[full_address(interface)]
-                    intf_conv.write(package_root)
+            classes = used.local_classes + [
+                o for o in objs if inspect.isclass(o) and o not in used.local_classes
+            ]
 
-            if other_objs:
-                if mod_path.is_dir():
-                    mod_name += ".__init__"
-                used = UsedSymbols.find(
-                    mod,
-                    other_objs,
-                    pull_out_inline_imports=False,
-                    translations=self.all_import_translations,
-                )
+            functions = list(used.local_functions) + [
+                o
+                for o in objs
+                if inspect.isfunction(o) and o not in used.local_functions
+            ]
 
-                classes = used.local_classes + [
-                    o
-                    for o in other_objs
-                    if inspect.isclass(o) and o not in used.local_classes
-                ]
-
-                functions = list(used.local_functions) + [
-                    o
-                    for o in other_objs
-                    if inspect.isfunction(o) and o not in used.local_functions
-                ]
-
-                write_to_module(
-                    package_root=package_root,
+            write_to_module(
+                package_root=package_root,
+                module_name=out_mod_name,
+                used=UsedSymbols(
                     module_name=mod_name,
-                    used=UsedSymbols(
-                        imports=used.imports,
-                        constants=used.constants,
-                        local_classes=classes,
-                        local_functions=functions,
-                    ),
-                    find_replace=self.find_replace,
-                    inline_intra_pkg=False,
-                )
+                    imports=used.imports,
+                    constants=used.constants,
+                    local_classes=classes,
+                    local_functions=functions,
+                ),
+                find_replace=self.find_replace,
+                inline_intra_pkg=False,
+            )
+
+    def to_output_module_path(self, nipype_module_path: str) -> str:
+        """Converts an original Nipype module path to a Pydra module path
+
+        Parameters
+        ----------
+        nipype_module_path : str
+            the original Nipype module path
+
+        Returns
+        -------
+        str
+            the Pydra module path
+        """
+        if re.match(r"^nipype\b", nipype_module_path):
+            return ImportStatement.join_relative_package(
+                self.name + ".nipype_ports.__init__",
+                ImportStatement.get_relative_package(nipype_module_path, "nipype"),
+            )
+        return ImportStatement.join_relative_package(
+            self.name + ".__init__",
+            ImportStatement.get_relative_package(nipype_module_path, self.nipype_name),
+        )
 
     @classmethod
     def default_spec(

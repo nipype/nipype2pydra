@@ -25,13 +25,6 @@ class UsedSymbols:
     -------
     imports : list[str]
         the import statements that need to be included in the converted file
-    intra_pkg_funcs: list[tuple[str, callable]]
-        list of functions that are defined in neighbouring modules that need to be
-        included in the converted file (as opposed of just imported from independent
-        packages) along with the name that they were imported as and therefore should
-        be named as in the converted module if they are included inline
-    intra_pkg_classes
-        like neigh_mod_funcs but classes
     local_functions: set[callable]
         locally-defined functions used in the function bodies, or nested functions thereof
     local_classes : set[type]
@@ -39,14 +32,27 @@ class UsedSymbols:
     constants: set[tuple[str, str]]
         constants used in the function bodies, or nested functions thereof, tuples consist
         of the constant name and its definition
+    intra_pkg_funcs: set[tuple[str, callable]]
+        list of functions that are defined in neighbouring modules that need to be
+        included in the converted file (as opposed of just imported from independent
+        packages) along with the name that they were imported as and therefore should
+        be named as in the converted module if they are included inline
+    intra_pkg_classes: list[tuple[str, callable]]
+        like neigh_mod_funcs but classes
+    intra_pkg_constants: set[tuple[str, str, str]]
+        set of all the constants defined within the package that are referenced by the
+        function, (<path of the module>, <constant name>, <local-name>), where
+        the local alias and the definition of the constant
     """
 
+    module_name: str
     imports: ty.Set[str] = attrs.field(factory=set)
-    intra_pkg_funcs: ty.Set[ty.Tuple[str, ty.Callable]] = attrs.field(factory=set)
-    intra_pkg_classes: ty.List[ty.Tuple[str, ty.Callable]] = attrs.field(factory=list)
     local_functions: ty.Set[ty.Callable] = attrs.field(factory=set)
     local_classes: ty.List[type] = attrs.field(factory=list)
     constants: ty.Set[ty.Tuple[str, str]] = attrs.field(factory=set)
+    intra_pkg_funcs: ty.Set[ty.Tuple[str, ty.Callable]] = attrs.field(factory=set)
+    intra_pkg_classes: ty.List[ty.Tuple[str, ty.Callable]] = attrs.field(factory=list)
+    intra_pkg_constants: ty.Set[ty.Tuple[str, str, str]] = attrs.field(factory=set)
 
     IGNORE_MODULES = [
         "traits.trait_handlers",  # Old traits module, pre v6.0
@@ -70,7 +76,10 @@ class UsedSymbols:
             for c in other.local_classes
             if (c.__name__, c) not in self.intra_pkg_classes
         )
-        self.constants.update(other.constants)
+        self.intra_pkg_constants.update(
+            (other.module_name, c[0], c[0]) for c in other.constants
+        )
+        self.intra_pkg_constants.update(other.intra_pkg_constants)
 
     DEFAULT_FILTERED_OBJECTS = (
         Undefined,
@@ -141,7 +150,7 @@ class UsedSymbols:
         except KeyError:
             pass
 
-        used = cls()
+        used = cls(module_name=module.__name__)
         source_code = inspect.getsource(module)
         local_functions = get_local_functions(module)
         local_constants = get_local_constants(module)
@@ -164,8 +173,13 @@ class UsedSymbols:
                     parse_imports(stmt, relative_to=module, translations=translations)
                 )
 
+        all_src = ""  # All the source code that is searched for symbols
+
         used_symbols = set()
         for function_body in function_bodies:
+            if not isinstance(function_body, str):
+                function_body = inspect.getsource(function_body)
+            all_src += "\n\n" + function_body
             cls._get_symbols(function_body, used_symbols)
 
         # Keep stepping into nested referenced local function/class sources until all local
@@ -180,6 +194,7 @@ class UsedSymbols:
                 ):
                     used.local_functions.add(local_func)
                     cls._get_symbols(local_func, used_symbols)
+                    all_src += "\n\n" + inspect.getsource(local_func)
             for local_class in local_classes:
                 if (
                     local_class.__name__ in used_symbols
@@ -192,6 +207,7 @@ class UsedSymbols:
                     bases = extract_args(class_body)[1]
                     used_symbols.update(bases)
                     cls._get_symbols(class_body, used_symbols)
+                    all_src += "\n\n" + class_body
             for const_name, const_def in local_constants:
                 if (
                     const_name in used_symbols
@@ -199,6 +215,7 @@ class UsedSymbols:
                 ):
                     used.constants.add((const_name, const_def))
                     cls._get_symbols(const_def, used_symbols)
+                    all_src += "\n\n" + const_def
             used_symbols -= set(cls.SYMBOLS_TO_IGNORE)
 
         base_pkg = module.__name__.split(".")[0]
@@ -242,22 +259,24 @@ class UsedSymbols:
                     continue
                 stmt = stmt.only_include(to_include)
             inlined_objects = []
+
             if stmt.in_package(base_pkg) or (
-                stmt.in_package("nipype") and not stmt.translation
+                stmt.in_package("nipype") and not stmt.in_package("nipype.interfaces")
             ):
+
                 for imported in list(stmt.values()):
                     if not (
                         imported.in_package(base_pkg) or imported.in_package("nipype")
                     ) or inspect.isbuiltin(imported.object):
                         # Case where an object is a nested import from a different package
-                        # which is imported from a neighbouring module
+                        # which is imported in a chain from a neighbouring module
                         used.imports.add(
                             imported.as_independent_statement(resolve=True)
                         )
                         stmt.drop(imported)
                     elif inspect.isfunction(imported.object):
                         used.intra_pkg_funcs.add((imported.local_name, imported.object))
-                        if collapse_intra_pkg or stmt.in_package("nipype"):
+                        if collapse_intra_pkg:
                             # Recursively include objects imported in the module
                             # by the inlined function
                             inlined_objects.append(
@@ -276,7 +295,7 @@ class UsedSymbols:
                         # from the other
                         if class_def not in used.intra_pkg_classes:
                             used.intra_pkg_classes.append(class_def)
-                        if collapse_intra_pkg or stmt.in_package("nipype"):
+                        if collapse_intra_pkg:
                             # Recursively include objects imported in the module
                             # by the inlined class
                             inlined_objects.append(
@@ -286,12 +305,43 @@ class UsedSymbols:
                                 )
                             )
                             stmt.drop(imported)
-                    elif not inspect.ismodule(imported.object) and (
-                        collapse_intra_pkg or stmt.in_package("nipype")
-                    ):
+                    elif inspect.ismodule(imported.object):
+                        # Skip if the module is the same as the module being converted
+                        if imported.object.__name__ == module.__name__:
+                            continue
+                        # Findall references to the module's attributes in the source code
+                        # and add them to the list of intra package objects
+                        used_attrs = re.findall(
+                            r"\b" + imported.local_name + r"\.(\w+)\b", all_src
+                        )
+                        for attr_name in used_attrs:
+                            obj = getattr(imported.object, attr_name)
 
-                        inlined_objects.append((stmt.module, imported.local_name))
-                        stmt.drop(imported)
+                            if inspect.isfunction(obj):
+                                used.intra_pkg_funcs.add((obj.__name__, obj))
+                            elif inspect.isclass(obj):
+                                class_def = (obj.__name__, obj)
+                                if class_def not in used.intra_pkg_classes:
+                                    used.intra_pkg_classes.append(class_def)
+                            else:
+                                used.intra_pkg_constants.add(
+                                    (
+                                        imported.object.__name__,
+                                        attr_name,
+                                        attr_name,
+                                    )
+                                )
+                    else:
+                        used.intra_pkg_constants.add(
+                            (
+                                stmt.module_name,
+                                imported.local_name,
+                                imported.name,
+                            )
+                        )
+                        if collapse_intra_pkg:
+                            inlined_objects.append((stmt.module, imported.local_name))
+                            stmt.drop(imported)
 
             # Recursively include neighbouring objects imported in the module
             for from_mod, inlined_obj in inlined_objects:
