@@ -15,6 +15,7 @@ from .utils import (
     UsedSymbols,
     full_address,
     write_to_module,
+    write_pkg_inits,
     ImportStatement,
 )
 import nipype2pydra.workflow
@@ -183,6 +184,35 @@ class PackageConverter:
             ),
         },
     )
+
+    init_depth: int = attrs.field(
+        metadata={
+            "help": (
+                "The depth at which __init__ files should include imports from sub-modules "
+                "by default"
+            )
+        }
+    )
+
+    auto_import_init_depth: int = attrs.field(
+        metadata={
+            "help": (
+                "The depth at which __init__ files should include imports from sub-modules "
+                "by default"
+            )
+        }
+    )
+
+    @init_depth.default
+    def _init_depth_default(self) -> int:
+        if self.name.startswith("pydra.tasks."):
+            return 3
+        else:
+            return 1
+
+    @auto_import_init_depth.default
+    def _auto_import_init_depth_default(self) -> int:
+        return len(self.name.split(".")) + 1
 
     @property
     def interface_only_package(self):
@@ -378,6 +408,17 @@ class PackageConverter:
                 ),
                 find_replace=self.find_replace,
                 inline_intra_pkg=False,
+            )
+
+            write_pkg_inits(
+                package_root,
+                out_mod_name,
+                names=(
+                    [o.__name__ for o in classes + functions]
+                    + [c[0] for c in used.constants]
+                ),
+                depth=self.init_depth,
+                auto_import_depth=self.auto_import_init_depth,
             )
 
     def to_output_module_path(self, nipype_module_path: str) -> str:

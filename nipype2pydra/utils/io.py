@@ -157,7 +157,11 @@ def write_to_module(
 
 
 def write_pkg_inits(
-    package_root: Path, module_name: str, depth: int, names: ty.List[str]
+    package_root: Path,
+    module_name: str,
+    names: ty.List[str],
+    depth: int,
+    auto_import_depth: int,
 ):
     """Writes __init__.py files to all directories in the given package path
 
@@ -170,6 +174,8 @@ def write_pkg_inits(
     depth : int
         The depth of the package from the root up to which to generate __init__.py files
         for
+    auto_import_depth: int
+        the depth below which the init files should contain cascading imports from
     names : List[str]
         The names to import in the __init__.py files
     """
@@ -178,6 +184,10 @@ def write_pkg_inits(
         mod_parts = parts[:-i]
         parent_mod = ".".join(mod_parts)
         init_fspath = package_root.joinpath(*mod_parts, "__init__.py")
+        if i > len(parts) - auto_import_depth:
+            # Write empty __init__.py if it doesn't exist
+            init_fspath.touch()
+            continue
         code_str = ""
         import_stmts = []
         if init_fspath.exists():

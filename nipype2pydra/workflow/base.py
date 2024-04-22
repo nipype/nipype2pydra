@@ -14,6 +14,7 @@ from ..utils import (
     split_source_into_statements,
     extract_args,
     write_to_module,
+    write_pkg_inits,
     full_address,
     ImportStatement,
     parse_imports,
@@ -318,6 +319,14 @@ class WorkflowConverter:
             converted_code=code_str,
             used=used,
             find_replace=self.package.find_replace,
+        )
+
+        write_pkg_inits(
+            package_root,
+            self.output_module,
+            names=[self.name],
+            depth=self.package.init_depth,
+            auto_import_depth=self.package.auto_import_init_depth,
         )
 
         # Write test code

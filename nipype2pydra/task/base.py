@@ -559,7 +559,8 @@ class BaseTaskConverter(metaclass=ABCMeta):
             package_root,
             self.output_module,
             names=[self.task_name],
-            depth=len(self.package.name.split(".")),
+            depth=self.package.init_depth,
+            auto_import_depth=self.package.auto_import_init_depth,
             # + [f.__name__ for f in self.used_symbols.local_functions]
             # + [c.__name__ for c in self.used_symbols.local_classes],
         )
