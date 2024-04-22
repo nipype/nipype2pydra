@@ -112,6 +112,7 @@ class UsedSymbols:
         omit_classes: ty.Optional[ty.List[ty.Type]] = None,
         omit_modules: ty.Optional[ty.List[str]] = None,
         translations: ty.Optional[ty.Sequence[ty.Tuple[str, str]]] = None,
+        absolute_imports: bool = False,
     ) -> "UsedSymbols":
         """Get the imports and local functions/classes/constants referenced in the
         provided function bodies, and those nested within them
@@ -140,12 +141,18 @@ class UsedSymbols:
             a list of tuples where the first element is the name of the symbol to be
             replaced and the second element is the name of the symbol to replace it with,
             regex supported, by default None
+        absolute_imports : bool, optional
+            whether to convert relative imports to absolute imports, by default False
 
         Returns
         -------
         UsedSymbols
             a class containing the used symbols in the module
         """
+        if omit_classes is None:
+            omit_classes = []
+        if omit_modules is None:
+            omit_modules = []
         if isinstance(module, str):
             module = import_module(module)
         cache_key = (
@@ -187,7 +194,12 @@ class UsedSymbols:
                         continue
             if ImportStatement.matches(stmt):
                 imports.extend(
-                    parse_imports(stmt, relative_to=module, translations=translations)
+                    parse_imports(
+                        stmt,
+                        relative_to=module,
+                        translations=translations,
+                        absolute=absolute_imports,
+                    )
                 )
         imports = sorted(imports)
 

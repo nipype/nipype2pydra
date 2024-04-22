@@ -7,3 +7,4 @@ nireports:
     - nireports.interfaces.mosaic.PlotContours
     - nireports.interfaces.mosaic.PlotMosaic
     - nireports.interfaces.mosaic.PlotSpikes
+    - nireports.interfaces.reporting.base.SimpleBeforeAfterRPT

@@ -54,6 +54,8 @@ def write_to_module(
             converted_code = black.format_file_contents(
                 converted_code, fast=False, mode=black.FileMode()
             )
+        except black.report.NothingChanged:
+            pass
         except Exception as e:
             # Write to file for debugging
             debug_file = "~/unparsable-nipype2pydra-output.py"
@@ -76,10 +78,12 @@ def write_to_module(
     if logger_stmt not in code_str:
         code_str = logger_stmt + code_str
 
-    code_str += "\n\n# Intra-package imports that have been inlined in this module\n\n"
-
     inlined_symbols = []
     if inline_intra_pkg:
+
+        code_str += (
+            "\n\n# Intra-package imports that have been inlined in this module\n\n"
+        )
         for func_name, func in sorted(used.intra_pkg_funcs, key=itemgetter(0)):
             func_src = get_source_code(func)
             func_src = re.sub(

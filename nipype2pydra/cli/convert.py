@@ -38,11 +38,34 @@ def convert(
             with open(to_include[0], "r") as f:
                 to_include = f.read().splitlines()
 
+    with open(specs_dir / "package.yaml", "r") as f:
+        package_spec = yaml.safe_load(f)
+
+    if not to_include and "to_include" in package_spec:
+        to_include = package_spec.pop("to_include")
+
+    converter = PackageConverter(**package_spec)
+    package_dir = converter.package_dir(package_root)
+
+    if package_dir.exists():
+        shutil.rmtree(package_dir)
+
+    def get_output_module(module: str, task_name: str) -> str:
+        output_module = converter.translate_submodule(
+            module, sub_pkg="auto" if converter.interface_only else None
+        )
+        output_module += "." + to_snake_case(task_name)
+        return output_module
+
+    # Load workflow specs
+
     workflow_specs = {}
     for fspath in (specs_dir / "workflows").glob("*.yaml"):
         with open(fspath, "r") as f:
             spec = yaml.safe_load(f)
             workflow_specs[f"{spec['nipype_module']}.{spec['name']}"] = spec
+
+    # Load interface specs
 
     interface_specs = {}
     interface_spec_callables = {}
@@ -54,25 +77,6 @@ def convert(
         interface_spec_callables[spec["task_name"]] = fspath.parent / (
             fspath.name[: -len(".yaml")] + "_callables.py"
         )
-
-    with open(specs_dir / "package.yaml", "r") as f:
-        spec = yaml.safe_load(f)
-
-    converter = PackageConverter(**spec)
-
-    package_dir = converter.package_dir(package_root)
-
-    if package_dir.exists():
-        shutil.rmtree(package_dir)
-
-    interfaces_only_pkg = not workflow_specs
-
-    def get_output_module(module: str, task_name: str) -> str:
-        output_module = converter.translate_submodule(
-            module, sub_pkg="auto" if interfaces_only_pkg else None
-        )
-        output_module += "." + to_snake_case(task_name)
-        return output_module
 
     converter.interfaces = {
         n: task.get_converter(

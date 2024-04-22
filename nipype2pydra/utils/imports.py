@@ -456,6 +456,7 @@ def parse_imports(
     stmts: ty.Union[str, ty.Sequence[str]],
     relative_to: ty.Union[str, ModuleType, None] = None,
     translations: ty.Sequence[ty.Tuple[str, str]] = (),
+    absolute: bool = False,
 ) -> ty.List["ImportStatement"]:
     """Parse an import statement from a string
 
@@ -467,6 +468,8 @@ def parse_imports(
         the module to resolve relative imports against
     translations : list[tuple[str, str]]
         the package translations to apply to the imports
+    absolute: bool, optional
+        whether to make the imports absolute, by default False
 
     Returns
     -------
@@ -519,15 +522,17 @@ def parse_imports(
                     f"Relative import statement '{stmt}' without relative_to module "
                     "provided"
                 )
-            parsed.append(
-                ImportStatement(
-                    indent=match.group(1),
-                    from_=from_,
-                    relative_to=relative_to,
-                    imported=imported,
-                    translation=translate(from_),
-                )
+            import_stmt = ImportStatement(
+                indent=match.group(1),
+                from_=from_,
+                relative_to=relative_to,
+                imported=imported,
             )
+            if absolute:
+                import_stmt = import_stmt.absolute()
+            import_stmt.translation = translate(import_stmt.module_name)
+            parsed.append(import_stmt)
+
         else:
             # Break up multiple comma separate imports into separate statements if not
             # in "from <module> import..." syntax

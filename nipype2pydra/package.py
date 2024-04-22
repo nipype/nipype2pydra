@@ -4,6 +4,7 @@ import re
 import typing as ty
 import types
 import logging
+import shutil
 from functools import cached_property
 from collections import defaultdict
 from pathlib import Path
@@ -74,7 +75,7 @@ def resolve_objects(addresses: ty.Optional[ty.List[str]]) -> list:
     return objs
 
 
-@attrs.define
+@attrs.define(slots=False)
 class PackageConverter:
     """
     workflows : dict[str, WorkflowConverter]
@@ -154,6 +155,14 @@ class PackageConverter:
             ),
         },
     )
+    interface_only: bool = attrs.field(
+        metadata={
+            "help": (
+                "Whether the package is an interface-only package (i.e. only contains "
+                "interfaces and not workflows)"
+            )
+        }
+    )
     omit_modules: ty.List[str] = attrs.field(
         factory=list,
         converter=lambda lst: list(lst) if lst else [],
@@ -202,6 +211,19 @@ class PackageConverter:
             )
         }
     )
+    copy_packages: ty.List[str] = attrs.field(
+        factory=list,
+        metadata={
+            "help": (
+                "Packages that should be copied directly into the new package without "
+                "modification"
+            )
+        },
+    )
+
+    @interface_only.default
+    def _interface_only_default(self) -> bool:
+        return not bool(self.workflows)
 
     @init_depth.default
     def _init_depth_default(self) -> int:
@@ -214,9 +236,9 @@ class PackageConverter:
     def _auto_import_init_depth_default(self) -> int:
         return len(self.name.split(".")) + 1
 
-    @property
-    def interface_only_package(self):
-        return not self.workflows
+    @cached_property
+    def nipype_module(self):
+        return import_module(self.nipype_name)
 
     @property
     def all_import_translations(self) -> ty.List[ty.Tuple[str, str]]:
@@ -229,7 +251,7 @@ class PackageConverter:
     def write(self, package_root: Path, to_include: ty.List[str] = None):
         """Writes the package to the specified package root"""
 
-        mod_dir = package_root.joinpath(*self.name.split("."))
+        mod_dir = self.to_fspath(package_root, self.name)
 
         already_converted = set()
         intra_pkg_modules = defaultdict(set)
@@ -271,7 +293,6 @@ class PackageConverter:
                     intra_pkg_modules[func.__module__].add(func)
             for const_mod_address, _, const_name in used.intra_pkg_constants:
                 intra_pkg_modules[const_mod_address].add(const_name)
-            1 + 1
 
         for converter in tqdm(
             workflows_to_include, "converting workflows from Nipype to Pydra syntax"
@@ -310,9 +331,23 @@ class PackageConverter:
         self.write_intra_pkg_modules(package_root, intra_pkg_modules)
 
         post_release_dir = mod_dir
-        if self.interface_only_package:
+        if self.interface_only:
             post_release_dir /= "auto"
         self.write_post_release_file(post_release_dir / "_post_release.py")
+
+        for cp_pkg in tqdm(self.copy_packages, "copying packages to output dir"):
+            input_pkg_fspath = self.to_fspath(
+                Path(self.nipype_module.__file__).parent,
+                ".".join(cp_pkg.split(".")[1:]),
+            )
+            output_pkg_fspath = self.to_fspath(
+                package_root, self.to_output_module_path(cp_pkg)
+            )
+            output_pkg_fspath.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copytree(
+                input_pkg_fspath,
+                output_pkg_fspath,
+            )
 
     def translate_submodule(
         self, nipype_module_name: str, sub_pkg: ty.Optional[str] = None
@@ -515,3 +550,8 @@ nipype2pydra_version = "{nipype2pydra_version}"
 post_release = "{post_release}"
         """
             )
+
+    @classmethod
+    def to_fspath(cls, package_root: Path, module_name: str) -> Path:
+        """Converts a module name to a file path in the package directory"""
+        return package_root.joinpath(*module_name.split("."))

@@ -24,6 +24,9 @@ from fileformats.text import TextFile
 from fileformats.datascience import TextMatrix, DatFile
 import nipype.interfaces.base.core
 from nipype.interfaces.base import BaseInterface, TraitedSpec
+from nipype2pydra.package import (
+    PackageConverter,
+)  # noqa F401  required to avoid partial import
 from nipype2pydra.task import (
     InputsConverter,
     OutputsConverter,
@@ -1119,6 +1122,8 @@ def get_callable_sources(
             if klass_src not in all_classes:
                 all_classes.append(klass_src)
         for new_func_name, func in used.intra_pkg_funcs:
+            if new_func_name is None:
+                continue  # Not referenced directly in this module
             func_src = get_source_code(func)
             location_comment, func_src = func_src.split("\n", 1)
             match = re.match(
@@ -1136,6 +1141,8 @@ def get_callable_sources(
             )
             all_funcs.add(cleanup_function_body(func_src))
         for new_klass_name, klass in used.intra_pkg_classes:
+            if new_klass_name is None:
+                continue  # Not referenced directly in this module
             klass_src = get_source_code(klass)
             location_comment, klass_src = klass_src.split("\n", 1)
             match = re.match(
