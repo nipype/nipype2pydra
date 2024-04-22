@@ -94,12 +94,13 @@ class UsedSymbols:
         )
         self.intra_pkg_constants.update(other.intra_pkg_constants)
 
-    DEFAULT_FILTERED_OBJECTS = (
+    DEFAULT_FILTERED_CONSTANTS = (
         Undefined,
-        isdefined,
         traits_extension.File,
         traits_extension.Directory,
     )
+
+    DEFAULT_FILTERED_FUNCTIONS = (isdefined,)
 
     @classmethod
     def find(
@@ -108,7 +109,8 @@ class UsedSymbols:
         function_bodies: ty.List[ty.Union[str, ty.Callable, ty.Type]],
         collapse_intra_pkg: bool = False,
         pull_out_inline_imports: bool = True,
-        omit_objs: ty.Sequence = DEFAULT_FILTERED_OBJECTS,
+        omit_constants: list = DEFAULT_FILTERED_CONSTANTS,
+        omit_functions: ty.Sequence = DEFAULT_FILTERED_FUNCTIONS,
         omit_classes: ty.Optional[ty.List[ty.Type]] = None,
         omit_modules: ty.Optional[ty.List[str]] = None,
         translations: ty.Optional[ty.Sequence[ty.Tuple[str, str]]] = None,
@@ -131,9 +133,12 @@ class UsedSymbols:
         pull_out_inline_imports : bool, optional
             whether to pull out imports that are inline in the function bodies
             or not, by default True
-        omit_objs : list[type], optional
-            a list of objects (including subclasses) to filter out from the used symbols,
-            by default (Undefined, isdefined, traits_extension.File, traits_extension.Directory)
+        omit_constants : list, optional
+            a list of objects to filter out from the used symbols,
+            by default (Undefined, traits_extension.File, traits_extension.Directory)
+        omit_functions : list[type], optional
+            a list of functions to filter out from the used symbols,
+            by default [isdefined]
         omit_classes : list[type], optional
             a list of classes (including subclasses) to filter out from the used symbols,
             by default None
@@ -160,7 +165,8 @@ class UsedSymbols:
             tuple(f.__name__ if not isinstance(f, str) else f for f in function_bodies),
             collapse_intra_pkg,
             pull_out_inline_imports,
-            tuple(omit_objs) if omit_objs else None,
+            tuple(omit_constants) if omit_constants else None,
+            tuple(omit_functions) if omit_functions else None,
             tuple(omit_classes) if omit_classes else None,
             tuple(omit_modules) if omit_modules else None,
             tuple(translations) if translations else None,
@@ -266,7 +272,7 @@ class UsedSymbols:
             if module_omit_re.match(stmt.module_name):
                 continue
             # Filter out Nipype specific classes that are relevant in Pydra
-            if omit_classes or omit_objs:
+            if omit_classes or omit_functions:
                 to_include = []
                 for imported in stmt.values():
                     try:
@@ -281,14 +287,17 @@ class UsedSymbols:
                             imported.name,
                             imported.statement.module_name,
                             omit_classes,
-                            omit_objs,
+                            omit_functions,
                         )
                         to_include.append(imported.local_name)
                         continue
-                    if omit_classes and inspect.isclass(obj):
-                        if issubclass(obj, tuple(omit_classes)):
+                    if inspect.isclass(obj):
+                        if omit_classes and issubclass(obj, tuple(omit_classes)):
                             continue
-                    elif omit_objs and obj in omit_objs:
+                    elif inspect.isfunction(obj):
+                        if omit_functions and obj in omit_functions:
+                            continue
+                    elif imported.address in omit_constants:
                         continue
                     to_include.append(imported.local_name)
                 if not to_include:
@@ -388,7 +397,8 @@ class UsedSymbols:
                     translations=translations,
                     omit_modules=omit_modules,
                     omit_classes=omit_classes,
-                    omit_objs=omit_objs,
+                    omit_functions=omit_functions,
+                    omit_constants=omit_constants,
                 )
                 used.update(used_in_mod, to_be_inlined=collapse_intra_pkg)
             if stmt:

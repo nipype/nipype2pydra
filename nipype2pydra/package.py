@@ -96,6 +96,14 @@ class PackageConverter:
             "help": ("name of the nipype package to generate from (e.g. mriqc)"),
         },
     )
+    interface_only: bool = attrs.field(
+        metadata={
+            "help": (
+                "Whether the package is an interface-only package (i.e. only contains "
+                "interfaces and not workflows)"
+            )
+        }
+    )
     config_params: ty.Dict[str, ConfigParamsConverter] = attrs.field(
         converter=lambda dct: (
             {
@@ -150,18 +158,20 @@ class PackageConverter:
         converter=lambda lst: [tuple(i) for i in lst] if lst else [],
         metadata={
             "help": (
-                "Generic regular expression substitutions to be run over the code before "
+                "Generic regular expression substitutions to be run over the code after "
                 "it is processed"
             ),
         },
     )
-    interface_only: bool = attrs.field(
+    import_find_replace: ty.List[ty.Tuple[str, str]] = attrs.field(
+        factory=list,
+        converter=lambda lst: [tuple(i) for i in lst] if lst else [],
         metadata={
             "help": (
-                "Whether the package is an interface-only package (i.e. only contains "
-                "interfaces and not workflows)"
-            )
-        }
+                "Generic regular expression substitutions to be run over the code after "
+                "it is processed and the imports have been prepended"
+            ),
+        },
     )
     omit_modules: ty.List[str] = attrs.field(
         factory=list,
@@ -183,12 +193,22 @@ class PackageConverter:
             ),
         },
     )
-    omit_objects: ty.List[str] = attrs.field(
+    omit_functions: ty.List[str] = attrs.field(
         factory=list,
         converter=resolve_objects,
         metadata={
             "help": (
-                "Addresses of objects (untranslated) that shouldn't be included in the "
+                "Addresses of functions (untranslated) that shouldn't be included in the "
+                "converted package"
+            ),
+        },
+    )
+    omit_constants: ty.List[str] = attrs.field(
+        factory=list,
+        converter=lambda lst: list(lst) if lst else [],
+        metadata={
+            "help": (
+                "Addresses of constants (untranslated) that shouldn't be included in the "
                 "converted package"
             ),
         },
@@ -220,10 +240,6 @@ class PackageConverter:
             )
         },
     )
-
-    @interface_only.default
-    def _interface_only_default(self) -> bool:
-        return not bool(self.workflows)
 
     @init_depth.default
     def _init_depth_default(self) -> int:
@@ -418,7 +434,8 @@ class PackageConverter:
                 translations=self.all_import_translations,
                 omit_classes=self.omit_classes,
                 omit_modules=self.omit_modules,
-                omit_objs=self.omit_objects,
+                omit_functions=self.omit_functions,
+                omit_constants=self.omit_constants,
             )
 
             classes = used.local_classes + [
@@ -442,6 +459,7 @@ class PackageConverter:
                     local_functions=functions,
                 ),
                 find_replace=self.find_replace,
+                import_find_replace=self.import_find_replace,
                 inline_intra_pkg=False,
             )
 
@@ -454,6 +472,7 @@ class PackageConverter:
                 ),
                 depth=self.init_depth,
                 auto_import_depth=self.auto_import_init_depth,
+                import_find_replace=self.import_find_replace,
             )
 
     def to_output_module_path(self, nipype_module_path: str) -> str:

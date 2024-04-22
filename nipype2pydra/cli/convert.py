@@ -44,6 +44,17 @@ def convert(
     if not to_include and "to_include" in package_spec:
         to_include = package_spec.pop("to_include")
 
+    # Load workflow specs
+
+    workflow_specs = {}
+    for fspath in (specs_dir / "workflows").glob("*.yaml"):
+        with open(fspath, "r") as f:
+            spec = yaml.safe_load(f)
+            workflow_specs[f"{spec['nipype_module']}.{spec['name']}"] = spec
+
+    if "interface_only" not in package_spec:
+        package_spec["interface_only"] = not workflow_specs
+
     converter = PackageConverter(**package_spec)
     package_dir = converter.package_dir(package_root)
 
@@ -56,14 +67,6 @@ def convert(
         )
         output_module += "." + to_snake_case(task_name)
         return output_module
-
-    # Load workflow specs
-
-    workflow_specs = {}
-    for fspath in (specs_dir / "workflows").glob("*.yaml"):
-        with open(fspath, "r") as f:
-            spec = yaml.safe_load(f)
-            workflow_specs[f"{spec['nipype_module']}.{spec['name']}"] = spec
 
     # Load interface specs
 

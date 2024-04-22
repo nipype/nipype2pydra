@@ -92,7 +92,8 @@ class FunctionTaskConverter(BaseTaskConverter):
             ],
             omit_classes=self.package.omit_classes + [BaseInterface, TraitedSpec],
             omit_modules=self.package.omit_modules,
-            omit_objs=self.package.omit_objects,
+            omit_functions=self.package.omit_functions,
+            omit_constants=self.package.omit_constants,
             translations=self.package.all_import_translations,
             absolute_imports=True,
         )

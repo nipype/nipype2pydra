@@ -44,6 +44,10 @@ class Imported:
     def local_name(self):
         return self.alias if self.alias else self.name
 
+    @property
+    def address(self):
+        return f"{self.module_name}.{self.name}"
+
     @cached_property
     def object(self) -> object:
         """Import and return the actual object being imported in the statement"""

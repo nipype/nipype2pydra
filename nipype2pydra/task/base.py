@@ -552,7 +552,8 @@ class BaseTaskConverter(metaclass=ABCMeta):
             converted_code=self.converted_code,
             used=self.used_symbols,
             # inline_intra_pkg=True,
-            find_replace=self.find_replace,
+            find_replace=self.find_replace + self.package.find_replace,
+            import_find_replace=self.package.import_find_replace,
         )
 
         write_pkg_inits(
@@ -561,6 +562,7 @@ class BaseTaskConverter(metaclass=ABCMeta):
             names=[self.task_name],
             depth=self.package.init_depth,
             auto_import_depth=self.package.auto_import_init_depth,
+            import_find_replace=self.package.import_find_replace,
             # + [f.__name__ for f in self.used_symbols.local_functions]
             # + [c.__name__ for c in self.used_symbols.local_classes],
         )
@@ -572,8 +574,9 @@ class BaseTaskConverter(metaclass=ABCMeta):
             ),
             converted_code=self.converted_test_code,
             used=self.used_symbols_test,
-            inline_intra_pkg=True,
-            find_replace=self.find_replace,
+            inline_intra_pkg=False,
+            find_replace=self.find_replace + self.package.find_replace,
+            import_find_replace=self.package.import_find_replace,
         )
 
         conftest_fspath = test_module_fspath.parent / "conftest.py"

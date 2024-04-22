@@ -189,7 +189,8 @@ class WorkflowConverter:
             collapse_intra_pkg=False,
             omit_classes=self.package.omit_classes,
             omit_modules=self.package.omit_modules,
-            omit_objs=self.package.omit_objects,
+            omit_functions=self.package.omit_functions,
+            omit_constants=self.package.omit_constants,
             translations=self.package.all_import_translations,
         )
 
@@ -319,6 +320,7 @@ class WorkflowConverter:
             converted_code=code_str,
             used=used,
             find_replace=self.package.find_replace,
+            import_find_replace=self.package.import_find_replace,
         )
 
         write_pkg_inits(
@@ -327,6 +329,7 @@ class WorkflowConverter:
             names=[self.name],
             depth=self.package.init_depth,
             auto_import_depth=self.package.auto_import_init_depth,
+            import_find_replace=self.package.import_find_replace,
         )
 
         # Write test code
@@ -337,6 +340,8 @@ class WorkflowConverter:
             ),
             converted_code=self.test_code,
             used=self.test_used,
+            find_replace=self.package.find_replace,
+            import_find_replace=self.package.import_find_replace,
         )
 
         all_used.update(self.test_used)

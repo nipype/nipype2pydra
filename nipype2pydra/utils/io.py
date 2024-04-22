@@ -16,6 +16,7 @@ def write_to_module(
     used: UsedSymbols,
     converted_code: ty.Optional[str] = None,
     find_replace: ty.Optional[ty.List[ty.Tuple[str, str]]] = None,
+    import_find_replace: ty.Optional[ty.List[ty.Tuple[str, str]]] = None,
     inline_intra_pkg: bool = False,
 ):
     """Writes the given imports, constants, classes, and functions to the file at the given path,
@@ -152,6 +153,10 @@ def write_to_module(
     except black.report.NothingChanged:
         pass
 
+    # Rerun find-replace to allow us to catch any imports we want to alter
+    for find, replace in import_find_replace or []:
+        import_str = re.sub(find, replace, import_str, flags=re.MULTILINE | re.DOTALL)
+
     code_str = import_str + "\n\n" + code_str
 
     with open(module_fspath, "w") as f:
@@ -166,6 +171,7 @@ def write_pkg_inits(
     names: ty.List[str],
     depth: int,
     auto_import_depth: int,
+    import_find_replace: ty.Optional[ty.List[str]] = None,
 ):
     """Writes __init__.py files to all directories in the given package path
 
@@ -213,7 +219,33 @@ def write_pkg_inits(
             )[0]
         )
         import_stmts = sorted(ImportStatement.collate(import_stmts))
-        code_str = "\n".join(str(i) for i in import_stmts) + "\n" + code_str
+        import_str = "\n".join(str(i) for i in import_stmts)
+
+        # Format import str to make the find-replace target consistent
+        try:
+            import_str = black.format_file_contents(
+                import_str, fast=False, mode=black.FileMode()
+            )
+        except black.report.NothingChanged:
+            pass
+        except Exception as e:
+            # Write to file for debugging
+            debug_file = "~/unparsable-nipype2pydra-output.py"
+            with open(Path(debug_file).expanduser(), "w") as f:
+                f.write(code_str)
+            raise RuntimeError(
+                f"Black could not parse generated code (written to {debug_file}): "
+                f"{e}\n\n{code_str}"
+            )
+
+        # Rerun find-replace to allow us to catch any imports we want to alter
+        for find, replace in import_find_replace or []:
+            import_str = re.sub(
+                find, replace, import_str, flags=re.MULTILINE | re.DOTALL
+            )
+
+        code_str = import_str + "\n" + code_str
+
         try:
             code_str = black.format_file_contents(
                 code_str, fast=False, mode=black.FileMode()
@@ -229,5 +261,6 @@ def write_pkg_inits(
                 f"Black could not parse generated code (written to {debug_file}): "
                 f"{e}\n\n{code_str}"
             )
+
         with open(init_fspath, "w") as f:
             f.write(code_str)
