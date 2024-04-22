@@ -239,7 +239,7 @@ class WorkflowConverter:
     @cached_property
     def nested_workflows(self):
         potential_funcs = {
-            full_address(f[1]): f[0] for f in self.used_symbols.intra_pkg_funcs
+            full_address(f[1]): f[0] for f in self.used_symbols.intra_pkg_funcs if f[0]
         }
         potential_funcs.update(
             (full_address(f), f.__name__) for f in self.used_symbols.local_functions

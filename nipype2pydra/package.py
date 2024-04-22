@@ -239,7 +239,7 @@ class PackageConverter:
             for _, func in used.intra_pkg_funcs:
                 if full_address(func) not in list(self.workflows):
                     intra_pkg_modules[func.__module__].add(func)
-            for const_mod_address, const_name, _ in used.intra_pkg_constants:
+            for const_mod_address, _, const_name in used.intra_pkg_constants:
                 intra_pkg_modules[const_mod_address].add(const_name)
 
         for converter in tqdm(

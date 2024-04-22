@@ -4,6 +4,7 @@ import keyword
 import types
 import inspect
 import builtins
+from operator import attrgetter
 from collections import defaultdict
 from logging import getLogger
 from importlib import import_module
@@ -79,17 +80,17 @@ class UsedSymbols:
                 i.absolute() if absolute_imports else i for i in other.imports
             )
         self.intra_pkg_funcs.update(other.intra_pkg_funcs)
-        self.intra_pkg_funcs.update((f.__name__, f) for f in other.local_functions)
+        self.intra_pkg_funcs.update((None, f) for f in other.local_functions)
         self.intra_pkg_classes.extend(
             c for c in other.intra_pkg_classes if c not in self.intra_pkg_classes
         )
         self.intra_pkg_classes.extend(
-            (c.__name__, c)
+            (None, c)
             for c in other.local_classes
-            if (c.__name__, c) not in self.intra_pkg_classes
+            if (None, c) not in self.intra_pkg_classes
         )
         self.intra_pkg_constants.update(
-            (other.module_name, c[0], c[0]) for c in other.constants
+            (other.module_name, None, c[0]) for c in other.constants
         )
         self.intra_pkg_constants.update(other.intra_pkg_constants)
 
@@ -164,9 +165,13 @@ class UsedSymbols:
         used = cls(module_name=module.__name__)
         cls._cache[cache_key] = used
         source_code = inspect.getsource(module)
-        local_functions = get_local_functions(module)
-        local_constants = get_local_constants(module)
-        local_classes = get_local_classes(module)
+        # Sort local func/classes/consts so they are iterated in a consistent order to
+        # remove stochastic element of traversal and make debugging easier
+        local_functions = sorted(
+            get_local_functions(module), key=attrgetter("__name__")
+        )
+        local_constants = sorted(get_local_constants(module))
+        local_classes = sorted(get_local_classes(module), key=attrgetter("__name__"))
         module_statements = split_source_into_statements(source_code)
         imports: ty.List[ImportStatement] = []
         global_scope = True
@@ -184,6 +189,7 @@ class UsedSymbols:
                 imports.extend(
                     parse_imports(stmt, relative_to=module, translations=translations)
                 )
+        imports = sorted(imports)
 
         all_src = ""  # All the source code that is searched for symbols
 
@@ -422,7 +428,7 @@ class UsedSymbols:
     SYMBOLS_TO_IGNORE = ["isdefined"] + keyword.kwlist + list(builtins.__dict__.keys())
 
 
-def get_local_functions(mod):
+def get_local_functions(mod) -> ty.List[ty.Callable]:
     """Get the functions defined in the module"""
     functions = []
     for attr_name in dir(mod):
@@ -432,7 +438,7 @@ def get_local_functions(mod):
     return functions
 
 
-def get_local_classes(mod):
+def get_local_classes(mod) -> ty.List[type]:
     """Get the functions defined in the module"""
     classes = []
     for attr_name in dir(mod):
@@ -442,7 +448,7 @@ def get_local_classes(mod):
     return classes
 
 
-def get_local_constants(mod):
+def get_local_constants(mod) -> ty.List[ty.Tuple[str, str]]:
     """
     Get the constants defined in the module
     """
