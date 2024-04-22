@@ -7,7 +7,6 @@ from importlib import import_module
 from types import ModuleType
 import itertools
 import inspect
-import black
 import traits.trait_types
 import json
 from functools import cached_property
@@ -943,7 +942,9 @@ class BaseTaskConverter(metaclass=ABCMeta):
             },
         )
 
-        return spec_str, UsedSymbols(module_name=self.nipype_module.__name__, imports=imports)
+        return spec_str, UsedSymbols(
+            module_name=self.nipype_module.__name__, imports=imports
+        )
 
     def create_doctests(self, input_fields, nonstd_types):
         """adding doctests to the interfaces"""

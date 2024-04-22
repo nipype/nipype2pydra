@@ -238,6 +238,12 @@ class UsedSymbols:
 
         base_pkg = module.__name__.split(".")[0]
 
+        module_omit_re = re.compile(
+            r"^\b("
+            + "|".join(cls.ALWAYS_OMIT_MODULES + [module.__name__] + omit_modules)
+            + r")\b",
+        )
+
         # functions to copy from a relative or nipype module into the output module
         for stmt in imports:
             stmt = stmt.only_include(used_symbols)
@@ -245,12 +251,7 @@ class UsedSymbols:
             if not stmt:
                 continue
             # Filter out Nipype specific modules and the module itself
-            if re.match(
-                r"^\b("
-                + "|".join(cls.ALWAYS_OMIT_MODULES + [module.__name__] + omit_modules)
-                + r")\b",
-                stmt.module_name,
-            ):
+            if module_omit_re.match(stmt.module_name):
                 continue
             # Filter out Nipype specific classes that are relevant in Pydra
             if omit_classes or omit_objs:
@@ -321,7 +322,8 @@ class UsedSymbols:
                             stmt.drop(imported)
                     elif inspect.ismodule(imported.object):
                         # Skip if the module is the same as the module being converted
-                        if imported.object.__name__ == module.__name__:
+                        if module_omit_re.match(imported.object.__name__):
+                            stmt.drop(imported)
                             continue
                         # Findall references to the module's attributes in the source code
                         # and add them to the list of intra package objects

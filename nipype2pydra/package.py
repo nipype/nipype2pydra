@@ -241,6 +241,7 @@ class PackageConverter:
                     intra_pkg_modules[func.__module__].add(func)
             for const_mod_address, _, const_name in used.intra_pkg_constants:
                 intra_pkg_modules[const_mod_address].add(const_name)
+            1 + 1
 
         for converter in tqdm(
             workflows_to_include, "converting workflows from Nipype to Pydra syntax"

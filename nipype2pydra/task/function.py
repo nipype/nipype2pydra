@@ -67,10 +67,17 @@ class FunctionTaskConverter(BaseTaskConverter):
 
         # Combined src of run_interface and list_outputs
         method_body = inspect.getsource(self.nipype_interface._run_interface).strip()
-        method_body = "\n".join(method_body.split("\n")[1:])
+        # Strip out method def and return statement
+        method_lines = method_body.strip().split("\n")[1:]
+        if re.match(r"\s*return", method_lines[-1]):
+            method_lines = method_lines[:-1]
+        method_body = "\n".join(method_lines)
         lo_src = inspect.getsource(self.nipype_interface._list_outputs).strip()
-        lo_lines = lo_src.split("\n")
-        lo_src = "\n".join(lo_lines[1:-1])
+        # Strip out method def and return statement
+        lo_lines = lo_src.strip().split("\n")[1:]
+        if re.match(r"\s*(return|raise NotImplementedError)", lo_lines[-1]):
+            lo_lines = lo_lines[:-1]
+        lo_src = "\n".join(lo_lines)
         method_body += "\n" + lo_src
         method_body = self.process_method_body(method_body, input_names, output_names)
 
