@@ -4,6 +4,7 @@ import keyword
 import types
 import inspect
 import builtins
+from collections import defaultdict
 from logging import getLogger
 from importlib import import_module
 import attrs
@@ -54,18 +55,29 @@ class UsedSymbols:
     intra_pkg_classes: ty.List[ty.Tuple[str, ty.Callable]] = attrs.field(factory=list)
     intra_pkg_constants: ty.Set[ty.Tuple[str, str, str]] = attrs.field(factory=set)
 
-    IGNORE_MODULES = [
+    ALWAYS_OMIT_MODULES = [
         "traits.trait_handlers",  # Old traits module, pre v6.0
+        "nipype.pipeline",
+        "nipype.logging",
+        "nipype.config",
+        "nipype.interfaces.base",
+        "nipype.interfaces.utility",
     ]
 
     _cache = {}
 
     symbols_re = re.compile(r"(?<!\"|')\b([a-zA-Z\_][\w\.]*)\b(?!\"|')")
 
-    def update(self, other: "UsedSymbols", absolute_imports: bool = False):
-        self.imports.update(
-            i.absolute() if absolute_imports else i for i in other.imports
-        )
+    def update(
+        self,
+        other: "UsedSymbols",
+        absolute_imports: bool = False,
+        to_be_inlined: bool = False,
+    ):
+        if to_be_inlined:
+            self.imports.update(
+                i.absolute() if absolute_imports else i for i in other.imports
+            )
         self.intra_pkg_funcs.update(other.intra_pkg_funcs)
         self.intra_pkg_funcs.update((f.__name__, f) for f in other.local_functions)
         self.intra_pkg_classes.extend(
@@ -93,11 +105,12 @@ class UsedSymbols:
         cls,
         module: types.ModuleType,
         function_bodies: ty.List[ty.Union[str, ty.Callable, ty.Type]],
-        collapse_intra_pkg: bool = True,
+        collapse_intra_pkg: bool = False,
         pull_out_inline_imports: bool = True,
-        filter_objs: ty.Sequence = DEFAULT_FILTERED_OBJECTS,
-        filter_classes: ty.Optional[ty.List[ty.Type]] = None,
-        translations: ty.Sequence[ty.Tuple[str, str]] = None,
+        omit_objs: ty.Sequence = DEFAULT_FILTERED_OBJECTS,
+        omit_classes: ty.Optional[ty.List[ty.Type]] = None,
+        omit_modules: ty.Optional[ty.List[str]] = None,
+        translations: ty.Optional[ty.Sequence[ty.Tuple[str, str]]] = None,
     ) -> "UsedSymbols":
         """Get the imports and local functions/classes/constants referenced in the
         provided function bodies, and those nested within them
@@ -116,16 +129,12 @@ class UsedSymbols:
         pull_out_inline_imports : bool, optional
             whether to pull out imports that are inline in the function bodies
             or not, by default True
-        filtered_classes : list[type], optional
+        omit_objs : list[type], optional
+            a list of objects (including subclasses) to filter out from the used symbols,
+            by default (Undefined, isdefined, traits_extension.File, traits_extension.Directory)
+        omit_classes : list[type], optional
             a list of classes (including subclasses) to filter out from the used symbols,
             by default None
-        filtered_objs : list[type], optional
-            a list of objects (including subclasses) to filter out from the used symbols,
-            by default (Undefined,
-                            isdefined,
-                            traits_extension.File,
-                            traits_extension.Directory,
-                        )
         translations : list[tuple[str, str]], optional
             a list of tuples where the first element is the name of the symbol to be
             replaced and the second element is the name of the symbol to replace it with,
@@ -136,21 +145,24 @@ class UsedSymbols:
         UsedSymbols
             a class containing the used symbols in the module
         """
+        if isinstance(module, str):
+            module = import_module(module)
         cache_key = (
             module.__name__,
             tuple(f.__name__ if not isinstance(f, str) else f for f in function_bodies),
             collapse_intra_pkg,
             pull_out_inline_imports,
-            tuple(filter_objs) if filter_objs else None,
-            tuple(filter_classes) if filter_classes else None,
+            tuple(omit_objs) if omit_objs else None,
+            tuple(omit_classes) if omit_classes else None,
+            tuple(omit_modules) if omit_modules else None,
             tuple(translations) if translations else None,
         )
         try:
             return cls._cache[cache_key]
         except KeyError:
             pass
-
         used = cls(module_name=module.__name__)
+        cls._cache[cache_key] = used
         source_code = inspect.getsource(module)
         local_functions = get_local_functions(module)
         local_constants = get_local_constants(module)
@@ -227,10 +239,15 @@ class UsedSymbols:
             if not stmt:
                 continue
             # Filter out Nipype specific modules and the module itself
-            if stmt.module_name in cls.IGNORE_MODULES + [module.__name__]:
+            if re.match(
+                r"^\b("
+                + "|".join(cls.ALWAYS_OMIT_MODULES + [module.__name__] + omit_modules)
+                + r")\b",
+                stmt.module_name,
+            ):
                 continue
             # Filter out Nipype specific classes that are relevant in Pydra
-            if filter_classes or filter_objs:
+            if omit_classes or omit_objs:
                 to_include = []
                 for imported in stmt.values():
                     try:
@@ -244,22 +261,21 @@ class UsedSymbols:
                             ),
                             imported.name,
                             imported.statement.module_name,
-                            filter_classes,
-                            filter_objs,
+                            omit_classes,
+                            omit_objs,
                         )
                         to_include.append(imported.local_name)
                         continue
-                    if filter_classes and inspect.isclass(obj):
-                        if issubclass(obj, filter_classes):
+                    if omit_classes and inspect.isclass(obj):
+                        if issubclass(obj, tuple(omit_classes)):
                             continue
-                    elif filter_objs and obj in filter_objs:
+                    elif omit_objs and obj in omit_objs:
                         continue
                     to_include.append(imported.local_name)
                 if not to_include:
                     continue
                 stmt = stmt.only_include(to_include)
-            inlined_objects = []
-
+            intra_pkg_objs = defaultdict(set)
             if stmt.in_package(base_pkg) or (
                 stmt.in_package("nipype") and not stmt.in_package("nipype.interfaces")
             ):
@@ -276,15 +292,11 @@ class UsedSymbols:
                         stmt.drop(imported)
                     elif inspect.isfunction(imported.object):
                         used.intra_pkg_funcs.add((imported.local_name, imported.object))
+                        # Recursively include objects imported in the module
+                        intra_pkg_objs[import_module(imported.object.__module__)].add(
+                            imported.object
+                        )
                         if collapse_intra_pkg:
-                            # Recursively include objects imported in the module
-                            # by the inlined function
-                            inlined_objects.append(
-                                (
-                                    import_module(imported.object.__module__),
-                                    imported.object,
-                                )
-                            )
                             stmt.drop(imported)
                     elif inspect.isclass(imported.object):
                         class_def = (imported.local_name, imported.object)
@@ -295,15 +307,11 @@ class UsedSymbols:
                         # from the other
                         if class_def not in used.intra_pkg_classes:
                             used.intra_pkg_classes.append(class_def)
+                        # Recursively include objects imported in the module
+                        intra_pkg_objs[import_module(imported.object.__module__)].add(
+                            imported.object,
+                        )
                         if collapse_intra_pkg:
-                            # Recursively include objects imported in the module
-                            # by the inlined class
-                            inlined_objects.append(
-                                (
-                                    import_module(imported.object.__module__),
-                                    imported.object,
-                                )
-                            )
                             stmt.drop(imported)
                     elif inspect.ismodule(imported.object):
                         # Skip if the module is the same as the module being converted
@@ -319,10 +327,12 @@ class UsedSymbols:
 
                             if inspect.isfunction(obj):
                                 used.intra_pkg_funcs.add((obj.__name__, obj))
+                                intra_pkg_objs[imported.object.__name__].add(obj)
                             elif inspect.isclass(obj):
                                 class_def = (obj.__name__, obj)
                                 if class_def not in used.intra_pkg_classes:
                                     used.intra_pkg_classes.append(class_def)
+                                intra_pkg_objs[imported.object.__name__].add(obj)
                             else:
                                 used.intra_pkg_constants.add(
                                     (
@@ -331,6 +341,12 @@ class UsedSymbols:
                                         attr_name,
                                     )
                                 )
+                                intra_pkg_objs[imported.object.__name__].add(attr_name)
+
+                        if collapse_intra_pkg:
+                            raise NotImplementedError(
+                                f"Cannot inline imported module in statement '{stmt}'"
+                            )
                     else:
                         used.intra_pkg_constants.add(
                             (
@@ -339,21 +355,24 @@ class UsedSymbols:
                                 imported.name,
                             )
                         )
+                        intra_pkg_objs[stmt.module].add(imported.local_name)
                         if collapse_intra_pkg:
-                            inlined_objects.append((stmt.module, imported.local_name))
                             stmt.drop(imported)
 
             # Recursively include neighbouring objects imported in the module
-            for from_mod, inlined_obj in inlined_objects:
+            for from_mod, inlined_objs in intra_pkg_objs.items():
                 used_in_mod = cls.find(
                     from_mod,
-                    function_bodies=[inlined_obj],
+                    function_bodies=inlined_objs,
+                    collapse_intra_pkg=collapse_intra_pkg,
                     translations=translations,
+                    omit_modules=omit_modules,
+                    omit_classes=omit_classes,
+                    omit_objs=omit_objs,
                 )
-                used.update(used_in_mod)
+                used.update(used_in_mod, to_be_inlined=collapse_intra_pkg)
             if stmt:
                 used.imports.add(stmt)
-        cls._cache[cache_key] = used
         return used
 
     @classmethod

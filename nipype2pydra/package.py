@@ -7,7 +7,6 @@ import logging
 from functools import cached_property
 from collections import defaultdict
 from pathlib import Path
-import shutil
 from tqdm import tqdm
 import attrs
 import yaml
@@ -61,6 +60,17 @@ class ConfigParamsConverter:
             "help": "default values for the config parameters",
         },
     )
+
+
+def resolve_objects(addresses: ty.Optional[ty.List[str]]) -> list:
+    if not addresses:
+        return []
+    objs = []
+    for address in addresses:
+        parts = address.split(".")
+        mod = import_module(".".join(parts[:-1]))
+        objs.append(getattr(mod, parts[-1]))
+    return objs
 
 
 @attrs.define
@@ -140,6 +150,36 @@ class PackageConverter:
             "help": (
                 "Generic regular expression substitutions to be run over the code before "
                 "it is processed"
+            ),
+        },
+    )
+    omit_modules: ty.List[str] = attrs.field(
+        factory=list,
+        converter=lambda lst: list(lst) if lst else [],
+        metadata={
+            "help": (
+                "Names of modules (untranslated) that shouldn't be included in the "
+                "converted package"
+            ),
+        },
+    )
+    omit_classes: ty.List[str] = attrs.field(
+        factory=list,
+        converter=resolve_objects,
+        metadata={
+            "help": (
+                "Addresses of classes (untranslated) that shouldn't be included in the "
+                "converted package"
+            ),
+        },
+    )
+    omit_objects: ty.List[str] = attrs.field(
+        factory=list,
+        converter=resolve_objects,
+        metadata={
+            "help": (
+                "Addresses of objects (untranslated) that shouldn't be included in the "
+                "converted package"
             ),
         },
     )
@@ -310,6 +350,9 @@ class PackageConverter:
                 objs,
                 pull_out_inline_imports=False,
                 translations=self.all_import_translations,
+                omit_classes=self.omit_classes,
+                omit_modules=self.omit_modules,
+                omit_objs=self.omit_objects,
             )
 
             classes = used.local_classes + [

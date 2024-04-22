@@ -190,6 +190,9 @@ def extract_args(snippet) -> ty.Tuple[str, ty.List[str], str]:
         return splits[0], None, None
     quote_types = ["'", '"']
     pre = splits[0]
+    if "#" in pre:
+        pre = pre.split("#")[0]
+        return pre, None, None
     contents = []
     bracket_types = {")": "(", "]": "[", "}": "{"}
     open = list(bracket_types.values())

@@ -552,7 +552,7 @@ class BaseTaskConverter(metaclass=ABCMeta):
             module_name=self.output_module,
             converted_code=self.converted_code,
             used=self.used_symbols,
-            inline_intra_pkg=True,
+            # inline_intra_pkg=True,
             find_replace=self.find_replace,
         )
 

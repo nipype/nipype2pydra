@@ -196,7 +196,7 @@ class ImportStatement:
         )
 
     match_re = re.compile(
-        r"^(\s*)(from[\w \.]+)?import\b([\w \n\.\,\(\)]+)$",
+        r"^(\s*)(from[\w \.]+)?import\b([\w \n\.\,\(\)]+)(?:#.*)?$",
         flags=re.MULTILINE | re.DOTALL,
     )
 
@@ -477,7 +477,9 @@ def parse_imports(
     if isinstance(stmts, str):
         stmts = [stmts]
     if isinstance(relative_to, ModuleType):
-        relative_to = relative_to.__name__
+        relative_to = relative_to.__name__ + (
+            ".__init__" if relative_to.__file__.endswith("__init__.py") else ""
+        )
 
     def translate(module_name: str) -> ty.Optional[str]:
         for from_pkg, to_pkg in translations:

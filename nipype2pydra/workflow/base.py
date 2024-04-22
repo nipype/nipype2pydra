@@ -5,7 +5,6 @@ import re
 import typing as ty
 from copy import copy
 import logging
-from collections import defaultdict
 from types import ModuleType
 from pathlib import Path
 import attrs
@@ -187,6 +186,9 @@ class WorkflowConverter:
             self.nipype_module,
             [self.func_body],
             collapse_intra_pkg=False,
+            omit_classes=self.package.omit_classes,
+            omit_modules=self.package.omit_modules,
+            omit_objs=self.package.omit_objects,
             translations=self.package.all_import_translations,
         )
 
@@ -638,10 +640,6 @@ def test_{self.name}():
                             indent=indent,
                             workflow_converter=self,
                         )
-                        try:
-                            conn_converter.lzouttable
-                        except AttributeError:
-                            conn_converter.lzouttable
                         if not conn_converter.lzouttable:
                             parsed.append(conn_converter)
                         for src_node in self.nodes[src]:

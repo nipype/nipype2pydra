@@ -1110,9 +1110,7 @@ def get_callable_sources(
     all_constants = set()
     for mod_name, methods in grouped_methods.items():
         mod = import_module(mod_name)
-        used = UsedSymbols.find(
-            mod, methods, filter_classes=(BaseInterface, TraitedSpec)
-        )
+        used = UsedSymbols.find(mod, methods, omit_classes=(BaseInterface, TraitedSpec))
         all_funcs.update(methods)
         for func in used.local_functions:
             all_funcs.add(cleanup_function_body(get_source_code(func)))

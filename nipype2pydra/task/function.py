@@ -83,9 +83,10 @@ class FunctionTaskConverter(BaseTaskConverter):
                     self.referenced_local_functions, self.referenced_methods
                 )
             ],
-            filter_classes=(BaseInterface, TraitedSpec),
+            omit_classes=self.package.omit_classes + [BaseInterface, TraitedSpec],
+            omit_modules=self.package.omit_modules,
+            omit_objs=self.package.omit_objects,
             translations=self.package.all_import_translations,
-            collapse_intra_pkg=True,
         )
 
         # spec_str = "\n".join(f"{n} = {d}" for n, d in used.constants)
