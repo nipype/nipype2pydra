@@ -360,13 +360,6 @@ class PackageConverter:
             )
             collect_intra_pkg_objects(converter.used_symbols, port_nipype=False)
 
-        # # # FIXME: hack to remove nipype-specific functions from intra-package
-        # # #        these should be mapped into a separate module,
-        # # #        maybe pydra.tasks.<pkg>.nipype_ports or something
-        # for mod_name in list(intra_pkg_modules):
-        #     if re.match(r"^nipype\.pipeline\b", mod_name):
-        #         intra_pkg_modules.pop(mod_name)
-
         # Write any additional functions in other modules in the package
         self.write_intra_pkg_modules(package_root, intra_pkg_modules)
 
@@ -635,3 +628,28 @@ post_release = "{post_release}"
     NIPYPE_PORT_CONVERTER_SPEC_DIR = (
         Path(__file__).parent / "interface" / "nipype-ports"
     )
+
+    def add_interface_from_spec(
+        self, spec: ty.Dict[str, ty.Any], callables_file: Path
+    ) -> interface.BaseInterfaceConverter:
+        output_module = self.translate_submodule(
+            spec["nipype_module"], sub_pkg="auto" if self.interface_only else None
+        )
+        output_module += "." + to_snake_case(spec["task_name"])
+        converter = self.interfaces[f"{spec['nipype_module']}.{spec['task_name']}"] = (
+            interface.get_converter(
+                output_module=output_module,
+                callables_module=callables_file,
+                package=self,
+                **spec,
+            )
+        )
+        return converter
+
+    def add_workflow_from_spec(
+        self, spec: ty.Dict[str, ty.Any]
+    ) -> "nipype2pydra.workflow.WorkflowConverter":
+        converter = self.workflows[f"{spec['nipype_module']}.{spec['name']}"] = (
+            nipype2pydra.workflow.WorkflowConverter(package=self, **spec)
+        )
+        return converter

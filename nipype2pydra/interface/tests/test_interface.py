@@ -2,17 +2,14 @@ from importlib import import_module
 import yaml
 import pytest
 import logging
-import io
-import contextlib
 from traceback import format_exc
-from nipype2pydra.cli.task import task as task_cli
 from nipype2pydra.utils import (
     add_to_sys_path,
     add_exc_note,
     INBUILT_NIPYPE_TRAIT_NAMES,
-    show_cli_trace,
 )
-from conftest import EXAMPLE_TASKS_DIR
+from nipype2pydra.package import PackageConverter
+from conftest import EXAMPLE_INTERFACES_DIR
 
 
 logging.basicConfig(level=logging.INFO)
@@ -40,56 +37,67 @@ XFAIL_INTERFACES_IN_COMBINED = [
 
 @pytest.fixture(
     params=[
-        str(p.relative_to(EXAMPLE_TASKS_DIR)).replace("/", "-")[:-5]
-        for p in (EXAMPLE_TASKS_DIR).glob("**/*.yaml")
+        str(p.relative_to(EXAMPLE_INTERFACES_DIR)).replace("/", "-")[:-5]
+        for p in (EXAMPLE_INTERFACES_DIR).glob("**/*.yaml")
     ]
 )
-def task_spec_file(request):
-    return EXAMPLE_TASKS_DIR.joinpath(*request.param.split("-")).with_suffix(".yaml")
+def interface_spec_file(request):
+    return EXAMPLE_INTERFACES_DIR.joinpath(*request.param.split("-")).with_suffix(
+        ".yaml"
+    )
 
 
-def test_task_conversion(task_spec_file, cli_runner, work_dir, gen_test_conftest):
+def test_interface_convert(
+    interface_spec_file, cli_runner, work_dir, gen_test_conftest
+):
 
     try:
-        with open(task_spec_file) as f:
-            task_spec = yaml.safe_load(f)
+        with open(interface_spec_file) as f:
+            interface_spec = yaml.safe_load(f)
         pkg_root = work_dir / "src"
         pkg_root.mkdir()
         # shutil.copyfile(gen_test_conftest, pkg_root / "conftest.py")
 
-        output_module_path = f"nipype2pydratest.{task_spec_file.stem.lower()}"
-
-        result = cli_runner(
-            task_cli,
-            args=[
-                str(task_spec_file),
-                str(pkg_root),
-                "--output-module",
-                output_module_path,
-                "--callables",
-                str(task_spec_file.parent / (task_spec_file.stem + "_callables.py")),
-            ],
+        pkg_converter = PackageConverter(
+            name="nipype2pydratest."
+            + "_".join(
+                interface_spec["nipype_module"].split(".")
+                + [interface_spec["task_name"]]
+            ),
+            nipype_name=interface_spec["nipype_module"].split(".")[0],
+            interface_only=True,
         )
 
-        assert result.exit_code == 0, show_cli_trace(result)
+        converter = pkg_converter.add_interface_from_spec(
+            spec=interface_spec,
+            callables_file=interface_spec_file.parent
+            / (interface_spec_file.stem + "_callables.py"),
+        )
+
+        converter.write(pkg_root)
 
         with add_to_sys_path(pkg_root):
             try:
-                pydra_module = import_module(output_module_path)
+                pydra_module = import_module(converter.output_module)
             except Exception as e:
                 add_exc_note(
                     e,
-                    f"Attempting to import {task_spec['task_name']} from '{output_module_path}'",
+                    f"Attempting to import {interface_spec['task_name']} from '{converter.output_module}'",
                 )
                 raise e
-        pydra_task = getattr(pydra_module, task_spec["task_name"])
+        pydra_task = getattr(pydra_module, interface_spec["task_name"])
         nipype_interface = getattr(
-            import_module(task_spec["nipype_module"]), task_spec["nipype_name"]
+            import_module(interface_spec["nipype_module"]),
+            interface_spec["nipype_name"],
         )
-        assert nipype_interface.__name__ == task_spec["nipype_name"]  # sanity check
+        assert (
+            nipype_interface.__name__ == interface_spec["nipype_name"]
+        )  # sanity check
 
         nipype_input_names = nipype_interface.input_spec().all_trait_names()
-        inputs_omit = task_spec["inputs"]["omit"] if task_spec["inputs"]["omit"] else []
+        inputs_omit = (
+            interface_spec["inputs"]["omit"] if interface_spec["inputs"]["omit"] else []
+        )
 
         assert sorted(
             f[0] for f in pydra_task().input_spec.fields if not f[0].startswith("_")
@@ -106,7 +114,9 @@ def test_task_conversion(task_spec_file, cli_runner, work_dir, gen_test_conftest
         if nipype_interface.output_spec:
             nipype_output_names = nipype_interface.output_spec().all_trait_names()
             outputs_omit = (
-                task_spec["outputs"]["omit"] if task_spec["outputs"]["omit"] else []
+                interface_spec["outputs"]["omit"]
+                if interface_spec["outputs"]["omit"]
+                else []
             )
 
             assert sorted(
@@ -152,7 +162,7 @@ def test_task_conversion(task_spec_file, cli_runner, work_dir, gen_test_conftest
 
         # assert result.value == 0
     except Exception:
-        task_name = task_spec_file.parent.name + "-" + task_spec_file.stem
+        task_name = interface_spec_file.parent.name + "-" + interface_spec_file.stem
         if task_name in XFAIL_INTERFACES or task_name in XFAIL_INTERFACES_IN_COMBINED:
             msg = f"Test for '{task_name}' is expected to fail:\n{format_exc()}"
             if task_name in XFAIL_INTERFACES_IN_COMBINED:

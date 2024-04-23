@@ -543,6 +543,10 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
         """creating pydra input/output spec from nipype specs
         if write is True, a pydra Task class will be written to the file together with tests
         """
+        if already_converted is None:
+            already_converted = set()
+        if additional_funcs is None:
+            additional_funcs = []
         if self.full_address in already_converted:
             return
 
