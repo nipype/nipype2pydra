@@ -16,7 +16,6 @@ mriqc:
     - mriqc.interfaces.bids.IQMFileSink
     - mriqc.interfaces.DerivativesDataSink
     - mriqc.interfaces.webapi.UploadIQMs
-    - mriqc.interfaces.datalad.DataladIdentityInterface
     - mriqc.interfaces.transitional.GCOR
     - mriqc.interfaces.common.ensure_size.EnsureSize
     - mriqc.interfaces.common.conform_image.ConformImage
