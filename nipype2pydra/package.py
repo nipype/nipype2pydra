@@ -253,7 +253,7 @@ class PackageConverter:
 
     @auto_import_init_depth.default
     def _auto_import_init_depth_default(self) -> int:
-        return self.init_depth + 1
+        return self.init_depth + int(not self.interface_only)
 
     @cached_property
     def nipype_module(self):
