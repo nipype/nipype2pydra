@@ -368,19 +368,20 @@ class PackageConverter:
             post_release_dir /= "auto"
         self.write_post_release_file(post_release_dir / "_post_release.py")
 
-        for cp_pkg in tqdm(self.copy_packages, "copying packages to output dir"):
-            input_pkg_fspath = self.to_fspath(
-                Path(self.nipype_module.__file__).parent,
-                ".".join(cp_pkg.split(".")[1:]),
-            )
-            output_pkg_fspath = self.to_fspath(
-                package_root, self.to_output_module_path(cp_pkg)
-            )
-            output_pkg_fspath.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copytree(
-                input_pkg_fspath,
-                output_pkg_fspath,
-            )
+        if self.copy_packages:
+            for cp_pkg in tqdm(self.copy_packages, "copying packages to output dir"):
+                input_pkg_fspath = self.to_fspath(
+                    Path(self.nipype_module.__file__).parent,
+                    ".".join(cp_pkg.split(".")[1:]),
+                )
+                output_pkg_fspath = self.to_fspath(
+                    package_root, self.to_output_module_path(cp_pkg)
+                )
+                output_pkg_fspath.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copytree(
+                    input_pkg_fspath,
+                    output_pkg_fspath,
+                )
 
     def translate_submodule(
         self, nipype_module_name: str, sub_pkg: ty.Optional[str] = None

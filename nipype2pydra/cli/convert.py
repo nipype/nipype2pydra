@@ -53,8 +53,8 @@ def convert(
             )
 
     # Load interface and workflow specs
-    workflow_yamls = list(specs_dir / "workflows").glob("*.yaml")
-    interface_yamls = list(specs_dir / "interfaces").glob("*.yaml")
+    workflow_yamls = list((specs_dir / "workflows").glob("*.yaml"))
+    interface_yamls = list((specs_dir / "interfaces").glob("*.yaml"))
 
     # Initialise PackageConverter
     if package_spec.get("interface_only", None) is None:

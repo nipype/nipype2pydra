@@ -51,6 +51,9 @@ test = [
     "fileformats-medimage-ants",
     "fileformats-medimage-freesurfer",
     "fileformats-medimage-fsl",
+    "niworkflows",
+    "mriqc",
+    "nireports",
 ]
 docs = [
     "packaging",
