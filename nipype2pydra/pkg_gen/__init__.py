@@ -27,7 +27,7 @@ from nipype.interfaces.base import BaseInterface, TraitedSpec
 from nipype2pydra.package import (
     PackageConverter,
 )  # noqa F401  required to avoid partial import
-from nipype2pydra.task import (
+from nipype2pydra.interface import (
     InputsConverter,
     OutputsConverter,
     TestGenerator,

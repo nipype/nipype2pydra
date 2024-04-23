@@ -11,12 +11,13 @@ from pathlib import Path
 from tqdm import tqdm
 import attrs
 import yaml
-from . import task
+from . import interface
 from .utils import (
     UsedSymbols,
     full_address,
     write_to_module,
     write_pkg_inits,
+    to_snake_case,
     ImportStatement,
 )
 import nipype2pydra.workflow
@@ -97,12 +98,13 @@ class PackageConverter:
         },
     )
     interface_only: bool = attrs.field(
+        default=False,
         metadata={
             "help": (
                 "Whether the package is an interface-only package (i.e. only contains "
                 "interfaces and not workflows)"
             )
-        }
+        },
     )
     config_params: ty.Dict[str, ConfigParamsConverter] = attrs.field(
         converter=lambda dct: (
@@ -135,7 +137,7 @@ class PackageConverter:
             ),
         },
     )
-    interfaces: ty.Dict[str, task.base.BaseTaskConverter] = attrs.field(
+    interfaces: ty.Dict[str, interface.base.BaseInterfaceConverter] = attrs.field(
         factory=dict,
         metadata={
             "help": (
@@ -244,13 +246,14 @@ class PackageConverter:
     @init_depth.default
     def _init_depth_default(self) -> int:
         if self.name.startswith("pydra.tasks."):
-            return 3
+            depth = 3
         else:
-            return 1
+            depth = 1
+        return depth + int(self.interface_only)
 
     @auto_import_init_depth.default
     def _auto_import_init_depth_default(self) -> int:
-        return len(self.name.split(".")) + 1
+        return self.init_depth + 1
 
     @cached_property
     def nipype_module(self):
@@ -300,9 +303,20 @@ class PackageConverter:
             interfaces_to_include = list(self.interfaces.values())
             workflows_to_include = list(self.workflows.values())
 
-        def collect_intra_pkg_objects(used: UsedSymbols):
+        nipype_ports = []
+
+        def collect_intra_pkg_objects(used: UsedSymbols, port_nipype: bool = True):
             for _, klass in used.intra_pkg_classes:
-                if full_address(klass) not in list(self.interfaces):
+                address = full_address(klass)
+                if address in self.nipype_port_converters:
+                    if port_nipype:
+                        nipype_ports.append(self.nipype_port_converters[address])
+                    else:
+                        raise NotImplementedError(
+                            f"Cannot port {address} as it is referenced from another "
+                            "nipype interface to be ported"
+                        )
+                elif full_address(klass) not in self.interfaces:
                     intra_pkg_modules[klass.__module__].add(klass)
             for _, func in used.intra_pkg_funcs:
                 if full_address(func) not in list(self.workflows):
@@ -324,11 +338,12 @@ class PackageConverter:
                 for a in class_addrs
                 if a in self.interfaces and a not in included_addrs
             )
+
             collect_intra_pkg_objects(all_used)
 
         for converter in tqdm(
             interfaces_to_include,
-            "converting interfaces from Nipype to Pydra syntax",
+            "Converting interfaces from Nipype to Pydra syntax",
         ):
             converter.write(
                 package_root,
@@ -336,12 +351,21 @@ class PackageConverter:
             )
             collect_intra_pkg_objects(converter.used_symbols)
 
-        # # FIXME: hack to remove nipype-specific functions from intra-package
-        # #        these should be mapped into a separate module,
-        # #        maybe pydra.tasks.<pkg>.nipype_ports or something
-        for mod_name in list(intra_pkg_modules):
-            if re.match(r"^nipype\.pipeline\b", mod_name):
-                intra_pkg_modules.pop(mod_name)
+        for converter in tqdm(
+            nipype_ports, "Porting interfaces from the core nipype package"
+        ):
+            converter.write(
+                package_root,
+                already_converted=already_converted,
+            )
+            collect_intra_pkg_objects(converter.used_symbols, port_nipype=False)
+
+        # # # FIXME: hack to remove nipype-specific functions from intra-package
+        # # #        these should be mapped into a separate module,
+        # # #        maybe pydra.tasks.<pkg>.nipype_ports or something
+        # for mod_name in list(intra_pkg_modules):
+        #     if re.match(r"^nipype\.pipeline\b", mod_name):
+        #         intra_pkg_modules.pop(mod_name)
 
         # Write any additional functions in other modules in the package
         self.write_intra_pkg_modules(package_root, intra_pkg_modules)
@@ -574,3 +598,40 @@ post_release = "{post_release}"
     def to_fspath(cls, package_root: Path, module_name: str) -> Path:
         """Converts a module name to a file path in the package directory"""
         return package_root.joinpath(*module_name.split("."))
+
+    @cached_property
+    def nipype_port_converters(self) -> ty.Dict[str, interface.BaseInterfaceConverter]:
+        if not self.NIPYPE_PORT_CONVERTER_SPEC_DIR.exists():
+            raise RuntimeError(
+                f"Nipype port specs dir '{self.NIPYPE_PORT_CONVERTER_SPEC_DIR}' does "
+                "not exist, cannot create Nipype port converters"
+            )
+        converters = {}
+        spec_files = list(self.NIPYPE_PORT_CONVERTER_SPEC_DIR.glob("*.yaml"))
+        for spec_file in spec_files:
+            with open(spec_file, "r") as f:
+                spec = yaml.safe_load(f)
+            callables_file = spec_file.parent / (spec_file.stem + "_callables.py")
+            module_name = ".".join(
+                [self.name, "nipype_ports"] + spec["nipype_module"].split(".")[1:]
+            )
+            task_name = spec["task_name"]
+            output_module = (
+                self.translate_submodule(
+                    module_name,
+                    sub_pkg="auto" if self.interface_only else None,
+                )
+                + "."
+                + to_snake_case(task_name)
+            )
+            converter = interface.get_converter(
+                output_module=output_module, callables_module=callables_file, **spec
+            )
+            converter.package = self
+            converters[converter.full_address] = converter
+
+        return converters
+
+    NIPYPE_PORT_CONVERTER_SPEC_DIR = (
+        Path(__file__).parent / "interface" / "nipype-ports"
+    )

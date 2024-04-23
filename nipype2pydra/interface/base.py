@@ -380,7 +380,7 @@ def from_list_to_doctests(
 
 
 @attrs.define(slots=False)
-class BaseTaskConverter(metaclass=ABCMeta):
+class BaseInterfaceConverter(metaclass=ABCMeta):
     """Specifies how the semi-automatic conversion from Nipype to Pydra should
     be performed
 

@@ -7,7 +7,7 @@ import itertools
 import logging
 import attrs
 from nipype.interfaces.base import BaseInterface, TraitedSpec
-from .base import BaseTaskConverter
+from .base import BaseInterfaceConverter
 from ..utils import (
     extract_args,
     UsedSymbols,
@@ -22,7 +22,7 @@ logger = logging.getLogger("nipype2pydra")
 
 
 @attrs.define(slots=False)
-class FunctionTaskConverter(BaseTaskConverter):
+class FunctionInterfaceConverter(BaseInterfaceConverter):
 
     def generate_code(self, input_fields, nonstd_types, output_fields) -> ty.Tuple[
         str,

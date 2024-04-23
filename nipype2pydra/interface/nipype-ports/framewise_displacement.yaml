@@ -1,0 +1,113 @@
+# This file is used to manually specify the semi-automatic conversion of
+# 'nipype.algorithms.confounds.FramewiseDisplacement' from Nipype to Pydra.
+#
+# Please fill-in/edit the fields below where appropriate
+#
+# Docs
+# ----
+# 
+#     Calculate the :abbr:`FD (framewise displacement)` as in [Power2012]_.
+#     This implementation reproduces the calculation in fsl_motion_outliers
+# 
+#     .. [Power2012] Power et al., Spurious but systematic correlations in functional
+#          connectivity MRI networks arise from subject motion, NeuroImage 59(3),
+#          2012. doi:`10.1016/j.neuroimage.2011.10.018
+#          <https://doi.org/10.1016/j.neuroimage.2011.10.018>`_.
+# 
+# 
+#     
+task_name: FramewiseDisplacement
+nipype_name: FramewiseDisplacement
+nipype_module: nipype.algorithms.confounds
+inputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    in_file: generic/file
+    # type=file|default=<undefined>: motion parameters
+    out_figure: Path
+    # type=file: output image file
+    # type=file|default='fd_power_2012.pdf': output figure name
+    out_file: Path
+    # type=file: calculated FD per timestep
+    # type=file|default='fd_power_2012.txt': output file name
+  callable_defaults:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set as the `default` method of input fields
+  metadata:
+  # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
+outputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    out_figure: generic/file
+    # type=file: output image file
+    # type=file|default='fd_power_2012.pdf': output figure name
+    out_file: generic/file
+    # type=file: calculated FD per timestep
+    # type=file|default='fd_power_2012.txt': output file name
+  callables:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set to the `callable` attribute of output fields
+    fd_average: fd_average_callable
+    # type=float: average FD
+  templates:
+  # dict[str, str] - `output_file_template` values to be provided to output fields
+  requirements:
+  # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
+tests:
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    in_file:
+    # type=file|default=<undefined>: motion parameters
+    parameter_source:
+    # type=enum|default='FSL'|allowed['AFNI','FSFAST','FSL','NIPY','SPM']: Source of movement parameters
+    radius:
+    # type=float|default=50: radius in mm to calculate angular FDs, 50mm is the default since it is used in Power et al. 2012
+    out_file:
+    # type=file: calculated FD per timestep
+    # type=file|default='fd_power_2012.txt': output file name
+    out_figure:
+    # type=file: output image file
+    # type=file|default='fd_power_2012.pdf': output figure name
+    series_tr:
+    # type=float|default=0.0: repetition time in sec.
+    save_plot:
+    # type=bool|default=False: write FD plot
+    normalize:
+    # type=bool|default=False: calculate FD in mm/s
+    figdpi:
+    # type=int|default=100: output dpi for the FD plot
+    figsize:
+    # type=tuple|default=(11.7, 2.3): output figure size
+  imports:
+  # list[nipype2pydra.task.base.explicitimport] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+doctests: []

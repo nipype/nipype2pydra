@@ -1,13 +1,16 @@
 from pathlib import Path
 import typing as ty
 import shutil
+import logging
 import click
 import yaml
 from nipype2pydra.workflow import WorkflowConverter
 from nipype2pydra.package import PackageConverter
-from nipype2pydra import task
+from nipype2pydra import interface
 from nipype2pydra.utils import to_snake_case
 from nipype2pydra.cli.base import cli
+
+logger = logging.getLogger(__name__)
 
 
 @cli.command(
@@ -41,8 +44,16 @@ def convert(
     with open(specs_dir / "package.yaml", "r") as f:
         package_spec = yaml.safe_load(f)
 
-    if not to_include and "to_include" in package_spec:
-        to_include = package_spec.pop("to_include")
+    spec_to_include = package_spec.pop("to_include", None)
+
+    if spec_to_include:
+        if not to_include:
+            to_include = spec_to_include
+        else:
+            logger.info(
+                "Overriding the following 'to_include' value in the spec: %s",
+                spec_to_include,
+            )
 
     # Load workflow specs
 
@@ -58,8 +69,10 @@ def convert(
     converter = PackageConverter(**package_spec)
     package_dir = converter.package_dir(package_root)
 
-    if package_dir.exists():
-        shutil.rmtree(package_dir)
+    # Clean previous version of output dir
+    output_dir = package_dir / "auto" if converter.interface_only else package_dir
+    if output_dir.exists():
+        shutil.rmtree(output_dir)
 
     def get_output_module(module: str, task_name: str) -> str:
         output_module = converter.translate_submodule(
@@ -82,7 +95,7 @@ def convert(
         )
 
     converter.interfaces = {
-        n: task.get_converter(
+        n: interface.get_converter(
             output_module=get_output_module(c["nipype_module"], c["task_name"]),
             callables_module=interface_spec_callables[c["task_name"]],
             package=converter,

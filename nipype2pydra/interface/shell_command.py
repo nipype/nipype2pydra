@@ -3,14 +3,14 @@ import typing as ty
 import attrs
 import inspect
 from copy import copy
-from .base import BaseTaskConverter
+from .base import BaseInterfaceConverter
 from ..utils import UsedSymbols
 from fileformats.core.mixin import WithClassifiers
 from fileformats.generic import File, Directory
 
 
 @attrs.define(slots=False)
-class ShellCommandTaskConverter(BaseTaskConverter):
+class ShellCommandInterfaceConverter(BaseInterfaceConverter):
     def generate_code(self, input_fields, nonstd_types, output_fields) -> ty.Tuple[
         str,
         UsedSymbols,
@@ -40,7 +40,7 @@ class ShellCommandTaskConverter(BaseTaskConverter):
             if not isinstance(executable, str):
                 raise RuntimeError(
                     f"Could not find executable for {self.nipype_interface}, "
-                    "try the FunctionTaskConverter class instead"
+                    "try the FunctionInterfaceConverter class instead"
                 )
 
         def unwrap_field_type(t):

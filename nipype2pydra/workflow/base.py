@@ -336,7 +336,17 @@ class WorkflowConverter:
         write_to_module(
             package_root,
             module_name=ImportStatement.join_relative_package(
-                self.output_module, ".tests.test_" + self.name
+                self.output_module,
+                (
+                    ".tests.test_"
+                    + "_".join(
+                        self.output_module.split(".")[
+                            len(self.package.name.split(".")) :
+                        ]
+                    )
+                    + "_"
+                    + self.name
+                ),
             ),
             converted_code=self.test_code,
             used=self.test_used,
