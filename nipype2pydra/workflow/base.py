@@ -444,7 +444,9 @@ class WorkflowConverter:
             f"    {self.workflow_variable} = Workflow("
             f'name={workflow_name}, input_spec=["'
             + '", "'.join(sorted(input_spec))
-            + '"])\n\n'
+            + '"], '
+            + ", ".join(f"{i}={i}" for i in input_spec)
+            + ")\n\n"
         )
 
         preamble = ""
@@ -489,8 +491,12 @@ class WorkflowConverter:
                 param_default = None
             config_sig.append(f"{param_name}={param_default!r}")
 
+        inputs_sig = [f"{i}=attrs.NOTHING" for i in input_spec]
+
         # construct code string with modified signature
-        signature = declaration + ", ".join(sorted(func_args + config_sig)) + ")"
+        signature = (
+            declaration + ", ".join(sorted(func_args + config_sig + inputs_sig)) + ")"
+        )
         if return_types:
             signature += f" -> {return_types}"
         code_str = signature + ":\n\n" + preamble + param_init + code_str

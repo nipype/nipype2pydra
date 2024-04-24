@@ -291,17 +291,8 @@ class NestedWorkflowConverter:
                     f"{conn.source_name}.lzout.{conn.source_out}"
                 )
             args.append(arg)
-        args_str = ", ".join(args)
-        if args_str:
-            args_str += ", "
-        args_str += f"name='{self.name}'"
-        return (
-            f"{self.indent}{self.workflow_variable}.add({self.workflow_name}("
-            + ", ".join(sorted(self.args + config_params))
-            + ")("
-            + args_str
-            + "))"
-        )
+        args_str = ", ".join(self.args + config_params + args + [f"name='{self.name}'"])
+        return f"{self.indent}{self.workflow_variable}.add({self.workflow_name}({args_str}))"
 
     @cached_property
     def conditional(self):
