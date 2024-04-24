@@ -168,15 +168,29 @@ class NodeConverter:
     def inputs(self):
         return [c.target_in for c in self.in_conns]
 
+    @property
+    def arg_name_vals(self) -> ty.List[ty.Tuple[str, str]]:
+        if self.args is None:
+            return []
+        name_vals = [a.split("=", 1) for a in self.args]
+        return [(n, v) for n, v in name_vals if n not in self.splits]
+
+    @cached_property
+    def split_args(self) -> ty.List[str]:
+        if self.args is None:
+            return []
+        return [a for a in self.args if a.split("=", 1)[0] in self.splits]
+
+    @property
+    def converted_interface(self):
+        """To be overridden by sub classes"""
+        return self.interface
+
     def __str__(self):
         if not self.include:
             return ""
         code_str = f"{self.indent}{self.workflow_variable}.add("
-        split_args = None
-        args = []
-        if self.args is not None:
-            split_args = [a for a in self.args if a.split("=", 1)[0] in self.splits]
-            args.extend(a for a in self.args if a.split("=", 1)[0] not in self.splits)
+        args = ["=".join(a) for a in self.arg_name_vals]
         for conn in self.in_conns:
             if not conn.include or not conn.lzouttable:
                 continue
@@ -190,15 +204,15 @@ class NodeConverter:
                     f"{conn.source_name}.lzout.{conn.source_out}"
                 )
             args.append(arg)
-        code_str += f"{self.interface}(" + ", ".join(args)
+        code_str += f"{self.converted_interface}(" + ", ".join(args)
         if args:
             code_str += ", "
         code_str += f'name="{self.name}")'
         code_str += ")"
-        if split_args:
+        if self.split_args:
             code_str += (
                 f"{self.indent}{self.workflow_variable}.{self.name}.split("
-                + ", ".join(split_args)
+                + ", ".join(self.split_args)
                 + ")"
             )
         if self.iterables:

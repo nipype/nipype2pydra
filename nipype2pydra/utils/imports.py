@@ -79,6 +79,8 @@ class Imported:
         """
         if inspect.isclass(self.object) or inspect.isfunction(self.object):
             return self.object.__module__
+        elif inspect.ismodule(self.object):
+            return self.object.__name__
         return self.statement.module_name
 
     def in_package(self, pkg: str) -> bool:
@@ -559,6 +561,9 @@ GENERIC_PYDRA_IMPORTS = parse_imports(
         "from pathlib import Path",
         "import logging",
         "import pydra.mark",
+        "import typing as ty",
         "from pydra.engine import Workflow",
+        "from pydra.engine.task import FunctionTask",
+        "from pydra.engine.specs import SpecInfo, BaseSpec",
     ]
 )

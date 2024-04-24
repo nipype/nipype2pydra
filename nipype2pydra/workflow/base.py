@@ -30,6 +30,7 @@ from .components import (
     DynamicField,
     NodeAssignmentConverter,
 )
+from .utility_converters import UTILITY_CONVERTERS
 import nipype2pydra.package
 
 logger = logging.getLogger(__name__)
@@ -597,7 +598,35 @@ def test_{self.name}():
                 splits = node_kwargs["iterfield"] if match.group(3) else None
                 if intf_name.endswith("("):  # strip trailing parenthesis
                     intf_name = intf_name[:-1]
-                node_converter = NodeConverter(
+                if "." in intf_name:
+                    parts = intf_name.rsplit(".")
+                    imported_name = ".".join(parts[:1])
+                    class_name = parts[-1]
+                else:
+                    imported_name = intf_name
+                    class_name = intf_name
+                try:
+                    import_stmt = next(
+                        i
+                        for i in self.used_symbols.imports
+                        if (i.module_name == imported_name or imported_name in i)
+                    )
+                except StopIteration:
+                    converter_cls = NodeConverter
+                else:
+                    if (
+                        import_stmt.module_name == imported_name
+                        and import_stmt.in_package("nipype.interfaces.utility")
+                    ) or import_stmt[imported_name].in_package(
+                        "nipype.interfaces.utility"
+                    ):
+                        converter_cls = UTILITY_CONVERTERS[class_name]
+                        # converter_cls = UTILITY_CONVERTERS.get(
+                        #     class_name, NodeConverter
+                        # )
+                    else:
+                        converter_cls = NodeConverter
+                node_converter = converter_cls(
                     name=varname,
                     interface=intf_name,
                     args=intf_args,

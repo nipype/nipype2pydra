@@ -41,6 +41,7 @@ class FunctionInterfaceConverter(BaseInterfaceConverter):
             "import pydra.mark",
             "import logging",
             "from logging import getLogger",
+            "from pydra.engine.task import FunctionTask",
             "import attrs",
         ]
 

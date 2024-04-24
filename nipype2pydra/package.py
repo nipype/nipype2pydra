@@ -262,10 +262,15 @@ class PackageConverter:
     @property
     def all_import_translations(self) -> ty.List[ty.Tuple[str, str]]:
         return self.import_translations + [
+            (r"nipype\.interfaces\.mrtrix3.\w+\b", r"pydra.tasks.mrtrix3.v3_0"),
             (r"nipype\.interfaces\.(?!base)(\w+)\b", r"pydra.tasks.\1.auto"),
             (r"nipype\.(.*)", self.name + r".nipype_ports.\1"),
             (self.nipype_name, self.name),
         ]
+
+    @property
+    def all_omit_modules(self) -> ty.List[str]:
+        return self.omit_modules + ["nipype.interfaces.utility"]
 
     def write(self, package_root: Path, to_include: ty.List[str] = None):
         """Writes the package to the specified package root"""
