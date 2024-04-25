@@ -36,6 +36,16 @@ import nipype2pydra.package
 logger = logging.getLogger(__name__)
 
 
+def convert_node_prefixes(
+    nodes: ty.Union[ty.Dict[str, str], ty.Sequence[ty.Tuple[str, str]]]
+) -> ty.Dict[str, str]:
+    if isinstance(nodes, dict):
+        nodes_it = nodes.items()
+    else:
+        nodes_it = [(n, "") if isinstance(n, str) else n for n in nodes]
+    return {n: v if v is not None else "" for n, v in nodes_it}
+
+
 @attrs.define
 class WorkflowConverter:
     """Specifies how the semi-automatic conversion from Nipype to Pydra should
@@ -84,20 +94,22 @@ class WorkflowConverter:
         },
     )
     input_nodes: ty.Dict[str, str] = attrs.field(
-        converter=dict,
+        converter=convert_node_prefixes,
         metadata={
             "help": (
                 "Name of the node that is to be considered the input of the workflow, "
-                "i.e. its outputs will be the inputs of the workflow"
+                "(i.e. its outputs will be the inputs of the workflow), mapped to the prefix"
+                "that will be prepended to the corresponding workflow input name"
             ),
         },
     )
     output_nodes: ty.Dict[str, str] = attrs.field(
-        converter=dict,
+        converter=convert_node_prefixes,
         metadata={
             "help": (
                 "Name of the node that is to be considered the output of the workflow, "
-                "i.e. its inputs will be the outputs of the workflow"
+                "(i.e. its inputs will be the outputs of the workflow), mapped to the prefix"
+                "that will be prepended to the corresponding workflow output name"
             ),
         },
     )
@@ -388,7 +400,7 @@ class WorkflowConverter:
         missing = []
         input_spec = set()
         input_nodes = []
-        for prefix, input_node_name in self.input_nodes.items():
+        for input_node_name, prefix in self.input_nodes.items():
             try:
                 sibling_input_nodes = self.nodes[input_node_name]
             except KeyError:
@@ -396,7 +408,7 @@ class WorkflowConverter:
             else:
                 for input_node in sibling_input_nodes:
                     for conn in input_node.out_conns:
-                        conn.wf_in_out = "in"
+                        conn.wf_in = True
                         src_out = (
                             conn.source_out
                             if not isinstance(conn.source_out, DynamicField)
@@ -419,9 +431,7 @@ class WorkflowConverter:
             for conn in node.out_conns:
                 conn.include = True
                 if conn.target_name not in (
-                    included
-                    + list(self.input_nodes.values())
-                    + list(self.output_nodes.values())
+                    included + list(self.input_nodes) + list(self.output_nodes)
                 ):
                     included.append(conn.target_name)
                     for tgt in conn.targets:
@@ -429,7 +439,7 @@ class WorkflowConverter:
                         node_stack.append(tgt)
 
         missing = []
-        for prefix, output_node_name in self.output_nodes.items():
+        for output_node_name, prefix in self.output_nodes.items():
             try:
                 sibling_output_nodes = self.nodes[output_node_name]
             except KeyError:
@@ -437,7 +447,7 @@ class WorkflowConverter:
             else:
                 for output_node in sibling_output_nodes:
                     for conn in output_node.in_conns:
-                        conn.wf_in_out = "out"
+                        conn.wf_out = True
         if missing:
             raise ValueError(
                 f"Unrecognised output node {missing}, not in "
@@ -782,8 +792,8 @@ def test_{self.name}():
             name=name,
             nipype_name=name,
             nipype_module=nipype_module,
-            input_nodes={"": "inputnode"},
-            output_nodes={"": "outputnode"},
+            input_nodes={"inputnode": ""},
+            output_nodes={"outputnode": ""},
             **{n: eval(v) for n, v in defaults},
         )
         dct = attrs.asdict(conv)

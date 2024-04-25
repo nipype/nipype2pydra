@@ -69,12 +69,8 @@ class ConnectionConverter:
     indent: str = attrs.field()
     workflow_converter: "WorkflowConverter" = attrs.field()
     include: bool = attrs.field(default=False)
-    wf_in_out: ty.Optional[str] = attrs.field(default=None)
-
-    @wf_in_out.validator
-    def wf_in_out_validator(self, attribute, value):
-        if value not in ["in", "out", None]:
-            raise ValueError(f"wf_in_out must be 'in', 'out' or None, not {value}")
+    wf_in: bool = False
+    wf_out: bool = False
 
     @cached_property
     def sources(self):
@@ -107,12 +103,15 @@ class ConnectionConverter:
         code_str = ""
 
         # Get source lazy-field
-        if self.wf_in_out == "in":
-            src = f"{self.workflow_variable}.lzin.{self.source_out}"
+        if self.wf_in:
+            prefix = self.workflow_converter.input_nodes[self.source_name]
+            if prefix:
+                prefix += "_"
+            src = f"{self.workflow_variable}.lzin.{prefix}{self.source_out}"
         else:
             src = f"{self.workflow_variable}.{self.source_name}.lzout.{self.source_out}"
         if isinstance(self.source_out, DynamicField):
-            task_name = f"{self.source_name}_{self.source_out.varname}"
+            task_name = f"{self.source_name}_{self.source_out.varname}_to_{self.target_name}_{self.target_in}"
             intf_name = f"{task_name}_callable"
             code_str += (
                 f"\n{self.indent}@pydra.mark.task\n"
@@ -126,8 +125,18 @@ class ConnectionConverter:
             src = f"getattr({self.workflow_variable}.{self.source_name}.lzout, {self.source_out!r})"
 
         # Set src lazy field to target input
-        if self.wf_in_out == "out":
-            code_str += f"{self.indent}{self.workflow_variable}.set_output([({self.target_in!r}, {src})])"
+        if self.wf_out:
+            prefix = self.workflow_converter.output_nodes[self.target_name]
+            if prefix:
+                prefix += "_"
+                if not isinstance(self.target_in, str):
+                    raise NotImplementedError(
+                        f"Can only prepend prefix to string target_in in {self}, no {self.target_in}"
+                    )
+                out_name = f"{prefix}{self.target_in}"
+            else:
+                out_name = self.target_in
+            code_str += f"{self.indent}{self.workflow_variable}.set_output([({out_name!r}, {src})])"
         elif isinstance(self.target_in, VarField):
             code_str += f"{self.indent}setattr({self.workflow_variable}.{self.target_name}.inputs, {self.target_in}, {src})"
         else:
@@ -194,7 +203,7 @@ class NodeConverter:
         for conn in self.in_conns:
             if not conn.include or not conn.lzouttable:
                 continue
-            if conn.wf_in_out == "in":
+            if conn.wf_in:
                 arg = (
                     f"{conn.source_out}={self.workflow_variable}.lzin.{conn.source_out}"
                 )
@@ -204,7 +213,7 @@ class NodeConverter:
                     f"{conn.source_name}.lzout.{conn.source_out}"
                 )
             args.append(arg)
-        code_str += f"{self.converted_interface}(" + ", ".join(args)
+        code_str += f"{self.converted_interface}(" + ", ".join(sorted(args))
         if args:
             code_str += ", "
         code_str += f'name="{self.name}")'
@@ -281,7 +290,7 @@ class NestedWorkflowConverter:
         for conn in self.in_conns:
             if not conn.include or not conn.lzouttable:
                 continue
-            if conn.wf_in_out == "in":
+            if conn.wf_in:
                 arg = (
                     f"{conn.source_out}={self.workflow_variable}.lzin.{conn.source_out}"
                 )

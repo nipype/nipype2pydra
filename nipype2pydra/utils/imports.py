@@ -40,6 +40,9 @@ class Imported:
     def __hash__(self):
         return hash(str(self))
 
+    def __lt__(self, other: "Imported") -> bool:
+        return self.name < other.name
+
     @property
     def local_name(self):
         return self.alias if self.alias else self.name
@@ -208,7 +211,7 @@ class ImportStatement:
 
     def __str__(self):
         if self.from_:
-            imported_str = ", ".join(str(i) for i in self.imported.values())
+            imported_str = ", ".join(str(i) for i in sorted(self.imported.values()))
             module = self.translation if self.translation else self.from_
             stmt_str = f"{self.indent}from {module} import {imported_str}"
         elif self.translation:
