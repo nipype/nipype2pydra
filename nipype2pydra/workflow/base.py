@@ -233,29 +233,6 @@ class WorkflowConverter:
         )
 
     @cached_property
-    def config_defaults(self) -> ty.Dict[str, ty.Dict[str, str]]:
-        all_defaults = {}
-        for name, config_params in self.package.config_params.items():
-            params = config_params.module
-            all_defaults[name] = {}
-            for part in config_params.varname.split("."):
-                params = getattr(params, part)
-            if config_params.type == "struct":
-                defaults = {
-                    a: getattr(params, a)
-                    for a in dir(params)
-                    if not inspect.isfunction(getattr(params, a))
-                    and not a.startswith("_")
-                }
-            elif config_params.type == "dict":
-                defaults = copy(params)
-            else:
-                assert False, f"Unrecognised config_params type {config_params.type}"
-            defaults.update(config_params.defaults)
-            all_defaults[name] = defaults
-        return all_defaults
-
-    @cached_property
     def used_configs(self) -> ty.List[str]:
         return self._converted_code[1]
 
@@ -516,7 +493,7 @@ class WorkflowConverter:
         param_init = ""
         for scope_prefix, config_name in used_configs:
             param_name = f"{scope_prefix}_{config_name}"
-            param_default = self.config_defaults[scope_prefix][config_name]
+            param_default = self.package.config_defaults[scope_prefix][config_name]
             if isinstance(param_default, str) and "(" in param_default:
                 # delay init of default value to function body
                 param_init += (

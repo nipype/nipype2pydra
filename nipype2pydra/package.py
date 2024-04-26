@@ -4,6 +4,7 @@ import re
 import typing as ty
 import types
 import logging
+from copy import copy
 import shutil
 from functools import cached_property
 from collections import defaultdict
@@ -271,6 +272,29 @@ class PackageConverter:
     @property
     def all_omit_modules(self) -> ty.List[str]:
         return self.omit_modules + ["nipype.interfaces.utility"]
+
+    @cached_property
+    def config_defaults(self) -> ty.Dict[str, ty.Dict[str, str]]:
+        all_defaults = {}
+        for name, config_params in self.config_params.items():
+            params = config_params.module
+            all_defaults[name] = {}
+            for part in config_params.varname.split("."):
+                params = getattr(params, part)
+            if config_params.type == "struct":
+                defaults = {
+                    a: getattr(params, a)
+                    for a in dir(params)
+                    if not inspect.isfunction(getattr(params, a))
+                    and not a.startswith("_")
+                }
+            elif config_params.type == "dict":
+                defaults = copy(params)
+            else:
+                assert False, f"Unrecognised config_params type {config_params.type}"
+            defaults.update(config_params.defaults)
+            all_defaults[name] = defaults
+        return all_defaults
 
     def write(self, package_root: Path, to_include: ty.List[str] = None):
         """Writes the package to the specified package root"""
