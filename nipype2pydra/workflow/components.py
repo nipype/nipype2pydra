@@ -67,7 +67,7 @@ class ConnectionConverter:
     source_out: ty.Union[str, VarField] = attrs.field(converter=field_converter)
     target_in: ty.Union[str, VarField] = attrs.field(converter=field_converter)
     indent: str = attrs.field()
-    workflow_converter: "WorkflowConverter" = attrs.field()
+    workflow_converter: "WorkflowConverter" = attrs.field(repr=False)
     include: bool = attrs.field(default=False)
     wf_in: bool = False
     wf_out: bool = False
@@ -97,46 +97,68 @@ class ConnectionConverter:
     def workflow_variable(self):
         return self.workflow_converter.workflow_variable
 
+    @property
+    def wf_in_name(self):
+        if not self.wf_in:
+            raise ValueError(
+                f"Cannot get wf_in_name for {self} as it is not a workflow input"
+            )
+        source_out_name = (
+            self.source_out
+            if not isinstance(self.source_out, DynamicField)
+            else self.source_out.varname
+        )
+        return self.workflow_converter.input_name(self.source_name, source_out_name)
+
+    @property
+    def wf_out_name(self):
+        if not self.wf_out:
+            raise ValueError(
+                f"Cannot get wf_out_name for {self} as it is not a workflow output"
+            )
+        return self.workflow_converter.output_name(self.target_name, self.target_in)
+
     def __str__(self):
         if not self.include:
             return ""
         code_str = ""
-
         # Get source lazy-field
         if self.wf_in:
-            prefix = self.workflow_converter.input_nodes[self.source_name]
-            if prefix:
-                prefix += "_"
-            src = f"{self.workflow_variable}.lzin.{prefix}{self.source_out}"
+            src = f"{self.workflow_variable}.lzin.{self.wf_in_name}"
         else:
             src = f"{self.workflow_variable}.{self.source_name}.lzout.{self.source_out}"
         if isinstance(self.source_out, DynamicField):
-            task_name = f"{self.source_name}_{self.source_out.varname}_to_{self.target_name}_{self.target_in}"
-            intf_name = f"{task_name}_callable"
+            base_task_name = f"{self.source_name}_{self.source_out.varname}_to_{self.target_name}_{self.target_in}"
+            intf_name = f"{base_task_name}_callable"
             code_str += (
                 f"\n{self.indent}@pydra.mark.task\n"
-                f"{self.indent}def {intf_name}(in_: str):\n"
+                f"{self.indent}def {intf_name}(in_: ty.Any) -> ty.Any:\n"
                 f"{self.indent}    return {self.source_out.callable}(in_)\n\n"
                 f"{self.indent}{self.workflow_variable}.add("
-                f'{intf_name}(in_={src}, name="{task_name}"))\n\n'
+                f'{intf_name}(in_={src}, name="{intf_name}"))\n\n'
             )
-            src = f"{self.workflow_variable}.{task_name}.lzout.out"
-        elif isinstance(self.source_out, VarField):
-            src = f"getattr({self.workflow_variable}.{self.source_name}.lzout, {self.source_out!r})"
+            src = f"{self.workflow_variable}.{intf_name}.lzout.out"
+        else:
+            base_task_name = f"{self.source_name}_{self.source_out}_to_{self.target_name}_{self.target_in}"
+            if isinstance(self.source_out, VarField):
+                src = f"getattr({self.workflow_variable}.{self.source_name}.lzout, {self.source_out!r})"
 
         # Set src lazy field to target input
         if self.wf_out:
-            prefix = self.workflow_converter.output_nodes[self.target_name]
-            if prefix:
-                prefix += "_"
-                if not isinstance(self.target_in, str):
-                    raise NotImplementedError(
-                        f"Can only prepend prefix to string target_in in {self}, no {self.target_in}"
-                    )
-                out_name = f"{prefix}{self.target_in}"
-            else:
-                out_name = self.target_in
-            code_str += f"{self.indent}{self.workflow_variable}.set_output([({out_name!r}, {src})])"
+            if self.wf_in:
+                # Workflow input is passed directly through to the output (because we have omitted the node)
+                # that generated it and taken it as an input to the current node), so we need
+                # to add an "identity" node to pass it through
+                intf_name = f"{base_task_name}_identity"
+                code_str += (
+                    f"\n{self.indent}@pydra.mark.task\n"
+                    f"{self.indent}def {intf_name}({self.wf_in_name}: ty.Any) -> ty.Any:\n"
+                    f"{self.indent}    return {self.wf_in_name}\n\n"
+                    f"{self.indent}{self.workflow_variable}.add("
+                    f'{intf_name}({self.wf_in_name}={src}, name="{intf_name}"))\n\n'
+                )
+                src = f"{self.workflow_variable}.{intf_name}.lzout.out"
+            code_str += f"{self.indent}{self.workflow_variable}.set_output([({self.wf_out_name!r}, {src})])"
         elif isinstance(self.target_in, VarField):
             code_str += f"{self.indent}setattr({self.workflow_variable}.{self.target_name}.inputs, {self.target_in}, {src})"
         else:
@@ -160,7 +182,7 @@ class NodeConverter:
     iterables: ty.List[IterableConverter]
     itersource: ty.Optional[str]
     indent: str
-    workflow_converter: "WorkflowConverter"
+    workflow_converter: "WorkflowConverter" = attrs.field(repr=False)
     splits: ty.List[str] = attrs.field(
         converter=attrs.converters.default_if_none(factory=list), factory=list
     )
@@ -205,7 +227,7 @@ class NodeConverter:
                 continue
             if conn.wf_in:
                 arg = (
-                    f"{conn.source_out}={self.workflow_variable}.lzin.{conn.source_out}"
+                    f"{conn.target_in}={self.workflow_variable}.lzin.{conn.wf_in_name}"
                 )
             else:
                 arg = (
@@ -267,7 +289,7 @@ class NestedWorkflowConverter:
     nested_spec: ty.Optional["WorkflowConverter"]
     indent: str
     args: ty.List[str]
-    workflow_converter: "WorkflowConverter" = attrs.field()
+    workflow_converter: "WorkflowConverter" = attrs.field(repr=False)
     include: bool = attrs.field(default=False)
     in_conns: ty.List[ConnectionConverter] = attrs.field(factory=list)
     out_conns: ty.List[ConnectionConverter] = attrs.field(factory=list)
@@ -292,7 +314,7 @@ class NestedWorkflowConverter:
                 continue
             if conn.wf_in:
                 arg = (
-                    f"{conn.source_out}={self.workflow_variable}.lzin.{conn.source_out}"
+                    f"{conn.target_in}={self.workflow_variable}.lzin.{conn.wf_in_name}"
                 )
             else:
                 arg = (
@@ -358,3 +380,31 @@ class NodeAssignmentConverter:
         assert (n.name == node_name for n in self.nodes)
         assert (n.workflow_variable == workflow_variable for n in self.nodes)
         return f"{self.indent}{workflow_variable}.{node_name}{self.attribute} = {self.value}"
+
+
+@attrs.define
+class NestedWorkflowAssignmentConverter:
+
+    nodes: ty.List[NestedWorkflowConverter] = attrs.field()
+    attribute: str = attrs.field()
+    value: str = attrs.field()
+    indent: str = attrs.field()
+
+    def __str__(self):
+        if not any(n.include for n in self.nodes):
+            return ""
+        node = self.nodes[0]
+        if not node.nested_spec:
+            raise NotImplementedError(
+                f"Need specification for nested workflow {node.workflow_name} in order to "
+                "assign to it"
+            )
+        nested_wf = node.nested_spec
+        parts = self.attribute.split(".")
+        nested_node_name = parts[2]
+        attribute_name = parts[3]
+        target_in = nested_wf.input_name(nested_node_name, attribute_name)
+        attribute = ".".join(parts[:2] + [target_in] + parts[4:])
+        workflow_variable = self.nodes[0].workflow_variable
+        assert (n.workflow_variable == workflow_variable for n in self.nodes)
+        return f"{self.indent}{workflow_variable}{attribute} = {self.value}"

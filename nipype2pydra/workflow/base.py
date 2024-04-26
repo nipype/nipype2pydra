@@ -7,6 +7,7 @@ from copy import copy
 import logging
 from types import ModuleType
 from pathlib import Path
+import black.report
 import attrs
 import yaml
 from ..utils import (
@@ -29,6 +30,7 @@ from .components import (
     IterableConverter,
     DynamicField,
     NodeAssignmentConverter,
+    NestedWorkflowAssignmentConverter,
 )
 from .utility_converters import UTILITY_CONVERTERS
 import nipype2pydra.package
@@ -193,6 +195,29 @@ class WorkflowConverter:
     @property
     def full_name(self):
         return f"{self.nipype_module_name}.{self.nipype_name}"
+
+    def input_name(self, node_name: str, field_name: str) -> str:
+        """
+        Returns the name of the input field in the workflow for the given node and field
+        escaped by the prefix of the node if present"""
+        prefix = self.input_nodes[node_name]
+        if prefix:
+            prefix += "_"
+        return prefix + field_name
+
+    def output_name(self, node_name: str, field_name: str) -> str:
+        """
+        Returns the name of the input field in the workflow for the given node and field
+        escaped by the prefix of the node if present"""
+        prefix = self.output_nodes[node_name]
+        if prefix:
+            prefix += "_"
+        if not isinstance(field_name, str):
+            raise NotImplementedError(
+                f"Can only prepend prefix to workflow output in {self}, "
+                f"not {field_name}"
+            )
+        return prefix + field_name
 
     @cached_property
     def used_symbols(self) -> UsedSymbols:
@@ -409,12 +434,7 @@ class WorkflowConverter:
                 for input_node in sibling_input_nodes:
                     for conn in input_node.out_conns:
                         conn.wf_in = True
-                        src_out = (
-                            conn.source_out
-                            if not isinstance(conn.source_out, DynamicField)
-                            else conn.source_out.varname
-                        )
-                        input_spec.add(src_out)
+                        input_spec.add(conn.wf_in_name)
                     input_nodes.append(input_node)
         if missing:
             raise ValueError(
@@ -460,7 +480,7 @@ class WorkflowConverter:
             f'name={workflow_name}, input_spec=["'
             + '", "'.join(sorted(input_spec))
             + '"], '
-            + ", ".join(f"{i}={i}" for i in input_spec)
+            + ", ".join(f"{i}={i}" for i in sorted(input_spec))
             + ")\n\n"
         )
 
@@ -519,6 +539,23 @@ class WorkflowConverter:
         if not isinstance(parsed_statements[-1], ReturnConverter):
             code_str += f"\n    return {self.workflow_variable}"
 
+        # Format the the code before the find and replace so it is more predictable
+        try:
+            code_str = black.format_file_contents(
+                code_str, fast=False, mode=black.FileMode()
+            )
+        except black.report.NothingChanged:
+            pass
+        except Exception as e:
+            # Write to file for debugging
+            debug_file = "~/unparsable-nipype2pydra-output.py"
+            with open(Path(debug_file).expanduser(), "w") as f:
+                f.write(code_str)
+            raise RuntimeError(
+                f"Black could not parse generated code (written to {debug_file}): "
+                f"{e}\n\n{code_str}"
+            )
+
         for find, replace in self.find_replace:
             code_str = re.sub(find, replace, code_str, flags=re.MULTILINE | re.DOTALL)
 
@@ -547,7 +584,17 @@ def test_{self.name}():
 
     def _parse_statements(self, func_body: str) -> ty.Tuple[
         ty.List[
-            ty.Union[str, NodeConverter, ConnectionConverter, NestedWorkflowConverter]
+            ty.Union[
+                str,
+                ImportStatement,
+                NodeConverter,
+                ConnectionConverter,
+                NestedWorkflowConverter,
+                NodeAssignmentConverter,
+                DocStringConverter,
+                CommentConverter,
+                ReturnConverter,
+            ]
         ],
         str,
     ]:
@@ -724,24 +771,33 @@ def test_{self.name}():
                 parsed.append(
                     ReturnConverter(vars=match.group(2), indent=match.group(1))
                 )
-            else:
-                # Match assignments to node attributes
-                match = re.match(
+            elif match := (
+                re.match(
                     r"(\s*)(" + "|".join(self.nodes) + r")\b([\w\.]+)\s*=\s*(.*)",
                     statement,
                     flags=re.MULTILINE | re.DOTALL,
                 )
-                if self.nodes and match:
-                    parsed.append(
-                        NodeAssignmentConverter(
-                            nodes=self.nodes[match.group(2)],
-                            attribute=match.group(3),
-                            value=match.group(4),
-                            indent=match.group(1),
-                        )
-                    )
+                if self.nodes
+                else False
+            ):
+                indent, node_name, attribute, value = match.groups()
+                nodes = self.nodes[node_name]
+                assert all(n.name == nodes[0].name for n in nodes)
+                if isinstance(nodes[0], NestedWorkflowConverter):
+                    assert all(isinstance(n, NestedWorkflowConverter) for n in nodes)
+                    klass = NestedWorkflowAssignmentConverter
                 else:
-                    parsed.append(statement)
+                    klass = NodeAssignmentConverter
+                parsed.append(
+                    klass(
+                        nodes=nodes,
+                        attribute=attribute,
+                        value=value,
+                        indent=indent,
+                    )
+                )
+            else:
+                parsed.append(statement)
 
         if workflow_name is None:
             raise ValueError(
