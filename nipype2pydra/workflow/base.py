@@ -147,6 +147,14 @@ class WorkflowConverter:
         factory=list,
     )
 
+    test_inputs: ty.Dict[str, ty.Any] = attrs.field(
+        metadata={
+            "help": ("the inputs to the test function"),
+        },
+        converter=attrs.converters.default_if_none(factory=list),
+        factory=dict,
+    )
+
     nodes: ty.Dict[str, ty.List[NodeConverter]] = attrs.field(factory=dict)
 
     def __attrs_post_init__(self):
@@ -540,10 +548,13 @@ class WorkflowConverter:
 
     @property
     def test_code(self):
+
+        args_str = ", ".join(f"{n}={v}" for n, v in self.test_inputs.items())
+
         return f"""
 
 def test_{self.name}():
-    workflow = {self.name}()
+    workflow = {self.name}({args_str})
     assert isinstance(workflow, Workflow)
 """
 
