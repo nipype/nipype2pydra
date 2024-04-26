@@ -481,35 +481,13 @@ class WorkflowConverter:
         for statement in parsed_statements:
             code_str += str(statement) + "\n"
 
-        used_configs = set()
-        for config_name, config_param in self.package.config_params.items():
-            if config_param.type == "dict":
-                config_regex = re.compile(
-                    r"\b" + config_name + r"\[(?:'|\")([^\]]+)(?:'|\")\]\b"
-                )
-            else:
-                config_regex = re.compile(r"\b" + config_param.varname + r"\.(\w+)\b")
-            used_configs.update(
-                (config_name, m) for m in config_regex.findall(code_str)
-            )
-            code_str = config_regex.sub(config_name + r"_\1", code_str)
-
+        nested_configs = set()
         for nested_workflow in self.nested_workflows.values():
-            used_configs.update(nested_workflow.used_configs)
+            nested_configs.update(nested_workflow.used_configs)
 
-        config_sig = []
-        param_init = ""
-        for scope_prefix, config_name in used_configs:
-            param_name = f"{scope_prefix}_{config_name}"
-            param_default = self.package.config_defaults[scope_prefix][config_name]
-            if isinstance(param_default, str) and "(" in param_default:
-                # delay init of default value to function body
-                param_init += (
-                    f"    if {param_name} is None:\n"
-                    f"        {param_name} = {param_default}\n\n"
-                )
-                param_default = None
-            config_sig.append(f"{param_name}={param_default!r}")
+        code_str, config_sig, used_configs = self.package.find_and_replace_config_params(
+            code_str, nested_configs
+        )
 
         inputs_sig = [f"{i}=attrs.NOTHING" for i in input_spec]
 
@@ -519,7 +497,7 @@ class WorkflowConverter:
         )
         if return_types:
             signature += f" -> {return_types}"
-        code_str = signature + ":\n\n" + preamble + param_init + code_str
+        code_str = signature + ":\n\n" + preamble + code_str
 
         if not isinstance(parsed_statements[-1], ReturnConverter):
             code_str += f"\n    return {self.workflow_variable}"

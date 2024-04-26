@@ -22,6 +22,7 @@ from .utils import (
     ImportStatement,
 )
 import nipype2pydra.workflow
+import nipype2pydra.node_factory
 
 logger = logging.getLogger(__name__)
 
@@ -145,6 +146,16 @@ class PackageConverter:
                 "interface specifications for the tasks defined within the workflow package"
             ),
         },
+    )
+    node_factories: ty.Dict[str, nipype2pydra.node_factory.NodeFactoryConverter] = (
+        attrs.field(
+            factory=dict,
+            metadata={
+                "help": (
+                    "node factory specifications for the tasks defined within the workflow package"
+                ),
+            },
+        )
     )
     import_translations: ty.List[ty.Tuple[str, str]] = attrs.field(
         factory=list,
@@ -683,3 +694,62 @@ post_release = "{post_release}"
             nipype2pydra.workflow.WorkflowConverter(package=self, **spec)
         )
         return converter
+
+    def add_node_factory_from_spec(
+        self, spec: ty.Dict[str, ty.Any]
+    ) -> "nipype2pydra.node_factory.NodeFactoryConverter":
+        converter = self.node_factories[f"{spec['nipype_module']}.{spec['name']}"] = (
+            nipype2pydra.node_factory.NodeFactoryConverter(package=self, **spec)
+        )
+        return converter
+
+    def find_and_replace_config_params(
+        self, code_str, nested_configs: ty.Optional[ty.Set[str]] = None
+    ) -> ty.Tuple[str, ty.List[str], ty.Set[str]]:
+        """Finds and replaces configuration parameters in the code string and returns
+        the modified code string along with the set of replaced parameters
+
+        Parameters
+        ----------
+        code_str : str
+            the code string to find and replace configuration parameters in
+        nested_configs : set[str], optional
+            the set of nested configuration parameters to replace
+
+        Returns
+        -------
+        str
+            the modified code string
+        list[str]
+            the signature of the configuration parameters
+        set[str]
+            the set of replaced parameters
+        """
+        used_configs = set() if nested_configs is None else copy(nested_configs)
+        for config_name, config_param in self.config_params.items():
+            if config_param.type == "dict":
+                config_regex = re.compile(
+                    r"\b" + config_name + r"\[(?:'|\")([^\]]+)(?:'|\")\]\b"
+                )
+            else:
+                config_regex = re.compile(r"\b" + config_param.varname + r"\.(\w+)\b")
+            used_configs.update(
+                (config_name, m) for m in config_regex.findall(code_str)
+            )
+            code_str = config_regex.sub(config_name + r"_\1", code_str)
+
+        config_sig = []
+        param_init = ""
+        for scope_prefix, config_name in used_configs:
+            param_name = f"{scope_prefix}_{config_name}"
+            param_default = self.config_defaults[scope_prefix][config_name]
+            if isinstance(param_default, str) and "(" in param_default:
+                # delay init of default value to function body
+                param_init += (
+                    f"    if {param_name} is None:\n"
+                    f"        {param_name} = {param_default}\n\n"
+                )
+                param_default = None
+            config_sig.append(f"{param_name}={param_default!r}")
+
+        return param_init + code_str, config_sig, used_configs
