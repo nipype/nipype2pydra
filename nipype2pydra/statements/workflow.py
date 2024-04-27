@@ -1,6 +1,7 @@
 from functools import cached_property
 import re
 import typing as ty
+import inspect
 import attrs
 from ..utils import extract_args
 from typing_extensions import Self
@@ -224,7 +225,7 @@ class IterableStatement:
 
 
 @attrs.define
-class AddNodeStatement:
+class AddInterfaceStatement:
 
     name: str
     interface: str
@@ -240,6 +241,7 @@ class AddNodeStatement:
     out_conns: ty.List[ConnectionStatement] = attrs.field(factory=list)
     include: bool = attrs.field(default=False)
     index: int = attrs.field()
+    is_factory: bool = attrs.field(default=False)
 
     @index.default
     def _index_default(self):
@@ -272,6 +274,7 @@ class AddNodeStatement:
             return ""
         code_str = f"{self.indent}{self.workflow_variable}.add("
         args = ["=".join(a) for a in self.arg_name_vals]
+        conn_args = []
         for conn in self.in_conns:
             if not conn.include or not conn.lzouttable:
                 continue
@@ -284,12 +287,18 @@ class AddNodeStatement:
                     f"{conn.target_in}={self.workflow_variable}."
                     f"{conn.source_name}.lzout.{conn.source_out}"
                 )
-            args.append(arg)
-        code_str += f"{self.converted_interface}(" + ", ".join(sorted(args))
-        if args:
-            code_str += ", "
-        code_str += f'name="{self.name}")'
-        code_str += ")"
+            conn_args.append(arg)
+
+        code_str += (
+            f"{self.workflow_variable}.add({self.converted_interface}("
+            + sorted((args if self.is_factory else args + conn_args))
+            + [f'name="{self.name}"']
+            + "))"
+        )
+        if self.is_factory:
+            for conn_arg in conn_args:
+                code_str += f"\n{self.indent}{self.workflow_variable}.inputs.{conn_arg}"
+
         if self.split_args:
             code_str += (
                 f"{self.indent}{self.workflow_variable}.{self.name}.split("
@@ -339,14 +348,14 @@ class AddNodeStatement:
     @classmethod
     def parse(
         cls, statement: str, workflow_converter: "WorkflowConverter"
-    ) -> "AddNodeStatement":
+    ) -> "AddInterfaceStatement":
         from .utility import UTILITY_CONVERTERS
 
         match = cls.match_re.match(statement)
         indent = match.group(1)
         varname = match.group(2)
         args = extract_args(statement)[1]
-        node_kwargs = match_kwargs(args, AddNodeStatement.SIGNATURE)
+        node_kwargs = match_kwargs(args, AddInterfaceStatement.SIGNATURE)
         intf_name, intf_args, intf_post = extract_args(node_kwargs["interface"])
         if "iterables" in node_kwargs:
             iterables = [
@@ -359,29 +368,11 @@ class AddNodeStatement:
         splits = node_kwargs["iterfield"] if match.group(3) else None
         if intf_name.endswith("("):  # strip trailing parenthesis
             intf_name = intf_name[:-1]
-        if "." in intf_name:
-            parts = intf_name.rsplit(".")
-            imported_name = ".".join(parts[:1])
-            class_name = parts[-1]
+        imported_obj = workflow_converter.used_symbols.get_imported_object(intf_name)
+        if re.match(r"nipype.interfaces.utility\b", imported_obj.__module__):
+            converter_cls = UTILITY_CONVERTERS[imported_obj.__name__]
         else:
-            imported_name = intf_name
-            class_name = intf_name
-        try:
-            import_stmt = next(
-                i
-                for i in workflow_converter.used_symbols.imports
-                if (i.module_name == imported_name or imported_name in i)
-            )
-        except StopIteration:
-            converter_cls = AddNodeStatement
-        else:
-            if (
-                import_stmt.module_name == imported_name
-                and import_stmt.in_package("nipype.interfaces.utility")
-            ) or import_stmt[imported_name].in_package("nipype.interfaces.utility"):
-                converter_cls = UTILITY_CONVERTERS[class_name]
-            else:
-                converter_cls = AddNodeStatement
+            converter_cls = AddInterfaceStatement
         return converter_cls(
             name=varname,
             interface=intf_name,
@@ -391,6 +382,7 @@ class AddNodeStatement:
             splits=splits,
             workflow_converter=workflow_converter,
             indent=indent,
+            is_factory=inspect.isfunction(imported_obj),
         )
 
 
@@ -478,7 +470,7 @@ class AddNestedWorkflowStatement:
 @attrs.define
 class NodeAssignmentStatement:
 
-    nodes: ty.List[AddNodeStatement]
+    nodes: ty.List[AddInterfaceStatement]
     attribute: str
     value: str
     indent: str
@@ -530,7 +522,7 @@ class NodeAssignmentStatement:
             assert all(isinstance(n, AddNestedWorkflowStatement) for n in nodes)
             is_workflow = True
         else:
-            assert all(isinstance(n, AddNodeStatement) for n in nodes)
+            assert all(isinstance(n, AddInterfaceStatement) for n in nodes)
             is_workflow = False
         return NodeAssignmentStatement(
             nodes=nodes,

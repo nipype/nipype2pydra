@@ -1,4 +1,7 @@
+import pytest
 from nipype2pydra.statements.imports import ImportStatement, parse_imports
+from nipype2pydra.utils.symbols import UsedSymbols
+import nipype.interfaces.utility
 
 
 def test_import_statement1():
@@ -40,3 +43,78 @@ def test_import_statement4():
     stmt = imports[0]
     assert stmt.module_name == "scipy.stats"
     assert stmt.imported["kurtosis"].local_name == "kurtosis"
+
+
+def test_get_imported_object1():
+    import_stmts = [
+        "import nipype.interfaces.utility as niu",
+    ]
+    used = UsedSymbols(module_name="test_module", imports=parse_imports(import_stmts))
+    assert (
+        used.get_imported_object("niu.IdentityInterface")
+        is nipype.interfaces.utility.IdentityInterface
+    )
+
+
+def test_get_imported_object2():
+    import_stmts = [
+        "import nipype.interfaces.utility",
+    ]
+    used = UsedSymbols(module_name="test_module", imports=parse_imports(import_stmts))
+    assert (
+        used.get_imported_object("nipype.interfaces.utility")
+        is nipype.interfaces.utility
+    )
+
+
+def test_get_imported_object3():
+    import_stmts = [
+        "from nipype.interfaces.utility import IdentityInterface",
+    ]
+    used = UsedSymbols(module_name="test_module", imports=parse_imports(import_stmts))
+    assert (
+        used.get_imported_object("IdentityInterface")
+        is nipype.interfaces.utility.IdentityInterface
+    )
+
+
+def test_get_imported_object4():
+    import_stmts = [
+        "from nipype.interfaces.utility import IdentityInterface",
+    ]
+    used = UsedSymbols(module_name="test_module", imports=parse_imports(import_stmts))
+    assert (
+        used.get_imported_object("IdentityInterface.input_spec")
+        is nipype.interfaces.utility.IdentityInterface.input_spec
+    )
+
+
+def test_get_imported_object5():
+    import_stmts = [
+        "import nipype.interfaces.utility",
+    ]
+    used = UsedSymbols(module_name="test_module", imports=parse_imports(import_stmts))
+    assert (
+        used.get_imported_object(
+            "nipype.interfaces.utility.IdentityInterface.input_spec"
+        )
+        is nipype.interfaces.utility.IdentityInterface.input_spec
+    )
+
+
+def test_get_imported_object_fail1():
+    import_stmts = [
+        "import nipype.interfaces.utility",
+    ]
+    used = UsedSymbols(module_name="test_module", imports=parse_imports(import_stmts))
+    with pytest.raises(ValueError, match="Could not find object named"):
+        used.get_imported_object("nipype.interfaces.utilityboo")
+
+
+def test_get_imported_object_fail2():
+    import_stmts = [
+        "from nipype.interfaces.utility import IdentityInterface",
+    ]
+    used = UsedSymbols(module_name="test_module", imports=parse_imports(import_stmts))
+    with pytest.raises(ValueError, match="Could not find object named"):
+        used.get_imported_object("IdentityBoo")

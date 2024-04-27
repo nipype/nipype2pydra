@@ -22,7 +22,7 @@ from .utils import (
     multiline_comment,
 )
 from .statements import (
-    AddNodeStatement,
+    AddInterfaceStatement,
     ConnectionStatement,
     AddNestedWorkflowStatement,
     CommentStatement,
@@ -153,7 +153,7 @@ class WorkflowConverter:
         factory=dict,
     )
 
-    nodes: ty.Dict[str, ty.List[AddNodeStatement]] = attrs.field(factory=dict)
+    nodes: ty.Dict[str, ty.List[AddInterfaceStatement]] = attrs.field(factory=dict)
 
     def __attrs_post_init__(self):
         if self.workflow_variable is None:
@@ -544,7 +544,7 @@ def test_{self.name}():
             ty.Union[
                 str,
                 ImportStatement,
-                AddNodeStatement,
+                AddInterfaceStatement,
                 ConnectionStatement,
                 AddNestedWorkflowStatement,
                 NodeAssignmentStatement,
@@ -598,10 +598,10 @@ def test_{self.name}():
                     parsed.append(workflow_init)
                 else:
                     parsed.insert(workflow_init_index, workflow_init)
-            elif AddNodeStatement.matches(statement):
+            elif AddInterfaceStatement.matches(statement):
                 if workflow_init_index is None:
                     workflow_init_index = i
-                node_converter = AddNodeStatement.parse(statement, self)
+                node_converter = AddInterfaceStatement.parse(statement, self)
                 if node_converter.name in self.nodes:
                     self.nodes[node_converter.name].append(node_converter)
                 else:

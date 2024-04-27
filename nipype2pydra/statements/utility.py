@@ -1,10 +1,10 @@
 import re
 import attrs
-from . import workflow
+from .workflow import AddInterfaceStatement
 
 
 @attrs.define
-class AddFunctionNodeStatement(workflow.AddNodeStatement):
+class AddFunctionInterfaceStatement(AddInterfaceStatement):
 
     converted_interface = "FunctionTask"
 
@@ -25,7 +25,7 @@ class AddFunctionNodeStatement(workflow.AddNodeStatement):
 
 
 @attrs.define
-class AddIdentityInterfaceNodeStatement(workflow.AddNodeStatement):
+class AddIdentityInterfaceStatement(AddInterfaceStatement):
 
     converted_interface = "FunctionTask"
 
@@ -47,8 +47,8 @@ class AddIdentityInterfaceNodeStatement(workflow.AddNodeStatement):
 
 
 UTILITY_CONVERTERS = {
-    "Function": AddFunctionNodeStatement,
-    "IdentityInterface": AddIdentityInterfaceNodeStatement,
+    "Function": AddFunctionInterfaceStatement,
+    "IdentityInterface": AddIdentityInterfaceStatement,
 }
 
 

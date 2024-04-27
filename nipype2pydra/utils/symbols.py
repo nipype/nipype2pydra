@@ -451,6 +451,54 @@ class UsedSymbols:
     # Nipype-specific names and Python keywords
     SYMBOLS_TO_IGNORE = ["isdefined"] + keyword.kwlist + list(builtins.__dict__.keys())
 
+    def get_imported_object(self, name: str) -> ty.Any:
+        """Get the object with the given name from used import statements
+
+        Parameters
+        ----------
+        name : str
+            the name of the object to get
+        imports : list[ImportStatement], optional
+            the import statements to search in (used in tests), by default the imports
+            in the used symbols
+
+        Returns
+        -------
+        Any
+            the object with the given name referenced by the given import statements
+        """
+        # Check to see if it isn't an imported module
+        # imported = {
+        #     i.sole_imported.local_name: i.sole_imported.object
+        #     for i in self.imports
+        #     if not i.from_
+        # }
+        all_imported = {}
+        for stmt in self.imports:
+            all_imported.update(stmt.imported)
+        try:
+            return all_imported[name].object
+        except KeyError:
+            pass
+        parts = name.rsplit(".")
+        imported_obj = None
+        for i in range(1, len(parts)):
+            obj_name = ".".join(parts[:-i])
+            try:
+                imported_obj = all_imported[obj_name].object
+            except KeyError:
+                continue
+            else:
+                break
+        if imported_obj is None:
+            raise ValueError(
+                f"Could not find object named {name} in any of the imported modules:\n"
+                + "\n".join(str(i) for i in self.imports)
+            )
+        for part in parts[-i:]:
+            imported_obj = getattr(imported_obj, part)
+        return imported_obj
+
 
 def get_local_functions(mod) -> ty.List[ty.Callable]:
     """Get the functions defined in the module"""
