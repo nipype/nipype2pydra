@@ -491,7 +491,7 @@ class UsedSymbols:
             else:
                 break
         if imported_obj is None:
-            raise ValueError(
+            raise ImportError(
                 f"Could not find object named {name} in any of the imported modules:\n"
                 + "\n".join(str(i) for i in self.imports)
             )

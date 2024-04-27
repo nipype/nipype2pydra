@@ -2,6 +2,7 @@ from functools import cached_property
 import re
 import typing as ty
 import inspect
+from operator import attrgetter
 import attrs
 from ..utils import extract_args
 from typing_extensions import Self
@@ -272,10 +273,9 @@ class AddInterfaceStatement:
     def __str__(self):
         if not self.include:
             return ""
-        code_str = f"{self.indent}{self.workflow_variable}.add("
         args = ["=".join(a) for a in self.arg_name_vals]
         conn_args = []
-        for conn in self.in_conns:
+        for conn in sorted(self.in_conns, key=attrgetter("target_in")):
             if not conn.include or not conn.lzouttable:
                 continue
             if conn.wf_in:
@@ -289,15 +289,20 @@ class AddInterfaceStatement:
                 )
             conn_args.append(arg)
 
-        code_str += (
-            f"{self.workflow_variable}.add({self.converted_interface}("
-            + sorted((args if self.is_factory else args + conn_args))
-            + [f'name="{self.name}"']
-            + "))"
-        )
         if self.is_factory:
+            code_str = f"{self.indent}{self.name} = {self.interface}"
+            if self.is_factory != "already-initialised":
+                code_str += "(" + ",".join(args) + ")"
+            code_str += f"\n{self.indent}{self.name}.name = {self.name}"
             for conn_arg in conn_args:
-                code_str += f"\n{self.indent}{self.workflow_variable}.inputs.{conn_arg}"
+                code_str += f"\n{self.indent}{self.name}.inputs.{conn_arg}"
+            code_str += f"\n{self.indent}{self.workflow_variable}.add({self.name})"
+        else:
+            code_str = (
+                f"{self.indent}{self.workflow_variable}.add({self.converted_interface}("
+                + ", ".join(sorted(args) + conn_args + [f'name="{self.name}"'])
+                + "))"
+            )
 
         if self.split_args:
             code_str += (
@@ -368,11 +373,20 @@ class AddInterfaceStatement:
         splits = node_kwargs["iterfield"] if match.group(3) else None
         if intf_name.endswith("("):  # strip trailing parenthesis
             intf_name = intf_name[:-1]
-        imported_obj = workflow_converter.used_symbols.get_imported_object(intf_name)
-        if re.match(r"nipype.interfaces.utility\b", imported_obj.__module__):
-            converter_cls = UTILITY_CONVERTERS[imported_obj.__name__]
-        else:
+        try:
+            imported_obj = workflow_converter.used_symbols.get_imported_object(
+                intf_name
+            )
+        except ImportError:
+            imported_obj = None
+            is_factory = "already-initialised"
             converter_cls = AddInterfaceStatement
+        else:
+            is_factory = inspect.isfunction(imported_obj)
+            if re.match(r"nipype.interfaces.utility\b", imported_obj.__module__):
+                converter_cls = UTILITY_CONVERTERS[imported_obj.__name__]
+            else:
+                converter_cls = AddInterfaceStatement
         return converter_cls(
             name=varname,
             interface=intf_name,
@@ -382,7 +396,7 @@ class AddInterfaceStatement:
             splits=splits,
             workflow_converter=workflow_converter,
             indent=indent,
-            is_factory=inspect.isfunction(imported_obj),
+            is_factory=is_factory,
         )
 
 
