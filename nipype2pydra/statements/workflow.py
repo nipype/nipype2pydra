@@ -2,6 +2,8 @@ from functools import cached_property
 import re
 import typing as ty
 import attrs
+from ..utils import extract_args
+from typing_extensions import Self
 
 if ty.TYPE_CHECKING:
     from ..workflow import WorkflowConverter
@@ -71,6 +73,17 @@ class ConnectionStatement:
     include: bool = attrs.field(default=False)
     wf_in: bool = False
     wf_out: bool = False
+
+    @classmethod
+    def match_re(cls, workflow_variable: str) -> bool:
+        return re.compile(
+            r"(\s*)" + workflow_variable + r"\.connect\(",
+            flags=re.MULTILINE | re.DOTALL,
+        )
+
+    @classmethod
+    def matches(cls, stmt, workflow_variable: str) -> bool:
+        return bool(cls.match_re(workflow_variable).match(stmt))
 
     @cached_property
     def sources(self):
@@ -164,6 +177,43 @@ class ConnectionStatement:
         else:
             code_str += f"{self.indent}{self.workflow_variable}.{self.target_name}.inputs.{self.target_in} = {src}"
         return code_str
+
+    @classmethod
+    def parse(
+        cls, statement: str, workflow_converter: "WorkflowConverter"
+    ) -> ty.List[Self]:
+        match = cls.match_re(workflow_converter.workflow_variable).match(statement)
+        indent = match.group(1)
+        args = extract_args(statement)[1]
+        if len(args) == 1:
+            conns = extract_args(args[0])[1]
+        else:
+            conns = [args]
+        conn_converters = []
+        for conn in conns:
+            src, tgt, field_conns_str = extract_args(conn)[1]
+            if (
+                field_conns_str.startswith("(")
+                and len(extract_args(field_conns_str)[1]) == 1
+            ):
+                field_conns_str = extract_args(field_conns_str)[1][0]
+            field_conns = extract_args(field_conns_str)[1]
+            for field_conn in field_conns:
+                out, in_ = extract_args(field_conn)[1]
+                pre, args, post = extract_args(out)
+                if args is not None:
+                    out = DynamicField(*args)
+                conn_converters.append(
+                    ConnectionStatement(
+                        source_name=src,
+                        target_name=tgt,
+                        source_out=out,
+                        target_in=in_,
+                        indent=indent,
+                        workflow_converter=workflow_converter,
+                    )
+                )
+        return conn_converters
 
 
 @attrs.define
@@ -280,6 +330,69 @@ class AddNodeStatement:
         "mem_gb",
     ]
 
+    match_re = re.compile(r"(\s+)(\w+)\s*=.*\b(Map)?Node\(", flags=re.MULTILINE)
+
+    @classmethod
+    def matches(cls, stmt) -> bool:
+        return bool(cls.match_re.match(stmt))
+
+    @classmethod
+    def parse(
+        cls, statement: str, workflow_converter: "WorkflowConverter"
+    ) -> "AddNodeStatement":
+        from .utility import UTILITY_CONVERTERS
+
+        match = cls.match_re.match(statement)
+        indent = match.group(1)
+        varname = match.group(2)
+        args = extract_args(statement)[1]
+        node_kwargs = match_kwargs(args, AddNodeStatement.SIGNATURE)
+        intf_name, intf_args, intf_post = extract_args(node_kwargs["interface"])
+        if "iterables" in node_kwargs:
+            iterables = [
+                IterableStatement(*extract_args(a)[1])
+                for a in extract_args(node_kwargs["iterables"])[1]
+            ]
+        else:
+            iterables = []
+
+        splits = node_kwargs["iterfield"] if match.group(3) else None
+        if intf_name.endswith("("):  # strip trailing parenthesis
+            intf_name = intf_name[:-1]
+        if "." in intf_name:
+            parts = intf_name.rsplit(".")
+            imported_name = ".".join(parts[:1])
+            class_name = parts[-1]
+        else:
+            imported_name = intf_name
+            class_name = intf_name
+        try:
+            import_stmt = next(
+                i
+                for i in workflow_converter.used_symbols.imports
+                if (i.module_name == imported_name or imported_name in i)
+            )
+        except StopIteration:
+            converter_cls = AddNodeStatement
+        else:
+            if (
+                import_stmt.module_name == imported_name
+                and import_stmt.in_package("nipype.interfaces.utility")
+            ) or import_stmt[imported_name].in_package("nipype.interfaces.utility"):
+                converter_cls = UTILITY_CONVERTERS[class_name]
+            else:
+                converter_cls = AddNodeStatement
+        return converter_cls(
+            name=varname,
+            interface=intf_name,
+            args=intf_args,
+            iterables=iterables,
+            itersource=node_kwargs.get("itersource"),
+            splits=splits,
+            workflow_converter=workflow_converter,
+            indent=indent,
+        )
+
 
 @attrs.define
 class AddNestedWorkflowStatement:
@@ -332,3 +445,155 @@ class AddNestedWorkflowStatement:
     @cached_property
     def workflow_variable(self):
         return self.workflow_converter.workflow_variable
+
+    @classmethod
+    def match_re(cls, workflow_symbols: ty.List[str]):
+        return re.compile(
+            r"(\s+)(\w+) = (" + "|".join(workflow_symbols) + r")\(",
+            flags=re.MULTILINE,
+        )
+
+    @classmethod
+    def matches(cls, stmt, workflow_symbols: ty.List[str]) -> bool:
+        return bool(cls.match_re(workflow_symbols).match(stmt))
+
+    @classmethod
+    def parse(
+        cls, statement: str, workflow_converter: "WorkflowConverter"
+    ) -> "AddNestedWorkflowStatement":
+        match = cls.match_re(workflow_converter.nested_workflow_symbols).match(
+            statement
+        )
+        indent, varname, wf_name = match.groups()
+        return AddNestedWorkflowStatement(
+            name=varname,
+            workflow_name=wf_name,
+            nested_spec=workflow_converter.nested_workflows.get(wf_name),
+            args=extract_args(statement)[1],
+            indent=indent,
+            workflow_converter=workflow_converter,
+        )
+
+
+@attrs.define
+class NodeAssignmentStatement:
+
+    nodes: ty.List[AddNodeStatement]
+    attribute: str
+    value: str
+    indent: str
+    is_workflow: bool
+
+    def __str__(self):
+        if not any(n.include for n in self.nodes):
+            return ""
+        node = self.nodes[0]
+        node_name = node.name
+        workflow_variable = self.nodes[0].workflow_variable
+        if self.is_workflow:
+            nested_wf = node.nested_spec
+            parts = self.attribute.split(".")
+            nested_node_name = parts[2]
+            attribute_name = parts[3]
+            target_in = nested_wf.input_name(nested_node_name, attribute_name)
+            attribute = ".".join(parts[:2] + [target_in] + parts[4:])
+            workflow_variable = self.nodes[0].workflow_variable
+            assert (n.workflow_variable == workflow_variable for n in self.nodes)
+            return f"{self.indent}{workflow_variable}{attribute} = {self.value}"
+        else:
+            assert (n.name == node_name for n in self.nodes)
+            assert (n.workflow_variable == workflow_variable for n in self.nodes)
+            return f"{self.indent}{workflow_variable}.{node_name}{self.attribute} = {self.value}"
+
+    @classmethod
+    def match_re(cls, node_names: ty.List[str]) -> re.Pattern:
+        return re.compile(
+            r"(\s*)(" + "|".join(node_names) + r")\b([\w\.]+)\s*=\s*(.*)",
+            flags=re.MULTILINE | re.DOTALL,
+        )
+
+    @classmethod
+    def matches(cls, stmt, node_names: ty.List[str]) -> bool:
+        if not node_names:
+            return False
+        return bool(cls.match_re(node_names).match(stmt))
+
+    @classmethod
+    def parse(
+        cls, statement: str, workflow_converter: "WorkflowConverter"
+    ) -> "NodeAssignmentStatement":
+        match = cls.match_re(list(workflow_converter.nodes)).match(statement)
+        indent, node_name, attribute, value = match.groups()
+        nodes = workflow_converter.nodes[node_name]
+        assert all(n.name == nodes[0].name for n in nodes)
+        if isinstance(nodes[0], AddNestedWorkflowStatement):
+            assert all(isinstance(n, AddNestedWorkflowStatement) for n in nodes)
+            is_workflow = True
+        else:
+            assert all(isinstance(n, AddNodeStatement) for n in nodes)
+            is_workflow = False
+        return NodeAssignmentStatement(
+            nodes=nodes,
+            attribute=attribute,
+            value=value,
+            indent=indent,
+            is_workflow=is_workflow,
+        )
+
+
+@attrs.define
+class WorkflowInitStatement:
+
+    varname: str
+    workflow_name: str
+    input_spec: ty.Optional[ty.List[str]] = None
+
+    match_re = re.compile(
+        r"\s+(\w+)\s*=.*\bWorkflow\(.*name\s*=\s*([^,=\)]+)",
+        flags=re.MULTILINE,
+    )
+
+    @classmethod
+    def matches(cls, stmt) -> bool:
+        return bool(cls.match_re.match(stmt))
+
+    @classmethod
+    def parse(cls, statement: str) -> "WorkflowInitStatement":
+        match = cls.match_re.match(statement)
+        varname, workflow_name = match.groups()
+        return WorkflowInitStatement(varname=varname, workflow_name=workflow_name)
+
+    def __str__(self):
+        # Initialise the workflow object
+        if self.input_spec is None:
+            raise RuntimeError(
+                "Workflow input spec not set, cannot initialise workflow object"
+            )
+        return (
+            f"    {self.varname} = Workflow("
+            f'name={self.workflow_name}, input_spec=["'
+            + '", "'.join(sorted(self.input_spec))
+            + '"], '
+            + ", ".join(f"{i}={i}" for i in sorted(self.input_spec))
+            + ")\n\n"
+        )
+
+
+def match_kwargs(args: ty.List[str], sig: ty.List[str]) -> ty.Dict[str, str]:
+    """Matches up the args with given signature"""
+    kwargs = {}
+    found_kw = False
+    for i, arg in enumerate(args):
+        match = re.match(r"\s*(\w+)\s*=\s*(.*)", arg)
+        if match:
+            key, val = match.groups()
+            found_kw = True
+            kwargs[key] = val
+        else:
+            if found_kw:
+                raise ValueError(
+                    f"Non-keyword arg '{arg}' found after keyword arg in {args}"
+                )
+            kwargs[sig[i]] = arg
+
+    return kwargs

@@ -28,12 +28,9 @@ from .statements import (
     CommentStatement,
     DocStringStatement,
     ReturnStatement,
-    IterableStatement,
-    DynamicField,
     NodeAssignmentStatement,
-    NestedWorkflowAssignmentStatement,
+    WorkflowInitStatement,
 )
-from .statements.utility import UTILITY_CONVERTERS
 import nipype2pydra.package
 
 logger = logging.getLogger(__name__)
@@ -403,7 +400,7 @@ class WorkflowConverter:
         return_types = post[1:].split(":", 1)[0]  # Get the return type
 
         # Parse the statements in the function body into converter objects and strings
-        parsed_statements, workflow_name = self._parse_statements(self.func_body)
+        parsed_statements, workflow_init = self._parse_statements(self.func_body)
 
         # Mark the nodes and connections that are to be included in the workflow, starting
         # from the designated input node (doesn't have to be the first node in the function body,
@@ -427,6 +424,8 @@ class WorkflowConverter:
                 f"Unrecognised input nodes {missing}, not in {list(self.nodes)} "
                 f"for {self.full_name}"
             )
+
+        workflow_init.input_spec = input_spec
 
         # Walk through the DAG and include all nodes and connections that are connected to
         # the input nodes and their connections up until the output nodes
@@ -460,16 +459,6 @@ class WorkflowConverter:
                 f"{list(self.nodes)} for {self.full_name}"
             )
 
-        # Initialise the workflow object
-        code_str = (
-            f"    {self.workflow_variable} = Workflow("
-            f'name={workflow_name}, input_spec=["'
-            + '", "'.join(sorted(input_spec))
-            + '"], '
-            + ", ".join(f"{i}={i}" for i in sorted(input_spec))
-            + ")\n\n"
-        )
-
         preamble = ""
         # Write out the preamble (e.g. docstring, comments, etc..)
         while parsed_statements and isinstance(
@@ -479,6 +468,7 @@ class WorkflowConverter:
             preamble += str(parsed_statements.pop(0)) + "\n"
 
         # Write out the statements to the code string
+        code_str = ""
         for statement in parsed_statements:
             code_str += str(statement) + "\n"
 
@@ -558,12 +548,13 @@ def test_{self.name}():
                 ConnectionStatement,
                 AddNestedWorkflowStatement,
                 NodeAssignmentStatement,
+                WorkflowInitStatement,
                 DocStringStatement,
                 CommentStatement,
                 ReturnStatement,
             ]
         ],
-        str,
+        WorkflowInitStatement,
     ]:
         """Parses the statements in the function body into converter objects and strings
         also populates the `self.nodes` attribute
@@ -575,29 +566,24 @@ def test_{self.name}():
 
         Returns
         -------
-        parsed : list[Union[str, NodeConverter, ConnectionConverter, NestedWorkflowConverter]]
+        parsed : list[str | NodeConverter | ImportStatement | AddNodeStatement | ConnectionStatement | AddNestedWorkflowStatement | NodeAssignmentStatement | WorkflowInitStatement | DocStringStatement | CommentStatement | ReturnStatement]
             the parsed statements
-        workflow_name : str
-            the name of the workflow
+        workflow_init : WorkflowInitStatement
+            the workflow init statement
         """
 
         statements = split_source_into_statements(func_body)
 
         parsed = []
-        workflow_name = None
-        for statement in statements:
+        workflow_init = None
+        workflow_init_index = None
+        for i, statement in enumerate(statements):
             if not statement.strip():
                 continue
-            if match := re.match(r"^(\s*)#\s*(.*)", statement):  # comments
-                parsed.append(
-                    CommentStatement(comment=match.group(2), indent=match.group(1))
-                )
-            elif match := re.match(
-                r"^(\s*)(?='|\")(.*)", statement, flags=re.MULTILINE | re.DOTALL
-            ):  # docstrings
-                parsed.append(
-                    DocStringStatement(docstring=match.group(2), indent=match.group(1))
-                )
+            if CommentStatement.matches(statement):  # comments
+                parsed.append(CommentStatement.parse(statement))
+            elif DocStringStatement.matches(statement):  # docstrings
+                parsed.append(DocStringStatement.parse(statement))
             elif ImportStatement.matches(statement):
                 parsed.extend(
                     parse_imports(
@@ -606,172 +592,64 @@ def test_{self.name}():
                         translations=self.package.all_import_translations,
                     )
                 )
-            elif match := re.match(
-                r"\s+(?:"
-                + self.workflow_variable
-                + r")\s*=.*\bWorkflow\(.*name\s*=\s*([^,=\)]+)",
-                statement,
-                flags=re.MULTILINE,
-            ):
-                workflow_name = match.group(1)
-            elif match := re.match(  # Nodes
-                r"(\s+)(\w+)\s*=.*\b(Map)?Node\(", statement, flags=re.MULTILINE
-            ):
-                indent = match.group(1)
-                varname = match.group(2)
-                args = extract_args(statement)[1]
-                node_kwargs = match_kwargs(args, AddNodeStatement.SIGNATURE)
-                intf_name, intf_args, intf_post = extract_args(node_kwargs["interface"])
-                if "iterables" in node_kwargs:
-                    iterables = [
-                        IterableStatement(*extract_args(a)[1])
-                        for a in extract_args(node_kwargs["iterables"])[1]
-                    ]
+            elif WorkflowInitStatement.matches(statement):
+                workflow_init = WorkflowInitStatement.parse(statement)
+                if workflow_init_index is None:
+                    parsed.append(workflow_init)
                 else:
-                    iterables = []
-
-                splits = node_kwargs["iterfield"] if match.group(3) else None
-                if intf_name.endswith("("):  # strip trailing parenthesis
-                    intf_name = intf_name[:-1]
-                if "." in intf_name:
-                    parts = intf_name.rsplit(".")
-                    imported_name = ".".join(parts[:1])
-                    class_name = parts[-1]
+                    parsed.insert(workflow_init_index, workflow_init)
+            elif AddNodeStatement.matches(statement):
+                if workflow_init_index is None:
+                    workflow_init_index = i
+                node_converter = AddNodeStatement.parse(statement, self)
+                if node_converter.name in self.nodes:
+                    self.nodes[node_converter.name].append(node_converter)
                 else:
-                    imported_name = intf_name
-                    class_name = intf_name
-                try:
-                    import_stmt = next(
-                        i
-                        for i in self.used_symbols.imports
-                        if (i.module_name == imported_name or imported_name in i)
-                    )
-                except StopIteration:
-                    converter_cls = AddNodeStatement
-                else:
-                    if (
-                        import_stmt.module_name == imported_name
-                        and import_stmt.in_package("nipype.interfaces.utility")
-                    ) or import_stmt[imported_name].in_package(
-                        "nipype.interfaces.utility"
-                    ):
-                        converter_cls = UTILITY_CONVERTERS[class_name]
-                        # converter_cls = UTILITY_CONVERTERS.get(
-                        #     class_name, NodeConverter
-                        # )
-                    else:
-                        converter_cls = AddNodeStatement
-                node_converter = converter_cls(
-                    name=varname,
-                    interface=intf_name,
-                    args=intf_args,
-                    iterables=iterables,
-                    itersource=node_kwargs.get("itersource"),
-                    splits=splits,
-                    workflow_converter=self,
-                    indent=indent,
-                )
-                if varname in self.nodes:
-                    self.nodes[varname].append(node_converter)
-                else:
-                    self.nodes[varname] = [node_converter]
+                    self.nodes[node_converter.name] = [node_converter]
                 parsed.append(node_converter)
-            elif match := re.match(  #
-                r"(\s+)(\w+) = (" + "|".join(self.nested_workflow_symbols) + r")\(",
-                statement,
-                flags=re.MULTILINE,
+            elif AddNestedWorkflowStatement.matches(
+                statement, self.nested_workflow_symbols
             ):
-                indent, varname, wf_name = match.groups()
-                nested_workflow_converter = AddNestedWorkflowStatement(
-                    name=varname,
-                    workflow_name=wf_name,
-                    nested_spec=self.nested_workflows.get(wf_name),
-                    args=extract_args(statement)[1],
-                    indent=indent,
-                    workflow_converter=self,
+                if workflow_init_index is None:
+                    workflow_init_index = i
+                nested_workflow_converter = AddNestedWorkflowStatement.parse(
+                    statement, self
                 )
-                if varname in self.nodes:
-                    self.nodes[varname].append(nested_workflow_converter)
+                if nested_workflow_converter.name in self.nodes:
+                    self.nodes[nested_workflow_converter.name].append(
+                        nested_workflow_converter
+                    )
                 else:
-                    self.nodes[varname] = [nested_workflow_converter]
+                    self.nodes[nested_workflow_converter.name] = [
+                        nested_workflow_converter
+                    ]
                 parsed.append(nested_workflow_converter)
 
-            elif match := re.match(
-                r"(\s*)" + self.workflow_variable + r"\.connect\(",
-                statement,
-                flags=re.MULTILINE | re.DOTALL,
-            ):
-                indent = match.group(1)
-                args = extract_args(statement)[1]
-                if len(args) == 1:
-                    conns = extract_args(args[0])[1]
-                else:
-                    conns = [args]
-                for conn in conns:
-                    src, tgt, field_conns_str = extract_args(conn)[1]
-                    if (
-                        field_conns_str.startswith("(")
-                        and len(extract_args(field_conns_str)[1]) == 1
-                    ):
-                        field_conns_str = extract_args(field_conns_str)[1][0]
-                    field_conns = extract_args(field_conns_str)[1]
-                    for field_conn in field_conns:
-                        out, in_ = extract_args(field_conn)[1]
-                        pre, args, post = extract_args(out)
-                        if args is not None:
-                            out = DynamicField(*args)
-                        conn_converter = ConnectionStatement(
-                            source_name=src,
-                            target_name=tgt,
-                            source_out=out,
-                            target_in=in_,
-                            indent=indent,
-                            workflow_converter=self,
-                        )
-                        if not conn_converter.lzouttable:
-                            parsed.append(conn_converter)
-                        for src_node in self.nodes[src]:
-                            src_node.out_conns.append(conn_converter)
-                        for tgt_node in self.nodes[tgt]:
-                            tgt_node.in_conns.append(conn_converter)
-            elif match := re.match(r"(\s*)return (.*)", statement):
-                parsed.append(
-                    ReturnStatement(vars=match.group(2), indent=match.group(1))
-                )
-            elif match := (
-                re.match(
-                    r"(\s*)(" + "|".join(self.nodes) + r")\b([\w\.]+)\s*=\s*(.*)",
-                    statement,
-                    flags=re.MULTILINE | re.DOTALL,
-                )
-                if self.nodes
-                else False
-            ):
-                indent, node_name, attribute, value = match.groups()
-                nodes = self.nodes[node_name]
-                assert all(n.name == nodes[0].name for n in nodes)
-                if isinstance(nodes[0], AddNestedWorkflowStatement):
-                    assert all(isinstance(n, AddNestedWorkflowStatement) for n in nodes)
-                    klass = NestedWorkflowAssignmentStatement
-                else:
-                    klass = NodeAssignmentStatement
-                parsed.append(
-                    klass(
-                        nodes=nodes,
-                        attribute=attribute,
-                        value=value,
-                        indent=indent,
-                    )
-                )
-            else:
+            elif ConnectionStatement.matches(statement, self.workflow_variable):
+                if workflow_init_index is None:
+                    workflow_init_index = i
+                for conn_converter in ConnectionStatement.parse(statement, self):
+                    if not conn_converter.lzouttable:
+                        parsed.append(conn_converter)
+                    for src_node in self.nodes[conn_converter.source_name]:
+                        src_node.out_conns.append(conn_converter)
+                    for tgt_node in self.nodes[conn_converter.target_name]:
+                        tgt_node.in_conns.append(conn_converter)
+            elif ReturnStatement.matches(statement):
+                parsed.append(ReturnStatement.parse(statement))
+            elif NodeAssignmentStatement.matches(statement, list(self.nodes)):
+                if workflow_init_index is None:
+                    workflow_init_index = i
+                parsed.append(NodeAssignmentStatement.parse(statement, self))
+            else:  # A statement we don't need to parse in a special way so leave as string
                 parsed.append(statement)
 
-        if workflow_name is None:
+        if workflow_init is None:
             raise ValueError(
                 "Did not detect worklow name in statements:\n\n" + "\n".join(statements)
             )
 
-        return parsed, workflow_name
+        return parsed, workflow_init
 
     def to_output_module_path(self, nipype_module_path: str) -> str:
         """Converts an original Nipype module path to a Pydra module path
@@ -865,23 +743,3 @@ if os.getenv("_PYTEST_RAISE", "0") != "0":
 else:
     CATCH_CLI_EXCEPTIONS = True
 """
-
-
-def match_kwargs(args: ty.List[str], sig: ty.List[str]) -> ty.Dict[str, str]:
-    """Matches up the args with given signature"""
-    kwargs = {}
-    found_kw = False
-    for i, arg in enumerate(args):
-        match = re.match(r"\s*(\w+)\s*=\s*(.*)", arg)
-        if match:
-            key, val = match.groups()
-            found_kw = True
-            kwargs[key] = val
-        else:
-            if found_kw:
-                raise ValueError(
-                    f"Non-keyword arg '{arg}' found after keyword arg in {args}"
-                )
-            kwargs[sig[i]] = arg
-
-    return kwargs
