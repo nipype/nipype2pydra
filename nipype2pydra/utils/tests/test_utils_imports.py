@@ -1,4 +1,4 @@
-from nipype2pydra.utils.imports import ImportStatement, parse_imports
+from nipype2pydra.statements.imports import ImportStatement, parse_imports
 
 
 def test_import_statement1():

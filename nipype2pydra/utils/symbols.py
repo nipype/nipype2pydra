@@ -12,7 +12,7 @@ import attrs
 from nipype.interfaces.base import BaseInterface, TraitedSpec, isdefined, Undefined
 from nipype.interfaces.base import traits_extension
 from .misc import split_source_into_statements, extract_args
-from .imports import ImportStatement, parse_imports
+from ..statements.imports import ImportStatement, parse_imports
 
 
 logger = getLogger("nipype2pydra")

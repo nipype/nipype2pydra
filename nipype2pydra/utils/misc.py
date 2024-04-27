@@ -417,3 +417,14 @@ def split_source_into_statements(source_code: str) -> ty.List[str]:
         else:
             statements.append(line)
     return statements
+
+
+def multiline_comment(comment: str, line_length: int = 100) -> str:
+    """Convert a comment string to a multiline comment block of width `line_length`"""
+    multiline = ""
+    start_of_line = 0
+    for end_of_line in range(line_length, len(comment), line_length):
+        multiline += "# " + comment[start_of_line:end_of_line] + "\n"
+        start_of_line = end_of_line
+    multiline += "# " + comment[start_of_line:] + "\n"
+    return multiline

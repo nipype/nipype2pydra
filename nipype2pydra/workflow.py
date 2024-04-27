@@ -10,7 +10,7 @@ from pathlib import Path
 import black.report
 import attrs
 import yaml
-from ..utils import (
+from .utils import (
     UsedSymbols,
     split_source_into_statements,
     extract_args,
@@ -19,20 +19,21 @@ from ..utils import (
     full_address,
     ImportStatement,
     parse_imports,
+    multiline_comment,
 )
-from .components import (
-    NodeConverter,
-    ConnectionConverter,
-    NestedWorkflowConverter,
-    CommentConverter,
-    DocStringConverter,
-    ReturnConverter,
-    IterableConverter,
+from .statements import (
+    AddNodeStatement,
+    ConnectionStatement,
+    AddNestedWorkflowStatement,
+    CommentStatement,
+    DocStringStatement,
+    ReturnStatement,
+    IterableStatement,
     DynamicField,
-    NodeAssignmentConverter,
-    NestedWorkflowAssignmentConverter,
+    NodeAssignmentStatement,
+    NestedWorkflowAssignmentStatement,
 )
-from .utility_converters import UTILITY_CONVERTERS
+from .statements.utility import UTILITY_CONVERTERS
 import nipype2pydra.package
 
 logger = logging.getLogger(__name__)
@@ -155,7 +156,7 @@ class WorkflowConverter:
         factory=dict,
     )
 
-    nodes: ty.Dict[str, ty.List[NodeConverter]] = attrs.field(factory=dict)
+    nodes: ty.Dict[str, ty.List[AddNodeStatement]] = attrs.field(factory=dict)
 
     def __attrs_post_init__(self):
         if self.workflow_variable is None:
@@ -473,7 +474,7 @@ class WorkflowConverter:
         # Write out the preamble (e.g. docstring, comments, etc..)
         while parsed_statements and isinstance(
             parsed_statements[0],
-            (DocStringConverter, CommentConverter, ImportStatement),
+            (DocStringStatement, CommentStatement, ImportStatement),
         ):
             preamble += str(parsed_statements.pop(0)) + "\n"
 
@@ -485,8 +486,8 @@ class WorkflowConverter:
         for nested_workflow in self.nested_workflows.values():
             nested_configs.update(nested_workflow.used_configs)
 
-        code_str, config_sig, used_configs = self.package.find_and_replace_config_params(
-            code_str, nested_configs
+        code_str, config_sig, used_configs = (
+            self.package.find_and_replace_config_params(code_str, nested_configs)
         )
 
         inputs_sig = [f"{i}=attrs.NOTHING" for i in input_spec]
@@ -499,7 +500,7 @@ class WorkflowConverter:
             signature += f" -> {return_types}"
         code_str = signature + ":\n\n" + preamble + code_str
 
-        if not isinstance(parsed_statements[-1], ReturnConverter):
+        if not isinstance(parsed_statements[-1], ReturnStatement):
             code_str += f"\n    return {self.workflow_variable}"
 
         # Format the the code before the find and replace so it is more predictable
@@ -553,13 +554,13 @@ def test_{self.name}():
             ty.Union[
                 str,
                 ImportStatement,
-                NodeConverter,
-                ConnectionConverter,
-                NestedWorkflowConverter,
-                NodeAssignmentConverter,
-                DocStringConverter,
-                CommentConverter,
-                ReturnConverter,
+                AddNodeStatement,
+                ConnectionStatement,
+                AddNestedWorkflowStatement,
+                NodeAssignmentStatement,
+                DocStringStatement,
+                CommentStatement,
+                ReturnStatement,
             ]
         ],
         str,
@@ -589,13 +590,13 @@ def test_{self.name}():
                 continue
             if match := re.match(r"^(\s*)#\s*(.*)", statement):  # comments
                 parsed.append(
-                    CommentConverter(comment=match.group(2), indent=match.group(1))
+                    CommentStatement(comment=match.group(2), indent=match.group(1))
                 )
             elif match := re.match(
                 r"^(\s*)(?='|\")(.*)", statement, flags=re.MULTILINE | re.DOTALL
             ):  # docstrings
                 parsed.append(
-                    DocStringConverter(docstring=match.group(2), indent=match.group(1))
+                    DocStringStatement(docstring=match.group(2), indent=match.group(1))
                 )
             elif ImportStatement.matches(statement):
                 parsed.extend(
@@ -619,11 +620,11 @@ def test_{self.name}():
                 indent = match.group(1)
                 varname = match.group(2)
                 args = extract_args(statement)[1]
-                node_kwargs = match_kwargs(args, NodeConverter.SIGNATURE)
+                node_kwargs = match_kwargs(args, AddNodeStatement.SIGNATURE)
                 intf_name, intf_args, intf_post = extract_args(node_kwargs["interface"])
                 if "iterables" in node_kwargs:
                     iterables = [
-                        IterableConverter(*extract_args(a)[1])
+                        IterableStatement(*extract_args(a)[1])
                         for a in extract_args(node_kwargs["iterables"])[1]
                     ]
                 else:
@@ -646,7 +647,7 @@ def test_{self.name}():
                         if (i.module_name == imported_name or imported_name in i)
                     )
                 except StopIteration:
-                    converter_cls = NodeConverter
+                    converter_cls = AddNodeStatement
                 else:
                     if (
                         import_stmt.module_name == imported_name
@@ -659,7 +660,7 @@ def test_{self.name}():
                         #     class_name, NodeConverter
                         # )
                     else:
-                        converter_cls = NodeConverter
+                        converter_cls = AddNodeStatement
                 node_converter = converter_cls(
                     name=varname,
                     interface=intf_name,
@@ -681,7 +682,7 @@ def test_{self.name}():
                 flags=re.MULTILINE,
             ):
                 indent, varname, wf_name = match.groups()
-                nested_workflow_converter = NestedWorkflowConverter(
+                nested_workflow_converter = AddNestedWorkflowStatement(
                     name=varname,
                     workflow_name=wf_name,
                     nested_spec=self.nested_workflows.get(wf_name),
@@ -719,7 +720,7 @@ def test_{self.name}():
                         pre, args, post = extract_args(out)
                         if args is not None:
                             out = DynamicField(*args)
-                        conn_converter = ConnectionConverter(
+                        conn_converter = ConnectionStatement(
                             source_name=src,
                             target_name=tgt,
                             source_out=out,
@@ -735,7 +736,7 @@ def test_{self.name}():
                             tgt_node.in_conns.append(conn_converter)
             elif match := re.match(r"(\s*)return (.*)", statement):
                 parsed.append(
-                    ReturnConverter(vars=match.group(2), indent=match.group(1))
+                    ReturnStatement(vars=match.group(2), indent=match.group(1))
                 )
             elif match := (
                 re.match(
@@ -749,11 +750,11 @@ def test_{self.name}():
                 indent, node_name, attribute, value = match.groups()
                 nodes = self.nodes[node_name]
                 assert all(n.name == nodes[0].name for n in nodes)
-                if isinstance(nodes[0], NestedWorkflowConverter):
-                    assert all(isinstance(n, NestedWorkflowConverter) for n in nodes)
-                    klass = NestedWorkflowAssignmentConverter
+                if isinstance(nodes[0], AddNestedWorkflowStatement):
+                    assert all(isinstance(n, AddNestedWorkflowStatement) for n in nodes)
+                    klass = NestedWorkflowAssignmentStatement
                 else:
-                    klass = NodeAssignmentConverter
+                    klass = NodeAssignmentStatement
                 parsed.append(
                     klass(
                         nodes=nodes,
@@ -832,7 +833,7 @@ def test_{self.name}():
             if hlp:
                 yaml_str = re.sub(
                     r"^(" + k + r"):",
-                    "# " + hlp + r"\n\1:",
+                    multiline_comment(hlp) + r"\1:",
                     yaml_str,
                     flags=re.MULTILINE,
                 )

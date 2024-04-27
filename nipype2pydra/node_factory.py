@@ -8,15 +8,17 @@ from pathlib import Path
 from importlib import import_module
 from types import ModuleType
 import black.report
+import yaml
 from .utils import (
     UsedSymbols,
     extract_args,
     ImportStatement,
     full_address,
+    multiline_comment,
 )
-from .worflow.components import (
-    CommentConverter,
-    DocStringConverter,
+from .statements import (
+    CommentStatement,
+    DocStringStatement,
 )
 import nipype2pydra.package
 import nipype2pydra.interface
@@ -27,7 +29,7 @@ logger = logging.getLogger(__name__)
 @attrs.define
 class NodeFactoryConverter:
     """Specifies how the semi-automatic conversion from Nipype to Pydra should
-    be performed
+    be performed for functions that build and return Nipype nodes
 
     Parameters
     ----------
@@ -176,7 +178,7 @@ class NodeFactoryConverter:
         # Write out the preamble (e.g. docstring, comments, etc..)
         while parsed_statements and isinstance(
             parsed_statements[0],
-            (DocStringConverter, CommentConverter, ImportStatement),
+            (DocStringStatement, CommentStatement, ImportStatement),
         ):
             preamble += str(parsed_statements.pop(0)) + "\n"
 
@@ -216,3 +218,36 @@ class NodeFactoryConverter:
             code_str = re.sub(find, replace, code_str, flags=re.MULTILINE | re.DOTALL)
 
         return code_str, used_configs
+
+    @classmethod
+    def default_spec(
+        cls, name: str, nipype_module: str, defaults: ty.Dict[str, ty.Any]
+    ) -> str:
+        """Generates a spec for the workflow converter from the given function"""
+        conv = NodeFactoryConverter(
+            name=name,
+            nipype_name=name,
+            nipype_module=nipype_module,
+            input_nodes={"inputnode": ""},
+            output_nodes={"outputnode": ""},
+            **{n: eval(v) for n, v in defaults},
+        )
+        dct = attrs.asdict(conv)
+        dct["nipype_module"] = dct["nipype_module"].__name__
+        del dct["package"]
+        del dct["nodes"]
+        for k in dct:
+            if not dct[k]:
+                dct[k] = None
+        yaml_str = yaml.dump(dct, sort_keys=False)
+        for k in dct:
+            fld = getattr(attrs.fields(NodeFactoryConverter), k)
+            hlp = fld.metadata.get("help")
+            if hlp:
+                yaml_str = re.sub(
+                    r"^(" + k + r"):",
+                    multiline_comment(hlp) + r"\1:",
+                    yaml_str,
+                    flags=re.MULTILINE,
+                )
+        return yaml_str

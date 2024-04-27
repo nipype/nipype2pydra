@@ -6,7 +6,7 @@ from pathlib import Path
 import black.parsing
 import black.report
 from .misc import cleanup_function_body, split_source_into_statements, get_source_code
-from .imports import ImportStatement, parse_imports, GENERIC_PYDRA_IMPORTS
+from ..statements.imports import ImportStatement, parse_imports, GENERIC_PYDRA_IMPORTS
 from .symbols import UsedSymbols
 
 

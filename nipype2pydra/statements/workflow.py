@@ -4,7 +4,7 @@ import typing as ty
 import attrs
 
 if ty.TYPE_CHECKING:
-    from .base import WorkflowConverter
+    from ..workflow import WorkflowConverter
 
 
 @attrs.define
@@ -60,7 +60,7 @@ def field_converter(field: str) -> ty.Union[str, VarField]:
 
 
 @attrs.define
-class ConnectionConverter:
+class ConnectionStatement:
 
     source_name: str
     target_name: str
@@ -167,27 +167,27 @@ class ConnectionConverter:
 
 
 @attrs.define
-class IterableConverter:
+class IterableStatement:
 
     fieldname: str = attrs.field(converter=field_converter)
     variable: str = attrs.field()
 
 
 @attrs.define
-class NodeConverter:
+class AddNodeStatement:
 
     name: str
     interface: str
     args: ty.List[str]
-    iterables: ty.List[IterableConverter]
+    iterables: ty.List[IterableStatement]
     itersource: ty.Optional[str]
     indent: str
     workflow_converter: "WorkflowConverter" = attrs.field(repr=False)
     splits: ty.List[str] = attrs.field(
         converter=attrs.converters.default_if_none(factory=list), factory=list
     )
-    in_conns: ty.List[ConnectionConverter] = attrs.field(factory=list)
-    out_conns: ty.List[ConnectionConverter] = attrs.field(factory=list)
+    in_conns: ty.List[ConnectionStatement] = attrs.field(factory=list)
+    out_conns: ty.List[ConnectionStatement] = attrs.field(factory=list)
     include: bool = attrs.field(default=False)
     index: int = attrs.field()
 
@@ -282,7 +282,7 @@ class NodeConverter:
 
 
 @attrs.define
-class NestedWorkflowConverter:
+class AddNestedWorkflowStatement:
 
     name: str
     workflow_name: str
@@ -291,8 +291,8 @@ class NestedWorkflowConverter:
     args: ty.List[str]
     workflow_converter: "WorkflowConverter" = attrs.field(repr=False)
     include: bool = attrs.field(default=False)
-    in_conns: ty.List[ConnectionConverter] = attrs.field(factory=list)
-    out_conns: ty.List[ConnectionConverter] = attrs.field(factory=list)
+    in_conns: ty.List[ConnectionStatement] = attrs.field(factory=list)
+    out_conns: ty.List[ConnectionStatement] = attrs.field(factory=list)
     index: int = attrs.field()
 
     @index.default
@@ -332,79 +332,3 @@ class NestedWorkflowConverter:
     @cached_property
     def workflow_variable(self):
         return self.workflow_converter.workflow_variable
-
-
-@attrs.define
-class ReturnConverter:
-
-    vars: ty.List[str] = attrs.field(converter=lambda s: s.split(", "))
-    indent: str = attrs.field()
-
-    def __str__(self):
-        return f"{self.indent}return {', '.join(self.vars)}"
-
-
-@attrs.define
-class CommentConverter:
-
-    comment: str = attrs.field()
-    indent: str = attrs.field()
-
-    def __str__(self):
-        return f"{self.indent}# {self.comment}"
-
-
-@attrs.define
-class DocStringConverter:
-
-    docstring: str = attrs.field()
-    indent: str = attrs.field()
-
-    def __str__(self):
-        return f"{self.indent}{self.docstring}"
-
-
-@attrs.define
-class NodeAssignmentConverter:
-
-    nodes: ty.List[NodeConverter] = attrs.field()
-    attribute: str = attrs.field()
-    value: str = attrs.field()
-    indent: str = attrs.field()
-
-    def __str__(self):
-        if not any(n.include for n in self.nodes):
-            return ""
-        node_name = self.nodes[0].name
-        workflow_variable = self.nodes[0].workflow_variable
-        assert (n.name == node_name for n in self.nodes)
-        assert (n.workflow_variable == workflow_variable for n in self.nodes)
-        return f"{self.indent}{workflow_variable}.{node_name}{self.attribute} = {self.value}"
-
-
-@attrs.define
-class NestedWorkflowAssignmentConverter:
-
-    nodes: ty.List[NestedWorkflowConverter] = attrs.field()
-    attribute: str = attrs.field()
-    value: str = attrs.field()
-    indent: str = attrs.field()
-
-    def __str__(self):
-        if not any(n.include for n in self.nodes):
-            return ""
-        node = self.nodes[0]
-        if not node.nested_spec:
-            raise NotImplementedError(
-                f"Need specification for nested workflow {node.workflow_name} in order to "
-                "assign to it"
-            )
-        nested_wf = node.nested_spec
-        parts = self.attribute.split(".")
-        nested_node_name = parts[2]
-        attribute_name = parts[3]
-        target_in = nested_wf.input_name(nested_node_name, attribute_name)
-        attribute = ".".join(parts[:2] + [target_in] + parts[4:])
-        workflow_variable = self.nodes[0].workflow_variable
-        assert (n.workflow_variable == workflow_variable for n in self.nodes)
-        return f"{self.indent}{workflow_variable}{attribute} = {self.value}"
