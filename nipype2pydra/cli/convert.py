@@ -55,6 +55,8 @@ def convert(
     # Load interface and workflow specs
     workflow_yamls = list((specs_dir / "workflows").glob("*.yaml"))
     interface_yamls = list((specs_dir / "interfaces").glob("*.yaml"))
+    function_yamls = list((specs_dir / "functions").glob("*.yaml"))
+    class_yamls = list((specs_dir / "classes").glob("*.yaml"))
 
     # Initialise PackageConverter
     if package_spec.get("interface_only", None) is None:
@@ -66,6 +68,9 @@ def convert(
     output_dir = package_dir / "auto" if converter.interface_only else package_dir
     if output_dir.exists():
         shutil.rmtree(output_dir)
+    nipype_ports_dir = package_dir / "nipype_ports"
+    if nipype_ports_dir.exists():
+        shutil.rmtree(nipype_ports_dir)
 
     # Load interface specs
     for fspath in interface_yamls:
@@ -83,6 +88,18 @@ def convert(
         with open(fspath, "r") as f:
             spec = yaml.safe_load(f)
         converter.add_workflow_from_spec(spec)
+
+    # Load workflow specs
+    for fspath in function_yamls:
+        with open(fspath, "r") as f:
+            spec = yaml.safe_load(f)
+        converter.add_function_from_spec(spec)
+
+    # Load workflow specs
+    for fspath in class_yamls:
+        with open(fspath, "r") as f:
+            spec = yaml.safe_load(f)
+        converter.add_class_from_spec(spec)
 
     # Write out converted package
     converter.write(package_root, to_include)

@@ -115,6 +115,8 @@ ants:
     - nipype.interfaces.ants.utils.LabelGeometry
     - nipype.interfaces.ants.visualization.ConvertScalarImageToRGB
     - nipype.interfaces.ants.visualization.CreateTiledMosaic
+  classes:
+    - nipype.interfaces.ants.base.Info
 brainsuite:
   interfaces:
     - nipype.interfaces.brainsuite.brainsuite.Bse

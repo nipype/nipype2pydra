@@ -8,7 +8,7 @@ import os
 import inspect
 from contextlib import contextmanager
 from pathlib import Path
-from fileformats.core import FileSet
+from fileformats.core import FileSet, from_mime
 from ..exceptions import (
     UnmatchedParensException,
     UnmatchedQuoteException,
@@ -24,6 +24,9 @@ from logging import getLogger
 
 
 logger = getLogger("nipype2pydra")
+
+
+T = ty.TypeVar("T")
 
 
 INBUILT_NIPYPE_TRAIT_NAMES = [
@@ -315,6 +318,10 @@ def cleanup_function_body(function_body: str) -> str:
         )
     # Other misc replacements
     # function_body = function_body.replace("LOGGER.", "logger.")
+    return replace_undefined(function_body)
+
+
+def replace_undefined(function_body: str) -> str:
     parts = re.split(r"not isdefined\b", function_body, flags=re.MULTILINE)
     new_function_body = parts[0]
     for part in parts[1:]:
@@ -428,3 +435,73 @@ def multiline_comment(comment: str, line_length: int = 100) -> str:
         start_of_line = end_of_line
     multiline += "# " + comment[start_of_line:] + "\n"
     return multiline
+
+
+def from_dict_converter(
+    obj: ty.Union[T, dict], klass: ty.Type[T], allow_none=False
+) -> T:
+    if obj is None:
+        if allow_none:
+            converted = None
+        else:
+            converted = klass()
+    elif isinstance(obj, dict):
+        converted = klass(**obj)
+    elif isinstance(obj, klass):
+        converted = obj
+    else:
+        raise TypeError(
+            f"Input must be of type {klass} or dict, not {type(obj)}: {obj}"
+        )
+    return converted
+
+
+def str_to_type(type_str: str) -> type:
+    """Resolve a string representation of a type into a valid type"""
+    if "/" in type_str:
+        tp = from_mime(type_str)
+        try:
+            # If datatype is a field, use its primitive instead
+            tp = tp.primitive  # type: ignore
+        except AttributeError:
+            pass
+    else:
+
+        def resolve_type(type_str: str) -> type:
+            if "." in type_str:
+                parts = type_str.split(".")
+                module = import_module(".".join(parts[:-1]))
+                class_str = parts[-1]
+            else:
+                class_str = type_str
+                module = None
+            match = re.match(r"(\w+)(\[.*\])?", class_str)
+            class_str = match.group(1)
+            if module:
+                t = getattr(module, match.group(1))
+            else:
+                if not re.match(r"^\w+$", class_str):
+                    raise ValueError(f"Cannot parse {class_str} to a type safely")
+                t = eval(class_str)
+            if match.group(2):
+                args = tuple(
+                    resolve_type(arg) for arg in match.group(2)[1:-1].split(",")
+                )
+                t = t.__getitem__(args)
+            return t
+
+        tp = resolve_type(type_str)
+        if not inspect.isclass(tp) and type(tp).__module__ != "typing":
+            raise TypeError(f"Designated type at {type_str} is not a class {tp}")
+    return tp
+
+
+def types_converter(types: ty.Dict[str, ty.Union[str, type]]) -> ty.Dict[str, type]:
+    if types is None:
+        return {}
+    converted = {}
+    for name, tp_or_str in types.items():
+        if isinstance(tp_or_str, str):
+            tp = str_to_type(tp_or_str)
+        converted[name] = tp
+    return converted

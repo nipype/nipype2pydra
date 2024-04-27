@@ -6,6 +6,7 @@ import inspect
 from functools import cached_property
 from operator import itemgetter, attrgetter
 import attrs
+from ..utils import from_dict_converter
 
 
 from importlib import import_module
@@ -100,9 +101,12 @@ class Imported:
         stmt_cpy = deepcopy(self.statement)
         stmt_cpy.imported = {self.local_name: stmt_cpy[self.local_name]}
         if resolve:
-            module_name = self.object.__module__
-            if inspect.isbuiltin(self.object):
-                module_name = module_name[1:]  # strip preceding '_' from builtins
+            if inspect.ismodule(self.object):
+                module_name = self.object.__name__
+            else:
+                module_name = self.object.__module__
+                if inspect.isbuiltin(self.object):
+                    module_name = module_name[1:]  # strip preceding '_' from builtins
         if module_name != stmt_cpy.from_:
             stmt_cpy.from_ = module_name
             if (
@@ -570,3 +574,27 @@ GENERIC_PYDRA_IMPORTS = parse_imports(
         "from pydra.engine.specs import SpecInfo, BaseSpec",
     ]
 )
+
+
+@attrs.define
+class ExplicitImport:
+    module: str
+    name: ty.Optional[str] = None
+    alias: ty.Optional[str] = None
+
+    def to_statement(self):
+        if self.name:
+            stmt = f"from {self.module} import {self.name}"
+        else:
+            stmt = f"import {self.module}"
+        if self.alias:
+            stmt += f" as {self.alias}"
+        return parse_imports(stmt)[0]
+
+
+def from_list_to_imports(
+    obj: ty.Union[ty.List[ExplicitImport], list]
+) -> ty.List[ExplicitImport]:
+    if obj is None:
+        return []
+    return [from_dict_converter(t, ExplicitImport) for t in obj]

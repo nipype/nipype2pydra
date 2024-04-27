@@ -9,6 +9,9 @@ import shutil
 from functools import cached_property
 from collections import defaultdict
 from pathlib import Path
+from operator import attrgetter, itemgetter
+import black.parsing
+import black.report
 from tqdm import tqdm
 import attrs
 import yaml
@@ -16,13 +19,15 @@ from . import interface
 from .utils import (
     UsedSymbols,
     full_address,
-    write_to_module,
-    write_pkg_inits,
     to_snake_case,
-    ImportStatement,
+    cleanup_function_body,
+    split_source_into_statements,
+    get_source_code,
 )
+from .statements import ImportStatement, parse_imports, GENERIC_PYDRA_IMPORTS
 import nipype2pydra.workflow
-import nipype2pydra.node_factory
+import nipype2pydra.helpers
+
 
 logger = logging.getLogger(__name__)
 
@@ -147,15 +152,21 @@ class PackageConverter:
             ),
         },
     )
-    node_factories: ty.Dict[str, nipype2pydra.node_factory.NodeFactoryConverter] = (
-        attrs.field(
-            factory=dict,
-            metadata={
-                "help": (
-                    "node factory specifications for the tasks defined within the workflow package"
-                ),
-            },
-        )
+    functions: ty.Dict[str, nipype2pydra.helpers.FunctionConverter] = attrs.field(
+        factory=dict,
+        metadata={
+            "help": (
+                "specifications for helper functions defined within the workflow package"
+            ),
+        },
+    )
+    classes: ty.Dict[str, nipype2pydra.helpers.ClassConverter] = attrs.field(
+        factory=dict,
+        metadata={
+            "help": (
+                "specifications for helper class defined within the workflow package"
+            ),
+        },
     )
     import_translations: ty.List[ty.Tuple[str, str]] = attrs.field(
         factory=list,
@@ -364,6 +375,10 @@ class PackageConverter:
             for const_mod_address, _, const_name in used.intra_pkg_constants:
                 intra_pkg_modules[const_mod_address].add(const_name)
 
+        for conv in list(self.functions.values()) + list(self.classes.values()):
+            intra_pkg_modules[conv.nipype_module_name].add(conv.nipype_object)
+            collect_intra_pkg_objects(conv.used_symbols)
+
         for converter in tqdm(
             workflows_to_include, "converting workflows from Nipype to Pydra syntax"
         ):
@@ -506,7 +521,7 @@ class PackageConverter:
                 if inspect.isfunction(o) and o not in used.local_functions
             ]
 
-            write_to_module(
+            self.write_to_module(
                 package_root=package_root,
                 module_name=out_mod_name,
                 used=UsedSymbols(
@@ -517,11 +532,10 @@ class PackageConverter:
                     local_functions=functions,
                 ),
                 find_replace=self.find_replace,
-                import_find_replace=self.import_find_replace,
                 inline_intra_pkg=False,
             )
 
-            write_pkg_inits(
+            self.write_pkg_inits(
                 package_root,
                 out_mod_name,
                 names=(
@@ -546,14 +560,17 @@ class PackageConverter:
         str
             the Pydra module path
         """
-        if re.match(r"^nipype\b", nipype_module_path):
-            return ImportStatement.join_relative_package(
-                self.name + ".nipype_ports.__init__",
-                ImportStatement.get_relative_package(nipype_module_path, "nipype"),
-            )
+        base_pkg = self.name + ".__init__"
+        relative_to = self.nipype_name
+        if re.match(self.nipype_module.__name__ + r"\b", nipype_module_path):
+            if self.interface_only:
+                base_pkg = self.name + ".auto.__init__"
+        elif re.match(r"^nipype\b", nipype_module_path):
+            base_pkg = self.name + ".nipype_ports.__init__"
+            relative_to = "nipype"
         return ImportStatement.join_relative_package(
-            self.name + ".__init__",
-            ImportStatement.get_relative_package(nipype_module_path, self.nipype_name),
+            base_pkg,
+            ImportStatement.get_relative_package(nipype_module_path, relative_to),
         )
 
     @classmethod
@@ -695,11 +712,19 @@ post_release = "{post_release}"
         )
         return converter
 
-    def add_node_factory_from_spec(
+    def add_function_from_spec(
         self, spec: ty.Dict[str, ty.Any]
-    ) -> "nipype2pydra.node_factory.NodeFactoryConverter":
-        converter = self.node_factories[f"{spec['nipype_module']}.{spec['name']}"] = (
-            nipype2pydra.node_factory.NodeFactoryConverter(package=self, **spec)
+    ) -> "nipype2pydra.helpers.FunctionConverter":
+        converter = self.functions[f"{spec['nipype_module']}.{spec['name']}"] = (
+            nipype2pydra.helpers.FunctionConverter(package=self, **spec)
+        )
+        return converter
+
+    def add_class_from_spec(
+        self, spec: ty.Dict[str, ty.Any]
+    ) -> "nipype2pydra.helpers.ClassConverter":
+        converter = self.classes[f"{spec['nipype_module']}.{spec['name']}"] = (
+            nipype2pydra.helpers.ClassConverter(package=self, **spec)
         )
         return converter
 
@@ -753,3 +778,280 @@ post_release = "{post_release}"
             config_sig.append(f"{param_name}={param_default!r}")
 
         return param_init + code_str, config_sig, used_configs
+
+    def write_to_module(
+        self,
+        package_root: Path,
+        module_name: str,
+        used: UsedSymbols,
+        converted_code: ty.Optional[str] = None,
+        find_replace: ty.Optional[ty.List[ty.Tuple[str, str]]] = None,
+        inline_intra_pkg: bool = False,
+    ):
+        """Writes the given imports, constants, classes, and functions to the file at the given path,
+        merging with existing code if it exists"""
+        from .helpers import FunctionConverter, ClassConverter
+
+        if find_replace is None:
+            find_replace = self.find_replace
+        else:
+            find_replace = copy(find_replace)
+            find_replace.extend(self.find_replace)
+
+        existing_import_strs = []
+        code_str = ""
+        module_fspath = package_root.joinpath(*module_name.split("."))
+        if module_fspath.is_dir():
+            module_fspath = module_fspath.joinpath("__init__.py")
+        else:
+            module_fspath = module_fspath.with_suffix(".py")
+        module_fspath.parent.mkdir(parents=True, exist_ok=True)
+        if module_fspath.exists():
+            with open(module_fspath, "r") as f:
+                existing_code = f.read()
+
+            for stmt in split_source_into_statements(existing_code):
+                if not stmt.startswith(" ") and ImportStatement.matches(stmt):
+                    existing_import_strs.append(stmt)
+                else:
+                    code_str += "\n" + stmt
+        existing_imports = parse_imports(existing_import_strs, relative_to=module_name)
+        converter_imports = []
+
+        for const_name, const_val in sorted(used.constants):
+            if f"\n{const_name} = " not in code_str:
+                code_str += f"\n{const_name} = {const_val}\n"
+
+        for klass in used.local_classes:
+            if f"\nclass {klass.__name__}(" not in code_str:
+                try:
+                    class_converter = self.classes[full_address(klass)]
+                except KeyError:
+                    class_converter = ClassConverter.from_object(klass, self)
+                converter_imports.extend(class_converter.used_symbols.imports)
+                code_str += "\n" + class_converter.converted_code + "\n"
+
+        if converted_code is not None:
+            # We need to format the converted code so we can check whether it's already in the file
+            # or not
+            try:
+                converted_code = black.format_file_contents(
+                    converted_code, fast=False, mode=black.FileMode()
+                )
+            except black.report.NothingChanged:
+                pass
+            except Exception as e:
+                # Write to file for debugging
+                debug_file = "~/unparsable-nipype2pydra-output.py"
+                with open(Path(debug_file).expanduser(), "w") as f:
+                    f.write(converted_code)
+                raise RuntimeError(
+                    f"Black could not parse generated code (written to {debug_file}): "
+                    f"{e}\n\n{converted_code}"
+                )
+
+            if converted_code.strip() not in code_str:
+                code_str += "\n" + converted_code + "\n"
+
+        for func in sorted(used.local_functions, key=attrgetter("__name__")):
+            if f"\ndef {func.__name__}(" not in code_str:
+                if func.__name__ in self.functions:
+                    function_converter = self.functions[full_address(func)]
+                else:
+                    function_converter = FunctionConverter.from_object(func, self)
+                converter_imports.extend(function_converter.used_symbols.imports)
+                code_str += "\n" + function_converter.converted_code + "\n"
+
+        # Add logger
+        logger_stmt = "logger = logging.getLogger(__name__)\n\n"
+        if logger_stmt not in code_str:
+            code_str = logger_stmt + code_str
+
+        inlined_symbols = []
+        if inline_intra_pkg:
+
+            code_str += (
+                "\n\n# Intra-package imports that have been inlined in this module\n\n"
+            )
+            for func_name, func in sorted(used.intra_pkg_funcs, key=itemgetter(0)):
+                func_src = get_source_code(func)
+                func_src = re.sub(
+                    r"^(#[^\n]+\ndef) (\w+)(?=\()",
+                    r"\1 " + func_name,
+                    func_src,
+                    flags=re.MULTILINE,
+                )
+                code_str += "\n\n" + cleanup_function_body(func_src)
+                inlined_symbols.append(func_name)
+
+            for klass_name, klass in sorted(used.intra_pkg_classes, key=itemgetter(0)):
+                klass_src = get_source_code(klass)
+                klass_src = re.sub(
+                    r"^(#[^\n]+\nclass) (\w+)(?=\()",
+                    r"\1 " + klass_name,
+                    klass_src,
+                    flags=re.MULTILINE,
+                )
+                code_str += "\n\n" + cleanup_function_body(klass_src)
+                inlined_symbols.append(klass_name)
+
+        # We run the formatter before the find/replace so that the find/replace can be more
+        # predictable
+        try:
+            code_str = black.format_file_contents(
+                code_str, fast=False, mode=black.FileMode()
+            )
+        except black.report.NothingChanged:
+            pass
+        except Exception as e:
+            # Write to file for debugging
+            debug_file = "~/unparsable-nipype2pydra-output.py"
+            with open(Path(debug_file).expanduser(), "w") as f:
+                f.write(code_str)
+            raise RuntimeError(
+                f"Black could not parse generated code (written to {debug_file}): {e}\n\n{code_str}"
+            )
+
+        for find, replace in find_replace or []:
+            code_str = re.sub(find, replace, code_str, flags=re.MULTILINE | re.DOTALL)
+
+        imports = ImportStatement.collate(
+            existing_imports
+            + converter_imports
+            + [i for i in used.imports if not i.indent]
+            + GENERIC_PYDRA_IMPORTS
+        )
+
+        if module_fspath.name != "__init__.py":
+            imports = UsedSymbols.filter_imports(imports, code_str)
+
+        # Strip out inlined imports
+        for inlined_symbol in inlined_symbols:
+            for stmt in imports:
+                if inlined_symbol in stmt:
+                    stmt.drop(inlined_symbol)
+
+        import_str = "\n".join(str(i) for i in imports if i)
+
+        try:
+            import_str = black.format_file_contents(
+                import_str,
+                fast=True,
+                mode=black.FileMode(),
+            )
+        except black.report.NothingChanged:
+            pass
+
+        # Rerun find-replace to allow us to catch any imports we want to alter
+        for find, replace in self.import_find_replace or []:
+            import_str = re.sub(
+                find, replace, import_str, flags=re.MULTILINE | re.DOTALL
+            )
+
+        code_str = import_str + "\n\n" + code_str
+
+        with open(module_fspath, "w") as f:
+            f.write(code_str)
+
+        return module_fspath
+
+    def write_pkg_inits(
+        self,
+        package_root: Path,
+        module_name: str,
+        names: ty.List[str],
+        depth: int,
+        auto_import_depth: int,
+        import_find_replace: ty.Optional[ty.List[str]] = None,
+    ):
+        """Writes __init__.py files to all directories in the given package path
+
+        Parameters
+        ----------
+        package_root : Path
+            The root directory of the package
+        module_name : str
+            The name of the module to write the imports to
+        depth : int
+            The depth of the package from the root up to which to generate __init__.py files
+            for
+        auto_import_depth: int
+            the depth below which the init files should contain cascading imports from
+        names : List[str]
+            The names to import in the __init__.py files
+        """
+        parts = module_name.split(".")
+        for i, part in enumerate(reversed(parts[depth:]), start=1):
+            mod_parts = parts[:-i]
+            parent_mod = ".".join(mod_parts)
+            init_fspath = package_root.joinpath(*mod_parts, "__init__.py")
+            if i > len(parts) - auto_import_depth:
+                # Write empty __init__.py if it doesn't exist
+                init_fspath.touch()
+                continue
+            code_str = ""
+            import_stmts = []
+            if init_fspath.exists():
+                with open(init_fspath, "r") as f:
+                    existing_code = f.read()
+                stmts = split_source_into_statements(existing_code)
+                for stmt in stmts:
+                    if ImportStatement.matches(stmt):
+                        import_stmt = parse_imports(stmt, relative_to=parent_mod)[0]
+                        if import_stmt.conditional:
+                            code_str += f"\n{stmt}"
+                        else:
+                            import_stmts.append(import_stmt)
+                    else:
+                        code_str += f"\n{stmt}"
+            import_stmts.append(
+                parse_imports(
+                    f"from .{part} import ({', '.join(names)})", relative_to=parent_mod
+                )[0]
+            )
+            import_stmts = sorted(ImportStatement.collate(import_stmts))
+            import_str = "\n".join(str(i) for i in import_stmts)
+
+            # Format import str to make the find-replace target consistent
+            try:
+                import_str = black.format_file_contents(
+                    import_str, fast=False, mode=black.FileMode()
+                )
+            except black.report.NothingChanged:
+                pass
+            except Exception as e:
+                # Write to file for debugging
+                debug_file = "~/unparsable-nipype2pydra-output.py"
+                with open(Path(debug_file).expanduser(), "w") as f:
+                    f.write(code_str)
+                raise RuntimeError(
+                    f"Black could not parse generated code (written to {debug_file}): "
+                    f"{e}\n\n{code_str}"
+                )
+
+            # Rerun find-replace to allow us to catch any imports we want to alter
+            for find, replace in import_find_replace or []:
+                import_str = re.sub(
+                    find, replace, import_str, flags=re.MULTILINE | re.DOTALL
+                )
+
+            code_str = import_str + "\n" + code_str
+
+            try:
+                code_str = black.format_file_contents(
+                    code_str, fast=False, mode=black.FileMode()
+                )
+            except black.report.NothingChanged:
+                pass
+            except Exception as e:
+                # Write to file for debugging
+                debug_file = "~/unparsable-nipype2pydra-output.py"
+                with open(Path(debug_file).expanduser(), "w") as f:
+                    f.write(code_str)
+                raise RuntimeError(
+                    f"Black could not parse generated code (written to {debug_file}): "
+                    f"{e}\n\n{code_str}"
+                )
+
+            with open(init_fspath, "w") as f:
+                f.write(code_str)

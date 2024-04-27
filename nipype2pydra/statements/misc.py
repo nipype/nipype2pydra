@@ -10,7 +10,7 @@ class ReturnStatement:
     vars: ty.List[str] = attrs.field(converter=lambda s: s.split(", "))
     indent: str = attrs.field()
 
-    match_re = re.compile(r"(\s*)return (.*)")
+    match_re = re.compile(r"(\s*)return (.*)", flags=re.MULTILINE | re.DOTALL)
 
     def __str__(self):
         return f"{self.indent}return {', '.join(self.vars)}"

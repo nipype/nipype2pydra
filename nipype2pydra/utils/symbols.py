@@ -58,10 +58,9 @@ class UsedSymbols:
 
     ALWAYS_OMIT_MODULES = [
         "traits.trait_handlers",  # Old traits module, pre v6.0
-        "nipype.pipeline",
+        # "nipype.pipeline",
         "nipype.logging",
         "nipype.config",
-        "nipype.interfaces.base",
         "nipype.interfaces.utility",
     ]
 

@@ -23,7 +23,7 @@ from nipype2pydra.pkg_gen import (
 from nipype2pydra.cli.base import cli
 from nipype2pydra.package import PackageConverter
 from nipype2pydra.workflow import WorkflowConverter
-from nipype2pydra.node_factory import NodeFactoryConverter
+from nipype2pydra.helpers import FunctionConverter, ClassConverter
 
 
 @cli.command(
@@ -100,7 +100,7 @@ def pkg_gen(
     # Wipe output dir
     if output_dir.exists():
         shutil.rmtree(output_dir)
-    output_dir.mkdir()
+    output_dir.mkdir(parents=True)
 
     not_interfaces = []
     unmatched_formats = []
@@ -187,11 +187,11 @@ def pkg_gen(
                 with open(callables_fspath, "w") as f:
                     f.write(parsed.generate_callables(nipype_interface))
 
-        if "node_factories" in spec:
-            node_factories_spec_dir = spec_dir / "node_factories"
-            node_factories_spec_dir.mkdir(parents=True, exist_ok=True)
-            for node_factory_path in spec["node_factories"]:
-                parts = node_factory_path.split(".")
+        if "functions" in spec:
+            functions_spec_dir = spec_dir / "functions"
+            functions_spec_dir.mkdir(parents=True, exist_ok=True)
+            for function_path in spec["functions"]:
+                parts = function_path.split(".")
                 factory_name = parts[-1]
                 nipype_module_str = ".".join(parts[:-1])
                 nipype_module = import_module(nipype_module_str)
@@ -202,9 +202,31 @@ def pkg_gen(
                         f"Did not find factory function {factory_name} in module {nipype_module_str}"
                     )
 
-                with open(workflows_spec_dir / (wf_path + ".yaml"), "w") as f:
+                with open(functions_spec_dir / (function_path + ".yaml"), "w") as f:
                     f.write(
-                        NodeFactoryConverter.default_spec(
+                        FunctionConverter.default_spec(
+                            factory_name, nipype_module_str, defaults=wf_defaults
+                        )
+                    )
+
+        if "classes" in spec:
+            classes_spec_dir = spec_dir / "classes"
+            classes_spec_dir.mkdir(parents=True, exist_ok=True)
+            for class_path in spec["classes"]:
+                parts = class_path.split(".")
+                factory_name = parts[-1]
+                nipype_module_str = ".".join(parts[:-1])
+                nipype_module = import_module(nipype_module_str)
+                try:
+                    getattr(nipype_module, factory_name)
+                except AttributeError:
+                    raise RuntimeError(
+                        f"Did not find factory function {factory_name} in module {nipype_module_str}"
+                    )
+
+                with open(classes_spec_dir / (class_path + ".yaml"), "w") as f:
+                    f.write(
+                        ClassConverter.default_spec(
                             factory_name, nipype_module_str, defaults=wf_defaults
                         )
                     )

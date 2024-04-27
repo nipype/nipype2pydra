@@ -24,9 +24,9 @@ from fileformats.text import TextFile
 from fileformats.datascience import TextMatrix, DatFile
 import nipype.interfaces.base.core
 from nipype.interfaces.base import BaseInterface, TraitedSpec
-from nipype2pydra.package import (
+from nipype2pydra.package import (  # noqa F401  required to avoid partial import
     PackageConverter,
-)  # noqa F401  required to avoid partial import
+)
 from nipype2pydra.interface import (
     InputsConverter,
     OutputsConverter,
@@ -40,8 +40,8 @@ from nipype2pydra.utils import (
     cleanup_function_body,
     insert_args_in_signature,
     INBUILT_NIPYPE_TRAIT_NAMES,
-    parse_imports,
 )
+from nipype2pydra.statements import parse_imports
 from nipype2pydra.exceptions import UnmatchedParensException
 
 

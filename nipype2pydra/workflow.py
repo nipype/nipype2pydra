@@ -14,14 +14,12 @@ from .utils import (
     UsedSymbols,
     split_source_into_statements,
     extract_args,
-    write_to_module,
-    write_pkg_inits,
     full_address,
-    ImportStatement,
-    parse_imports,
     multiline_comment,
 )
 from .statements import (
+    ImportStatement,
+    parse_imports,
     AddInterfaceStatement,
     ConnectionStatement,
     AddNestedWorkflowStatement,
@@ -335,16 +333,14 @@ class WorkflowConverter:
                 )
                 all_used.update(conv_all_used)
 
-        write_to_module(
+        self.package.write_to_module(
             package_root,
             module_name=self.output_module,
             converted_code=code_str,
             used=used,
-            find_replace=self.package.find_replace,
-            import_find_replace=self.package.import_find_replace,
         )
 
-        write_pkg_inits(
+        self.package.write_pkg_inits(
             package_root,
             self.output_module,
             names=[self.name],
@@ -354,7 +350,7 @@ class WorkflowConverter:
         )
 
         # Write test code
-        test_module_fspath = write_to_module(
+        test_module_fspath = self.package.write_to_module(
             package_root,
             module_name=ImportStatement.join_relative_package(
                 self.output_module,
@@ -371,8 +367,6 @@ class WorkflowConverter:
             ),
             converted_code=self.test_code,
             used=self.test_used,
-            find_replace=self.package.find_replace,
-            import_find_replace=self.package.import_find_replace,
         )
 
         conftest_fspath = test_module_fspath.parent / "conftest.py"
