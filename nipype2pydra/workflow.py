@@ -1,5 +1,5 @@
 from importlib import import_module
-from functools import cached_property
+from functools import cached_property, partial
 import inspect
 import re
 import typing as ty
@@ -16,6 +16,7 @@ from .utils import (
     extract_args,
     full_address,
     multiline_comment,
+    from_named_dicts_converter,
 )
 from .statements import (
     ImportStatement,
@@ -35,13 +36,82 @@ logger = logging.getLogger(__name__)
 
 
 def convert_node_prefixes(
-    nodes: ty.Union[ty.Dict[str, str], ty.Sequence[ty.Tuple[str, str]]]
+    nodes: ty.Union[ty.Dict[str, str], ty.Sequence[ty.Union[ty.Tuple[str, str], str]]]
 ) -> ty.Dict[str, str]:
     if isinstance(nodes, dict):
         nodes_it = nodes.items()
     else:
         nodes_it = [(n, "") if isinstance(n, str) else n for n in nodes]
     return {n: v if v is not None else "" for n, v in nodes_it}
+
+
+@attrs.define
+class WorkflowInterfaceField:
+
+    name: str = attrs.field(
+        converter=str,
+        metadata={
+            "help": "Name of the input/output field in the converted workflow",
+        },
+    )
+    node_name: str = attrs.field(
+        metadata={
+            "help": "Name of the node the field belongs to ",
+        },
+    )
+    type: type = attrs.field(
+        default=ty.Any,
+        metadata={
+            "help": "The type of the input/output of the converted workflow",
+        },
+    )
+    field: str = attrs.field(
+        converter=str,
+        metadata={
+            "help": "Name of field in the node it belongs to",
+        },
+    )
+    mappings: ty.List[ty.Tuple[str, str]] = attrs.field(
+        converter=lambda lst: [tuple(t) for t in lst],
+        factory=list,
+        metadata={
+            "help": "mappings from other node fields to this input/output",
+        },
+    )
+    external: bool = attrs.field(
+        default=False,
+        metadata={
+            "help": (
+                "Whether the input/output needs to be propagated up to parent "
+                "workflows so it can be set as an input/output of the whole package"
+            )
+        },
+    )
+    used: bool = attrs.field(
+        default=False,
+        metadata={
+            "help": "Whether the input/output has been is used in the package",
+        },
+    )
+    implicit: bool = attrs.field(
+        default=False,
+        metadata={
+            "help": "Whether the output is to be exported to the outer workflow",
+        },
+    )
+
+    @field.default
+    def _field_name_default(self):
+        return self.name
+
+
+class WorkflowInput(WorkflowInterfaceField):
+    pass
+
+
+@attrs.define
+class WorkflowOutput(WorkflowInterfaceField):
+    pass
 
 
 @attrs.define
@@ -92,22 +162,44 @@ class WorkflowConverter:
         },
     )
     input_nodes: ty.Dict[str, str] = attrs.field(
+        factory=dict,
         converter=convert_node_prefixes,
         metadata={
             "help": (
                 "Name of the node that is to be considered the input of the workflow, "
-                "(i.e. its outputs will be the inputs of the workflow), mapped to the prefix"
-                "that will be prepended to the corresponding workflow input name"
+                "i.e. all of its outputs will be the inputs of the workflow, unless "
+                'explicitly overridden by an "input" value.'
             ),
         },
     )
     output_nodes: ty.Dict[str, str] = attrs.field(
+        factory=dict,
         converter=convert_node_prefixes,
         metadata={
             "help": (
                 "Name of the node that is to be considered the output of the workflow, "
-                "(i.e. its inputs will be the outputs of the workflow), mapped to the prefix"
-                "that will be prepended to the corresponding workflow output name"
+                "i.e. its inputs will be the outputs of the workflow unless "
+                'explicitly overridden by an "output" value.'
+            ),
+        },
+    )
+    inputs: ty.Dict[str, WorkflowInput] = attrs.field(
+        converter=partial(from_named_dicts_converter, klass=WorkflowInput),
+        factory=dict,
+        metadata={
+            "help": (
+                "Explicitly defined inputs of the workflow (i.e. as opposed to implicit "
+                "ones determined by the input_nodes of the workflow)"
+            ),
+        },
+    )
+    outputs: ty.Dict[str, WorkflowOutput] = attrs.field(
+        converter=partial(from_named_dicts_converter, klass=WorkflowOutput),
+        factory=dict,
+        metadata={
+            "help": (
+                "Explicitly defined output of the workflow (i.e. as opposed to implicit "
+                "ones determined by the output_nodes of the workflow)"
             ),
         },
     )
@@ -142,7 +234,6 @@ class WorkflowConverter:
         converter=attrs.converters.default_if_none(factory=list),
         factory=list,
     )
-
     test_inputs: ty.Dict[str, ty.Any] = attrs.field(
         metadata={
             "help": ("the inputs to the test function"),
@@ -150,7 +241,13 @@ class WorkflowConverter:
         converter=attrs.converters.default_if_none(factory=list),
         factory=dict,
     )
-
+    is_external: bool = attrs.field(
+        default=False,
+        metadata={
+            "help": "Whether the workflow is to be treated as an external workflow, "
+            "i.e. all inputs and outputs are to be exported"
+        },
+    )
     nodes: ty.Dict[str, ty.List[AddInterfaceStatement]] = attrs.field(factory=dict)
 
     def __attrs_post_init__(self):
@@ -197,31 +294,113 @@ class WorkflowConverter:
         return self.nipype_module.__name__
 
     @property
-    def full_name(self):
+    def address(self):
         return f"{self.nipype_module_name}.{self.nipype_name}"
 
     def input_name(self, node_name: str, field_name: str) -> str:
         """
         Returns the name of the input field in the workflow for the given node and field
         escaped by the prefix of the node if present"""
-        prefix = self.input_nodes[node_name]
-        if prefix:
-            prefix += "_"
-        return prefix + field_name
+        for inpt in self.inputs.values():
+            if (
+                inpt.node_name == node_name
+                and inpt.field == field_name
+                or (node_name, field_name) in inpt.mappings
+            ):
+                return inpt.name
+        raise KeyError(
+            f"Could not find input corresponding to {field_name} in {node_name}"
+        )
 
     def output_name(self, node_name: str, field_name: str) -> str:
         """
         Returns the name of the input field in the workflow for the given node and field
         escaped by the prefix of the node if present"""
-        prefix = self.output_nodes[node_name]
-        if prefix:
-            prefix += "_"
-        if not isinstance(field_name, str):
-            raise NotImplementedError(
-                f"Can only prepend prefix to workflow output in {self}, "
-                f"not {field_name}"
-            )
-        return prefix + field_name
+        for outpt in self.outputs.values():
+            if (
+                outpt.node_name == node_name
+                and outpt.field == field_name
+                or (node_name, field_name) in outpt.mappings
+            ):
+                return outpt.name
+
+        raise KeyError(
+            f"Could not find output corresponding to {field_name} in {node_name}"
+        )
+
+    def add_input(self, node_name: str, field_name: str) -> str:
+        field_name = str(field_name)
+        try:
+            # Check to see if the input is already defined
+            return self.input_name(node_name, field_name)
+        except KeyError:
+            pass
+        if field_name in self.inputs:
+            existing = self.inputs[field_name]
+            if not (
+                (existing.node_name == node_name and existing.field == field_name)
+                or (
+                    node_name,
+                    field_name,
+                )
+                in existing.mappings
+            ):
+                raise ValueError(
+                    f"Attempting to set '{field_name}' input as {node_name}.{field_name} "
+                    f" but it is already defined in {self.address} as "
+                    f"{existing.node_name}.{existing.field}, "
+                    f"please explicitly define the input of {self.address} it should map on to "
+                )
+        try:
+            prefix = self.input_nodes[node_name]
+        except KeyError:
+            prefix = ""
+        else:
+            if prefix:
+                prefix += "_"
+        if field_name.startswith("out_"):
+            field_name = field_name[4:]
+        self.inputs[f"{prefix}{field_name}"] = WorkflowInput(
+            name=field_name, node_name=node_name, field=field_name
+        )
+
+    def add_output(self, node_name: str, field_name: str):
+        field_name = str(field_name)
+        try:
+            # Check to see if the output is already defined
+            return self.output_name(node_name, field_name)
+        except KeyError:
+            pass
+        if field_name in self.outputs:
+            existing = self.outputs[field_name]
+            if not (
+                (existing.node_name == node_name and existing.field == field_name)
+                or (
+                    node_name,
+                    field_name,
+                )
+                in existing.mappings
+            ):
+                raise ValueError(
+                    f"Attempting to set '{field_name}' output as {node_name}.{field_name} "
+                    f" but it is already defined in {self.address} as "
+                    f"{existing.node_name}.{existing.field}, "
+                    f"please explicitly define the output of {self.address} it should map on to "
+                )
+        try:
+            prefix = self.output_nodes[node_name]
+        except KeyError:
+            prefix = ""
+        else:
+            if prefix:
+                prefix += "_"
+        if field_name.startswith("in_"):
+            field_name = field_name[3:]
+        elif field_name.startswith("source_"):
+            field_name = field_name[7:]
+        self.outputs[f"{prefix}{field_name}"] = WorkflowOutput(
+            name=field_name, node_name=node_name, field=field_name
+        )
 
     @cached_property
     def used_symbols(self) -> UsedSymbols:
@@ -233,6 +412,7 @@ class WorkflowConverter:
             omit_modules=self.package.omit_modules,
             omit_functions=self.package.omit_functions,
             omit_constants=self.package.omit_constants,
+            always_include=self.package.all_explicit,
             translations=self.package.all_import_translations,
         )
 
@@ -304,7 +484,7 @@ class WorkflowConverter:
 
         if already_converted is None:
             already_converted = set()
-        already_converted.add(self.full_name)
+        already_converted.add(self.address)
 
         if additional_funcs is None:
             additional_funcs = []
@@ -319,9 +499,9 @@ class WorkflowConverter:
         local_func_names = {f.__name__ for f in used.local_functions}
         # Convert any nested workflows
         for name, conv in self.nested_workflows.items():
-            if conv.full_name in already_converted:
+            if conv.address in already_converted:
                 continue
-            already_converted.add(conv.full_name)
+            already_converted.add(conv.address)
             all_used.update(conv.used_symbols)
             if name in local_func_names:
                 code_str += "\n\n\n" + conv.converted_code
@@ -393,77 +573,70 @@ class WorkflowConverter:
         declaration, func_args, post = extract_args(self.func_src)
         return_types = post[1:].split(":", 1)[0]  # Get the return type
 
-        # Parse the statements in the function body into converter objects and strings
-        parsed_statements, workflow_init = self._parse_statements(self.func_body)
-
-        # Mark the nodes and connections that are to be included in the workflow, starting
-        # from the designated input node (doesn't have to be the first node in the function body,
-        # i.e. the input node can be after the data grabbing steps)
-        missing = []
-        input_spec = set()
-        input_nodes = []
-        for input_node_name, prefix in self.input_nodes.items():
-            try:
-                sibling_input_nodes = self.nodes[input_node_name]
-            except KeyError:
-                missing.append(input_node_name)
-            else:
-                for input_node in sibling_input_nodes:
-                    for conn in input_node.out_conns:
-                        conn.wf_in = True
-                        input_spec.add(conn.wf_in_name)
-                    input_nodes.append(input_node)
-        if missing:
-            raise ValueError(
-                f"Unrecognised input nodes {missing}, not in {list(self.nodes)} "
-                f"for {self.full_name}"
-            )
-
-        workflow_init.input_spec = input_spec
-
         # Walk through the DAG and include all nodes and connections that are connected to
         # the input nodes and their connections up until the output nodes
-        included = []
-        node_stack = copy(input_nodes)
-        while node_stack:
-            node = node_stack.pop()
-            for conn in node.out_conns:
-                conn.include = True
-                if conn.target_name not in (
-                    included + list(self.input_nodes) + list(self.output_nodes)
-                ):
-                    included.append(conn.target_name)
-                    for tgt in conn.targets:
-                        tgt.include = True
-                        node_stack.append(tgt)
+        conn_stack: ty.List[ConnectionStatement] = []
+        for inpt in self.inputs.values():
+            sibling_nodes = self.nodes[inpt.node_name]
+            conns = []
+            for node in sibling_nodes:
+                conns.extend(c for c in node.out_conns if c.source_out == inpt.field)
+            for conn in conns:
+                conn.wf_in = True
+            if not conns:
+                raise RuntimeError(f"No connections found for {inpt}")
+            conn_stack.extend(conns)
+        while conn_stack:
+            conn = conn_stack.pop()
+            # Will only be included if connected from inputs to outputs, still coerces to
+            # false but
+            conn.include = 0
+            sibling_target_nodes = self.nodes[conn.target_name]
+            for target_node in sibling_target_nodes:
+                target_node.include = 0
+                conn_stack.extend(target_node.out_conns)
 
-        missing = []
-        for output_node_name, prefix in self.output_nodes.items():
-            try:
-                sibling_output_nodes = self.nodes[output_node_name]
-            except KeyError:
-                missing.append(output_node_name)
-            else:
-                for output_node in sibling_output_nodes:
-                    for conn in output_node.in_conns:
-                        conn.wf_out = True
-        if missing:
-            raise ValueError(
-                f"Unrecognised output node {missing}, not in "
-                f"{list(self.nodes)} for {self.full_name}"
-            )
+        # Walk through the graph backwards from the outputs and trim any unnecessary
+        # connections
+        assert not conn_stack
+        for outpt in self.outputs.values():
+            sibling_nodes = self.nodes[outpt.node_name]
+            conns = []
+            for node in sibling_nodes:
+                conns.extend(c for c in node.in_conns if c.target_in == outpt.field)
+            for conn in conns:
+                conn.wf_out = True
+            if not conns:
+                raise RuntimeError(
+                    f"No connections found into {outpt} in '{self.address}' workflow"
+                )
+            conn_stack.extend(conns)
+        while conn_stack:
+            conn = conn_stack.pop()
+            if (
+                conn.include == 0
+            ):  # if included forward from inputs and backwards from outputs
+                conn.include = True
+            sibling_source_nodes = self.nodes[conn.source_name]
+            for source_node in sibling_source_nodes:
+                if (
+                    source_node.include == 0
+                ):  # if included forward from inputs and backwards from outputs
+                    source_node.include = True
+                    conn_stack.extend(source_node.in_conns)
 
         preamble = ""
+        statements = copy(self.parsed_statements)
         # Write out the preamble (e.g. docstring, comments, etc..)
-        while parsed_statements and isinstance(
-            parsed_statements[0],
+        while statements and isinstance(
+            statements[0],
             (DocStringStatement, CommentStatement, ImportStatement),
         ):
-            preamble += str(parsed_statements.pop(0)) + "\n"
+            preamble += str(statements.pop(0)) + "\n"
 
         # Write out the statements to the code string
         code_str = ""
-        for statement in parsed_statements:
+        for statement in statements:
             code_str += str(statement) + "\n"
 
         nested_configs = set()
@@ -474,7 +647,7 @@ class WorkflowConverter:
             self.package.find_and_replace_config_params(code_str, nested_configs)
         )
 
-        inputs_sig = [f"{i}=attrs.NOTHING" for i in input_spec]
+        inputs_sig = [f"{i}=attrs.NOTHING" for i in self.inputs]
 
         # construct code string with modified signature
         signature = (
@@ -484,7 +657,7 @@ class WorkflowConverter:
             signature += f" -> {return_types}"
         code_str = signature + ":\n\n" + preamble + code_str
 
-        if not isinstance(parsed_statements[-1], ReturnStatement):
+        if not isinstance(statements[-1], ReturnStatement):
             code_str += f"\n    return {self.workflow_variable}"
 
         # Format the the code before the find and replace so it is more predictable
@@ -509,6 +682,11 @@ class WorkflowConverter:
 
         return code_str, used_configs
 
+    @cached_property
+    def parsed_statements(self):
+        # Parse the statements in the function body into converter objects and strings
+        return self._parse_statements(self.func_body)
+
     @property
     def test_code(self):
 
@@ -532,6 +710,12 @@ def test_{self.name}():
                 ]
             ),
         )
+
+    def prepare(self):
+        """Prepare workflow for writing by populating all members via parsing the
+        statments within it. It is delayed until all workflow converters are initiated
+        so that they can detect inputs/outputs in each other"""
+        self.parsed_statements
 
     def _parse_statements(self, func_body: str) -> ty.Tuple[
         ty.List[
@@ -587,7 +771,7 @@ def test_{self.name}():
                     )
                 )
             elif WorkflowInitStatement.matches(statement):
-                workflow_init = WorkflowInitStatement.parse(statement)
+                workflow_init = WorkflowInitStatement.parse(statement, self)
                 if workflow_init_index is None:
                     parsed.append(workflow_init)
                 else:
@@ -596,10 +780,7 @@ def test_{self.name}():
                 if workflow_init_index is None:
                     workflow_init_index = i
                 node_converter = AddInterfaceStatement.parse(statement, self)
-                if node_converter.name in self.nodes:
-                    self.nodes[node_converter.name].append(node_converter)
-                else:
-                    self.nodes[node_converter.name] = [node_converter]
+                self._add_node_converter(node_converter)
                 parsed.append(node_converter)
             elif AddNestedWorkflowStatement.matches(
                 statement, self.nested_workflow_symbols
@@ -609,16 +790,8 @@ def test_{self.name}():
                 nested_workflow_converter = AddNestedWorkflowStatement.parse(
                     statement, self
                 )
-                if nested_workflow_converter.name in self.nodes:
-                    self.nodes[nested_workflow_converter.name].append(
-                        nested_workflow_converter
-                    )
-                else:
-                    self.nodes[nested_workflow_converter.name] = [
-                        nested_workflow_converter
-                    ]
+                self._add_node_converter(nested_workflow_converter)
                 parsed.append(nested_workflow_converter)
-
             elif ConnectionStatement.matches(statement, self.workflow_variable):
                 if workflow_init_index is None:
                     workflow_init_index = i
@@ -626,9 +799,22 @@ def test_{self.name}():
                     if not conn_converter.lzouttable:
                         parsed.append(conn_converter)
                     for src_node in self.nodes[conn_converter.source_name]:
-                        src_node.out_conns.append(conn_converter)
+                        if (
+                            src_node.add_output_connection(conn_converter)
+                            and not conn_converter.lzouttable
+                        ):
+                            # Add so it can be set as an output of the workflow
+                            parsed.append(conn_converter)
                     for tgt_node in self.nodes[conn_converter.target_name]:
-                        tgt_node.in_conns.append(conn_converter)
+                        tgt_node.add_input_connection(conn_converter)
+                    if conn_converter.source_name in self.input_nodes:
+                        self.add_input(
+                            conn_converter.source_name, str(conn_converter.source_out)
+                        )
+                    if conn_converter.target_name in self.output_nodes:
+                        self.add_output(
+                            conn_converter.target_name, str(conn_converter.target_in)
+                        )
             elif ReturnStatement.matches(statement):
                 parsed.append(ReturnStatement.parse(statement))
             elif NodeAssignmentStatement.matches(statement, list(self.nodes)):
@@ -640,10 +826,19 @@ def test_{self.name}():
 
         if workflow_init is None:
             raise ValueError(
-                "Did not detect worklow name in statements:\n\n" + "\n".join(statements)
+                "Did not detect worklow initialisation in statements:\n\n"
+                + "\n".join(statements)
             )
 
-        return parsed, workflow_init
+        return parsed
+
+    def _add_node_converter(
+        self, converter: ty.Union[AddInterfaceStatement, AddNestedWorkflowStatement]
+    ):
+        if converter.name in self.nodes:
+            self.nodes[converter.name].append(converter)
+        else:
+            self.nodes[converter.name] = [converter]
 
     def to_output_module_path(self, nipype_module_path: str) -> str:
         """Converts an original Nipype module path to a Pydra module path

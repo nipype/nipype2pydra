@@ -6,7 +6,7 @@ from .imports import (  # noqa: F401
     ExplicitImport,
     from_list_to_imports,
 )
-from .workflow import (  # noqa: F401
+from .workflow_components import (  # noqa: F401
     AddNestedWorkflowStatement,
     AddInterfaceStatement,
     ConnectionStatement,

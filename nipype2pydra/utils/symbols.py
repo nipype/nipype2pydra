@@ -58,9 +58,10 @@ class UsedSymbols:
 
     ALWAYS_OMIT_MODULES = [
         "traits.trait_handlers",  # Old traits module, pre v6.0
-        # "nipype.pipeline",
+        "nipype.pipeline",
         "nipype.logging",
         "nipype.config",
+        "nipype.interfaces.base",
         "nipype.interfaces.utility",
     ]
 
@@ -112,6 +113,7 @@ class UsedSymbols:
         omit_functions: ty.Sequence = DEFAULT_FILTERED_FUNCTIONS,
         omit_classes: ty.Optional[ty.List[ty.Type]] = None,
         omit_modules: ty.Optional[ty.List[str]] = None,
+        always_include: ty.Optional[ty.List[str]] = None,
         translations: ty.Optional[ty.Sequence[ty.Tuple[str, str]]] = None,
         absolute_imports: bool = False,
     ) -> "UsedSymbols":
@@ -141,6 +143,10 @@ class UsedSymbols:
         omit_classes : list[type], optional
             a list of classes (including subclasses) to filter out from the used symbols,
             by default None
+        always_include : list[str], optional
+            a list of module objects (e.g. functions, classes, etc...) to always include
+            in list of used imports, even if they would be normally filtered out by
+            one of the `omit` clauses, by default None
         translations : list[tuple[str, str]], optional
             a list of tuples where the first element is the name of the symbol to be
             replaced and the second element is the name of the symbol to replace it with,
@@ -157,6 +163,8 @@ class UsedSymbols:
             omit_classes = []
         if omit_modules is None:
             omit_modules = []
+        if always_include is None:
+            always_include = []
         if isinstance(module, str):
             module = import_module(module)
         cache_key = (
@@ -168,6 +176,7 @@ class UsedSymbols:
             tuple(omit_functions) if omit_functions else None,
             tuple(omit_classes) if omit_classes else None,
             tuple(omit_modules) if omit_modules else None,
+            tuple(always_include) if always_include else None,
             tuple(translations) if translations else None,
         )
         try:
@@ -267,13 +276,16 @@ class UsedSymbols:
             # Skip if no required symbols are in the import statement
             if not stmt:
                 continue
-            # Filter out Nipype specific modules and the module itself
-            if module_omit_re.match(stmt.module_name):
-                continue
-            # Filter out Nipype specific classes that are relevant in Pydra
-            if omit_classes or omit_functions:
+            # Filter out Nipype-specific objects that aren't relevant in Pydra
+            module_omit = bool(module_omit_re.match(stmt.module_name))
+            if module_omit or omit_classes or omit_functions or omit_constants:
                 to_include = []
                 for imported in stmt.values():
+                    if imported.address in always_include:
+                        to_include.append(imported.local_name)
+                        continue
+                    if module_omit:
+                        continue
                     try:
                         obj = imported.object
                     except ImportError:
@@ -398,6 +410,7 @@ class UsedSymbols:
                     omit_classes=omit_classes,
                     omit_functions=omit_functions,
                     omit_constants=omit_constants,
+                    always_include=always_include,
                 )
                 used.update(used_in_mod, to_be_inlined=collapse_intra_pkg)
             if stmt:

@@ -130,6 +130,7 @@ class BaseHelperConverter:
             omit_modules=self.package.omit_modules,
             omit_functions=self.package.omit_functions,
             omit_constants=self.package.omit_constants,
+            always_include=self.package.all_explicit,
             translations=self.package.all_import_translations,
         )
         used.imports.update(i.to_statement() for i in self.imports)

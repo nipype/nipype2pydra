@@ -1,6 +1,6 @@
 import re
 import attrs
-from .workflow import AddInterfaceStatement
+from .workflow_components import AddInterfaceStatement
 
 
 @attrs.define
@@ -34,7 +34,8 @@ class AddIdentityInterfaceStatement(AddInterfaceStatement):
         fields_str = next(v for n, v in super().arg_name_vals if n == "fields")
         field_names, fields_spec = to_fields_spec(fields_str)
         name_vals = [
-            ("func", f"lambda {', '.join(field_names)}: {', '.join(field_names)}")(
+            ("func", f"lambda {', '.join(field_names)}: {', '.join(field_names)}"),
+            (
                 "input_spec",
                 f"SpecInfo(name='IdentityIn', bases=(BaseSpec,), fields={fields_spec})",
             ),

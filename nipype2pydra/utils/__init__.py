@@ -15,6 +15,7 @@ from .misc import (  # noqa: F401
     multiline_comment,
     replace_undefined,
     from_dict_converter,
+    from_named_dicts_converter,
     str_to_type,
     types_converter,
     INBUILT_NIPYPE_TRAIT_NAMES,

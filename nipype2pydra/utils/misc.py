@@ -456,6 +456,19 @@ def from_dict_converter(
     return converted
 
 
+def from_named_dicts_converter(
+    dct: ty.Optional[ty.Dict[str, ty.Union[T, dict]]],
+    klass: ty.Type[T],
+    allow_none=False,
+) -> ty.Dict[str, T]:
+    converted = {}
+    for name, conv in dct.items() or []:
+        if isinstance(conv, dict):
+            conv = klass(name=name, **conv)
+        converted[name] = conv
+    return converted
+
+
 def str_to_type(type_str: str) -> type:
     """Resolve a string representation of a type into a valid type"""
     if "/" in type_str:

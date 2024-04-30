@@ -295,6 +295,15 @@ class PackageConverter:
     def all_omit_modules(self) -> ty.List[str]:
         return self.omit_modules + ["nipype.interfaces.utility"]
 
+    @property
+    def all_explicit(self):
+        return (
+            list(self.interfaces)
+            + list(self.workflows)
+            + list(self.functions)
+            + list(self.classes)
+        )
+
     @cached_property
     def config_defaults(self) -> ty.Dict[str, ty.Dict[str, str]]:
         all_defaults = {}
@@ -355,6 +364,9 @@ class PackageConverter:
             workflows_to_include = list(self.workflows.values())
 
         nipype_ports = []
+
+        for workflow in tqdm(workflows_to_include, "preparing workflows for writing"):
+            workflow.prepare()
 
         def collect_intra_pkg_objects(used: UsedSymbols, port_nipype: bool = True):
             for _, klass in used.intra_pkg_classes:
@@ -509,6 +521,7 @@ class PackageConverter:
                 omit_modules=self.omit_modules,
                 omit_functions=self.omit_functions,
                 omit_constants=self.omit_constants,
+                always_include=self.all_explicit,
             )
 
             classes = used.local_classes + [
@@ -826,9 +839,9 @@ post_release = "{post_release}"
             if f"\nclass {klass.__name__}(" not in code_str:
                 try:
                     class_converter = self.classes[full_address(klass)]
+                    converter_imports.extend(class_converter.used_symbols.imports)
                 except KeyError:
                     class_converter = ClassConverter.from_object(klass, self)
-                converter_imports.extend(class_converter.used_symbols.imports)
                 code_str += "\n" + class_converter.converted_code + "\n"
 
         if converted_code is not None:
@@ -857,9 +870,9 @@ post_release = "{post_release}"
             if f"\ndef {func.__name__}(" not in code_str:
                 if func.__name__ in self.functions:
                     function_converter = self.functions[full_address(func)]
+                    converter_imports.extend(function_converter.used_symbols.imports)
                 else:
                     function_converter = FunctionConverter.from_object(func, self)
-                converter_imports.extend(function_converter.used_symbols.imports)
                 code_str += "\n" + function_converter.converted_code + "\n"
 
         # Add logger

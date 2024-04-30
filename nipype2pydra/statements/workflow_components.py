@@ -153,20 +153,22 @@ class ConnectionStatement:
                 f'{intf_name}(in_={src}, name="{intf_name}"))\n\n'
             )
             src = f"{self.workflow_variable}.{intf_name}.lzout.out"
+            dynamic_src = True
         else:
             base_task_name = f"{self.source_name}_{self.source_out}_to_{self.target_name}_{self.target_in}"
             if isinstance(self.source_out, VarField):
                 src = f"getattr({self.workflow_variable}.{self.source_name}.lzout, {self.source_out!r})"
+            dynamic_src = False
 
         # Set src lazy field to target input
         if self.wf_out:
-            if self.wf_in:
+            if self.wf_in and not dynamic_src:
                 # Workflow input is passed directly through to the output (because we have omitted the node)
                 # that generated it and taken it as an input to the current node), so we need
                 # to add an "identity" node to pass it through
                 intf_name = f"{base_task_name}_identity"
                 code_str += (
-                    f"\n{self.indent}@pydra.mark.task\n"
+                    f"{self.indent}@pydra.mark.task\n"
                     f"{self.indent}def {intf_name}({self.wf_in_name}: ty.Any) -> ty.Any:\n"
                     f"{self.indent}    return {self.wf_in_name}\n\n"
                     f"{self.indent}{self.workflow_variable}.add("
@@ -270,6 +272,48 @@ class AddInterfaceStatement:
         """To be overridden by sub classes"""
         return self.interface
 
+    def add_input_connection(self, conn: ConnectionStatement):
+        """Adds and input connection to a node, setting as an input of the whole
+        workflow if the connection is to an input node and the workflow is marked as
+        an "interface" to the package
+
+        Parameters
+        ----------
+        conn : ConnectionStatement
+            the connection to add
+
+        Returns
+        -------
+        bool
+            whether the connection is an input of the workflow
+        """
+        self.in_conns.append(conn)
+        if conn.source_name in self.workflow_converter.input_nodes:
+            self.workflow_converter.add_input(conn.source_name, conn.source_out)
+            return True
+        return False
+
+    def add_output_connection(self, conn: ConnectionStatement) -> bool:
+        """Adds and output connection to a node, setting as an output of the whole
+        workflow if the connection is to an output nodeand the workflow is marked as
+        an "interface" to the package
+
+        Parameters
+        ----------
+        conn : ConnectionStatement
+            the connection to add
+
+        Returns
+        -------
+        bool
+            whether the connection is an output of the workflow
+        """
+        self.out_conns.append(conn)
+        if conn.target_name in self.workflow_converter.output_nodes:
+            self.workflow_converter.add_output(conn.target_name, conn.target_in)
+            return True
+        return False
+
     def __str__(self):
         if not self.include:
             return ""
@@ -293,7 +337,7 @@ class AddInterfaceStatement:
             code_str = f"{self.indent}{self.name} = {self.interface}"
             if self.is_factory != "already-initialised":
                 code_str += "(" + ",".join(args) + ")"
-            code_str += f"\n{self.indent}{self.name}.name = {self.name}"
+            code_str += f"\n{self.indent}{self.name}.name = '{self.name}'"
             for conn_arg in conn_args:
                 code_str += f"\n{self.indent}{self.name}.inputs.{conn_arg}"
             code_str += f"\n{self.indent}{self.workflow_variable}.add({self.name})"
@@ -405,7 +449,7 @@ class AddNestedWorkflowStatement:
 
     name: str
     workflow_name: str
-    nested_spec: ty.Optional["WorkflowConverter"]
+    nested_workflow: ty.Optional["WorkflowConverter"]
     indent: str
     args: ty.List[str]
     workflow_converter: "WorkflowConverter" = attrs.field(repr=False)
@@ -421,9 +465,9 @@ class AddNestedWorkflowStatement:
     def __str__(self):
         if not self.include:
             return ""
-        if self.nested_spec:
+        if self.nested_workflow:
             config_params = [
-                f"{n}_{c}={n}_{c}" for n, c in self.nested_spec.used_configs
+                f"{n}_{c}={n}_{c}" for n, c in self.nested_workflow.used_configs
             ]
         else:
             config_params = []
@@ -474,11 +518,58 @@ class AddNestedWorkflowStatement:
         return AddNestedWorkflowStatement(
             name=varname,
             workflow_name=wf_name,
-            nested_spec=workflow_converter.nested_workflows.get(wf_name),
+            nested_workflow=workflow_converter.nested_workflows.get(wf_name),
             args=extract_args(statement)[1],
             indent=indent,
             workflow_converter=workflow_converter,
         )
+
+    def add_input_connection(self, conn: ConnectionStatement) -> bool:
+        """Adds and input connection to a node, setting as an input of the whole
+        workflow if the connection is to an input node and the workflow is marked as
+        an "interface" to the package
+
+        Parameters
+        ----------
+        conn : ConnectionStatement
+            the connection to add
+
+        Returns
+        -------
+        bool
+            whether the connection is an input of the workflow
+        """
+        self.in_conns.append(conn)
+        self.nested_workflow.add_input(conn.target_in.node_name, conn.target_in.varname)
+        if conn.source_name in self.workflow_converter.input_nodes:
+            self.workflow_converter.add_input(conn.source_name, conn.source_out)
+            return True
+        return False
+
+    def add_output_connection(self, conn: ConnectionStatement) -> bool:
+        """Adds and output connection to a node, setting as an output of the whole
+        workflow if the connection is to an output nodeand the workflow is marked as
+        an "interface" to the package
+
+        Parameters
+        ----------
+        conn : ConnectionStatement
+            the connection to add
+
+        Returns
+        -------
+        bool
+            whether the connection is an output of the workflow
+        """
+        self.out_conns.append(conn)
+        if not isinstance(conn.source_out, VarField):
+            self.nested_workflow.add_output(
+                conn.source_out.node_name, conn.source_out.varname
+            )
+        if conn.target_name in self.workflow_converter.output_nodes:
+            self.workflow_converter.add_output(conn.target_name, conn.target_in)
+            return True
+        return False
 
 
 @attrs.define
@@ -552,7 +643,7 @@ class WorkflowInitStatement:
 
     varname: str
     workflow_name: str
-    input_spec: ty.Optional[ty.List[str]] = None
+    workflow_converter: "WorkflowConverter"
 
     match_re = re.compile(
         r"\s+(\w+)\s*=.*\bWorkflow\(.*name\s*=\s*([^,=\)]+)",
@@ -564,23 +655,36 @@ class WorkflowInitStatement:
         return bool(cls.match_re.match(stmt))
 
     @classmethod
-    def parse(cls, statement: str) -> "WorkflowInitStatement":
+    def parse(
+        cls, statement: str, workflow_converter: "WorkflowConverter"
+    ) -> "WorkflowInitStatement":
         match = cls.match_re.match(statement)
         varname, workflow_name = match.groups()
-        return WorkflowInitStatement(varname=varname, workflow_name=workflow_name)
+        return WorkflowInitStatement(
+            varname=varname,
+            workflow_name=workflow_name,
+            workflow_converter=workflow_converter,
+        )
 
     def __str__(self):
-        # Initialise the workflow object
-        if self.input_spec is None:
-            raise RuntimeError(
-                "Workflow input spec not set, cannot initialise workflow object"
-            )
         return (
             f"    {self.varname} = Workflow("
-            f'name={self.workflow_name}, input_spec=["'
-            + '", "'.join(sorted(self.input_spec))
-            + '"], '
-            + ", ".join(f"{i}={i}" for i in sorted(self.input_spec))
+            f"name={self.workflow_name}, input_spec={{"
+            + ", ".join(
+                f"'{i.name}': {i.type}"
+                for i in sorted(
+                    self.workflow_converter.inputs.values(), key=attrgetter("name")
+                )
+            )
+            + "}, output_spec={"
+            + ", ".join(
+                f"'{o.name}': {o.type}"
+                for o in sorted(
+                    self.workflow_converter.outputs.values(), key=attrgetter("name")
+                )
+            )
+            + "}, "
+            + ", ".join(f"{i}={i}" for i in sorted(self.workflow_converter.inputs))
             + ")\n\n"
         )
 
