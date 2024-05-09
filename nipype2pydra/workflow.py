@@ -863,8 +863,6 @@ def test_{self.name}():
         workflow_init = None
         workflow_init_index = None
         assignments = defaultdict(list)
-        scope = []
-        current_indent = None
         for i, statement in enumerate(statements):
             if not statement.strip():
                 continue
@@ -883,7 +881,9 @@ def test_{self.name}():
                 parsed.extend(parsed_imports)
                 parsed_stmt = parsed_imports[-1]
             elif WorkflowInitStatement.matches(statement):
-                parsed_stmt = WorkflowInitStatement.parse(statement, self)
+                workflow_init = parsed_stmt = WorkflowInitStatement.parse(
+                    statement, self
+                )
                 if workflow_init_index is None:
                     parsed.append(parsed_stmt)
                 else:
@@ -905,7 +905,7 @@ def test_{self.name}():
             elif ConnectionStatement.matches(statement, self.workflow_variable):
                 if workflow_init_index is None:
                     workflow_init_index = i
-                conn_stmts = ConnectionStatement.parse(statement, self, scope)
+                conn_stmts = ConnectionStatement.parse(statement, self, assignments)
                 for conn_stmt in conn_stmts:
                     self.connections.append(conn_stmt)
                     if conn_stmt.wf_out or not conn_stmt.lzouttable:
@@ -921,21 +921,12 @@ def test_{self.name}():
                 parsed.append(parsed_stmt)
             elif AssignmentStatement.matches(statement):
                 parsed_stmt = AssignmentStatement.parse(statement)
-                for varname in parsed_stmt.varnames:
-                    assignments[varname].append(parsed_stmt)
-                    scope[-1][varname] = parsed_stmt
+                for varname, value in parsed_stmt.items():
+                    assignments[varname].append(value)
                 parsed.append(parsed_stmt)
             else:  # A statement we don't need to parse in a special way so leave as string
-                parsed_stmt = OtherStatement(statement)
+                parsed_stmt = OtherStatement.parse(statement)
                 parsed.append(parsed_stmt)
-            # Determine whether the scope has changed
-            new_indent = len(parsed_stmt.indent)
-            if new_indent < current_indent:
-                scope.pop()
-            elif new_indent > current_indent:
-                scope.append(default)
-            if new_indent != current_indent:
-                current_indent = new_indent
 
         if workflow_init is None:
             raise ValueError(

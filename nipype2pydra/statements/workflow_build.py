@@ -14,22 +14,36 @@ if ty.TYPE_CHECKING:
 @attrs.define
 class AssignmentStatement:
 
-    varnames: ty.List[str]
-    values: ty.List[str] = attrs.field()
+    indent: str = attrs.field()
+    assignments: ty.Dict[str, str] = attrs.field()
 
-    @values.validator
-    def _values_validator(self, attribute, values):
-        if len(values) != len(self.varnames):
-            raise ValueError(
-                f"Number of values ({len(values)}) does not match number of variables "
-                f"({len(self.varnames)})"
-            )
+    matches_re = re.compile(r"(\s*)(\w[\w\s,]*)\s*=\s*(.*)")
+
+    def __iter__(self):
+        return iter(self.assignments)
+
+    def items(self):
+        return self.assignments.items()
+
+    def keys(self):
+        return self.assignments.keys()
+
+    def values(self):
+        return self.assignments.values()
+
+    def __getitem__(self, name) -> str:
+        return self.assignments[name]
+
+    @classmethod
+    def matches(cls, stmt) -> bool:
+        return bool(cls.matches_re.match(stmt))
 
     @classmethod
     def parse(cls, statement: str) -> "AssignmentStatement":
-        match = re.match(r"([\w\s,]+)\s*=\s*(.*)", statement)
-        varnames = [v.strip() for v in match.group(1).split(",")]
-        value_str = match.group(2)
+        match = cls.matches_re.match(statement)
+        indent = match.group(1)
+        varnames = [v.strip() for v in match.group(2).split(",")]
+        value_str = match.group(3)
         if len(varnames) > 1:
             values = extract_args(
                 "(" + value_str + ")" if not value_str.startswith("(") else value_str
@@ -38,22 +52,43 @@ class AssignmentStatement:
                 values = [value_str + f"[{i}]" for i in range(len(varnames))]
         else:
             values = [value_str]
-        return AssignmentStatement(varnames=varnames, values=values)
+        if len(varnames) != len(values):
+            raise ValueError(
+                f"Number of variables ({len(varnames)}) does not match number of values "
+                f"({len(values)})"
+            )
+        return AssignmentStatement(
+            indent=indent, assignments=dict(zip(varnames, values))
+        )
 
     def __str__(self):
-        return f"{', '.join(self.varnames)} = {', '.join(self.value)}"
+        return f"{self.indent}{', '.join(self.varnames)} = {', '.join(self.value)}"
 
 
 @attrs.define
 class VarField:
 
     varname: str = attrs.field()
+    values: ty.List[AssignmentStatement] = attrs.field()
 
     def __repr__(self):
         return str(self)
 
     def __str__(self):
         return self.varname
+
+    def match_to_workflow(self, workflow: "WorkflowConverter"):
+        for node_and_field in reversed(self.values):
+            match = re.match(r"('|\")(\w+)\.(\w+)\1", node_and_field)
+            if not match:
+                continue
+            node_name, field_name = match.groups()[1:]
+            if node_name in workflow.nodes:
+                return node_name, field_name
+        raise ValueError(
+            f"Could not find node in {workflow.name} that match any "
+            f"of the nodes referenced by for {self.varname}:\n" + "\n".join(self.values)
+        )
 
 
 @attrs.define
@@ -63,7 +98,6 @@ class DynamicField(VarField):
         converter=lambda s: s[1:-1] if s.startswith("'") or s.startswith('"') else s
     )
     callable: ty.Callable = attrs.field()
-    values: ty.List[AssignmentStatement] = attrs.field()
 
     def __repr__(self):
         return f"DelayedVarField({self.varname}, callable={self.callable})"
@@ -82,14 +116,16 @@ class NestedVarField:
         return self.varname
 
 
-def field_converter(field: str) -> ty.Union[str, VarField]:
+def field_converter(
+    field: str, assignments: ty.Dict[str, ty.List[AssignmentStatement]]
+) -> ty.Union[str, VarField]:
     if isinstance(field, DynamicField):
         return field
     match = re.match(r"('|\")?([\w\.]+)\1?", field)
     if not match:
         raise ValueError(f"Could not parse field {field}, unmatched quotes")
     if match.group(1) is None:
-        return VarField(field)
+        return VarField(field, assignments[field])
     else:
         field = match.group(2)
         if "." in field:
@@ -102,8 +138,8 @@ class ConnectionStatement:
 
     source_name: ty.Optional[str]
     target_name: ty.Optional[str]
-    source_out: ty.Union[str, VarField] = attrs.field(converter=field_converter)
-    target_in: ty.Union[str, VarField] = attrs.field(converter=field_converter)
+    source_out: ty.Union[str, VarField] = attrs.field()
+    target_in: ty.Union[str, VarField] = attrs.field()
     indent: str = attrs.field()
     workflow_converter: "WorkflowConverter" = attrs.field(repr=False)
     include: bool = attrs.field(default=False)
@@ -233,7 +269,7 @@ class ConnectionStatement:
         cls,
         statement: str,
         workflow_converter: "WorkflowConverter",
-        scope: ty.List[ty.Dict[str, AssignmentStatement]],
+        assignments: ty.Dict[str, ty.List[AssignmentStatement]],
     ) -> ty.List[Self]:
         match = cls.match_re(workflow_converter.workflow_variable).match(statement)
         indent = match.group(1)
@@ -256,7 +292,11 @@ class ConnectionStatement:
                 pre, args, post = extract_args(out)
                 if args is not None:
                     varname, callable_str = args
-                    out = DynamicField(*args, scope=scope)
+                    out = DynamicField(
+                        varname=varname,
+                        callable=callable_str,
+                        values=assignments[varname],
+                    )
                 if src == workflow_converter.input_node:
                     src = None  # Input node
                 if tgt == workflow_converter.output_node:
@@ -265,8 +305,8 @@ class ConnectionStatement:
                     ConnectionStatement(
                         source_name=src,
                         target_name=tgt,
-                        source_out=out,
-                        target_in=in_,
+                        source_out=field_converter(out, assignments),
+                        target_in=field_converter(in_, assignments),
                         indent=indent,
                         workflow_converter=workflow_converter,
                     )
@@ -574,22 +614,30 @@ class AddNestedWorkflowStatement(AddNodeStatement):
         bool
             whether the connection is an input of the workflow
         """
-        target_name = conn.target_in.node_name
-        target_in = conn.target_in.varname
+        if isinstance(conn.target_in, VarField):
+            target_name, target_in = conn.target_in.match_to_workflow(
+                self.nested_workflow
+            )
+        else:
+            target_name = conn.target_in.node_name
+            target_in = conn.target_in.varname
+        if target_name == self.nested_workflow.input_node:
+            target_name = None
         nested_input = self.nested_workflow.get_input(target_in, node_name=target_name)
         conn.target_in = nested_input.name
         super().add_input_connection(conn)
-        for node in self.nested_workflow.nodes[target_name]:
-            node.add_input_connection(
-                ConnectionStatement(
-                    source_name=None,
-                    source_out=nested_input.name,
-                    target_name=target_name,
-                    target_in=target_in,
-                    indent=conn.indent,
-                    workflow_converter=self.nested_workflow,
+        if target_name:
+            for node in self.nested_workflow.nodes[target_name]:
+                node.add_input_connection(
+                    ConnectionStatement(
+                        source_name=None,
+                        source_out=nested_input.name,
+                        target_name=target_name,
+                        target_in=target_in,
+                        indent=conn.indent,
+                        workflow_converter=self.nested_workflow,
+                    )
                 )
-            )
 
     def add_output_connection(self, conn: ConnectionStatement):
         """Adds and output connection to a node, setting as an output of the whole
@@ -606,24 +654,32 @@ class AddNestedWorkflowStatement(AddNodeStatement):
         bool
             whether the connection is an output of the workflow
         """
-        source_name = conn.source_out.node_name
-        source_out = conn.source_out.varname
+        if isinstance(conn.source_out, VarField):
+            source_name, source_out = conn.source_out.match_to_workflow(
+                self.nested_workflow
+            )
+        else:
+            source_name = conn.source_out.node_name
+            source_out = conn.source_out.varname
+        if source_name == self.nested_workflow.output_node:
+            source_name = None
         nested_output = self.nested_workflow.get_output(
             source_out, node_name=source_name
         )
         conn.source_out = nested_output.name
         super().add_output_connection(conn)
-        for node in self.nested_workflow.nodes[source_name]:
-            node.add_output_connection(
-                ConnectionStatement(
-                    source_name=source_name,
-                    source_out=source_out,
-                    target_name=None,
-                    target_in=nested_output.name,
-                    indent=conn.indent,
-                    workflow_converter=self.nested_workflow,
+        if source_name:
+            for node in self.nested_workflow.nodes[source_name]:
+                node.add_output_connection(
+                    ConnectionStatement(
+                        source_name=source_name,
+                        source_out=source_out,
+                        target_name=None,
+                        target_in=nested_output.name,
+                        indent=conn.indent,
+                        workflow_converter=self.nested_workflow,
+                    )
                 )
-            )
 
 
 @attrs.define
@@ -774,4 +830,4 @@ class OtherStatement:
 
     @classmethod
     def parse(cls, statement: str) -> "OtherStatement":
-        return OtherStatement(re.match(r"(\s*)(.*)", statement).groups())
+        return OtherStatement(*re.match(r"(\s*)(.*)", statement).groups())
