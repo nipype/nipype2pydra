@@ -368,6 +368,9 @@ class PackageConverter:
         for workflow in tqdm(workflows_to_include, "preparing workflows for writing"):
             workflow.prepare()
 
+        for workflow in tqdm(workflows_to_include, "preparing workflow connections"):
+            workflow.prepare_connections()
+
         def collect_intra_pkg_objects(used: UsedSymbols, port_nipype: bool = True):
             for _, klass in used.intra_pkg_classes:
                 address = full_address(klass)

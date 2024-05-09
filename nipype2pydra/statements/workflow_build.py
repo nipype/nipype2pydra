@@ -12,6 +12,39 @@ if ty.TYPE_CHECKING:
 
 
 @attrs.define
+class AssignmentStatement:
+
+    varnames: ty.List[str]
+    values: ty.List[str] = attrs.field()
+
+    @values.validator
+    def _values_validator(self, attribute, values):
+        if len(values) != len(self.varnames):
+            raise ValueError(
+                f"Number of values ({len(values)}) does not match number of variables "
+                f"({len(self.varnames)})"
+            )
+
+    @classmethod
+    def parse(cls, statement: str) -> "AssignmentStatement":
+        match = re.match(r"([\w\s,]+)\s*=\s*(.*)", statement)
+        varnames = [v.strip() for v in match.group(1).split(",")]
+        value_str = match.group(2)
+        if len(varnames) > 1:
+            values = extract_args(
+                "(" + value_str + ")" if not value_str.startswith("(") else value_str
+            )[1]
+            if len(values) == 1:
+                values = [value_str + f"[{i}]" for i in range(len(varnames))]
+        else:
+            values = [value_str]
+        return AssignmentStatement(varnames=varnames, values=values)
+
+    def __str__(self):
+        return f"{', '.join(self.varnames)} = {', '.join(self.value)}"
+
+
+@attrs.define
 class VarField:
 
     varname: str = attrs.field()
@@ -30,6 +63,7 @@ class DynamicField(VarField):
         converter=lambda s: s[1:-1] if s.startswith("'") or s.startswith('"') else s
     )
     callable: ty.Callable = attrs.field()
+    values: ty.List[AssignmentStatement] = attrs.field()
 
     def __repr__(self):
         return f"DelayedVarField({self.varname}, callable={self.callable})"
@@ -66,15 +100,15 @@ def field_converter(field: str) -> ty.Union[str, VarField]:
 @attrs.define
 class ConnectionStatement:
 
-    source_name: str
-    target_name: str
+    source_name: ty.Optional[str]
+    target_name: ty.Optional[str]
     source_out: ty.Union[str, VarField] = attrs.field(converter=field_converter)
     target_in: ty.Union[str, VarField] = attrs.field(converter=field_converter)
     indent: str = attrs.field()
     workflow_converter: "WorkflowConverter" = attrs.field(repr=False)
     include: bool = attrs.field(default=False)
-    wf_in: bool = False
-    wf_out: bool = False
+    # wf_in: bool = False
+    # wf_out: bool = False
 
     @classmethod
     def match_re(cls, workflow_variable: str) -> bool:
@@ -89,11 +123,23 @@ class ConnectionStatement:
 
     @cached_property
     def sources(self):
+        if self.wf_in:
+            return []
         return self.workflow_converter.nodes[self.source_name]
 
     @cached_property
     def targets(self):
+        if self.wf_out:
+            return []
         return self.workflow_converter.nodes[self.target_name]
+
+    @property
+    def wf_in(self):
+        return self.source_name is None
+
+    @property
+    def wf_out(self):
+        return self.target_name is None
 
     @cached_property
     def conditional(self):
@@ -184,7 +230,10 @@ class ConnectionStatement:
 
     @classmethod
     def parse(
-        cls, statement: str, workflow_converter: "WorkflowConverter"
+        cls,
+        statement: str,
+        workflow_converter: "WorkflowConverter",
+        scope: ty.List[ty.Dict[str, AssignmentStatement]],
     ) -> ty.List[Self]:
         match = cls.match_re(workflow_converter.workflow_variable).match(statement)
         indent = match.group(1)
@@ -193,7 +242,7 @@ class ConnectionStatement:
             conns = extract_args(args[0])[1]
         else:
             conns = [args]
-        conn_converters = []
+        conn_stmts = []
         for conn in conns:
             src, tgt, field_conns_str = extract_args(conn)[1]
             if (
@@ -206,8 +255,13 @@ class ConnectionStatement:
                 out, in_ = extract_args(field_conn)[1]
                 pre, args, post = extract_args(out)
                 if args is not None:
-                    out = DynamicField(*args)
-                conn_converters.append(
+                    varname, callable_str = args
+                    out = DynamicField(*args, scope=scope)
+                if src == workflow_converter.input_node:
+                    src = None  # Input node
+                if tgt == workflow_converter.output_node:
+                    tgt = None
+                conn_stmts.append(
                     ConnectionStatement(
                         source_name=src,
                         target_name=tgt,
@@ -217,7 +271,7 @@ class ConnectionStatement:
                         workflow_converter=workflow_converter,
                     )
                 )
-        return conn_converters
+        return conn_stmts
 
 
 @attrs.define
@@ -227,28 +281,77 @@ class IterableStatement:
     variable: str = attrs.field()
 
 
-@attrs.define
-class AddInterfaceStatement:
+@attrs.define(kw_only=True)
+class AddNodeStatement:
 
     name: str
-    interface: str
     args: ty.List[str]
-    iterables: ty.List[IterableStatement]
-    itersource: ty.Optional[str]
     indent: str
     workflow_converter: "WorkflowConverter" = attrs.field(repr=False)
-    splits: ty.List[str] = attrs.field(
-        converter=attrs.converters.default_if_none(factory=list), factory=list
-    )
     in_conns: ty.List[ConnectionStatement] = attrs.field(factory=list)
     out_conns: ty.List[ConnectionStatement] = attrs.field(factory=list)
     include: bool = attrs.field(default=False)
     index: int = attrs.field()
-    is_factory: bool = attrs.field(default=False)
 
     @index.default
     def _index_default(self):
         return len(self.workflow_converter.nodes)
+
+    @cached_property
+    def conditional(self):
+        return len(self.indent) != 4
+
+    @cached_property
+    def workflow_variable(self):
+        return self.workflow_converter.workflow_variable
+
+    def add_input_connection(self, conn: ConnectionStatement):
+        """Adds and input connection to a node, setting as an input of the whole
+        workflow if the connection is to an input node and the workflow is marked as
+        an "interface" to the package
+
+        Parameters
+        ----------
+        conn : ConnectionStatement
+            the connection to add
+
+        Returns
+        -------
+        bool
+            whether the connection is an input of the workflow
+        """
+
+        self.in_conns.append(conn)
+
+    def add_output_connection(self, conn: ConnectionStatement) -> bool:
+        """Adds and output connection to a node, setting as an output of the whole
+        workflow if the connection is to an output nodeand the workflow is marked as
+        an "interface" to the package
+
+        Parameters
+        ----------
+        conn : ConnectionStatement
+            the connection to add
+
+        Returns
+        -------
+        bool
+            whether the connection is an output of the workflow
+        """
+        self.out_conns.append(conn)
+
+
+@attrs.define(kw_only=True)
+class AddInterfaceStatement(AddNodeStatement):
+
+    interface: str
+    iterables: ty.List[IterableStatement]
+    itersource: ty.Optional[str]
+    splits: ty.List[str] = attrs.field(
+        converter=attrs.converters.default_if_none(factory=list), factory=list
+    )
+
+    is_factory: bool = attrs.field(default=False)
 
     @property
     def inputs(self):
@@ -271,48 +374,6 @@ class AddInterfaceStatement:
     def converted_interface(self):
         """To be overridden by sub classes"""
         return self.interface
-
-    def add_input_connection(self, conn: ConnectionStatement):
-        """Adds and input connection to a node, setting as an input of the whole
-        workflow if the connection is to an input node and the workflow is marked as
-        an "interface" to the package
-
-        Parameters
-        ----------
-        conn : ConnectionStatement
-            the connection to add
-
-        Returns
-        -------
-        bool
-            whether the connection is an input of the workflow
-        """
-        self.in_conns.append(conn)
-        if conn.source_name in self.workflow_converter.input_nodes:
-            self.workflow_converter.add_input(conn.source_name, conn.source_out)
-            return True
-        return False
-
-    def add_output_connection(self, conn: ConnectionStatement) -> bool:
-        """Adds and output connection to a node, setting as an output of the whole
-        workflow if the connection is to an output nodeand the workflow is marked as
-        an "interface" to the package
-
-        Parameters
-        ----------
-        conn : ConnectionStatement
-            the connection to add
-
-        Returns
-        -------
-        bool
-            whether the connection is an output of the workflow
-        """
-        self.out_conns.append(conn)
-        if conn.target_name in self.workflow_converter.output_nodes:
-            self.workflow_converter.add_output(conn.target_name, conn.target_in)
-            return True
-        return False
 
     def __str__(self):
         if not self.include:
@@ -366,14 +427,6 @@ class AddInterfaceStatement:
             )
         return code_str
 
-    @cached_property
-    def conditional(self):
-        return len(self.indent) != 4
-
-    @cached_property
-    def workflow_variable(self):
-        return self.workflow_converter.workflow_variable
-
     SIGNATURE = [
         "interface",
         "name",
@@ -396,7 +449,9 @@ class AddInterfaceStatement:
 
     @classmethod
     def parse(
-        cls, statement: str, workflow_converter: "WorkflowConverter"
+        cls,
+        statement: str,
+        workflow_converter: "WorkflowConverter",
     ) -> "AddInterfaceStatement":
         from .utility import UTILITY_CONVERTERS
 
@@ -444,23 +499,11 @@ class AddInterfaceStatement:
         )
 
 
-@attrs.define
-class AddNestedWorkflowStatement:
+@attrs.define(kw_only=True)
+class AddNestedWorkflowStatement(AddNodeStatement):
 
-    name: str
     workflow_name: str
     nested_workflow: ty.Optional["WorkflowConverter"]
-    indent: str
-    args: ty.List[str]
-    workflow_converter: "WorkflowConverter" = attrs.field(repr=False)
-    include: bool = attrs.field(default=False)
-    in_conns: ty.List[ConnectionStatement] = attrs.field(factory=list)
-    out_conns: ty.List[ConnectionStatement] = attrs.field(factory=list)
-    index: int = attrs.field()
-
-    @index.default
-    def _index_default(self):
-        return len(self.workflow_converter.nodes)
 
     def __str__(self):
         if not self.include:
@@ -487,14 +530,6 @@ class AddNestedWorkflowStatement:
             args.append(arg)
         args_str = ", ".join(self.args + config_params + args + [f"name='{self.name}'"])
         return f"{self.indent}{self.workflow_variable}.add({self.workflow_name}({args_str}))"
-
-    @cached_property
-    def conditional(self):
-        return len(self.indent) != 4
-
-    @cached_property
-    def workflow_variable(self):
-        return self.workflow_converter.workflow_variable
 
     @classmethod
     def match_re(cls, workflow_symbols: ty.List[str]):
@@ -524,7 +559,7 @@ class AddNestedWorkflowStatement:
             workflow_converter=workflow_converter,
         )
 
-    def add_input_connection(self, conn: ConnectionStatement) -> bool:
+    def add_input_connection(self, conn: ConnectionStatement):
         """Adds and input connection to a node, setting as an input of the whole
         workflow if the connection is to an input node and the workflow is marked as
         an "interface" to the package
@@ -539,14 +574,24 @@ class AddNestedWorkflowStatement:
         bool
             whether the connection is an input of the workflow
         """
-        self.in_conns.append(conn)
-        self.nested_workflow.add_input(conn.target_in.node_name, conn.target_in.varname)
-        if conn.source_name in self.workflow_converter.input_nodes:
-            self.workflow_converter.add_input(conn.source_name, conn.source_out)
-            return True
-        return False
+        target_name = conn.target_in.node_name
+        target_in = conn.target_in.varname
+        nested_input = self.nested_workflow.get_input(target_in, node_name=target_name)
+        conn.target_in = nested_input.name
+        super().add_input_connection(conn)
+        for node in self.nested_workflow.nodes[target_name]:
+            node.add_input_connection(
+                ConnectionStatement(
+                    source_name=None,
+                    source_out=nested_input.name,
+                    target_name=target_name,
+                    target_in=target_in,
+                    indent=conn.indent,
+                    workflow_converter=self.nested_workflow,
+                )
+            )
 
-    def add_output_connection(self, conn: ConnectionStatement) -> bool:
+    def add_output_connection(self, conn: ConnectionStatement):
         """Adds and output connection to a node, setting as an output of the whole
         workflow if the connection is to an output nodeand the workflow is marked as
         an "interface" to the package
@@ -561,15 +606,24 @@ class AddNestedWorkflowStatement:
         bool
             whether the connection is an output of the workflow
         """
-        self.out_conns.append(conn)
-        if not isinstance(conn.source_out, VarField):
-            self.nested_workflow.add_output(
-                conn.source_out.node_name, conn.source_out.varname
+        source_name = conn.source_out.node_name
+        source_out = conn.source_out.varname
+        nested_output = self.nested_workflow.get_output(
+            source_out, node_name=source_name
+        )
+        conn.source_out = nested_output.name
+        super().add_output_connection(conn)
+        for node in self.nested_workflow.nodes[source_name]:
+            node.add_output_connection(
+                ConnectionStatement(
+                    source_name=source_name,
+                    source_out=source_out,
+                    target_name=None,
+                    target_in=nested_output.name,
+                    indent=conn.indent,
+                    workflow_converter=self.nested_workflow,
+                )
             )
-        if conn.target_name in self.workflow_converter.output_nodes:
-            self.workflow_converter.add_output(conn.target_name, conn.target_in)
-            return True
-        return False
 
 
 @attrs.define
@@ -707,3 +761,17 @@ def match_kwargs(args: ty.List[str], sig: ty.List[str]) -> ty.Dict[str, str]:
             kwargs[sig[i]] = arg
 
     return kwargs
+
+
+@attrs.define
+class OtherStatement:
+
+    indent: str
+    statement: str
+
+    def __str__(self):
+        return self.indent + self.statement
+
+    @classmethod
+    def parse(cls, statement: str) -> "OtherStatement":
+        return OtherStatement(re.match(r"(\s*)(.*)", statement).groups())

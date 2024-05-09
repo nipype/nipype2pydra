@@ -6,7 +6,7 @@ from .imports import (  # noqa: F401
     ExplicitImport,
     from_list_to_imports,
 )
-from .workflow_components import (  # noqa: F401
+from .workflow_build import (  # noqa: F401
     AddNestedWorkflowStatement,
     AddInterfaceStatement,
     ConnectionStatement,
@@ -14,6 +14,8 @@ from .workflow_components import (  # noqa: F401
     DynamicField,
     NodeAssignmentStatement,
     WorkflowInitStatement,
+    AssignmentStatement,
+    OtherStatement,
 )
 from .misc import DocStringStatement, CommentStatement, ReturnStatement  # noqa: F401
 from .utility import (  # noqa: F401
