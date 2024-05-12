@@ -7,10 +7,12 @@ from copy import copy
 import logging
 from collections import defaultdict
 from types import ModuleType
+import itertools
 from pathlib import Path
 import black.report
 import attrs
 import yaml
+from fileformats.core import from_mime
 from .utils import (
     UsedSymbols,
     split_source_into_statements,
@@ -18,6 +20,7 @@ from .utils import (
     full_address,
     multiline_comment,
     from_named_dicts_converter,
+    unwrap_nested_type,
 )
 from .statements import (
     ImportStatement,
@@ -71,12 +74,13 @@ class WorkflowInterfaceField:
     )
     type: type = attrs.field(
         default=ty.Any,
+        converter=lambda t: from_mime(t) if isinstance(t, str) else t,
         metadata={
             "help": "The type of the input/output of the converted workflow",
         },
     )
-    replaces: ty.List[ty.Tuple[str, str]] = attrs.field(
-        converter=lambda lst: [tuple(t) for t in lst],
+    replaces: ty.Tuple[ty.Tuple[str, str]] = attrs.field(
+        converter=lambda lst: tuple(tuple(t) for t in lst),
         factory=list,
         metadata={
             "help": (
@@ -85,10 +89,31 @@ class WorkflowInterfaceField:
             )
         },
     )
+    export: bool = attrs.field(
+        default=False,
+        metadata={
+            "help": (
+                "whether the input and output should be propagated out from "
+                "nested workflows to the top-level workflow."
+            )
+        },
+    )
 
     @field.default
     def _field_name_default(self):
         return self.name
+
+    def __hash__(self):
+        return hash(
+            (
+                self.name,
+                self.node_name,
+                self.field,
+                self.type,
+                self.replaces,
+                self.export,
+            )
+        )
 
 
 @attrs.define
@@ -96,6 +121,8 @@ class WorkflowInput(WorkflowInterfaceField):
 
     out_conns: ty.List[ConnectionStatement] = attrs.field(
         factory=list,
+        eq=False,
+        hash=False,
         metadata={
             "help": (
                 "The list of connections that are connected from this output, "
@@ -104,12 +131,17 @@ class WorkflowInput(WorkflowInterfaceField):
         },
     )
 
+    def __hash__(self):
+        return super().__hash__()
+
 
 @attrs.define
 class WorkflowOutput(WorkflowInterfaceField):
 
     in_conns: ty.List[ConnectionStatement] = attrs.field(
         factory=list,
+        eq=False,
+        hash=False,
         metadata={
             "help": (
                 "The list of connections that are connected to this input, "
@@ -117,6 +149,9 @@ class WorkflowOutput(WorkflowInterfaceField):
             )
         },
     )
+
+    def __hash__(self):
+        return super().__hash__()
 
 
 @attrs.define
@@ -339,6 +374,14 @@ class WorkflowConverter:
     def address(self):
         return f"{self.nipype_module_name}.{self.nipype_name}"
 
+    @property
+    def exported_inputs(self):
+        return (i for i in self.inputs.values() if i.export)
+
+    @property
+    def exported_outputs(self):
+        return (o for o in self.outputs.values() if o.export)
+
     def get_input(
         self, field_name: str, node_name: ty.Optional[str] = None
     ) -> WorkflowInput:
@@ -376,7 +419,7 @@ class WorkflowConverter:
             outpt = WorkflowOutput(
                 name=outpt_name, field=field_name, node_name=node_name
             )
-            self.outputs[outpt_name] = self._input_mapping[(node_name, field_name)] = (
+            self.outputs[outpt_name] = self._output_mapping[(node_name, field_name)] = (
                 outpt
             )
             return outpt
@@ -531,6 +574,14 @@ class WorkflowConverter:
         return self._converted_code[0]
 
     @cached_property
+    def input_output_imports(self) -> ty.List[ImportStatement]:
+        nonstd_types = self._converted_code[2]
+        stmts = []
+        for tp in itertools.chain(*(unwrap_nested_type(t) for t in nonstd_types)):
+            stmts.append(ImportStatement.from_object(tp))
+        return ImportStatement.collate(stmts)
+
+    @cached_property
     def inline_imports(self) -> ty.List[str]:
         return [s for s in self.converted_code if isinstance(s, ImportStatement)]
 
@@ -562,6 +613,15 @@ class WorkflowConverter:
         """Returns the symbols that are used in the body of the workflow that are also
         workflows"""
         return list(self.nested_workflows) + self.external_nested_workflows
+
+    @cached_property
+    def nested_workflow_statements(self) -> ty.List[AddNestedWorkflowStatement]:
+        """Returns the statements in the workflow that are AddNestedWorkflowStatements"""
+        return [
+            stmt
+            for stmt in self.parsed_statements
+            if isinstance(stmt, AddNestedWorkflowStatement)
+        ]
 
     def write(
         self,
@@ -624,6 +684,7 @@ class WorkflowConverter:
             module_name=self.output_module,
             converted_code=code_str,
             used=used,
+            additional_imports=self.input_output_imports,
         )
 
         self.package.write_pkg_inits(
@@ -653,6 +714,7 @@ class WorkflowConverter:
             ),
             converted_code=self.test_code,
             used=self.test_used,
+            additional_imports=self.input_output_imports,
         )
 
         conftest_fspath = test_module_fspath.parent / "conftest.py"
@@ -679,26 +741,42 @@ class WorkflowConverter:
         declaration, func_args, post = extract_args(self.func_src)
         return_types = post[1:].split(":", 1)[0]  # Get the return type
 
+        nonstd_types = set()
+
+        def add_nonstd_types(tp):
+            if ty.get_origin(tp) in (list, ty.Union):
+                for tp_arg in ty.get_args(tp):
+                    add_nonstd_types(tp_arg)
+            elif tp.__module__ not in ["builtins", "pathlib", "typing"]:
+                nonstd_types.add(tp)
+
         # Walk through the DAG and include all nodes and connections that are connected to
         # the input nodes and their connections up until the output nodes
         conn_stack: ty.List[ConnectionStatement] = []
+
         for inpt in self.inputs.values():
             conn_stack.extend(inpt.out_conns)
+            add_nonstd_types(inpt.type)
+
         while conn_stack:
             conn = conn_stack.pop()
             # Will only be included if connected from inputs to outputs, still coerces to
             # false but
             conn.include = 0
-            sibling_target_nodes = self.nodes[conn.target_name]
-            for target_node in sibling_target_nodes:
-                target_node.include = 0
-                conn_stack.extend(target_node.out_conns)
+            if conn.target_name:
+                sibling_target_nodes = self.nodes[conn.target_name]
+                for target_node in sibling_target_nodes:
+                    target_node.include = 0
+                    conn_stack.extend(target_node.out_conns)
 
         # Walk through the graph backwards from the outputs and trim any unnecessary
         # connections
         assert not conn_stack
         for outpt in self.outputs.values():
             conn_stack.extend(outpt.in_conns)
+            add_nonstd_types(outpt.type)
+
+        nonstd_types.discard(ty.Any)
 
         while conn_stack:
             conn = conn_stack.pop()
@@ -706,13 +784,14 @@ class WorkflowConverter:
                 conn.include == 0
             ):  # if included forward from inputs and backwards from outputs
                 conn.include = True
-            sibling_source_nodes = self.nodes[conn.source_name]
-            for source_node in sibling_source_nodes:
-                if (
-                    source_node.include == 0
-                ):  # if included forward from inputs and backwards from outputs
-                    source_node.include = True
-                    conn_stack.extend(source_node.in_conns)
+            if conn.source_name:
+                sibling_source_nodes = self.nodes[conn.source_name]
+                for source_node in sibling_source_nodes:
+                    if (
+                        source_node.include == 0
+                    ):  # if included forward from inputs and backwards from outputs
+                        source_node.include = True
+                        conn_stack.extend(source_node.in_conns)
 
         preamble = ""
         statements = copy(self.parsed_statements)
@@ -769,7 +848,7 @@ class WorkflowConverter:
         for find, replace in self.find_replace:
             code_str = re.sub(find, replace, code_str, flags=re.MULTILINE | re.DOTALL)
 
-        return code_str, used_configs
+        return code_str, used_configs, nonstd_types
 
     @cached_property
     def parsed_statements(self):
@@ -810,8 +889,48 @@ def test_{self.name}():
         """Prepare workflow connections by assigning all connections to inputs and outputs
         of each node statement, inputs and outputs of the workflow are also assigned"""
         self.prepare()
+        # Ensure that nested workflows are prepared first
         for nested_workflow in self.nested_workflows.values():
-            nested_workflow.prepare()
+            nested_workflow.prepare_connections()
+        # Propagate exported inputs and outputs to the top-level workflow
+        for node_name, nodes in self.nodes.items():
+            exported_inputs = set()
+            exported_outputs = set()
+            for node in nodes:
+                if isinstance(node, AddNestedWorkflowStatement):
+                    exported_inputs.update(
+                        (i.name, self.get_input(i.name, node_name))
+                        for i in node.nested_workflow.exported_inputs
+                    )
+                    exported_outputs.update(
+                        (o.name, self.get_output(o.name, node_name))
+                        for o in node.nested_workflow.exported_outputs
+                    )
+            for inpt_name, exp_inpt in exported_inputs:
+                exp_inpt.export = True
+                self.connections.append(
+                    ConnectionStatement(
+                        indent="    ",
+                        source_name=None,
+                        source_out=exp_inpt.name,
+                        target_name=node_name,
+                        target_in=inpt_name,
+                        workflow_converter=self,
+                    )
+                )
+            for outpt_name, exp_outpt in exported_outputs:
+                exp_outpt.export = True
+                conn_stmt = ConnectionStatement(
+                    indent="    ",
+                    source_name=node_name,
+                    source_out=outpt_name,
+                    target_name=None,
+                    target_in=exp_outpt.name,
+                    workflow_converter=self,
+                )
+                self.connections.append(conn_stmt)
+                # append to parsed statements so set_output can be set
+                self.parsed_statements.append(conn_stmt)
         for conn in self.connections:
             if conn.wf_in:
                 self.get_input(conn.source_out).out_conns.append(conn)
@@ -933,6 +1052,11 @@ def test_{self.name}():
                 "Did not detect worklow initialisation in statements:\n\n"
                 + "\n".join(statements)
             )
+
+        # Pop return statement so that other statements can be appended if necessary.
+        # An explicit return statement will be added before it is written to file
+        if isinstance(parsed[-1], ReturnStatement):
+            parsed.pop()
 
         return parsed
 

@@ -18,6 +18,7 @@ from .misc import (  # noqa: F401
     from_named_dicts_converter,
     str_to_type,
     types_converter,
+    unwrap_nested_type,
     INBUILT_NIPYPE_TRAIT_NAMES,
 )
 from .symbols import (  # noqa: F401

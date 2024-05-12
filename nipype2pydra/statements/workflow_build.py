@@ -17,7 +17,9 @@ class AssignmentStatement:
     indent: str = attrs.field()
     assignments: ty.Dict[str, str] = attrs.field()
 
-    matches_re = re.compile(r"(\s*)(\w[\w\s,]*)\s*=\s*(.*)")
+    matches_re = re.compile(
+        r"(\s*)(\w[\w\s,]*)\s*=\s*(.*)$", flags=re.MULTILINE | re.DOTALL
+    )
 
     def __iter__(self):
         return iter(self.assignments)
@@ -62,7 +64,7 @@ class AssignmentStatement:
         )
 
     def __str__(self):
-        return f"{self.indent}{', '.join(self.varnames)} = {', '.join(self.value)}"
+        return f"{self.indent}{', '.join(self.keys())} = {', '.join(self.values())}"
 
 
 @attrs.define
@@ -171,11 +173,17 @@ class ConnectionStatement:
 
     @property
     def wf_in(self):
-        return self.source_name is None
+        return self.source_name is None or (
+            (self.target_name, str(self.target_in))
+            in self.workflow_converter._input_mapping
+        )
 
     @property
     def wf_out(self):
-        return self.target_name is None
+        return self.target_name is None or (
+            (self.source_name, str(self.source_out))
+            in self.workflow_converter._output_mapping
+        )
 
     @cached_property
     def conditional(self):
@@ -200,12 +208,12 @@ class ConnectionStatement:
             raise ValueError(
                 f"Cannot get wf_in_name for {self} as it is not a workflow input"
             )
-        source_out_name = (
-            self.source_out
-            if not isinstance(self.source_out, DynamicField)
-            else self.source_out.varname
-        )
-        return self.workflow_converter.input_name(self.source_name, source_out_name)
+        # source_out_name = (
+        #     self.source_out
+        #     if not isinstance(self.source_out, DynamicField)
+        #     else self.source_out.varname
+        # )
+        return self.workflow_converter.get_input(self.source_out, self.source_name).name
 
     @property
     def wf_out_name(self):
@@ -213,15 +221,15 @@ class ConnectionStatement:
             raise ValueError(
                 f"Cannot get wf_out_name for {self} as it is not a workflow output"
             )
-        return self.workflow_converter.output_name(self.target_name, self.target_in)
+        return self.workflow_converter.get_output(self.target_in, self.target_name).name
 
     def __str__(self):
         if not self.include:
-            return ""
+            return f"{self.indent}pass\n" if self.conditional else ""
         code_str = ""
         # Get source lazy-field
         if self.wf_in:
-            src = f"{self.workflow_variable}.lzin.{self.wf_in_name}"
+            src = f"{self.workflow_variable}.lzin.{self.source_out}"
         else:
             src = f"{self.workflow_variable}.{self.source_name}.lzout.{self.source_out}"
         if isinstance(self.source_out, DynamicField):
@@ -257,7 +265,7 @@ class ConnectionStatement:
                     f'{intf_name}({self.wf_in_name}={src}, name="{intf_name}"))\n\n'
                 )
                 src = f"{self.workflow_variable}.{intf_name}.lzout.out"
-            code_str += f"{self.indent}{self.workflow_variable}.set_output([({self.wf_out_name!r}, {src})])"
+            code_str += f"{self.indent}{self.workflow_variable}.set_output([({self.target_in!r}, {src})])"
         elif isinstance(self.target_in, VarField):
             code_str += f"{self.indent}setattr({self.workflow_variable}.{self.target_name}.inputs, {self.target_in}, {src})"
         else:
@@ -417,7 +425,7 @@ class AddInterfaceStatement(AddNodeStatement):
 
     def __str__(self):
         if not self.include:
-            return ""
+            return f"{self.indent}pass\n" if self.conditional else ""
         args = ["=".join(a) for a in self.arg_name_vals]
         conn_args = []
         for conn in sorted(self.in_conns, key=attrgetter("target_in")):
@@ -425,7 +433,7 @@ class AddInterfaceStatement(AddNodeStatement):
                 continue
             if conn.wf_in:
                 arg = (
-                    f"{conn.target_in}={self.workflow_variable}.lzin.{conn.wf_in_name}"
+                    f"{conn.target_in}={self.workflow_variable}.lzin.{conn.source_out}"
                 )
             else:
                 arg = (
@@ -547,7 +555,7 @@ class AddNestedWorkflowStatement(AddNodeStatement):
 
     def __str__(self):
         if not self.include:
-            return ""
+            return f"{self.indent}pass\n" if self.conditional else ""
         if self.nested_workflow:
             config_params = [
                 f"{n}_{c}={n}_{c}" for n, c in self.nested_workflow.used_configs
@@ -618,26 +626,31 @@ class AddNestedWorkflowStatement(AddNodeStatement):
             target_name, target_in = conn.target_in.match_to_workflow(
                 self.nested_workflow
             )
-        else:
+        elif isinstance(conn.target_in, NestedVarField):
             target_name = conn.target_in.node_name
             target_in = conn.target_in.varname
+        else:
+            target_in = conn.target_in
+            target_name = None
         if target_name == self.nested_workflow.input_node:
             target_name = None
         nested_input = self.nested_workflow.get_input(target_in, node_name=target_name)
         conn.target_in = nested_input.name
         super().add_input_connection(conn)
         if target_name:
+            # If not connected to the input node, add connections from the nested
+            # workflow input to the target node
             for node in self.nested_workflow.nodes[target_name]:
-                node.add_input_connection(
-                    ConnectionStatement(
-                        source_name=None,
-                        source_out=nested_input.name,
-                        target_name=target_name,
-                        target_in=target_in,
-                        indent=conn.indent,
-                        workflow_converter=self.nested_workflow,
-                    )
+                node_conn = ConnectionStatement(
+                    source_name=None,
+                    source_out=nested_input.name,
+                    target_name=target_name,
+                    target_in=target_in,
+                    indent=conn.indent,
+                    workflow_converter=self.nested_workflow,
                 )
+                self.nested_workflow.connections.append(node_conn)
+                node.add_input_connection(node_conn)
 
     def add_output_connection(self, conn: ConnectionStatement):
         """Adds and output connection to a node, setting as an output of the whole
@@ -658,9 +671,12 @@ class AddNestedWorkflowStatement(AddNodeStatement):
             source_name, source_out = conn.source_out.match_to_workflow(
                 self.nested_workflow
             )
-        else:
+        elif isinstance(conn.source_out, NestedVarField):
             source_name = conn.source_out.node_name
             source_out = conn.source_out.varname
+        else:
+            source_out = conn.source_out
+            source_name = None
         if source_name == self.nested_workflow.output_node:
             source_name = None
         nested_output = self.nested_workflow.get_output(
@@ -669,17 +685,19 @@ class AddNestedWorkflowStatement(AddNodeStatement):
         conn.source_out = nested_output.name
         super().add_output_connection(conn)
         if source_name:
+            # If not the output node, add connections to the nested workflow output
+            # from the source node
             for node in self.nested_workflow.nodes[source_name]:
-                node.add_output_connection(
-                    ConnectionStatement(
-                        source_name=source_name,
-                        source_out=source_out,
-                        target_name=None,
-                        target_in=nested_output.name,
-                        indent=conn.indent,
-                        workflow_converter=self.nested_workflow,
-                    )
+                node_conn = ConnectionStatement(
+                    source_name=source_name,
+                    source_out=source_out,
+                    target_name=None,
+                    target_in=nested_output.name,
+                    indent=conn.indent,
+                    workflow_converter=self.nested_workflow,
                 )
+                self.nested_workflow.connections.append(node_conn)
+                node.add_output_connection(node_conn)
 
 
 @attrs.define
@@ -698,11 +716,11 @@ class NodeAssignmentStatement:
         node_name = node.name
         workflow_variable = self.nodes[0].workflow_variable
         if self.is_workflow:
-            nested_wf = node.nested_spec
+            nested_wf = node.nested_workflow
             parts = self.attribute.split(".")
             nested_node_name = parts[2]
             attribute_name = parts[3]
-            target_in = nested_wf.input_name(nested_node_name, attribute_name)
+            target_in = nested_wf.get_input(attribute_name, nested_node_name).name
             attribute = ".".join(parts[:2] + [target_in] + parts[4:])
             workflow_variable = self.nodes[0].workflow_variable
             assert (n.workflow_variable == workflow_variable for n in self.nodes)
@@ -781,14 +799,14 @@ class WorkflowInitStatement:
             f"    {self.varname} = Workflow("
             f"name={self.workflow_name}, input_spec={{"
             + ", ".join(
-                f"'{i.name}': {i.type}"
+                f"'{i.name}': {i.type.__name__}"
                 for i in sorted(
                     self.workflow_converter.inputs.values(), key=attrgetter("name")
                 )
             )
             + "}, output_spec={"
             + ", ".join(
-                f"'{o.name}': {o.type}"
+                f"'{o.name}': {o.type.__name__}"
                 for o in sorted(
                     self.workflow_converter.outputs.values(), key=attrgetter("name")
                 )
@@ -830,4 +848,6 @@ class OtherStatement:
 
     @classmethod
     def parse(cls, statement: str) -> "OtherStatement":
-        return OtherStatement(*re.match(r"(\s*)(.*)", statement).groups())
+        return OtherStatement(
+            *re.match(r"(\s*)(.*)$", statement, flags=re.MULTILINE | re.DOTALL).groups()
+        )

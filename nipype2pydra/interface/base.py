@@ -23,6 +23,7 @@ from ..utils import (
     UsedSymbols,
     types_converter,
     from_dict_converter,
+    unwrap_nested_type,
 )
 from ..statements import (
     ImportStatement,
@@ -30,7 +31,6 @@ from ..statements import (
     ExplicitImport,
     from_list_to_imports,
 )
-from fileformats.core.mixin import WithClassifiers
 from fileformats.generic import File
 import nipype2pydra.package
 
@@ -754,14 +754,6 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
                         if not stmt:
                             continue
                     stmts.append(stmt)
-
-        def unwrap_nested_type(t: type) -> ty.List[type]:
-            if issubclass(t, WithClassifiers) and t.is_classified:
-                unwrapped = [t.unclassified]
-                for c in t.classifiers:
-                    unwrapped.extend(unwrap_nested_type(c))
-                return unwrapped
-            return [t]
 
         for tp in itertools.chain(*(unwrap_nested_type(t) for t in nonstd_types)):
             stmts.append(ImportStatement.from_object(tp))

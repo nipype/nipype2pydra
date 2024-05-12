@@ -9,6 +9,7 @@ import inspect
 from contextlib import contextmanager
 from pathlib import Path
 from fileformats.core import FileSet, from_mime
+from fileformats.core.mixin import WithClassifiers
 from ..exceptions import (
     UnmatchedParensException,
     UnmatchedQuoteException,
@@ -518,3 +519,12 @@ def types_converter(types: ty.Dict[str, ty.Union[str, type]]) -> ty.Dict[str, ty
             tp = str_to_type(tp_or_str)
         converted[name] = tp
     return converted
+
+
+def unwrap_nested_type(t: type) -> ty.List[type]:
+    if issubclass(t, WithClassifiers) and t.is_classified:
+        unwrapped = [t.unclassified]
+        for c in t.classifiers:
+            unwrapped.extend(unwrap_nested_type(c))
+        return unwrapped
+    return [t]

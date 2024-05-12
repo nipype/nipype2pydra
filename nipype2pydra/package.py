@@ -803,10 +803,14 @@ post_release = "{post_release}"
         converted_code: ty.Optional[str] = None,
         find_replace: ty.Optional[ty.List[ty.Tuple[str, str]]] = None,
         inline_intra_pkg: bool = False,
+        additional_imports: ty.Optional[ty.List[ImportStatement]] = None,
     ):
         """Writes the given imports, constants, classes, and functions to the file at the given path,
         merging with existing code if it exists"""
         from .helpers import FunctionConverter, ClassConverter
+
+        if additional_imports is None:
+            additional_imports = []
 
         if find_replace is None:
             find_replace = self.find_replace
@@ -936,6 +940,7 @@ post_release = "{post_release}"
             + converter_imports
             + [i for i in used.imports if not i.indent]
             + GENERIC_PYDRA_IMPORTS
+            + additional_imports
         )
 
         if module_fspath.name != "__init__.py":
