@@ -2,6 +2,7 @@ from functools import cached_property
 import re
 import typing as ty
 import inspect
+import logging
 from operator import attrgetter
 import attrs
 from ..utils import extract_args
@@ -9,6 +10,9 @@ from typing_extensions import Self
 
 if ty.TYPE_CHECKING:
     from ..workflow import WorkflowConverter
+
+
+logger = logging.getLogger(__name__)
 
 
 @attrs.define
@@ -368,7 +372,28 @@ class AddNodeStatement:
         bool
             whether the connection is an input of the workflow
         """
-
+        # Ensure that there is only 1 non-conditional connection to the input
+        if not conn.conditional:
+            try:
+                prev = next(
+                    c
+                    for c in self.in_conns
+                    if c.target_in == conn.target_in and not c.conditional
+                )
+            except StopIteration:
+                pass
+            else:
+                logger.warning(
+                    "'%s' input field of '%s' node receives multiple connections: "
+                    "replacing %s:%s with %s:%s",
+                    conn.target_in,
+                    self.name,
+                    prev.source_name,
+                    prev.source_out,
+                    conn.source_name,
+                    conn.source_out,
+                )
+                self.in_conns.remove(prev)
         self.in_conns.append(conn)
 
     def add_output_connection(self, conn: ConnectionStatement) -> bool:

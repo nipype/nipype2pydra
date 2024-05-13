@@ -317,7 +317,9 @@ class WorkflowConverter:
     nodes: ty.Dict[str, ty.List[AddInterfaceStatement]] = attrs.field(
         factory=dict, repr=False
     )
-    _unprocessed_connections: ty.List[ConnectionStatement] = attrs.field(factory=list, repr=False)
+    _unprocessed_connections: ty.List[ConnectionStatement] = attrs.field(
+        factory=list, repr=False
+    )
     _input_mapping: ty.Dict[str, WorkflowInput] = attrs.field(
         factory=dict,
         init=False,
