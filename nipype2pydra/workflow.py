@@ -12,7 +12,7 @@ from pathlib import Path
 import black.report
 import attrs
 import yaml
-from fileformats.core import from_mime
+from fileformats.core import from_mime, FileSet
 from .utils import (
     UsedSymbols,
     split_source_into_statements,
@@ -80,7 +80,7 @@ class WorkflowInterfaceField:
         },
     )
     replaces: ty.Tuple[ty.Tuple[str, str]] = attrs.field(
-        converter=lambda lst: tuple(tuple(t) for t in lst),
+        converter=lambda lst: tuple(sorted(tuple(t) for t in lst)),
         factory=list,
         metadata={
             "help": (
@@ -98,6 +98,28 @@ class WorkflowInterfaceField:
             )
         },
     )
+
+    @property
+    def type_repr(self):
+        """Get a representation of the input/output type that can be written to code"""
+
+        def type_repr_(t):
+            args = ty.get_args(t)
+            if args:
+                return (
+                    type_repr_(ty.get_origin(t))
+                    + "["
+                    + ", ".join(type_repr_(a) for a in args)
+                    + "]"
+                )
+            if t in (ty.Any, ty.Union, ty.List, ty.Tuple):
+                return f"ty.{t.__name__}"
+            elif issubclass(t, FileSet):
+                return t.__name__
+            else:
+                return f"{t.__module__}.{t.__name__}"
+
+        return type_repr_(self.type)
 
     @field.default
     def _field_name_default(self):
@@ -295,7 +317,7 @@ class WorkflowConverter:
     nodes: ty.Dict[str, ty.List[AddInterfaceStatement]] = attrs.field(
         factory=dict, repr=False
     )
-    connections: ty.List[ConnectionStatement] = attrs.field(factory=list, repr=False)
+    _unprocessed_connections: ty.List[ConnectionStatement] = attrs.field(factory=list, repr=False)
     _input_mapping: ty.Dict[str, WorkflowInput] = attrs.field(
         factory=dict,
         init=False,
@@ -483,73 +505,73 @@ class WorkflowConverter:
         """Add a connection to an input of the workflow, adding the input if not present"""
         self._add_output_conn(out_conn, "from")
 
-    def _add_input_conn(self, conn: ConnectionStatement, direction: str = "in"):
-        """Add an incoming connection to an input of the workflow, adding the input
-        if not present"""
-        if direction == "in":
-            node_name = conn.target_name
-            field_name = str(conn.target_in)
-        else:
-            node_name = conn.source_name
-            field_name = str(conn.source_out)
-        try:
-            inpt = self._input_mapping[(node_name, field_name)]
-        except KeyError:
-            if node_name == self.input_node:
-                inpt = WorkflowInput(
-                    name=field_name,
-                    node_name=self.input_node,
-                    field=field_name,
-                )
-            elif direction == "in":
-                name = conn.source_out
-                if conn.source_name != conn.workflow_converter.input_node:
-                    name = f"{conn.source_name}_{name}"
-                inpt = WorkflowInput(
-                    name=name,
-                    node_name=self.input_node,
-                    field=field_name,
-                )
-            else:
-                raise KeyError(
-                    f"Could not find input corresponding to '{field_name}' field in "
-                    f"'{conn.target_name}' node in '{self.name}' workflow"
-                )
-            self._input_mapping[(node_name, field_name)] = inpt
-            self.inputs[field_name] = inpt
+    # def _add_input_conn(self, conn: ConnectionStatement, direction: str = "in"):
+    #     """Add an incoming connection to an input of the workflow, adding the input
+    #     if not present"""
+    #     if direction == "in":
+    #         node_name = conn.target_name
+    #         field_name = str(conn.target_in)
+    #     else:
+    #         node_name = conn.source_name
+    #         field_name = str(conn.source_out)
+    #     try:
+    #         inpt = self._input_mapping[(node_name, field_name)]
+    #     except KeyError:
+    #         if node_name == self.input_node:
+    #             inpt = WorkflowInput(
+    #                 name=field_name,
+    #                 node_name=self.input_node,
+    #                 field=field_name,
+    #             )
+    #         elif direction == "in":
+    #             name = conn.source_out
+    #             if conn.source_name != conn.workflow_converter.input_node:
+    #                 name = f"{conn.source_name}_{name}"
+    #             inpt = WorkflowInput(
+    #                 name=name,
+    #                 node_name=self.input_node,
+    #                 field=field_name,
+    #             )
+    #         else:
+    #             raise KeyError(
+    #                 f"Could not find input corresponding to '{field_name}' field in "
+    #                 f"'{conn.target_name}' node in '{self.name}' workflow"
+    #             )
+    #         self._input_mapping[(node_name, field_name)] = inpt
+    #         self.inputs[field_name] = inpt
 
-        inpt.in_conns.append(conn)
+    #     inpt.in_conns.append(conn)
 
-    def _add_output_conn(self, conn: ConnectionStatement, direction="in"):
-        if direction == "from":
-            node_name = conn.source_name
-            field_name = str(conn.source_out)
-        else:
-            node_name = conn.target_name
-            field_name = str(conn.target_in)
-        try:
-            outpt = self._output_mapping[(node_name, field_name)]
-        except KeyError:
-            if node_name == self.output_node:
-                outpt = WorkflowOutput(
-                    name=field_name,
-                    node_name=self.output_node,
-                    field=field_name,
-                )
-            elif direction == "out":
-                outpt = WorkflowOutput(
-                    name=field_name,
-                    node_name=self.output_node,
-                    field=field_name,
-                )
-            else:
-                raise KeyError(
-                    f"Could not foutd output correspondoutg to '{field_name}' field out "
-                    f"'{conn.target_name}' node out '{self.name}' workflow"
-                )
-            self._output_mapping[(node_name, field_name)] = outpt
-            self.outputs[field_name] = outpt
-        outpt.out_conns.append(conn)
+    # def _add_output_conn(self, conn: ConnectionStatement, direction="in"):
+    #     if direction == "from":
+    #         node_name = conn.source_name
+    #         field_name = str(conn.source_out)
+    #     else:
+    #         node_name = conn.target_name
+    #         field_name = str(conn.target_in)
+    #     try:
+    #         outpt = self._output_mapping[(node_name, field_name)]
+    #     except KeyError:
+    #         if node_name == self.output_node:
+    #             outpt = WorkflowOutput(
+    #                 name=field_name,
+    #                 node_name=self.output_node,
+    #                 field=field_name,
+    #             )
+    #         elif direction == "out":
+    #             outpt = WorkflowOutput(
+    #                 name=field_name,
+    #                 node_name=self.output_node,
+    #                 field=field_name,
+    #             )
+    #         else:
+    #             raise KeyError(
+    #                 f"Could not foutd output correspondoutg to '{field_name}' field out "
+    #                 f"'{conn.target_name}' node out '{self.name}' workflow"
+    #             )
+    #         self._output_mapping[(node_name, field_name)] = outpt
+    #         self.outputs[field_name] = outpt
+    #     outpt.out_conns.append(conn)
 
     @cached_property
     def used_symbols(self) -> UsedSymbols:
@@ -908,7 +930,7 @@ def test_{self.name}():
                     )
             for inpt_name, exp_inpt in exported_inputs:
                 exp_inpt.export = True
-                self.connections.append(
+                self._unprocessed_connections.append(
                     ConnectionStatement(
                         indent="    ",
                         source_name=None,
@@ -928,10 +950,11 @@ def test_{self.name}():
                     target_in=exp_outpt.name,
                     workflow_converter=self,
                 )
-                self.connections.append(conn_stmt)
+                self._unprocessed_connections.append(conn_stmt)
                 # append to parsed statements so set_output can be set
                 self.parsed_statements.append(conn_stmt)
-        for conn in self.connections:
+        while self._unprocessed_connections:
+            conn = self._unprocessed_connections.pop()
             if conn.wf_in:
                 self.get_input(conn.source_out).out_conns.append(conn)
             else:
@@ -1026,7 +1049,7 @@ def test_{self.name}():
                     workflow_init_index = i
                 conn_stmts = ConnectionStatement.parse(statement, self, assignments)
                 for conn_stmt in conn_stmts:
-                    self.connections.append(conn_stmt)
+                    self._unprocessed_connections.append(conn_stmt)
                     if conn_stmt.wf_out or not conn_stmt.lzouttable:
                         parsed.append(conn_stmt)
                 parsed_stmt = conn_stmts[-1]

@@ -265,7 +265,7 @@ class ConnectionStatement:
                     f'{intf_name}({self.wf_in_name}={src}, name="{intf_name}"))\n\n'
                 )
                 src = f"{self.workflow_variable}.{intf_name}.lzout.out"
-            code_str += f"{self.indent}{self.workflow_variable}.set_output([({self.target_in!r}, {src})])"
+            code_str += f"{self.indent}{self.workflow_variable}.set_output([('{self.wf_out_name}', {src})])"
         elif isinstance(self.target_in, VarField):
             code_str += f"{self.indent}setattr({self.workflow_variable}.{self.target_name}.inputs, {self.target_in}, {src})"
         else:
@@ -649,7 +649,7 @@ class AddNestedWorkflowStatement(AddNodeStatement):
                     indent=conn.indent,
                     workflow_converter=self.nested_workflow,
                 )
-                self.nested_workflow.connections.append(node_conn)
+                self.nested_workflow._unprocessed_connections.append(node_conn)
                 node.add_input_connection(node_conn)
 
     def add_output_connection(self, conn: ConnectionStatement):
@@ -696,7 +696,7 @@ class AddNestedWorkflowStatement(AddNodeStatement):
                     indent=conn.indent,
                     workflow_converter=self.nested_workflow,
                 )
-                self.nested_workflow.connections.append(node_conn)
+                self.nested_workflow._unprocessed_connections.append(node_conn)
                 node.add_output_connection(node_conn)
 
 
@@ -799,14 +799,14 @@ class WorkflowInitStatement:
             f"    {self.varname} = Workflow("
             f"name={self.workflow_name}, input_spec={{"
             + ", ".join(
-                f"'{i.name}': {i.type.__name__}"
+                f"'{i.name}': {i.type_repr}"
                 for i in sorted(
                     self.workflow_converter.inputs.values(), key=attrgetter("name")
                 )
             )
             + "}, output_spec={"
             + ", ".join(
-                f"'{o.name}': {o.type.__name__}"
+                f"'{o.name}': {o.type_repr}"
                 for o in sorted(
                     self.workflow_converter.outputs.values(), key=attrgetter("name")
                 )
