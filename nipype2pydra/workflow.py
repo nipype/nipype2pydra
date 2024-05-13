@@ -12,7 +12,7 @@ from pathlib import Path
 import black.report
 import attrs
 import yaml
-from fileformats.core import from_mime, FileSet
+from fileformats.core import from_mime, FileSet, Field
 from .utils import (
     UsedSymbols,
     split_source_into_statements,
@@ -114,6 +114,8 @@ class WorkflowInterfaceField:
                 )
             if t in (ty.Any, ty.Union, ty.List, ty.Tuple):
                 return f"ty.{t.__name__}"
+            elif issubclass(t, Field):
+                return t.primative.__name__
             elif issubclass(t, FileSet):
                 return t.__name__
             else:
@@ -407,7 +409,7 @@ class WorkflowConverter:
         return (o for o in self.outputs.values() if o.export)
 
     def get_input(
-        self, field_name: str, node_name: ty.Optional[str] = None
+        self, field_name: str, node_name: ty.Optional[str] = None, create: bool = False
     ) -> WorkflowInput:
         """
         Returns the name of the input field in the workflow for the given node and field
@@ -416,17 +418,21 @@ class WorkflowConverter:
         try:
             return self._input_mapping[(node_name, field_name)]
         except KeyError:
-            inpt_name = (
-                field_name
-                if node_name is None or node_name == self.input_node
-                else f"{node_name}_{field_name}"
-            )
+            if node_name is None or node_name == self.input_node:
+                inpt_name = field_name
+            elif create:
+                inpt_name = f"{node_name}_{field_name}"
+            else:
+                raise KeyError(
+                    f"Unrecognised output corresponding to {node_name}:{field_name} field, "
+                    "set create=True to auto-create"
+                )
             inpt = WorkflowInput(name=inpt_name, field=field_name, node_name=node_name)
             self.inputs[inpt_name] = self._input_mapping[(node_name, field_name)] = inpt
             return inpt
 
     def get_output(
-        self, field_name: str, node_name: ty.Optional[str] = None
+        self, field_name: str, node_name: ty.Optional[str] = None, create: bool = False
     ) -> WorkflowOutput:
         """
         Returns the name of the input field in the workflow for the given node and field
@@ -435,11 +441,15 @@ class WorkflowConverter:
         try:
             return self._output_mapping[(node_name, field_name)]
         except KeyError:
-            outpt_name = (
-                field_name
-                if node_name is None or node_name == self.input_node
-                else f"{node_name}_{field_name}"
-            )
+            if node_name is None or node_name == self.output_node:
+                outpt_name = field_name
+            elif create:
+                outpt_name = f"{node_name}_{field_name}"
+            else:
+                raise KeyError(
+                    f"Unrecognised output corresponding to {node_name}:{field_name} field, "
+                    "set create=True to auto-create"
+                )
             outpt = WorkflowOutput(
                 name=outpt_name, field=field_name, node_name=node_name
             )
@@ -923,11 +933,11 @@ def test_{self.name}():
             for node in nodes:
                 if isinstance(node, AddNestedWorkflowStatement):
                     exported_inputs.update(
-                        (i.name, self.get_input(i.name, node_name))
+                        (i.name, self.get_input(i.name, node_name, create=True))
                         for i in node.nested_workflow.exported_inputs
                     )
                     exported_outputs.update(
-                        (o.name, self.get_output(o.name, node_name))
+                        (o.name, self.get_output(o.name, node_name, create=True))
                         for o in node.nested_workflow.exported_outputs
                     )
             for inpt_name, exp_inpt in exported_inputs:
@@ -957,16 +967,20 @@ def test_{self.name}():
                 self.parsed_statements.append(conn_stmt)
         while self._unprocessed_connections:
             conn = self._unprocessed_connections.pop()
-            if conn.wf_in:
-                self.get_input(conn.source_out).out_conns.append(conn)
-            else:
+            try:
+                inpt = self.get_input(conn.source_out, node_name=conn.source_name)
+            except KeyError:
                 for src_node in self.nodes[conn.source_name]:
                     src_node.add_output_connection(conn)
-            if conn.wf_out:
-                self.get_output(conn.target_in).in_conns.append(conn)
             else:
+                inpt.out_conns.append(conn)
+            try:
+                outpt = self.get_output(conn.target_in, node_name=conn.target_name)
+            except KeyError:
                 for tgt_node in self.nodes[conn.target_name]:
                     tgt_node.add_input_connection(conn)
+            else:
+                outpt.in_conns.append(conn)
 
     def _parse_statements(self, func_body: str) -> ty.Tuple[
         ty.List[

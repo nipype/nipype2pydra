@@ -177,17 +177,24 @@ class ConnectionStatement:
 
     @property
     def wf_in(self):
-        return self.source_name is None or (
-            (self.target_name, str(self.target_in))
-            in self.workflow_converter._input_mapping
-        )
+        if self.source_name is None:
+            return True
+        for inpt in self.workflow_converter.inputs.values():
+            if self.target_name == inpt.node_name and str(self.target_in) == inpt.field:
+                return True
+        return False
 
     @property
     def wf_out(self):
-        return self.target_name is None or (
-            (self.source_name, str(self.source_out))
-            in self.workflow_converter._output_mapping
-        )
+        if self.target_name is None:
+            return True
+        for output in self.workflow_converter.outputs.values():
+            if (
+                self.source_name == output.node_name
+                and str(self.source_out) == output.field
+            ):
+                return True
+        return False
 
     @cached_property
     def conditional(self):
@@ -212,12 +219,13 @@ class ConnectionStatement:
             raise ValueError(
                 f"Cannot get wf_in_name for {self} as it is not a workflow input"
             )
-        # source_out_name = (
-        #     self.source_out
-        #     if not isinstance(self.source_out, DynamicField)
-        #     else self.source_out.varname
-        # )
-        return self.workflow_converter.get_input(self.source_out, self.source_name).name
+        if self.source_name is None:
+            return (
+                self.source_out
+                if not isinstance(self.source_out, DynamicField)
+                else self.source_out.varname
+            )
+        return self.workflow_converter.get_input(self.target_in, self.target_name).name
 
     @property
     def wf_out_name(self):
@@ -225,11 +233,15 @@ class ConnectionStatement:
             raise ValueError(
                 f"Cannot get wf_out_name for {self} as it is not a workflow output"
             )
-        return self.workflow_converter.get_output(self.target_in, self.target_name).name
+        if self.target_name is None:
+            return self.target_in
+        return self.workflow_converter.get_output(
+            self.source_out, self.source_name
+        ).name
 
     def __str__(self):
         if not self.include:
-            return f"{self.indent}pass\n" if self.conditional else ""
+            return f"{self.indent}pass" if self.conditional else ""
         code_str = ""
         # Get source lazy-field
         if self.wf_in:
@@ -450,7 +462,7 @@ class AddInterfaceStatement(AddNodeStatement):
 
     def __str__(self):
         if not self.include:
-            return f"{self.indent}pass\n" if self.conditional else ""
+            return f"{self.indent}pass" if self.conditional else ""
         args = ["=".join(a) for a in self.arg_name_vals]
         conn_args = []
         for conn in sorted(self.in_conns, key=attrgetter("target_in")):
@@ -580,7 +592,7 @@ class AddNestedWorkflowStatement(AddNodeStatement):
 
     def __str__(self):
         if not self.include:
-            return f"{self.indent}pass\n" if self.conditional else ""
+            return f"{self.indent}pass" if self.conditional else ""
         if self.nested_workflow:
             config_params = [
                 f"{n}_{c}={n}_{c}" for n, c in self.nested_workflow.used_configs
@@ -659,7 +671,9 @@ class AddNestedWorkflowStatement(AddNodeStatement):
             target_name = None
         if target_name == self.nested_workflow.input_node:
             target_name = None
-        nested_input = self.nested_workflow.get_input(target_in, node_name=target_name)
+        nested_input = self.nested_workflow.get_input(
+            target_in, node_name=target_name, create=True
+        )
         conn.target_in = nested_input.name
         super().add_input_connection(conn)
         if target_name:
@@ -705,7 +719,7 @@ class AddNestedWorkflowStatement(AddNodeStatement):
         if source_name == self.nested_workflow.output_node:
             source_name = None
         nested_output = self.nested_workflow.get_output(
-            source_out, node_name=source_name
+            source_out, node_name=source_name, create=True
         )
         conn.source_out = nested_output.name
         super().add_output_connection(conn)
@@ -736,7 +750,7 @@ class NodeAssignmentStatement:
 
     def __str__(self):
         if not any(n.include for n in self.nodes):
-            return ""
+            return f"{self.indent}pass" if self.conditional else ""
         node = self.nodes[0]
         node_name = node.name
         workflow_variable = self.nodes[0].workflow_variable

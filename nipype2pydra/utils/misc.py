@@ -463,7 +463,7 @@ def from_named_dicts_converter(
     allow_none=False,
 ) -> ty.Dict[str, T]:
     converted = {}
-    for name, conv in dct.items() or []:
+    for name, conv in (dct or {}).items():
         if isinstance(conv, dict):
             conv = klass(name=name, **conv)
         converted[name] = conv
