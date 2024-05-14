@@ -60,8 +60,7 @@ class WorkflowInterfaceField:
             "help": "Name of the input/output field in the converted workflow",
         },
     )
-    node_name: str = attrs.field(
-        converter=str,
+    node_name: ty.Optional[str] = attrs.field(
         metadata={
             "help": "The name of the node that the input/output is connected to",
         },
@@ -115,7 +114,7 @@ class WorkflowInterfaceField:
             if t in (ty.Any, ty.Union, ty.List, ty.Tuple):
                 return f"ty.{t.__name__}"
             elif issubclass(t, Field):
-                return t.primative.__name__
+                return t.primitive.__name__
             elif issubclass(t, FileSet):
                 return t.__name__
             else:
@@ -322,40 +321,10 @@ class WorkflowConverter:
     _unprocessed_connections: ty.List[ConnectionStatement] = attrs.field(
         factory=list, repr=False
     )
-    _input_mapping: ty.Dict[str, WorkflowInput] = attrs.field(
-        factory=dict,
-        init=False,
-        repr=False,
-        metadata={
-            "help": (
-                "The mapping of node and field names to the inputs they are connected to"
-            ),
-        },
-    )
-    _output_mapping: ty.Dict[str, WorkflowOutput] = attrs.field(
-        factory=dict,
-        init=False,
-        repr=False,
-        metadata={
-            "help": (
-                "The mapping of node and field names to the inputs they are connected to"
-            ),
-        },
-    )
 
     def __attrs_post_init__(self):
         if self.workflow_variable is None:
             self.workflow_variable = self.workflow_variable_default()
-        for inpt in self.inputs.values():
-            self._input_mapping[(inpt.node_name, inpt.field)] = inpt
-            self._input_mapping.update(
-                {(node_name, field): inpt for node_name, field in inpt.replaces}
-            )
-        for outpt in self.outputs.values():
-            self._output_mapping[(outpt.node_name, outpt.field)] = outpt
-            self._output_mapping.update(
-                {(node_name, field): outpt for node_name, field in outpt.replaces}
-            )
 
     @nipype_module.validator
     def _nipype_module_validator(self, _, value):
@@ -408,55 +377,120 @@ class WorkflowConverter:
     def exported_outputs(self):
         return (o for o in self.outputs.values() if o.export)
 
-    def get_input(
-        self, field_name: str, node_name: ty.Optional[str] = None, create: bool = False
+    def get_input_from_conn(self, conn: ConnectionStatement) -> WorkflowInput:
+        """
+        Returns the name of the input field in the workflow for the given node and field
+        escaped by the prefix of the node if present"""
+        if conn.source_name is None or conn.source_name == self.input_node:
+            return self.make_input(field_name=conn.source_out)
+        elif conn.target_name is None:
+            raise KeyError(
+                f"Could not find output corresponding to '{conn.source_out}' input"
+            )
+        return self.make_input(
+            field_name=conn.target_in, node_name=conn.target_name, input_node_only=True
+        )
+
+    def get_output_from_conn(self, conn: ConnectionStatement) -> WorkflowOutput:
+        """
+        Returns the name of the input field in the workflow for the given node and field
+        escaped by the prefix of the node if present"""
+        if conn.target_name is None or conn.target_name == self.output_node:
+            return self.make_output(field_name=conn.target_in)
+        elif conn.source_name is None:
+            raise KeyError(
+                f"Could not find output corresponding to '{conn.source_out}' input"
+            )
+        return self.make_output(
+            field_name=conn.source_out,
+            node_name=conn.source_name,
+            output_node_only=True,
+        )
+
+    def make_input(
+        self,
+        field_name: str,
+        node_name: ty.Optional[str] = None,
+        input_node_only: bool = False,
     ) -> WorkflowInput:
         """
         Returns the name of the input field in the workflow for the given node and field
         escaped by the prefix of the node if present"""
         field_name = str(field_name)
-        try:
-            return self._input_mapping[(node_name, field_name)]
-        except KeyError:
+        matching = [
+            i
+            for i in self.inputs.values()
+            if i.node_name == node_name and i.field == field_name
+        ]
+        if len(matching) > 1:
+            raise KeyError(
+                f"Multiple inputs found for '{field_name}' field in "
+                f"'{node_name}' node in '{self.name}' workflow"
+            )
+        elif len(matching) == 1:
+            return matching[0]
+        else:
             if node_name is None or node_name == self.input_node:
                 inpt_name = field_name
-            elif create:
-                inpt_name = f"{node_name}_{field_name}"
-            else:
+            elif input_node_only:
                 raise KeyError(
-                    f"Unrecognised output corresponding to {node_name}:{field_name} field, "
-                    "set create=True to auto-create"
+                    f"Could not find input corresponding to '{field_name}' field in "
+                    f"'{node_name}' node in '{self.name}' workflow, set "
+                    "`only_input_node=False` to make an input for any node input"
+                ) from None
+            else:
+                inpt_name = f"{node_name}_{field_name}"
+            try:
+                return self.inputs[inpt_name]
+            except KeyError:
+                inpt = WorkflowInput(
+                    name=inpt_name, field=field_name, node_name=node_name
                 )
-            inpt = WorkflowInput(name=inpt_name, field=field_name, node_name=node_name)
-            self.inputs[inpt_name] = self._input_mapping[(node_name, field_name)] = inpt
-            return inpt
+                self.inputs[inpt_name] = inpt
+                return inpt
 
-    def get_output(
-        self, field_name: str, node_name: ty.Optional[str] = None, create: bool = False
+    def make_output(
+        self,
+        field_name: str,
+        node_name: ty.Optional[str] = None,
+        output_node_only: bool = False,
     ) -> WorkflowOutput:
         """
         Returns the name of the input field in the workflow for the given node and field
         escaped by the prefix of the node if present"""
         field_name = str(field_name)
-        try:
-            return self._output_mapping[(node_name, field_name)]
-        except KeyError:
+        matching = [
+            o
+            for o in self.outputs.values()
+            if o.node_name == node_name and o.field == field_name
+        ]
+        if len(matching) > 1:
+            raise KeyError(
+                f"Multiple outputs found for '{field_name}' field in "
+                f"'{node_name}' node in '{self.name}' workflow: "
+                + ", ".join(str(m) for m in matching)
+            )
+        elif len(matching) == 1:
+            return matching[0]
+        else:
             if node_name is None or node_name == self.output_node:
                 outpt_name = field_name
-            elif create:
-                outpt_name = f"{node_name}_{field_name}"
-            else:
+            elif output_node_only:
                 raise KeyError(
-                    f"Unrecognised output corresponding to {node_name}:{field_name} field, "
-                    "set create=True to auto-create"
+                    f"Could not find output corresponding to '{field_name}' field in "
+                    f"'{node_name}' node in '{self.name}' workflow, set "
+                    "`only_output_node=False` to make an output for any node output"
+                ) from None
+            else:
+                outpt_name = f"{node_name}_{field_name}"
+            try:
+                return self.outputs[outpt_name]
+            except KeyError:
+                outpt = WorkflowOutput(
+                    name=outpt_name, field=field_name, node_name=node_name
                 )
-            outpt = WorkflowOutput(
-                name=outpt_name, field=field_name, node_name=node_name
-            )
-            self.outputs[outpt_name] = self._output_mapping[(node_name, field_name)] = (
-                outpt
-            )
-            return outpt
+                self.outputs[outpt_name] = outpt
+                return outpt
 
     def add_connection_to_input(self, in_conn: ConnectionStatement):
         """Add a in_connection to an input of the workflow, adding the input if not present"""
@@ -933,11 +967,11 @@ def test_{self.name}():
             for node in nodes:
                 if isinstance(node, AddNestedWorkflowStatement):
                     exported_inputs.update(
-                        (i.name, self.get_input(i.name, node_name, create=True))
+                        (i.name, self.make_input(i.name, node_name))
                         for i in node.nested_workflow.exported_inputs
                     )
                     exported_outputs.update(
-                        (o.name, self.get_output(o.name, node_name, create=True))
+                        (o.name, self.make_output(o.name, node_name))
                         for o in node.nested_workflow.exported_outputs
                     )
             for inpt_name, exp_inpt in exported_inputs:
@@ -968,18 +1002,22 @@ def test_{self.name}():
         while self._unprocessed_connections:
             conn = self._unprocessed_connections.pop()
             try:
-                inpt = self.get_input(conn.source_out, node_name=conn.source_name)
+                inpt = self.get_input_from_conn(conn)
             except KeyError:
                 for src_node in self.nodes[conn.source_name]:
                     src_node.add_output_connection(conn)
             else:
+                conn.source_name = None
+                conn.source_out = inpt.name
                 inpt.out_conns.append(conn)
             try:
-                outpt = self.get_output(conn.target_in, node_name=conn.target_name)
+                outpt = self.get_output_from_conn(conn)
             except KeyError:
                 for tgt_node in self.nodes[conn.target_name]:
                     tgt_node.add_input_connection(conn)
             else:
+                conn.target_name = None
+                conn.target_in = outpt.name
                 outpt.in_conns.append(conn)
 
     def _parse_statements(self, func_body: str) -> ty.Tuple[
