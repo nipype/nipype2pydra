@@ -365,10 +365,10 @@ class PackageConverter:
 
         nipype_ports = []
 
-        for workflow in tqdm(workflows_to_include, "preparing workflows for writing"):
+        for workflow in tqdm(workflows_to_include, "parsing workflow statements"):
             workflow.prepare()
 
-        for workflow in tqdm(workflows_to_include, "preparing workflow connections"):
+        for workflow in tqdm(workflows_to_include, "processing workflow connections"):
             workflow.prepare_connections()
 
         def collect_intra_pkg_objects(used: UsedSymbols, port_nipype: bool = True):

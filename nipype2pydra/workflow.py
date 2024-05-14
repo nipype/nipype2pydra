@@ -1056,6 +1056,7 @@ def test_{self.name}():
         statements = split_source_into_statements(func_body)
 
         parsed = []
+        outputs = []
         workflow_init = None
         workflow_init_index = None
         assignments = defaultdict(list)
@@ -1104,7 +1105,15 @@ def test_{self.name}():
                 conn_stmts = ConnectionStatement.parse(statement, self, assignments)
                 for conn_stmt in conn_stmts:
                     self._unprocessed_connections.append(conn_stmt)
-                    if conn_stmt.wf_out or not conn_stmt.lzouttable:
+                    if conn_stmt.wf_out:
+                        if conn_stmt.conditional:
+                            parsed.append(conn_stmt)
+                        else:
+                            outpt = self.get_output_from_conn(conn_stmt)
+                            if outpt not in outputs:
+                                parsed.append(conn_stmt)
+                                outputs.append(outpt)
+                    elif not conn_stmt.lzouttable:
                         parsed.append(conn_stmt)
                 parsed_stmt = conn_stmts[-1]
             elif ReturnStatement.matches(statement):
