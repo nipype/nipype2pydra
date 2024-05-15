@@ -381,6 +381,12 @@ class WorkflowConverter:
         """
         Returns the name of the input field in the workflow for the given node and field
         escaped by the prefix of the node if present"""
+        try:
+            return self.make_input(
+                field_name=conn.target_in, node_name=conn.target_name, input_node_only=None
+            )
+        except KeyError:
+            pass
         if conn.source_name is None or conn.source_name == self.input_node:
             return self.make_input(field_name=conn.source_out)
         elif conn.target_name is None:
@@ -395,6 +401,14 @@ class WorkflowConverter:
         """
         Returns the name of the input field in the workflow for the given node and field
         escaped by the prefix of the node if present"""
+        try:
+            return self.make_output(
+                field_name=conn.source_out,
+                node_name=conn.source_name,
+                output_node_only=None,
+            )
+        except KeyError:
+            pass
         if conn.target_name is None or conn.target_name == self.output_node:
             return self.make_output(field_name=conn.target_in)
         elif conn.source_name is None:
@@ -411,7 +425,7 @@ class WorkflowConverter:
         self,
         field_name: str,
         node_name: ty.Optional[str] = None,
-        input_node_only: bool = False,
+        input_node_only: ty.Optional[bool] = False,
     ) -> WorkflowInput:
         """
         Returns the name of the input field in the workflow for the given node and field
@@ -430,6 +444,8 @@ class WorkflowConverter:
         elif len(matching) == 1:
             return matching[0]
         else:
+            if input_node_only is None:
+                raise KeyError
             if node_name is None or node_name == self.input_node:
                 inpt_name = field_name
             elif input_node_only:
@@ -453,7 +469,7 @@ class WorkflowConverter:
         self,
         field_name: str,
         node_name: ty.Optional[str] = None,
-        output_node_only: bool = False,
+        output_node_only: ty.Optional[bool] = False,
     ) -> WorkflowOutput:
         """
         Returns the name of the input field in the workflow for the given node and field
@@ -473,6 +489,8 @@ class WorkflowConverter:
         elif len(matching) == 1:
             return matching[0]
         else:
+            if output_node_only is None:
+                raise KeyError
             if node_name is None or node_name == self.output_node:
                 outpt_name = field_name
             elif output_node_only:
@@ -1056,7 +1074,7 @@ def test_{self.name}():
         statements = split_source_into_statements(func_body)
 
         parsed = []
-        outputs = []
+        output_names = []
         workflow_init = None
         workflow_init_index = None
         assignments = defaultdict(list)
@@ -1106,13 +1124,13 @@ def test_{self.name}():
                 for conn_stmt in conn_stmts:
                     self._unprocessed_connections.append(conn_stmt)
                     if conn_stmt.wf_out:
+                        output_name = self.get_output_from_conn(conn_stmt).name
+                        conn_stmt.target_in = output_name
                         if conn_stmt.conditional:
                             parsed.append(conn_stmt)
-                        else:
-                            outpt = self.get_output_from_conn(conn_stmt)
-                            if outpt not in outputs:
-                                parsed.append(conn_stmt)
-                                outputs.append(outpt)
+                        elif output_name not in output_names:
+                            parsed.append(conn_stmt)
+                            output_names.append(output_name)
                     elif not conn_stmt.lzouttable:
                         parsed.append(conn_stmt)
                 parsed_stmt = conn_stmts[-1]
