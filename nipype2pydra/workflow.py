@@ -13,6 +13,7 @@ import black.report
 import attrs
 import yaml
 from fileformats.core import from_mime, FileSet, Field
+from fileformats.core.exceptions import FormatRecognitionError
 from .utils import (
     UsedSymbols,
     split_source_into_statements,
@@ -51,6 +52,15 @@ def convert_node_prefixes(
     return {n: v if v is not None else "" for n, v in nodes_it}
 
 
+def convert_type(tp: ty.Union[str, type]) -> type:
+    if not isinstance(tp, str):
+        return tp
+    try:
+        return from_mime(tp)
+    except FormatRecognitionError:
+        return eval(tp)
+
+
 @attrs.define
 class WorkflowInterfaceField:
 
@@ -73,7 +83,7 @@ class WorkflowInterfaceField:
     )
     type: type = attrs.field(
         default=ty.Any,
-        converter=lambda t: from_mime(t) if isinstance(t, str) else t,
+        converter=convert_type,
         metadata={
             "help": "The type of the input/output of the converted workflow",
         },
@@ -117,6 +127,8 @@ class WorkflowInterfaceField:
                 return t.primitive.__name__
             elif issubclass(t, FileSet):
                 return t.__name__
+            elif t.__module__ == "builtins":
+                return t.__name__
             else:
                 return f"{t.__module__}.{t.__name__}"
 
@@ -150,6 +162,18 @@ class WorkflowInput(WorkflowInterfaceField):
             "help": (
                 "The list of connections that are connected from this output, "
                 "populated during parsing"
+            )
+        },
+    )
+
+    include: bool = attrs.field(
+        default=False,
+        eq=False,
+        hash=False,
+        metadata={
+            "help": (
+                "Whether the input is required for the workflow once the unused nodes "
+                "have been filtered out"
             )
         },
     )
@@ -321,6 +345,9 @@ class WorkflowConverter:
     _unprocessed_connections: ty.List[ConnectionStatement] = attrs.field(
         factory=list, repr=False
     )
+    used_inputs: ty.Optional[ty.Set[WorkflowInput]] = attrs.field(
+        default=None, repr=False
+    )
 
     def __attrs_post_init__(self):
         if self.workflow_variable is None:
@@ -383,7 +410,9 @@ class WorkflowConverter:
         escaped by the prefix of the node if present"""
         try:
             return self.make_input(
-                field_name=conn.target_in, node_name=conn.target_name, input_node_only=None
+                field_name=conn.source_out,
+                node_name=conn.source_name,
+                input_node_only=None,
             )
         except KeyError:
             pass
@@ -394,7 +423,7 @@ class WorkflowConverter:
                 f"Could not find output corresponding to '{conn.source_out}' input"
             )
         return self.make_input(
-            field_name=conn.target_in, node_name=conn.target_name, input_node_only=True
+            field_name=conn.source_out, node_name=conn.source_name, input_node_only=True
         )
 
     def get_output_from_conn(self, conn: ConnectionStatement) -> WorkflowOutput:
@@ -437,7 +466,7 @@ class WorkflowConverter:
             if i.node_name == node_name and i.field == field_name
         ]
         if len(matching) > 1:
-            raise KeyError(
+            raise RuntimeError(
                 f"Multiple inputs found for '{field_name}' field in "
                 f"'{node_name}' node in '{self.name}' workflow"
             )
@@ -481,7 +510,7 @@ class WorkflowConverter:
             if o.node_name == node_name and o.field == field_name
         ]
         if len(matching) > 1:
-            raise KeyError(
+            raise RuntimeError(
                 f"Multiple outputs found for '{field_name}' field in "
                 f"'{node_name}' node in '{self.name}' workflow: "
                 + ", ".join(str(m) for m in matching)
@@ -569,74 +598,6 @@ class WorkflowConverter:
         """Add a connection to an input of the workflow, adding the input if not present"""
         self._add_output_conn(out_conn, "from")
 
-    # def _add_input_conn(self, conn: ConnectionStatement, direction: str = "in"):
-    #     """Add an incoming connection to an input of the workflow, adding the input
-    #     if not present"""
-    #     if direction == "in":
-    #         node_name = conn.target_name
-    #         field_name = str(conn.target_in)
-    #     else:
-    #         node_name = conn.source_name
-    #         field_name = str(conn.source_out)
-    #     try:
-    #         inpt = self._input_mapping[(node_name, field_name)]
-    #     except KeyError:
-    #         if node_name == self.input_node:
-    #             inpt = WorkflowInput(
-    #                 name=field_name,
-    #                 node_name=self.input_node,
-    #                 field=field_name,
-    #             )
-    #         elif direction == "in":
-    #             name = conn.source_out
-    #             if conn.source_name != conn.workflow_converter.input_node:
-    #                 name = f"{conn.source_name}_{name}"
-    #             inpt = WorkflowInput(
-    #                 name=name,
-    #                 node_name=self.input_node,
-    #                 field=field_name,
-    #             )
-    #         else:
-    #             raise KeyError(
-    #                 f"Could not find input corresponding to '{field_name}' field in "
-    #                 f"'{conn.target_name}' node in '{self.name}' workflow"
-    #             )
-    #         self._input_mapping[(node_name, field_name)] = inpt
-    #         self.inputs[field_name] = inpt
-
-    #     inpt.in_conns.append(conn)
-
-    # def _add_output_conn(self, conn: ConnectionStatement, direction="in"):
-    #     if direction == "from":
-    #         node_name = conn.source_name
-    #         field_name = str(conn.source_out)
-    #     else:
-    #         node_name = conn.target_name
-    #         field_name = str(conn.target_in)
-    #     try:
-    #         outpt = self._output_mapping[(node_name, field_name)]
-    #     except KeyError:
-    #         if node_name == self.output_node:
-    #             outpt = WorkflowOutput(
-    #                 name=field_name,
-    #                 node_name=self.output_node,
-    #                 field=field_name,
-    #             )
-    #         elif direction == "out":
-    #             outpt = WorkflowOutput(
-    #                 name=field_name,
-    #                 node_name=self.output_node,
-    #                 field=field_name,
-    #             )
-    #         else:
-    #             raise KeyError(
-    #                 f"Could not foutd output correspondoutg to '{field_name}' field out "
-    #                 f"'{conn.target_name}' node out '{self.name}' workflow"
-    #             )
-    #         self._output_mapping[(node_name, field_name)] = outpt
-    #         self.outputs[field_name] = outpt
-    #     outpt.out_conns.append(conn)
-
     @cached_property
     def used_symbols(self) -> UsedSymbols:
         return UsedSymbols.find(
@@ -651,13 +612,16 @@ class WorkflowConverter:
             translations=self.package.all_import_translations,
         )
 
-    @cached_property
+    @property
     def used_configs(self) -> ty.List[str]:
         return self._converted_code[1]
 
-    @cached_property
+    @property
     def converted_code(self) -> ty.List[str]:
-        return self._converted_code[0]
+        try:
+            return self._converted_code[0]
+        except AttributeError as e:
+            raise RuntimeError("caught AttributeError") from e
 
     @cached_property
     def input_output_imports(self) -> ty.List[ImportStatement]:
@@ -666,10 +630,6 @@ class WorkflowConverter:
         for tp in itertools.chain(*(unwrap_nested_type(t) for t in nonstd_types)):
             stmts.append(ImportStatement.from_object(tp))
         return ImportStatement.collate(stmts)
-
-    @cached_property
-    def inline_imports(self) -> ty.List[str]:
-        return [s for s in self.converted_code if isinstance(s, ImportStatement)]
 
     @cached_property
     def func_src(self):
@@ -824,6 +784,10 @@ class WorkflowConverter:
             the names of the used configs
         """
 
+        for nested_workflow in self.nested_workflows.values():
+            # processing nested workflows first so we know which inputs are required
+            nested_workflow._converted_code
+
         declaration, func_args, post = extract_args(self.func_src)
         return_types = post[1:].split(":", 1)[0]  # Get the return type
 
@@ -846,14 +810,26 @@ class WorkflowConverter:
 
         while conn_stack:
             conn = conn_stack.pop()
-            # Will only be included if connected from inputs to outputs, still coerces to
-            # false but
-            conn.include = 0
+            # Will only be included if connected from inputs to outputs. If included
+            # from input->output traversal nodes and conns are flagged as include=None,
+            # because this coerces to False but is differentiable from False when we
+            # come to do the traversal in the other direction
+            conn.include = None
             if conn.target_name:
                 sibling_target_nodes = self.nodes[conn.target_name]
+                exclude = True
                 for target_node in sibling_target_nodes:
-                    target_node.include = 0
-                    conn_stack.extend(target_node.out_conns)
+                    # Check to see if the input is required, so we can change its include
+                    # flag back to false if not
+                    if (
+                        not isinstance(target_node, AddNestedWorkflowStatement)
+                        or target_node.nested_workflow.inputs[conn.target_in].include
+                    ):
+                        target_node.include = None
+                        conn_stack.extend(target_node.out_conns)
+                        exclude = False
+                if exclude:
+                    conn.include = False
 
         # Walk through the graph backwards from the outputs and trim any unnecessary
         # connections
@@ -864,20 +840,26 @@ class WorkflowConverter:
 
         nonstd_types.discard(ty.Any)
 
+        self.used_inputs = set()
+
         while conn_stack:
             conn = conn_stack.pop()
-            if (
-                conn.include == 0
-            ):  # if included forward from inputs and backwards from outputs
+            # if included forward from inputs and backwards from outputs
+            if conn.include is None:
                 conn.include = True
+            else:
+                continue
             if conn.source_name:
                 sibling_source_nodes = self.nodes[conn.source_name]
                 for source_node in sibling_source_nodes:
-                    if (
-                        source_node.include == 0
-                    ):  # if included forward from inputs and backwards from outputs
+                    # if included forward from inputs and backwards from outputs
+                    if source_node.include is None:
                         source_node.include = True
                         conn_stack.extend(source_node.in_conns)
+            else:
+                inpt = self.inputs[conn.source_out]
+                inpt.include = True
+                self.used_inputs.add(inpt)
 
         preamble = ""
         statements = copy(self.parsed_statements)
@@ -901,7 +883,7 @@ class WorkflowConverter:
             self.package.find_and_replace_config_params(code_str, nested_configs)
         )
 
-        inputs_sig = [f"{i}=attrs.NOTHING" for i in self.inputs]
+        inputs_sig = [f"{i.name}=attrs.NOTHING" for i in self.used_inputs]
 
         # construct code string with modified signature
         signature = (

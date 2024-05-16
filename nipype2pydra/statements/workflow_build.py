@@ -219,7 +219,9 @@ class ConnectionStatement:
         return self.workflow_converter.get_output_from_conn(self).name
 
     def __str__(self):
-        if not self.include:
+        if not self.include or (
+            self.wf_in and not self.workflow_converter.inputs[self.source_out].include
+        ):
             return f"{self.indent}pass" if self.conditional else ""
         code_str = ""
         # Get source lazy-field
@@ -856,7 +858,7 @@ class WorkflowInitStatement:
             + ", ".join(
                 f"'{i.name}': {i.type_repr}"
                 for i in sorted(
-                    self.workflow_converter.inputs.values(), key=attrgetter("name")
+                    self.workflow_converter.used_inputs, key=attrgetter("name")
                 )
             )
             + "}, output_spec={"
@@ -867,7 +869,10 @@ class WorkflowInitStatement:
                 )
             )
             + "}, "
-            + ", ".join(f"{i}={i}" for i in sorted(self.workflow_converter.inputs))
+            + ", ".join(
+                f"{i}={i}"
+                for i in sorted(j.name for j in self.workflow_converter.used_inputs)
+            )
             + ")\n\n"
         )
 
