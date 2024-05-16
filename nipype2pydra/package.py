@@ -10,6 +10,7 @@ from functools import cached_property
 from collections import defaultdict
 from pathlib import Path
 from operator import attrgetter, itemgetter
+import attrs
 import black.parsing
 import black.report
 from tqdm import tqdm
@@ -137,6 +138,7 @@ class PackageConverter:
     )
     workflows: ty.Dict[str, "nipype2pydra.workflow.WorkflowConverter"] = attrs.field(
         factory=dict,
+        converter=attrs.converters.default_if_none(factory=dict),
         metadata={
             "help": (
                 "workflow specifications of other workflow functions in the package, which "
@@ -146,6 +148,7 @@ class PackageConverter:
     )
     interfaces: ty.Dict[str, interface.base.BaseInterfaceConverter] = attrs.field(
         factory=dict,
+        converter=attrs.converters.default_if_none(factory=dict),
         metadata={
             "help": (
                 "interface specifications for the tasks defined within the workflow package"
@@ -154,6 +157,7 @@ class PackageConverter:
     )
     functions: ty.Dict[str, nipype2pydra.helpers.FunctionConverter] = attrs.field(
         factory=dict,
+        converter=attrs.converters.default_if_none(factory=dict),
         metadata={
             "help": (
                 "specifications for helper functions defined within the workflow package"
@@ -162,6 +166,7 @@ class PackageConverter:
     )
     classes: ty.Dict[str, nipype2pydra.helpers.ClassConverter] = attrs.field(
         factory=dict,
+        converter=attrs.converters.default_if_none(factory=dict),
         metadata={
             "help": (
                 "specifications for helper class defined within the workflow package"

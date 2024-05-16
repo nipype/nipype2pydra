@@ -329,7 +329,7 @@ class WorkflowConverter:
         metadata={
             "help": ("the inputs to the test function"),
         },
-        converter=attrs.converters.default_if_none(factory=list),
+        converter=attrs.converters.default_if_none(factory=dict),
         factory=dict,
     )
     external: bool = attrs.field(
@@ -925,7 +925,6 @@ class WorkflowConverter:
 
     @property
     def test_code(self):
-
         args_str = ", ".join(f"{n}={v}" for n, v in self.test_inputs.items())
 
         return f"""
@@ -1196,14 +1195,14 @@ def test_{self.name}():
             name=name,
             nipype_name=name,
             nipype_module=nipype_module,
-            input_nodes={"inputnode": ""},
-            output_nodes={"outputnode": ""},
+            input_node="inputnode",
+            output_node="outputnode",
             **{n: eval(v) for n, v in defaults},
         )
         dct = attrs.asdict(conv)
         dct["nipype_module"] = dct["nipype_module"].__name__
-        del dct["package"]
-        del dct["nodes"]
+        for n in ["package", "nodes", "used_inputs", "_unprocessed_connections"]:
+            del dct[n]
         for k in dct:
             if not dct[k]:
                 dct[k] = None

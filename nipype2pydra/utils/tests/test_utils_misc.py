@@ -3,6 +3,8 @@ from nipype2pydra.utils import (
     extract_args,
     get_source_code,
     split_source_into_statements,
+)
+from nipype2pydra.statements import (
     ImportStatement,
     Imported,
     parse_imports,
@@ -130,7 +132,31 @@ def test_extract_args11():
 
 
 def test_extract_args12():
-    src = '    """\n    Calculates the worst-case and best-case signal-to-noise ratio (SNR) within the corpus callosum.\n\n    This function estimates the SNR in the corpus callosum (CC) by comparing the\n    mean signal intensity within the CC mask to the standard deviation of the background\n    signal (extracted from the b0 image). It performs separate calculations for\n    each diffusion-weighted imaging (DWI) shell.\n\n    **Worst-case SNR:** The mean signal intensity along the diffusion direction with the\n    lowest signal is considered the worst-case scenario.\n\n    **Best-case SNR:** The mean signal intensity averaged across the two diffusion\n    directions with the highest signal is considered the best-case scenario.\n\n    Parameters\n    ----------\n    in_b0 : :obj:`~numpy.ndarray` (float, 3D)\n        T1-weighted or b0 image used for background signal estimation.\n    dwi_shells : list[:obj:`~numpy.ndarray` (float, 4D)]\n        List of DWI data for each diffusion shell.\n    cc_mask : :obj:`~numpy.ndarray` (bool, 3D)\n        Boolean mask of the corpus callosum.\n    b_values : :obj:`~numpy.ndarray` (int)\n        Array of b-values for each DWI volume in ``dwi_shells``.\n    b_vectors : :obj:`~numpy.ndarray` (float)\n        Array of diffusion-encoding vectors for each DWI volume in ``dwi_shells``.\n\n    Returns\n    -------\n    cc_snr_estimates : :obj:`dict`\n        Dictionary containing SNR estimates for each b-value. Keys are the b-values\n        (integers), and values are tuples containing two elements:\n\n        * The first element is the worst-case SNR (float).\n        * The second element is the best-case SNR (float).\n\n    """'
+    src = (
+        '    """\n    Calculates the worst-case and best-case signal-to-noise ratio (SNR) '
+        "within the corpus callosum.\n\n    This function estimates the SNR in the corpus "
+        "callosum (CC) by comparing the\n    mean signal intensity within the CC mask to "
+        "the standard deviation of the background\n    signal (extracted from the b0 image). "
+        "It performs separate calculations for\n    each diffusion-weighted imaging (DWI) shell.\n\n    "
+        "**Worst-case SNR:** The mean signal intensity along the diffusion direction with the\n    "
+        "lowest signal is considered the worst-case scenario.\n\n    "
+        "**Best-case SNR:** The mean signal intensity averaged across the two diffusion\n    "
+        "directions with the highest signal is considered the best-case scenario.\n\n    "
+        "Parameters\n    ----------\n    in_b0 : :obj:`~numpy.ndarray` (float, 3D)\n        "
+        "T1-weighted or b0 image used for background signal estimation.\n    "
+        "dwi_shells : list[:obj:`~numpy.ndarray` (float, 4D)]\n        "
+        "List of DWI data for each diffusion shell.\n    cc_mask : :obj:`~numpy.ndarray` "
+        "(bool, 3D)\n        Boolean mask of the corpus callosum.\n    b_values : "
+        ":obj:`~numpy.ndarray` (int)\n        Array of b-values for each DWI volume in "
+        "``dwi_shells``.\n    b_vectors : :obj:`~numpy.ndarray` (float)\n        "
+        "Array of diffusion-encoding vectors for each DWI volume in ``dwi_shells``.\n\n    "
+        "Returns\n    -------\n    cc_snr_estimates : :obj:`dict`\n        Dictionary "
+        "containing SNR estimates for each b-value. Keys are the b-values\n        "
+        "(integers), and values are tuples containing two elements:\n\n        "
+        "* The first element is the worst-case SNR (float).\n        * The second element "
+        'is the best-case SNR (float).\n\n    """'
+    )
+    assert extract_args(src) == (src, None, None)
 
 
 def test_split_source_into_statements_tripple_quote():
@@ -537,7 +563,9 @@ def test_import_statement4():
 
 
 def test_import_statement_get_object1():
-    import_str = "from nipype2pydra.utils import ImportStatement, Imported as imp"
+    import_str = (
+        "from nipype2pydra.statements.imports import ImportStatement, Imported as imp"
+    )
     parsed = parse_imports(import_str)[0]
     assert parsed["imp"].object is Imported
     assert parsed["ImportStatement"].object is ImportStatement

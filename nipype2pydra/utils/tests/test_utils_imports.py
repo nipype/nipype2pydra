@@ -1,6 +1,6 @@
 import pytest
-from nipype2pydra.statements.imports import ImportStatement, parse_imports
 from nipype2pydra.utils.symbols import UsedSymbols
+from nipype2pydra.statements.imports import ImportStatement, parse_imports
 import nipype.interfaces.utility
 
 
@@ -107,7 +107,7 @@ def test_get_imported_object_fail1():
         "import nipype.interfaces.utility",
     ]
     used = UsedSymbols(module_name="test_module", imports=parse_imports(import_stmts))
-    with pytest.raises(ValueError, match="Could not find object named"):
+    with pytest.raises(ImportError, match="Could not find object named"):
         used.get_imported_object("nipype.interfaces.utilityboo")
 
 
@@ -116,5 +116,5 @@ def test_get_imported_object_fail2():
         "from nipype.interfaces.utility import IdentityInterface",
     ]
     used = UsedSymbols(module_name="test_module", imports=parse_imports(import_stmts))
-    with pytest.raises(ValueError, match="Could not find object named"):
+    with pytest.raises(ImportError, match="Could not find object named"):
         used.get_imported_object("IdentityBoo")
