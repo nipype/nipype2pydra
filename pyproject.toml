@@ -54,6 +54,7 @@ test = [
     "niworkflows",
     "mriqc",
     "nireports",
+    "nitime",
 ]
 docs = [
     "packaging",
