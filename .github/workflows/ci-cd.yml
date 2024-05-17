@@ -23,14 +23,15 @@ jobs:
         LATEST=$(curl -s https://api.github.com/repos/nipype/pydra-tasks-template/releases/latest | grep tag_name | awk -F\" '{print $4}')
         curl -Lo pydra-tasks-template.tar.gz https://github.com/nipype/pydra-tasks-template/archive/refs/tags/$LATEST.tar.gz
         tar xzf pydra-tasks-template.tar.gz
-        ls
-        mv pydra-tasks-template-${LATEST#v} $HOME/pydra-tasks-template
-        ls $HOME
+        rm pydra-tasks-template.tar.gz
+        mv pydra-tasks-template-${LATEST#v} pydra-tasks-template
+        tar czf $HOME/pydra-tasks-template.tar.gz pydra-tasks-template
+        
 
     - uses: actions/upload-artifact@v4
       with:
         name: tasks-template
-        path: $HOME/pydra-tasks-template
+        path: $HOME/pydra-tasks-template.tar.gz
 
   test:
     needs: [download-task-template]
@@ -52,7 +53,13 @@ jobs:
       uses: actions/download-artifact@v4
       with:
         name: tasks-template
-        path: $HOME/pydra-tasks-template      
+        path: $HOME/pydra-tasks-template.tar.gz
+
+    - name: Extract the pydra-tasks-template
+      run: |
+        pushd $HOME
+        tar xzf pydra-tasks-template.tar.gz
+        popd
 
     - name: Unset header
       # checkout@v2 adds a header that makes branch protection report errors
