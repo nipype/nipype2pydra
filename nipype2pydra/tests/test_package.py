@@ -33,7 +33,7 @@ def package_spec(request):
 
 
 @pytest.mark.xfail(reason="Fails due to missing dependencies on PyPI")
-def test_package_complete(package_spec, cli_runner, tmp_path):
+def test_package_complete(package_spec, cli_runner, tmp_path, tasks_template_args):
     pkg_name = package_spec.stem
     repo_output = tmp_path / "repo"
     repo_output.mkdir()
@@ -43,7 +43,8 @@ def test_package_complete(package_spec, cli_runner, tmp_path):
         [
             str(package_spec),
             str(repo_output),
-        ],
+        ]
+        + tasks_template_args,
     )
     assert result.exit_code == 0, show_cli_trace(result)
     pkg_root = repo_output / f"pydra-{pkg_name}"

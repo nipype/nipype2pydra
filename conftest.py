@@ -40,6 +40,14 @@ def cli_runner(catch_cli_exceptions):
     return invoke
 
 
+@pytest.fixture
+def tasks_template_args():
+    template = os.environ.get("NIPYPE2PYDRA_PYDRA_TASK_TEMPLATE", None)
+    if template:
+        return ["--task-template", template]
+    return []
+
+
 # For debugging in IDE's don't catch raised exceptions and let the IDE
 # break at it
 if os.getenv("_PYTEST_RAISE", "0") != "0":
