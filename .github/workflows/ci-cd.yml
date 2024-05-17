@@ -26,13 +26,11 @@ jobs:
         rm pydra-tasks-template.tar.gz
         mv pydra-tasks-template-${LATEST#v} pydra-tasks-template
         tar czf pydra-tasks-template.tar.gz pydra-tasks-template
-        echo $PWD
-        ls
 
     - uses: actions/upload-artifact@v4
       with:
         name: tasks-template
-        path: /pydra-tasks-template.tar.gz
+        path: pydra-tasks-template.tar.gz
 
   test:
     needs: [download-task-template]
@@ -54,13 +52,10 @@ jobs:
       uses: actions/download-artifact@v4
       with:
         name: tasks-template
-        path: /pydra-tasks-template.tar.gz
+        path: .
 
     - name: Extract the pydra-tasks-template
-      run: |
-        pushd /
-        tar xzf pydra-tasks-template.tar.gz
-        popd
+      run: tar xzf pydra-tasks-template.tar.gz
 
     - name: Unset header
       # checkout@v2 adds a header that makes branch protection report errors
@@ -99,7 +94,7 @@ jobs:
 
     - name: Pytest
       run: >-
-        NIPYPE2PYDRA_PYDRA_TASK_TEMPLATE=/pydra-tasks-template
+        NIPYPE2PYDRA_PYDRA_TASK_TEMPLATE=$PWD/pydra-tasks-template
         pytest -vvs --cov nipype2pydra --cov-config .coveragerc --cov-report xml
 
     - name: Upload coverage to Codecov
