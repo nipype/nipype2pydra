@@ -21,10 +21,11 @@ jobs:
     - name: Download task template
       run: |
         LATEST=$(curl -s https://api.github.com/repos/nipype/pydra-tasks-template/releases/latest | grep tag_name | awk -F\" '{print $4}')
-        curl -Lo pydra-task-template.tar.gz https://github.com/nipype/pydra-tasks-template/archive/refs/tags/$LATEST.tar.gz
-        tar xzf pydra-task-template.tar.gz
+        curl -Lo pydra-tasks-template.tar.gz https://github.com/nipype/pydra-tasks-template/archive/refs/tags/$LATEST.tar.gz
+        tar xzf pydra-tasks-template.tar.gz
         ls
-        mv pydra-tasks-template-* $HOME/pydra-tasks-template
+        mv pydra-tasks-template-$LATEST $HOME/pydra-tasks-template
+        ls $HOME
 
     - uses: actions/upload-artifact@v4
       with:
