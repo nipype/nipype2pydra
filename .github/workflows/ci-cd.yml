@@ -25,13 +25,12 @@ jobs:
         tar xzf pydra-tasks-template.tar.gz
         rm pydra-tasks-template.tar.gz
         mv pydra-tasks-template-${LATEST#v} pydra-tasks-template
-        tar czf $HOME/pydra-tasks-template.tar.gz pydra-tasks-template
-        echo $HOME
+        tar czf /home/runner/pydra-tasks-template.tar.gz pydra-tasks-template
 
     - uses: actions/upload-artifact@v4
       with:
         name: tasks-template
-        path: $HOME/pydra-tasks-template.tar.gz
+        path: /home/runner/pydra-tasks-template.tar.gz
 
   test:
     needs: [download-task-template]
@@ -53,11 +52,11 @@ jobs:
       uses: actions/download-artifact@v4
       with:
         name: tasks-template
-        path: $HOME/pydra-tasks-template.tar.gz
+        path: /home/runner/pydra-tasks-template.tar.gz
 
     - name: Extract the pydra-tasks-template
       run: |
-        pushd $HOME
+        pushd /home/runner
         tar xzf pydra-tasks-template.tar.gz
         popd
 
@@ -98,7 +97,7 @@ jobs:
 
     - name: Pytest
       run: >-
-        NIPYPE2PYDRA_PYDRA_TASK_TEMPLATE=$HOME/pydra-tasks-template
+        NIPYPE2PYDRA_PYDRA_TASK_TEMPLATE=/home/runner/pydra-tasks-template
         pytest -vvs --cov nipype2pydra --cov-config .coveragerc --cov-report xml
 
     - name: Upload coverage to Codecov
