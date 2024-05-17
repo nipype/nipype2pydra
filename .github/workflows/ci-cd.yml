@@ -24,7 +24,7 @@ jobs:
         curl -Lo pydra-tasks-template.tar.gz https://github.com/nipype/pydra-tasks-template/archive/refs/tags/$LATEST.tar.gz
         tar xzf pydra-tasks-template.tar.gz
         ls
-        mv pydra-tasks-template-$LATEST $HOME/pydra-tasks-template
+        mv pydra-tasks-template-${LATEST#v} $HOME/pydra-tasks-template
         ls $HOME
 
     - uses: actions/upload-artifact@v4
