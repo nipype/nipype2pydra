@@ -1,4 +1,4 @@
-def test_line_number_of_function():
+def for_testing_line_number_of_function():
     """Test function used to test the detection of a line number of a function."""
     return 1
 

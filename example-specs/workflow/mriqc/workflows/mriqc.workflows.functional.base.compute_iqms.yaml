@@ -1,0 +1,59 @@
+# name of the converted workflow constructor function
+name: compute_iqms
+# name of the nipype workflow constructor
+nipype_name: compute_iqms
+# name of the nipype module the function is found within, e.g. mriqc.workflows.anatomical.base
+nipype_module: mriqc.workflows.functional.base
+# Name of the node that is to be considered the input of the workflow, i.e. its outputs will be the inputs of the workflow
+input_node: inputnode
+outputs:
+  out_file:
+    node_name: measures
+    field: out_qc
+    export: true
+    replaces:
+      - [outputnode, out_file]
+  spikes:
+    node_name: spikes_fft
+    field: out_spikes
+    export: true
+    replaces:
+      - ["outputnode", "out_spikes"]
+  fft:
+    node_name: spikes_fft
+    field: out_fft
+    export: true
+    replaces:
+      - ["outputnode", "out_fft"]
+  spikes_num:
+    node_name: spikes_fft
+    field: n_spikes
+    type: field/integer
+    export: true
+    replaces:
+      - ["outputnode", "spikes_num"]
+  outliers:
+    node_name: outliers
+    field: out_file
+    export: true
+    replaces:
+      - ["outputnode", "outliers"]
+  dvars:
+    node_name: dvnode
+    field: out_all
+    export: true
+    replaces:
+      - ["outputnode", "out_dvars"]
+# Generic regular expression substitutions to be run over the code before it is processed
+find_replace:
+  - ["config = NipypeConfig\\(\\)", ""]
+  - ["iflogger = logging.getLogger\\(\"nipype.interface\"\\)", ""]
+  - ["logging = Logging\\(config\\)", ""]
+  - [
+      "if wf_fft_spikes_detector:",
+      "if True:  # wf_fft_spikes_detector: - disabled to ensure all outputs are generated",
+    ]
+# name of the workflow variable that is returned
+workflow_variable: workflow
+# the names of the nested workflows that are defined in other modules and need to be imported
+external_nested_workflows: null

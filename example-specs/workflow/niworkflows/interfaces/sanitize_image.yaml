@@ -1,0 +1,125 @@
+# This file is used to manually specify the semi-automatic conversion of
+# 'niworkflows.interfaces.header.SanitizeImage' from Nipype to Pydra.
+#
+# Please fill-in/edit the fields below where appropriate
+#
+# Docs
+# ----
+# 
+#     Check the correctness of x-form headers (matrix and code) and fixes
+#     problematic combinations of values. Removes any extension form the header
+#     if present.
+#     This interface implements the `following logic
+#     <https://github.com/nipreps/fmriprep/issues/873#issuecomment-349394544>`_:
+# 
+# 
+#     .. list-table:: ``SanitizeImage`` truth table
+#        :widths: 15 15 15 15 40
+#        :header-rows: 1
+# 
+#        * - valid quaternions
+#          - ``qform_code`` > 0
+#          - ``sform_code`` > 0
+#          - ``qform == sform``
+#          - actions
+#        * - ``True``
+#          - ``True``
+#          - ``True``
+#          - ``True``
+#          - None
+#        * - ``True``
+#          - ``True``
+#          - ``False``
+#          - \*
+#          - sform, scode <- qform, qcode
+#        * - \*
+#          - ``True``
+#          - \*
+#          - ``False``
+#          - sform, scode <- qform, qcode
+#        * - \*
+#          - ``False``
+#          - ``True``
+#          - \*
+#          - qform, qcode <- sform, scode
+#        * - \*
+#          - ``False``
+#          - ``False``
+#          - \*
+#          - sform, qform <- best affine; scode, qcode <- 1
+#        * - ``False``
+#          - \*
+#          - ``False``
+#          - \*
+#          - sform, qform <- best affine; scode, qcode <- 1
+# 
+#     
+task_name: SanitizeImage
+nipype_name: SanitizeImage
+nipype_module: niworkflows.interfaces.header
+inputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    in_file: generic/file
+    # type=file|default=<undefined>: input image
+  callable_defaults:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set as the `default` method of input fields
+  metadata:
+  # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
+outputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    out_file: generic/file
+    # type=file: validated image
+    out_report: generic/file
+    # type=file: HTML segment containing warning
+  callables:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set to the `callable` attribute of output fields
+  templates:
+  # dict[str, str] - `output_file_template` values to be provided to output fields
+  requirements:
+  # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
+tests:
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    in_file:
+    # type=file|default=<undefined>: input image
+    n_volumes_to_discard:
+    # type=int|default=0: discard n first volumes
+    max_32bit:
+    # type=bool|default=False: cast data to float32 if higher precision is encountered
+  imports:
+  # list[nipype2pydra.task.base.explicitimport] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+doctests: []

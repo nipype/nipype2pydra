@@ -1,0 +1,6 @@
+nipype_ports:
+  interfaces:
+    - nipype.algorithms.confounds.TSNR
+    - nipype.algorithms.confounds.ComputeDVARS
+    - nipype.algorithms.confounds.NonSteadyStateDetector
+    - nipype.algorithms.confounds.FramewiseDisplacement

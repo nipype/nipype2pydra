@@ -1,6 +1,5 @@
 import os
 from pathlib import Path
-import traceback
 import tempfile
 import pytest
 from click.testing import CliRunner
@@ -8,18 +7,14 @@ from click.testing import CliRunner
 
 PKG_DIR = Path(__file__).parent
 EXAMPLE_SPECS_DIR = PKG_DIR / "example-specs"
-EXAMPLE_TASKS_DIR = EXAMPLE_SPECS_DIR / "task" / "nipype"
+EXAMPLE_INTERFACES_DIR = EXAMPLE_SPECS_DIR / "interface" / "nipype"
 EXAMPLE_WORKFLOWS_DIR = EXAMPLE_SPECS_DIR / "workflow"
+EXAMPLE_PKG_GEN_DIR = EXAMPLE_SPECS_DIR / "pkg-gen"
 
 
 @pytest.fixture
 def gen_test_conftest():
     return PKG_DIR / "scripts" / "pkg_gen" / "resources" / "conftest.py"
-
-
-@pytest.fixture(params=[str(p.stem) for p in EXAMPLE_WORKFLOWS_DIR.glob("*.yaml")])
-def workflow_spec_file(request):
-    return (EXAMPLE_WORKFLOWS_DIR / request.param).with_suffix(".yaml")
 
 
 @pytest.fixture

@@ -1,6 +1,0 @@
-packages:
-- afni
-interfaces:
-  afni:
-  - QwarpPlusMinus
-  

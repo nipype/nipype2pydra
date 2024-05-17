@@ -23,7 +23,11 @@ from fileformats.application import Dicom, Xml
 from fileformats.text import TextFile
 from fileformats.datascience import TextMatrix, DatFile
 import nipype.interfaces.base.core
-from nipype2pydra.task import (
+from nipype.interfaces.base import BaseInterface, TraitedSpec
+from nipype2pydra.package import (  # noqa F401  required to avoid partial import
+    PackageConverter,
+)
+from nipype2pydra.interface import (
     InputsConverter,
     OutputsConverter,
     TestGenerator,
@@ -37,6 +41,7 @@ from nipype2pydra.utils import (
     insert_args_in_signature,
     INBUILT_NIPYPE_TRAIT_NAMES,
 )
+from nipype2pydra.statements import parse_imports
 from nipype2pydra.exceptions import UnmatchedParensException
 
 
@@ -106,7 +111,10 @@ class NipypeInterface:
 
     @classmethod
     def parse(
-        cls, nipype_interface: type, pkg: str, base_package: str
+        cls,
+        nipype_interface: type,
+        pkg: str,
+        base_package: str,
     ) -> "NipypeInterface":
         """Generate preamble comments at start of file with args and doc strings"""
 
@@ -124,10 +132,17 @@ class NipypeInterface:
 # {doc_string}\n"""
         ).replace("        #", "#")
 
+        base_package = base_package.rstrip(".")
+
+        if base_package:
+            module = nipype_interface.__module__[len(base_package) + 1 :]
+        else:
+            module = nipype_interface.__module__
+
         parsed = cls(
             name=nipype_interface.__name__,
             doc_str=nipype_interface.__doc__ if nipype_interface.__doc__ else "",
-            module=nipype_interface.__module__[len(base_package) + 1 :],
+            module=module,
             pkg=pkg,
             base_package=base_package,
             preamble=preamble,
@@ -282,10 +297,15 @@ class NipypeInterface:
         output_types = dict(sorted(output_types.items(), key=itemgetter(0)))
         output_templates = dict(sorted(output_templates.items(), key=itemgetter(0)))
 
+        if self.base_package:
+            nipype_module = self.base_package + "." + self.module
+        else:
+            nipype_module = self.module
+
         spec_stub = {
             "task_name": self.name,
             "nipype_name": self.name,
-            "nipype_module": self.base_package + "." + self.module,
+            "nipype_module": nipype_module,
             "inputs": self._fields_stub(
                 "inputs",
                 InputsConverter,
@@ -363,11 +383,10 @@ class NipypeInterface:
             re.match(r"\battrs\b", s, flags=re.MULTILINE)
             for s in (list(funcs) + classes)
         ):
-            imports.add("import attrs")
-        obj_imports = set(i for i in imports if i.startswith("from"))
-        mod_imports = imports - obj_imports
-        callables_str += "\n".join(sorted(mod_imports)) + "\n"
-        callables_str += "\n".join(sorted(obj_imports)) + "\n\n"
+            imports.add(parse_imports("import attrs"))
+        callables_str += (
+            "\n".join(str(i.absolute()) for i in sorted(imports) if not i.indent) + "\n"
+        )
 
         # Create separate default function for each input field with genfile, which
         # reference the magic "_gen_filename" method
@@ -402,6 +421,8 @@ class NipypeInterface:
                 callables_str, fast=False, mode=black.FileMode()
             )
         except black.parsing.InvalidInput as e:
+            with open(Path("~/Desktop/gen-code.py").expanduser(), "w") as f:
+                f.write(callables_str)
             raise RuntimeError(
                 f"Black could not parse generated code: {e}\n\n{callables_str}"
             )
@@ -611,7 +632,9 @@ def download_tasks_template(output_path: Path):
         )
 
 
-def initialise_task_repo(output_dir, task_template: Path, pkg: str) -> Path:
+def initialise_task_repo(
+    output_dir, task_template: Path, pkg: str, interface_only: bool
+) -> Path:
     """Copy the task template to the output directory and customise it for the given
     package name and return the created package directory"""
 
@@ -626,7 +649,13 @@ def initialise_task_repo(output_dir, task_template: Path, pkg: str) -> Path:
     auto_conv_dir = pkg_dir / "nipype-auto-conv"
     specs_dir = auto_conv_dir / "specs"
     specs_dir.mkdir(parents=True)
-    shutil.copy(TEMPLATES_DIR / "nipype-auto-convert.py", auto_conv_dir / "generate")
+    with open(auto_conv_dir / "generate", "w") as f:
+        f.write(
+            """#!/usr/bin/env bash
+conv_dir=$(dirname $0)
+nipype2pydra convert $conv_dir/specs $conv_dir/.. $@
+"""
+        )
     os.chmod(auto_conv_dir / "generate", 0o755)  # make executable
     shutil.copy(
         TEMPLATES_DIR / "nipype-auto-convert-requirements.txt",
@@ -636,8 +665,9 @@ def initialise_task_repo(output_dir, task_template: Path, pkg: str) -> Path:
     # Setup GitHub workflows
     gh_workflows_dir = pkg_dir / ".github" / "workflows"
     gh_workflows_dir.mkdir(parents=True, exist_ok=True)
+    ci_cd = "ci-cd-interface.yaml" if interface_only else "ci-cd-workflow.yaml"
     shutil.copy(
-        TEMPLATES_DIR / "gh_workflows" / "ci-cd.yaml",
+        TEMPLATES_DIR / "gh_workflows" / ci_cd,
         gh_workflows_dir / "ci-cd.yaml",
     )
 
@@ -690,37 +720,47 @@ def initialise_task_repo(output_dir, task_template: Path, pkg: str) -> Path:
     with open(pkg_dir / ".gitignore", "a") as f:
         f.write(f"\n/pydra/tasks/{pkg}/auto" f"\n/pydra/tasks/{pkg}/_version.py\n")
 
+    python_pkg_dir = pkg_dir / "pydra" / "tasks" / pkg
+
     # rename tasks directory
-    (pkg_dir / "pydra" / "tasks" / "CHANGEME").rename(pkg_dir / "pydra" / "tasks" / pkg)
-    (
-        pkg_dir
-        / "related-packages"
-        / "fileformats"
-        / "fileformats"
-        / "medimage_CHANGEME"
-    ).rename(
-        pkg_dir / "related-packages" / "fileformats" / "fileformats" / f"medimage_{pkg}"
-    )
-    (
-        pkg_dir
-        / "related-packages"
-        / "fileformats-extras"
-        / "fileformats"
-        / "extras"
-        / "medimage_CHANGEME"
-    ).rename(
-        pkg_dir
-        / "related-packages"
-        / "fileformats-extras"
-        / "fileformats"
-        / "extras"
-        / f"medimage_{pkg}"
-    )
+    if interface_only:
+        (pkg_dir / "pydra" / "tasks" / "CHANGEME").rename(python_pkg_dir)
+        (
+            pkg_dir
+            / "related-packages"
+            / "fileformats"
+            / "fileformats"
+            / "medimage_CHANGEME"
+        ).rename(
+            pkg_dir
+            / "related-packages"
+            / "fileformats"
+            / "fileformats"
+            / f"medimage_{pkg}"
+        )
+        (
+            pkg_dir
+            / "related-packages"
+            / "fileformats-extras"
+            / "fileformats"
+            / "extras"
+            / "medimage_CHANGEME"
+        ).rename(
+            pkg_dir
+            / "related-packages"
+            / "fileformats-extras"
+            / "fileformats"
+            / "extras"
+            / f"medimage_{pkg}"
+        )
+
+    else:
+        shutil.rmtree(pkg_dir / "pydra" / "tasks" / "CHANGEME")
+        shutil.rmtree(pkg_dir / "related-packages")
+        python_pkg_dir.mkdir(parents=True)
 
     # Add in modified __init__.py
-    shutil.copy(
-        TEMPLATES_DIR / "pkg_init.py", pkg_dir / "pydra" / "tasks" / pkg / "__init__.py"
-    )
+    shutil.copy(TEMPLATES_DIR / "init.py", python_pkg_dir / "__init__.py")
 
     # Replace "CHANGEME" string with pkg name
     for fspath in pkg_dir.glob("**/*"):
@@ -1073,7 +1113,7 @@ def get_callable_sources(
     all_constants = set()
     for mod_name, methods in grouped_methods.items():
         mod = import_module(mod_name)
-        used = UsedSymbols.find(mod, methods)
+        used = UsedSymbols.find(mod, methods, omit_classes=(BaseInterface, TraitedSpec))
         all_funcs.update(methods)
         for func in used.local_functions:
             all_funcs.add(cleanup_function_body(get_source_code(func)))
@@ -1081,7 +1121,9 @@ def get_callable_sources(
             klass_src = cleanup_function_body(get_source_code(klass))
             if klass_src not in all_classes:
                 all_classes.append(klass_src)
-        for new_func_name, func in used.funcs_to_include:
+        for new_func_name, func in used.intra_pkg_funcs:
+            if new_func_name is None:
+                continue  # Not referenced directly in this module
             func_src = get_source_code(func)
             location_comment, func_src = func_src.split("\n", 1)
             match = re.match(
@@ -1098,7 +1140,9 @@ def get_callable_sources(
                 + match.group(2)
             )
             all_funcs.add(cleanup_function_body(func_src))
-        for new_klass_name, klass in used.classes_to_include:
+        for new_klass_name, klass in used.intra_pkg_classes:
+            if new_klass_name is None:
+                continue  # Not referenced directly in this module
             klass_src = get_source_code(klass)
             location_comment, klass_src = klass_src.split("\n", 1)
             match = re.match(

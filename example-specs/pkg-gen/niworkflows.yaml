@@ -1,0 +1,17 @@
+niworkflows:
+  interfaces:
+    - niworkflows.data.Loader
+    - niworkflows.interfaces.bids.DerivativesDataSink
+    - niworkflows.interfaces.bids.ReadSidecarJSON
+    - niworkflows.interfaces.fixes.FixHeaderApplyTransforms
+    - niworkflows.interfaces.fixes.FixN4BiasFieldCorrection
+    - niworkflows.interfaces.header.SanitizeImage
+    - niworkflows.interfaces.images.RobustAverage
+    - niworkflows.interfaces.morphology.BinaryDilation
+    - niworkflows.interfaces.morphology.BinarySubtraction
+    - niworkflows.interfaces.nibabel.ApplyMask
+    - niworkflows.interfaces.nibabel.Binarize
+    - niworkflows.interfaces.nibabel.IntensityClip
+    - niworkflows.interfaces.reportlets.registration.SpatialNormalizationRPT
+  workflows:
+    - niworkflows.anat.skullstrip.afni_wf

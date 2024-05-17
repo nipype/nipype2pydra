@@ -1,0 +1,16 @@
+# name of the converted workflow constructor function
+name: afni_wf
+# name of the nipype workflow constructor
+nipype_name: afni_wf
+# name of the nipype module the function is found within, e.g. mriqc.workflows.anatomical.base
+nipype_module: niworkflows.anat.skullstrip
+# Name of the node that is to be considered the input of the workflow, i.e. its outputs will be the inputs of the workflow
+input_node: inputnode
+# Name of the node that is to be considered the output of the workflow, i.e. its inputs will be the outputs of the workflow
+output_node: outputnode
+# Generic regular expression substitutions to be run over the code before it is processed
+find_replace: null
+# name of the workflow variable that is returned
+workflow_variable: workflow
+# the names of the nested workflows that are defined in other modules and need to be imported
+external_nested_workflows: null

@@ -18,6 +18,7 @@ dependencies = [
     "fileformats-datascience",
     "requests>=2.31.0",
     "traits",
+    "tqdm",
 ]
 license = { file = "LICENSE" }
 authors = [{ name = "Thomas G. Close", email = "tom.g.close@gmail.com" }]
@@ -50,6 +51,10 @@ test = [
     "fileformats-medimage-ants",
     "fileformats-medimage-freesurfer",
     "fileformats-medimage-fsl",
+    "niworkflows",
+    "mriqc",
+    "nireports",
+    "nitime",
 ]
 docs = [
     "packaging",

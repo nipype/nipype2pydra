@@ -1,0 +1,165 @@
+# This file is used to manually specify the semi-automatic conversion of
+# 'mriqc.interfaces.diffusion.DiffusionQC' from Nipype to Pydra.
+#
+# Please fill-in/edit the fields below where appropriate
+#
+# Docs
+# ----
+# Computes :abbr:`QC (Quality Control)` measures on the input DWI EPI scan.
+task_name: DiffusionQC
+nipype_name: DiffusionQC
+nipype_module: mriqc.interfaces.diffusion
+inputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    brain_mask: generic/file
+    # type=file|default=<undefined>: input probabilistic brain mask
+    cc_mask: generic/file
+    # type=file|default=<undefined>: input binary mask of the corpus callosum
+    in_b0: generic/file
+    # type=file|default=<undefined>: input b=0 average
+    in_bval_file: generic/file
+    # type=file|default=<undefined>: original b-vals file
+    in_cfa: generic/file
+    # type=file|default=<undefined>: output color FA file
+    in_fa: generic/file
+    # type=file|default=<undefined>: input FA map
+    in_fa_degenerate: generic/file
+    # type=file|default=<undefined>: binary mask of values outside [0, 1] in the "raw" FA map
+    in_fa_nans: generic/file
+    # type=file|default=<undefined>: binary mask of NaN values in the "raw" FA map
+    in_fd: generic/file
+    # type=file|default=<undefined>: motion parameters for FD computation
+    in_file: generic/file
+    # type=file|default=<undefined>: original EPI 4D file
+    in_md: generic/file
+    # type=file|default=<undefined>: input MD map
+    in_shells: generic/file+list-of
+    # type=inputmultiobject|default=[]: DWI data after HMC and split by shells (indexed by in_bval)
+    spikes_mask: generic/file
+    # type=file|default=<undefined>: input binary mask of spiking voxels
+    wm_mask: generic/file
+    # type=file|default=<undefined>: input probabilistic white-matter mask
+  callable_defaults:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set as the `default` method of input fields
+  metadata:
+  # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
+outputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+  callables:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set to the `callable` attribute of output fields
+    bdiffs: bdiffs_callable
+    # type=dict: 
+    efc: efc_callable
+    # type=dict: 
+    fa_degenerate: fa_degenerate_callable
+    # type=float: 
+    fa_nans: fa_nans_callable
+    # type=float: 
+    fber: fber_callable
+    # type=dict: 
+    fd: fd_callable
+    # type=dict: 
+    ndc: ndc_callable
+    # type=float: 
+    out_qc: out_qc_callable
+    # type=dict: output flattened dictionary with all measures
+    sigma: sigma_callable
+    # type=dict: 
+    snr_cc: snr_cc_callable
+    # type=dict: 
+    spikes: spikes_callable
+    # type=dict: 
+    summary: summary_callable
+    # type=dict: 
+  templates:
+  # dict[str, str] - `output_file_template` values to be provided to output fields
+  requirements:
+  # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
+tests:
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    in_file:
+    # type=file|default=<undefined>: original EPI 4D file
+    in_b0:
+    # type=file|default=<undefined>: input b=0 average
+    in_shells:
+    # type=inputmultiobject|default=[]: DWI data after HMC and split by shells (indexed by in_bval)
+    in_shells_bval:
+    # type=list|default=[]: list of unique b-values (one per shell), ordered by growing intensity
+    in_bval_file:
+    # type=file|default=<undefined>: original b-vals file
+    in_bvec:
+    # type=list|default=[]: a list of shell-wise splits of b-vectors lists -- first list are b=0
+    in_bvec_rotated:
+    # type=list|default=[]: b-vectors after rotating by the head-motion correction transform
+    in_bvec_diff:
+    # type=list|default=[]: list of angle deviations from the original b-vectors table
+    in_fa:
+    # type=file|default=<undefined>: input FA map
+    in_fa_nans:
+    # type=file|default=<undefined>: binary mask of NaN values in the "raw" FA map
+    in_fa_degenerate:
+    # type=file|default=<undefined>: binary mask of values outside [0, 1] in the "raw" FA map
+    in_cfa:
+    # type=file|default=<undefined>: output color FA file
+    in_md:
+    # type=file|default=<undefined>: input MD map
+    brain_mask:
+    # type=file|default=<undefined>: input probabilistic brain mask
+    wm_mask:
+    # type=file|default=<undefined>: input probabilistic white-matter mask
+    cc_mask:
+    # type=file|default=<undefined>: input binary mask of the corpus callosum
+    spikes_mask:
+    # type=file|default=<undefined>: input binary mask of spiking voxels
+    noise_floor:
+    # type=float|default=0.0: noise-floor map estimated by means of PCA
+    direction:
+    # type=enum|default='all'|allowed['-x','-y','all','x','y']: direction for GSR computation
+    in_fd:
+    # type=file|default=<undefined>: motion parameters for FD computation
+    fd_thres:
+    # type=float|default=0.2: FD threshold for orientation exclusion based on head motion
+    in_fwhm:
+    # type=list|default=[]: smoothness estimated with AFNI
+    qspace_neighbors:
+    # type=list|default=[]: q-space nearest neighbor pairs
+    piesno_sigma:
+    # type=float|default=-1.0: noise sigma calculated with PIESNO
+  imports:
+  # list[nipype2pydra.task.base.explicitimport] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+doctests: []
