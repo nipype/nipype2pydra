@@ -31,6 +31,7 @@ jobs:
         path: pydra-tasks-template
 
   test:
+    needs: [download-task-template]
     strategy:
       matrix:
         os: [macos-latest, ubuntu-latest]
