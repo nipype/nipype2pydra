@@ -92,7 +92,7 @@ jobs:
         python-version: '3.11'
 
     - name: Install build tools
-      run: python3 -m pip install --break-system-packagesbuild twine
+      run: python3 -m pip install --break-system-packages build twine
 
     - name: Build source and wheel distributions
       run: python3 -m build .
