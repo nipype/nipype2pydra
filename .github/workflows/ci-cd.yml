@@ -122,10 +122,11 @@ jobs:
       matrix:
           repo:
           - afni
-          # - ants
-          # - fsl
-          # - freesurfer
-          # - mriqc
+          - ants
+          - fsl
+          - freesurfer
+          - mriqc
+          - niworkflows
     steps:
 
     - name: Trigger post-release on downstream repos
