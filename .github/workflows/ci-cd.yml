@@ -13,7 +13,27 @@ defaults:
     shell: bash
 
 jobs:
+
+  download-task-template:
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Download task template
+      run: |
+        LATEST=$(curl -s https://api.github.com/repos/nipype/pydra-tasks-template/releases/latest | grep tag_name | awk -F\" '{print $4}')
+        curl -Lo pydra-tasks-template.tar.gz https://github.com/nipype/pydra-tasks-template/archive/refs/tags/$LATEST.tar.gz
+        tar xzf pydra-tasks-template.tar.gz
+        rm pydra-tasks-template.tar.gz
+        mv pydra-tasks-template-${LATEST#v} pydra-tasks-template
+        tar czf pydra-tasks-template.tar.gz pydra-tasks-template
+
+    - uses: actions/upload-artifact@v4
+      with:
+        name: tasks-template
+        path: pydra-tasks-template.tar.gz
+
   test:
+    needs: [download-task-template]
     strategy:
       matrix:
         os: [macos-latest, ubuntu-latest]
@@ -27,6 +47,15 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v2
+
+    - name: Download the pydra-tasks-template artefact
+      uses: actions/download-artifact@v4
+      with:
+        name: tasks-template
+        path: .
+
+    - name: Extract the pydra-tasks-template
+      run: tar xzf pydra-tasks-template.tar.gz
 
     - name: Unset header
       # checkout@v2 adds a header that makes branch protection report errors
@@ -64,7 +93,9 @@ jobs:
       run: python3 -m pip install --break-system-packages .[test]
 
     - name: Pytest
-      run: pytest -vvs --cov nipype2pydra --cov-config .coveragerc --cov-report xml
+      run: >-
+        NIPYPE2PYDRA_PYDRA_TASK_TEMPLATE=$PWD/pydra-tasks-template
+        pytest -vvs --cov nipype2pydra --cov-config .coveragerc --cov-report xml
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v2
