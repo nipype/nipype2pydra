@@ -25,7 +25,9 @@ jobs:
         tar xzf pydra-tasks-template.tar.gz
         rm pydra-tasks-template.tar.gz
         mv pydra-tasks-template-${LATEST#v} pydra-tasks-template
-        tar czf /pydra-tasks-template.tar.gz pydra-tasks-template
+        tar czf pydra-tasks-template.tar.gz pydra-tasks-template
+        echo $PWD
+        ls
 
     - uses: actions/upload-artifact@v4
       with:
