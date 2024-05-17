@@ -19,6 +19,7 @@ dependencies = [
     "requests>=2.31.0",
     "traits",
     "tqdm",
+    "typing_extensions",
 ]
 license = { file = "LICENSE" }
 authors = [{ name = "Thomas G. Close", email = "tom.g.close@gmail.com" }]
