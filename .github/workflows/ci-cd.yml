@@ -49,7 +49,7 @@ jobs:
     - name: Download the pydra-tasks-template artefact
       uses: actions/download-artifact@v4
       with:
-        name: pydra-tasks-template
+        name: tasks-template
         path: $HOME/pydra-tasks-template      
 
     - name: Unset header
