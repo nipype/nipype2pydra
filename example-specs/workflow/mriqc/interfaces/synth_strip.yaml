@@ -23,7 +23,7 @@ inputs:
     in_file: generic/file
     # type=file|default=<undefined>: Input image to be brain extracted
     model: generic/file
-    # type=file|default='<undefined>': file containing model's weights
+    # type=file|default=<undefined>: file containing model's weights
     out_file: Path
     # type=file: brain-extracted image
     # type=file|default=<undefined>: store brain-extracted input to file
@@ -68,7 +68,7 @@ tests:
     use_gpu:
     # type=bool|default=False: Use GPU
     model:
-    # type=file|default='<undefined>': file containing model's weights
+    # type=file|default=<undefined>: file containing model's weights
     border_mm:
     # type=int|default=1: Mask border threshold in mm
     out_file:

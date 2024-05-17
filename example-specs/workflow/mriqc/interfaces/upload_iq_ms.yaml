@@ -5,9 +5,9 @@
 #
 # Docs
 # ----
-# 
+#
 #     Upload features to MRIQCWebAPI
-#     
+#
 task_name: UploadIQMs
 nipype_name: UploadIQMs
 nipype_module: mriqc.interfaces.webapi
@@ -17,12 +17,12 @@ inputs:
   rename:
   # dict[str, str] - fields to rename in the Pydra interface
   types:
-  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
-  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
-  # from the nipype interface, but you may want to be more specific, particularly
-  # for file types, where specifying the format also specifies the file that will be
-  # passed to the field in the automatically generated unittests.
-    in_iqms: generic/file
+    # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+    # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+    # from the nipype interface, but you may want to be more specific, particularly
+    # for file types, where specifying the format also specifies the file that will be
+    # passed to the field in the automatically generated unittests.
+    in_iqms: dict
     # type=file|default=<undefined>: the input IQMs-JSON file
   callable_defaults:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
@@ -41,8 +41,8 @@ outputs:
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
   callables:
-  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
-  # to set to the `callable` attribute of output fields
+    # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+    # to set to the `callable` attribute of output fields
     api_id: api_id_callable
     # type=traitcompound: Id for report returned by the web api
   templates:
@@ -50,32 +50,40 @@ outputs:
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
-- inputs:
-  # dict[str, str] - values to provide to inputs fields in the task initialisation
-  # (if not specified, will try to choose a sensible value)
-    in_iqms:
-    # type=file|default=<undefined>: the input IQMs-JSON file
-    endpoint:
-    # type=str|default='': URL of the POST endpoint
-    auth_token:
-    # type=str|default='': authentication token
-    email:
-    # type=str|default='': set sender email
-    strict:
-    # type=bool|default=False: crash if upload was not successful
-  imports:
-  # list[nipype2pydra.task.base.explicitimport] - list import statements required by the test, with each list item
-  # consisting of 'module', 'name', and optionally 'alias' keys
-  expected_outputs:
-  # dict[str, str] - expected values for selected outputs, noting that tests will typically
-  # be terminated before they complete for time-saving reasons, and therefore
-  # these values will be ignored, when running in CI
-  timeout: 10
-  # int - the value to set for the timeout in the generated test, 
-  # after which the test will be considered to have been initialised 
-  # successfully. Set to 0 to disable the timeout (warning, this could
-  # lead to the unittests taking a very long time to complete)
-  xfail: true
-  # bool - whether the unittest is expected to fail or not. Set to false
-  # when you are satisfied with the edits you have made to this file
+  - inputs:
+      # dict[str, str] - values to provide to inputs fields in the task initialisation
+      # (if not specified, will try to choose a sensible value)
+      in_iqms:
+      # type=file|default=<undefined>: the input IQMs-JSON file
+      endpoint:
+      # type=str|default='': URL of the POST endpoint
+      auth_token:
+      # type=str|default='': authentication token
+      email:
+      # type=str|default='': set sender email
+      strict:
+      # type=bool|default=False: crash if upload was not successful
+    imports:
+    # list[nipype2pydra.task.base.explicitimport] - list import statements required by the test, with each list item
+    # consisting of 'module', 'name', and optionally 'alias' keys
+    expected_outputs:
+    # dict[str, str] - expected values for selected outputs, noting that tests will typically
+    # be terminated before they complete for time-saving reasons, and therefore
+    # these values will be ignored, when running in CI
+    timeout: 10
+    # int - the value to set for the timeout in the generated test,
+    # after which the test will be considered to have been initialised
+    # successfully. Set to 0 to disable the timeout (warning, this could
+    # lead to the unittests taking a very long time to complete)
+    xfail: true
+    # bool - whether the unittest is expected to fail or not. Set to false
+    # when you are satisfied with the edits you have made to this file
 doctests: []
+find_replace:
+  - [config\.loggers\.interface, logger]
+  - ["return runtime", "return api_id"]
+  - ["messages.QC_UPLOAD_COMPLETE", "'QC metrics successfully uploaded.'"]
+  - ["messages.QC_UPLOAD_START", "'MRIQC Web API: submitting to <{url}>'"]
+  - ["config = NipypeConfig\\(\\)", ""]
+  - ["iflogger = logging.getLogger\\(\"nipype.interface\"\\)", ""]
+  - ["logging = Logging\\(config\\)", ""]

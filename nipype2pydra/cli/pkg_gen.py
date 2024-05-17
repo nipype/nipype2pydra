@@ -7,6 +7,7 @@ import tarfile
 from pathlib import Path
 import click
 import yaml
+import toml
 from fileformats.generic import File
 import nipype.interfaces.base.core
 from nipype2pydra.utils import (
@@ -108,6 +109,8 @@ def pkg_gen(
     has_doctests = set()
 
     for pkg, spec in to_import.items():
+
+        with_fileformats = spec.get("with_fileformats")
         interface_only_pkg = "workflows" not in spec
         pkg_dir = initialise_task_repo(
             output_dir, task_template, pkg, interface_only=interface_only_pkg
@@ -230,64 +233,83 @@ def pkg_gen(
                             factory_name, nipype_module_str, defaults=wf_defaults
                         )
                     )
+        if with_fileformats is None:
+            with_fileformats = interface_only_pkg
 
-            if interface_only_pkg:
-                with open(
-                    pkg_dir
-                    / "related-packages"
-                    / "fileformats"
-                    / "fileformats"
-                    / f"medimage_{pkg}"
-                    / "__init__.py",
-                    "w",
-                ) as f:
-                    f.write(gen_fileformats_module(pkg_formats))
+        if with_fileformats:
+            with open(
+                pkg_dir
+                / "related-packages"
+                / "fileformats"
+                / "fileformats"
+                / f"medimage_{pkg}"
+                / "__init__.py",
+                "w",
+            ) as f:
+                f.write(gen_fileformats_module(pkg_formats))
 
-                with open(
-                    pkg_dir
-                    / "related-packages"
-                    / "fileformats-extras"
-                    / "fileformats"
-                    / "extras"
-                    / f"medimage_{pkg}"
-                    / "__init__.py",
-                    "w",
-                ) as f:
-                    f.write(gen_fileformats_extras_module(pkg, pkg_formats))
+            with open(
+                pkg_dir
+                / "related-packages"
+                / "fileformats-extras"
+                / "fileformats"
+                / "extras"
+                / f"medimage_{pkg}"
+                / "__init__.py",
+                "w",
+            ) as f:
+                f.write(gen_fileformats_extras_module(pkg, pkg_formats))
 
-                tests_dir = (
-                    pkg_dir
-                    / "related-packages"
-                    / "fileformats-extras"
-                    / "fileformats"
-                    / "extras"
-                    / f"medimage_{pkg}"
-                    / "tests"
+            tests_dir = (
+                pkg_dir
+                / "related-packages"
+                / "fileformats-extras"
+                / "fileformats"
+                / "extras"
+                / f"medimage_{pkg}"
+                / "tests"
+            )
+            tests_dir.mkdir()
+
+            with open(tests_dir / "test_generate_sample_data.py", "w") as f:
+                f.write(gen_fileformats_extras_tests(pkg, pkg_formats))
+
+        # Remove fileformats lines from pyproject.toml
+        pyproject_fspath = pkg_dir / "pyproject.toml"
+
+        pyproject = toml.load(pyproject_fspath)
+
+        if not with_fileformats:
+            deps = pyproject["project"]["dependencies"]
+            deps = [d for d in deps if d != f"fileformats-medimage-{pkg}"]
+            pyproject["project"]["dependencies"] = deps
+            test_deps = pyproject["project"]["optional-dependencies"]["test"]
+            test_deps = [
+                d for d in test_deps if d != f"fileformats-medimage-{pkg}-extras"
+            ]
+            pyproject["project"]["optional-dependencies"]["test"] = test_deps
+        with open(pyproject_fspath, "w") as f:
+            toml.dump(pyproject, f)
+
+        if example_packages and not single_interface:
+            with open(example_packages) as f:
+                example_pkg_names = yaml.load(f, Loader=yaml.SafeLoader)
+
+            examples_dir = (
+                Path(__file__).parent.parent.parent / "example-specs" / "task" / pkg
+            )
+            if examples_dir.exists():
+                shutil.rmtree(examples_dir)
+            examples_dir.mkdir()
+            for example_pkg_name in example_pkg_names:
+                specs_dir = (
+                    output_dir
+                    / ("pydra-" + example_pkg_name)
+                    / "nipype-auto-conv"
+                    / "specs"
                 )
-                tests_dir.mkdir()
-
-                with open(tests_dir / "test_generate_sample_data.py", "w") as f:
-                    f.write(gen_fileformats_extras_tests(pkg, pkg_formats))
-
-            if example_packages and not single_interface:
-                with open(example_packages) as f:
-                    example_pkg_names = yaml.load(f, Loader=yaml.SafeLoader)
-
-                examples_dir = (
-                    Path(__file__).parent.parent.parent / "example-specs" / "task" / pkg
-                )
-                if examples_dir.exists():
-                    shutil.rmtree(examples_dir)
-                examples_dir.mkdir()
-                for example_pkg_name in example_pkg_names:
-                    specs_dir = (
-                        output_dir
-                        / ("pydra-" + example_pkg_name)
-                        / "nipype-auto-conv"
-                        / "specs"
-                    )
-                    dest_dir = examples_dir / example_pkg_name
-                    shutil.copytree(specs_dir, dest_dir)
+                dest_dir = examples_dir / example_pkg_name
+                shutil.copytree(specs_dir, dest_dir)
 
         sp.check_call("git init", shell=True, cwd=pkg_dir)
         sp.check_call("git add --all", shell=True, cwd=pkg_dir)

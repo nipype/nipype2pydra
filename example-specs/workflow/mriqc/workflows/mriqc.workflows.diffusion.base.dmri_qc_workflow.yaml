@@ -5,13 +5,40 @@ nipype_name: dmri_qc_workflow
 # name of the nipype module the function is found within, e.g. mriqc.workflows.anatomical.base
 nipype_module: mriqc.workflows.diffusion.base
 # Name of the node that is to be considered the input of the workflow, i.e. its outputs will be the inputs of the workflow
-input_nodes:
-  "": inputnode
-# Name of the node that is to be considered the output of the workflow, i.e. its inputs will be the outputs of the workflow
-output_nodes:
-  "": outputnode
-# mappings between nipype packages and their pydra equivalents
-# mappings between nipype objects/classes and their pydra equivalents
+input_node: inputnode
+inputs:
+  bvals:
+    node_name: load_bmat
+    field: out_bval_file
+    type: medimage/bval
+  bvecs:
+    node_name: load_bmat
+    field: out_bvec_file
+    type: medimage/bvec
+  qspace_neighbors:
+    node_name: load_bmat
+    field: qspace_neighbors
+    # type: field/integer+list-of.list-of
+# Generic regular expression substitutions to be run over the code before it is processed
 find_replace:
+  - [from pydra.tasks.mriqc.messages import BUILDING_WORKFLOW, ""]
+  - [BUILDING_WORKFLOW, "'Building {modality} MRIQC workflow {detail}.'"]
+  - ["config = NipypeConfig\\(\\)", ""]
+  - ["iflogger = logging.getLogger\\(\"nipype.interface\"\\)", ""]
+  - ["logging = Logging\\(config\\)", ""]
+  - [
+      "workflow\\.dwidenoise\\.inputs\\.in_file",
+      "workflow.dwidenoise.inputs.dwi",
+    ]
+  - [
+      "in_file=workflow\\.dwidenoise\\.lzout\\.out_file",
+      "in_file=workflow.dwidenoise.lzout.out",
+    ]
+  # - [
+  #     "workflow.set_output\\(\\n(\\s*)\\[\\(\"dwi_report_wf_spikes_report\", workflow.dwi_report_wf.lzout.spikes_report\\)\\n(\\s*)\\]\\n(\\s*)\\)",
+  #     "if wf_fft_spikes_detector:\\n        workflow.set_output(\\n    \\1[(\"dwi_report_wf_spikes_report\", workflow.dwi_report_wf.lzout.spikes_report)\\n    \\2]\\n    \\3)",
+  #   ]
 # name of the workflow variable that is returned
 workflow_variable: workflow
+# the names of the nested workflows that are defined in other modules and need to be imported
+external_nested_workflows: null

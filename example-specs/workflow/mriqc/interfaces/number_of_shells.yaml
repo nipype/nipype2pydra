@@ -72,6 +72,8 @@ tests:
     # type=file|default=<undefined>: bvals file
     b0_threshold:
     # type=float|default=50: a threshold for the low-b values
+    dsi_threshold:
+    # type=int|default=11: number of shells to call a dataset DSI
   imports:
   # list[nipype2pydra.task.base.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys

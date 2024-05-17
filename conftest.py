@@ -17,11 +17,6 @@ def gen_test_conftest():
     return PKG_DIR / "scripts" / "pkg_gen" / "resources" / "conftest.py"
 
 
-@pytest.fixture(params=[str(p.stem) for p in EXAMPLE_WORKFLOWS_DIR.glob("*.yaml")])
-def workflow_spec_file(request):
-    return (EXAMPLE_WORKFLOWS_DIR / request.param).with_suffix(".yaml")
-
-
 @pytest.fixture
 def work_dir():
     work_dir = tempfile.mkdtemp()

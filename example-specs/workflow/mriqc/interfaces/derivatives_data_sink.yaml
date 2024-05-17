@@ -1,14 +1,14 @@
 # This file is used to manually specify the semi-automatic conversion of
-# 'mriqc.interfaces.datalad.DataladIdentityInterface' from Nipype to Pydra.
+# 'mriqc.interfaces.DerivativesDataSink' from Nipype to Pydra.
 #
 # Please fill-in/edit the fields below where appropriate
 #
 # Docs
 # ----
-# Sneaks a ``datalad get`` in paths, if datalad is available.
-task_name: DataladIdentityInterface
-nipype_name: DataladIdentityInterface
-nipype_module: mriqc.interfaces.datalad
+# 
+task_name: DerivativesDataSink
+nipype_name: DerivativesDataSink
+nipype_module: mriqc.interfaces
 inputs:
   omit:
   # list[str] - fields to omit from the Pydra interface
@@ -20,6 +20,12 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
+    base_directory: generic/directory
+    # type=directory|default='': Path to the base directory for storing data.
+    in_file: generic/file+list-of
+    # type=inputmultiobject|default=[]: the object to be saved
+    source_file: generic/file+list-of
+    # type=inputmultiobject|default=[]: the source file(s) to extract entities from
   callable_defaults:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set as the `default` method of input fields
@@ -36,6 +42,10 @@ outputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
+    out_file: generic/file+list-of
+    # type=outputmultiobject: 
+    out_meta: generic/file+list-of
+    # type=outputmultiobject: 
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
@@ -47,6 +57,22 @@ tests:
 - inputs:
   # dict[str, str] - values to provide to inputs fields in the task initialisation
   # (if not specified, will try to choose a sensible value)
+    base_directory:
+    # type=directory|default='': Path to the base directory for storing data.
+    check_hdr:
+    # type=bool|default=True: fix headers of NIfTI outputs
+    compress:
+    # type=inputmultiobject|default=[]: whether ``in_file`` should be compressed (True), uncompressed (False) or left unmodified (None, default).
+    data_dtype:
+    # type=str|default='': NumPy datatype to coerce NIfTI data to, or `source` tomatch the input file dtype
+    dismiss_entities:
+    # type=inputmultiobject|default=[]: a list entities that will not be propagated from the source file
+    in_file:
+    # type=inputmultiobject|default=[]: the object to be saved
+    meta_dict:
+    # type=dict|default={}: an input dictionary containing metadata
+    source_file:
+    # type=inputmultiobject|default=[]: the source file(s) to extract entities from
   imports:
   # list[nipype2pydra.task.base.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys

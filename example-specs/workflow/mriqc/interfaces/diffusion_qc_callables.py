@@ -8,13 +8,6 @@ def bdiffs_callable(output_dir, inputs, stdout, stderr):
     return outputs["bdiffs"]
 
 
-def cc_snr_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["cc_snr"]
-
-
 def efc_callable(output_dir, inputs, stdout, stderr):
     outputs = _list_outputs(
         output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
@@ -64,32 +57,25 @@ def out_qc_callable(output_dir, inputs, stdout, stderr):
     return outputs["out_qc"]
 
 
-def sigma_cc_callable(output_dir, inputs, stdout, stderr):
+def sigma_callable(output_dir, inputs, stdout, stderr):
     outputs = _list_outputs(
         output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
     )
-    return outputs["sigma_cc"]
+    return outputs["sigma"]
 
 
-def sigma_pca_callable(output_dir, inputs, stdout, stderr):
+def snr_cc_callable(output_dir, inputs, stdout, stderr):
     outputs = _list_outputs(
         output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
     )
-    return outputs["sigma_pca"]
+    return outputs["snr_cc"]
 
 
-def sigma_piesno_callable(output_dir, inputs, stdout, stderr):
+def spikes_callable(output_dir, inputs, stdout, stderr):
     outputs = _list_outputs(
         output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
     )
-    return outputs["sigma_piesno"]
-
-
-def spikes_ppm_callable(output_dir, inputs, stdout, stderr):
-    outputs = _list_outputs(
-        output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr
-    )
-    return outputs["spikes_ppm"]
+    return outputs["spikes"]
 
 
 def summary_callable(output_dir, inputs, stdout, stderr):

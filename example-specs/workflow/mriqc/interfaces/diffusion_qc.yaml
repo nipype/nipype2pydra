@@ -26,6 +26,8 @@ inputs:
     # type=file|default=<undefined>: input binary mask of the corpus callosum
     in_b0: generic/file
     # type=file|default=<undefined>: input b=0 average
+    in_bval_file: generic/file
+    # type=file|default=<undefined>: original b-vals file
     in_cfa: generic/file
     # type=file|default=<undefined>: output color FA file
     in_fa: generic/file
@@ -67,8 +69,6 @@ outputs:
   # to set to the `callable` attribute of output fields
     bdiffs: bdiffs_callable
     # type=dict: 
-    cc_snr: cc_snr_callable
-    # type=dict: 
     efc: efc_callable
     # type=dict: 
     fa_degenerate: fa_degenerate_callable
@@ -83,13 +83,11 @@ outputs:
     # type=float: 
     out_qc: out_qc_callable
     # type=dict: output flattened dictionary with all measures
-    sigma_cc: sigma_cc_callable
-    # type=float: 
-    sigma_pca: sigma_pca_callable
-    # type=float: 
-    sigma_piesno: sigma_piesno_callable
-    # type=float: 
-    spikes_ppm: spikes_ppm_callable
+    sigma: sigma_callable
+    # type=dict: 
+    snr_cc: snr_cc_callable
+    # type=dict: 
+    spikes: spikes_callable
     # type=dict: 
     summary: summary_callable
     # type=dict: 
@@ -107,8 +105,10 @@ tests:
     # type=file|default=<undefined>: input b=0 average
     in_shells:
     # type=inputmultiobject|default=[]: DWI data after HMC and split by shells (indexed by in_bval)
-    in_bval:
+    in_shells_bval:
     # type=list|default=[]: list of unique b-values (one per shell), ordered by growing intensity
+    in_bval_file:
+    # type=file|default=<undefined>: original b-vals file
     in_bvec:
     # type=list|default=[]: a list of shell-wise splits of b-vectors lists -- first list are b=0
     in_bvec_rotated:

@@ -1,0 +1,87 @@
+# This file is used to manually specify the semi-automatic conversion of
+# 'niworkflows.interfaces.images.RobustAverage' from Nipype to Pydra.
+#
+# Please fill-in/edit the fields below where appropriate
+#
+# Docs
+# ----
+# Robustly estimate an average of the input.
+task_name: RobustAverage
+nipype_name: RobustAverage
+nipype_module: niworkflows.interfaces.images
+inputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    in_file: generic/file
+    # type=file|default=<undefined>: Either a 3D reference or 4D file to average through the last axis
+  callable_defaults:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set as the `default` method of input fields
+  metadata:
+  # dict[str, dict[str, any]] - additional metadata to set on any of the input fields (e.g. out_file: position: 1)
+outputs:
+  omit:
+  # list[str] - fields to omit from the Pydra interface
+  rename:
+  # dict[str, str] - fields to rename in the Pydra interface
+  types:
+  # dict[str, type] - override inferred types (use "mime-like" string for file-format types,
+  # e.g. 'medimage/nifti-gz'). For most fields the type will be correctly inferred
+  # from the nipype interface, but you may want to be more specific, particularly
+  # for file types, where specifying the format also specifies the file that will be
+  # passed to the field in the automatically generated unittests.
+    out_file: generic/file
+    # type=file: the averaged image
+    out_hmc: generic/file+list-of
+    # type=outputmultiobject: head-motion correction matrices
+    out_hmc_volumes: generic/file+list-of
+    # type=outputmultiobject: head-motion correction volumes
+    out_volumes: generic/file
+    # type=file: the volumes selected that have been averaged
+  callables:
+  # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
+  # to set to the `callable` attribute of output fields
+  templates:
+  # dict[str, str] - `output_file_template` values to be provided to output fields
+  requirements:
+  # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
+tests:
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    in_file:
+    # type=file|default=<undefined>: Either a 3D reference or 4D file to average through the last axis
+    t_mask:
+    # type=list|default=[]: List of selected timepoints to be averaged
+    mc_method:
+    # type=enum|default='AFNI'|allowed['AFNI','FSL',None]: Which software to use to perform motion correction
+    nonnegative:
+    # type=bool|default=True: whether the output should be clipped below zero
+    num_threads:
+    # type=int|default=0: number of threads
+    two_pass:
+    # type=bool|default=True: whether two passes of correction is necessary
+  imports:
+  # list[nipype2pydra.task.base.explicitimport] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+doctests: []

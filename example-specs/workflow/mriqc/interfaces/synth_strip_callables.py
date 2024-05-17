@@ -3,10 +3,10 @@
 import attrs
 import logging
 import os
-from ... import logging
-from ...utils.filemanip import split_filename
-from .support import NipypeInterfaceError
-from .traits_extension import traits
+from nipype import logging
+from nipype.utils.filemanip import split_filename
+from nipype.interfaces.base.support import NipypeInterfaceError
+from nipype.interfaces.base.traits_extension import traits
 
 
 def out_file_callable(output_dir, inputs, stdout, stderr):

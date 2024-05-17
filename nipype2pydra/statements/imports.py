@@ -16,7 +16,7 @@ from logging import getLogger
 logger = getLogger("nipype2pydra")
 
 
-@attrs.define
+@attrs.define(slots=False)
 class Imported:
     """
     A class to hold a reference to an imported object within an import statement
@@ -52,7 +52,7 @@ class Imported:
     def address(self):
         return f"{self.module_name}.{self.name}"
 
-    @cached_property
+    @property
     def object(self) -> object:
         """Import and return the actual object being imported in the statement"""
         if self.statement.from_:
@@ -123,7 +123,7 @@ class Imported:
         return stmt_cpy
 
 
-@attrs.define
+@attrs.define(slots=False)
 class ImportStatement:
     """
     A class to hold an import statement
@@ -271,7 +271,7 @@ class ImportStatement:
             return self.join_relative_package(self.relative_to, self.from_)
         return self.from_
 
-    @cached_property
+    @property
     def module(self) -> ModuleType:
         return import_module(self.module_name)
 

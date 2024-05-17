@@ -36,7 +36,7 @@ if ty.TYPE_CHECKING:
     from nipype2pydra.package import PackageConverter
 
 
-@attrs.define
+@attrs.define(slots=False)
 class BaseHelperConverter:
     """Specifies how the semi-automatic conversion from Nipype to Pydra should
     be performed for generic functions that may be part of function interfaces or
@@ -254,7 +254,7 @@ class BaseHelperConverter:
 
         return parsed
 
-    def _convert_function(self, func_src: str) -> ty.Tuple[str:, ty.List[str]]:
+    def _convert_function(self, func_src: str) -> ty.Tuple[str, ty.List[str]]:
         """
         Convert the function source code to a Pydra function
 
@@ -306,7 +306,7 @@ class BaseHelperConverter:
         return code_str, used_configs
 
 
-@attrs.define
+@attrs.define(slots=False)
 class FunctionConverter(BaseHelperConverter):
     """Specifies how the semi-automatic conversion from Nipype to Pydra should
     be performed for generic functions that may be part of function interfaces or
@@ -362,7 +362,7 @@ class FunctionConverter(BaseHelperConverter):
         return code_str, used_configs
 
 
-@attrs.define
+@attrs.define(slots=False)
 class ClassConverter(BaseHelperConverter):
     """Specifies how the semi-automatic conversion from Nipype to Pydra should
     be performed for generic functions that may be part of function interfaces or

@@ -1,6 +1,6 @@
-# name of the converted workflow constructor function
+# name of the package to generate, e.g. pydra.tasks.mriqc
 name: pydra.tasks.mriqc
-# name of the nipype workflow constructor
+# name of the nipype package to generate from (e.g. mriqc)
 nipype_name: mriqc
 # The name of the global struct/dict that contains workflow inputs that are to be converted to inputs of the function along with the type of the struct, either "dict" or "class"
 config_params:
@@ -8,12 +8,12 @@ config_params:
     varname: config.workflow
     type: struct
     module: mriqc
-    defaults:
-      work_dir: Path.cwd()
   exec:
     varname: config.execution
     type: struct
     module: mriqc
+    defaults:
+      work_dir: Path.cwd()
   nipype:
     varname: config.nipype
     type: struct
@@ -22,5 +22,33 @@ config_params:
     varname: config.environment
     type: struct
     module: mriqc
-# mappings between nipype packages and their pydra equivalents
+omit_functions:
+  - nipype.external.due.BibTeX
+omit_classes:
+  - niworkflows.interfaces.bids._ReadSidecarJSONOutputSpec
+  - mriqc.interfaces.diffusion._ReadDWIMetadataOutputSpec
+omit_constants:
+  - nipype.utils.filemanip._cifs_table
+  - nipype.config
+  - nipype.logging
+# Mappings between nipype packages and their pydra equivalents. Regular expressions are supported
 import_translations:
+  - [nireports, pydra.tasks.nireports]
+  - [niworkflows, pydra.tasks.niworkflows]
+find_replace:
+  - [config\.loggers\.\w+\., logger.]
+  - [config.to_filename\(\), ""]
+  - ["config = NipypeConfig\\(\\)", ""]
+  - ["iflogger = logging.getLogger\\(\"nipype.interface\"\\)", ""]
+  - ["logging = Logging\\(config\\)", ""]
+  - ["class _ReadDWIMetadataOutputSpec.+?(?=\\n\\n)", ""]
+  - ["dataset = wf_inputs\\.get\\(.*?_datalad_get\\(\\w+\\)", ""]
+  - ["DWIDenoise", "DwiDenoise"]
+omit_modules:
+  - "mriqc.config"
+import_find_replace:
+  - ["from \\.\\. import config, logging", ""]
+  - ["_ReadDWIMetadataOutputSpec,", ""]
+  - ["from pydra.tasks.mriqc.nipype_ports.interfaces import utility as niu", ""]
+copy_packages:
+  - mriqc.data
