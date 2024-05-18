@@ -68,9 +68,6 @@ def convert(
     output_dir = package_dir / "auto" if converter.interface_only else package_dir
     if output_dir.exists():
         shutil.rmtree(output_dir)
-    nipype_ports_dir = package_dir / "nipype_ports"
-    if nipype_ports_dir.exists():
-        shutil.rmtree(nipype_ports_dir)
 
     # Load interface specs
     for fspath in interface_yamls:

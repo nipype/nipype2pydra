@@ -289,12 +289,25 @@ class PackageConverter:
 
     @property
     def all_import_translations(self) -> ty.List[ty.Tuple[str, str]]:
-        return self.import_translations + [
+        all_translations = self.import_translations + [
             (r"nipype\.interfaces\.mrtrix3.\w+\b", r"pydra.tasks.mrtrix3.v3_0"),
             (r"nipype\.interfaces\.(?!base)(\w+)\b", r"pydra.tasks.\1.auto"),
-            (r"nipype\.(.*)", self.name + r".nipype_ports.\1"),
-            (self.nipype_name, self.name),
         ]
+        if self.interface_only:
+            all_translations.extend(
+                [
+                    (r"nipype\.(.*)", self.name + r".auto.nipype_ports.\1"),
+                    (self.nipype_name, self.name + ".auto"),
+                ]
+            )
+        else:
+            all_translations.extend(
+                [
+                    (r"nipype\.(.*)", self.name + r".nipype_ports.\1"),
+                    (self.nipype_name, self.name),
+                ]
+            )
+        return all_translations
 
     @property
     def all_omit_modules(self) -> ty.List[str]:
@@ -450,7 +463,7 @@ class PackageConverter:
                     ".".join(cp_pkg.split(".")[1:]),
                 )
                 output_pkg_fspath = self.to_fspath(
-                    package_root, self.to_output_module_path(cp_pkg)
+                    package_root, self.nipype2pydra_module_name(cp_pkg)
                 )
                 output_pkg_fspath.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copytree(
@@ -508,7 +521,7 @@ class PackageConverter:
             if not objs:
                 continue
 
-            out_mod_name = self.to_output_module_path(mod_name)
+            out_mod_name = self.nipype2pydra_module_name(mod_name)
 
             if mod_name == self.name:
                 raise NotImplementedError(
@@ -568,7 +581,7 @@ class PackageConverter:
                 import_find_replace=self.import_find_replace,
             )
 
-    def to_output_module_path(self, nipype_module_path: str) -> str:
+    def nipype2pydra_module_name(self, nipype_name: str) -> str:
         """Converts an original Nipype module path to a Pydra module path
 
         Parameters
@@ -581,17 +594,20 @@ class PackageConverter:
         str
             the Pydra module path
         """
-        base_pkg = self.name + ".__init__"
-        relative_to = self.nipype_name
-        if re.match(self.nipype_module.__name__ + r"\b", nipype_module_path):
-            if self.interface_only:
-                base_pkg = self.name + ".auto.__init__"
-        elif re.match(r"^nipype\b", nipype_module_path):
-            base_pkg = self.name + ".nipype_ports.__init__"
+        if self.interface_only:
+            base_pkg = self.name + ".auto"
+        else:
+            base_pkg = self.name
+        if re.match(self.nipype_module.__name__ + r"\b", nipype_name):
+            relative_to = self.nipype_name
+        elif re.match(r"^nipype\b", nipype_name):
+            base_pkg += ".nipype_ports"
             relative_to = "nipype"
+        else:
+            return nipype_name
         return ImportStatement.join_relative_package(
-            base_pkg,
-            ImportStatement.get_relative_package(nipype_module_path, relative_to),
+            base_pkg + ".__init__",
+            ImportStatement.get_relative_package(nipype_name, relative_to),
         )
 
     @classmethod
@@ -684,9 +700,11 @@ post_release = "{post_release}"
             with open(spec_file, "r") as f:
                 spec = yaml.safe_load(f)
             callables_file = spec_file.parent / (spec_file.stem + "_callables.py")
-            module_name = ".".join(
-                [self.name, "nipype_ports"] + spec["nipype_module"].split(".")[1:]
-            )
+            if self.interface_only:
+                mod_base = [self.name, "auto", "nipype_ports"]
+            else:
+                mod_base = [self.name, "nipype_ports"]
+            module_name = ".".join(mod_base + spec["nipype_module"].split(".")[1:])
             task_name = spec["task_name"]
             output_module = (
                 self.translate_submodule(
