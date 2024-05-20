@@ -122,7 +122,11 @@ class WorkflowInterfaceField:
                     + "]"
                 )
             if t in (ty.Any, ty.Union, ty.List, ty.Tuple):
-                return f"ty.{t.__name__}"
+                try:
+                    t_name = t.__name__
+                except AttributeError:
+                    t_name = t._name
+                return f"ty.{t_name}"
             elif issubclass(t, Field):
                 return t.primitive.__name__
             elif issubclass(t, FileSet):
