@@ -1023,13 +1023,13 @@ post_release = "{post_release}"
         names : List[str]
             The names to import in the __init__.py files
         """
-        parts = module_name.split(".")
         # Write base init path that imports __version__ from the auto-generated _version
         # file
-        base_init_fspath = package_root.joinpath(*parts, "__init__.py")
+        base_init_fspath = package_root.joinpath(*self.name, "__init__.py")
         if not base_init_fspath.exists():
             with open(base_init_fspath, "w") as f:
                 f.write("from ._version import __version__")
+        parts = module_name.split(".")
         for i, part in enumerate(reversed(parts[depth:]), start=1):
             mod_parts = parts[:-i]
             parent_mod = ".".join(mod_parts)
