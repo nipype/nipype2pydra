@@ -1,6 +1,8 @@
 import sys
 import shutil
 import subprocess as sp
+import traceback
+import re
 import pytest
 import toml
 from nipype2pydra.cli import pkg_gen, convert
@@ -91,8 +93,8 @@ def test_package_complete(package_spec, cli_runner, tmp_path, tasks_template_arg
     except sp.CalledProcessError:
         raise RuntimeError(
             f"Tests of generated package '{pkg_name}' failed when running, "
-            f"'\n{' '.join(pytest_cmd)}':\n\n{pytest_output}"
+            f"'\n{' '.join(pytest_cmd)}':\n\n{traceback.format_exc()}"
         )
 
-    assert "fail" not in pytest_output
-    assert "error" not in pytest_output
+    assert not re.findall(r"\bFAIL\b", pytest_output)
+    assert not re.findall(r"\bERROR\b", pytest_output)
