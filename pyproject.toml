@@ -57,6 +57,8 @@ test = [
     "mriqc",
     "nireports",
     "nitime",
+    "datalad",
+    "nirodents",
 ]
 docs = [
     "packaging",
