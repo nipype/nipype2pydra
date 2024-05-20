@@ -1025,10 +1025,6 @@ post_release = "{post_release}"
         """
         # Write base init path that imports __version__ from the auto-generated _version
         # file
-        base_init_fspath = package_root.joinpath(*self.name, "__init__.py")
-        if not base_init_fspath.exists():
-            with open(base_init_fspath, "w") as f:
-                f.write("from ._version import __version__")
         parts = module_name.split(".")
         for i, part in enumerate(reversed(parts[depth:]), start=1):
             mod_parts = parts[:-i]
@@ -1104,3 +1100,43 @@ post_release = "{post_release}"
 
             with open(init_fspath, "w") as f:
                 f.write(code_str)
+
+    BASE_INIT_TEMPLATE = """\"\"\"
+This is a basic doctest demonstrating that the package and pydra can both be successfully
+imported.
+
+>>> import pydra.engine
+>>> import pydra.tasks.{pkg}
+\"\"\"
+
+from warnings import warn
+from pathlib import Path
+
+pkg_path = Path(__file__).parent.parent
+
+try:
+    from ._version import __version__
+except ImportError:
+    raise RuntimeError(
+        "pydra-{pkg} has not been properly installed, please run "
+        f"`pip install -e {str(pkg_path)}` to install a development version"
+    )
+if "nipype" not in __version__:
+    try:
+        from ._post_release import src_pkg_version, nipype2pydra_version
+    except ImportError:
+        warn(
+            "Nipype interfaces haven't been automatically converted from their specs in "
+            f"`nipype-auto-conv`. Please run `{str(pkg_path / 'nipype-auto-conv' / 'generate')}` "
+            "to generated the converted Nipype interfaces in pydra.tasks.{pkg}.auto"
+        )
+    else:
+        n_ver = src_pkg_version.replace(".", "_")
+        n2p_ver = nipype2pydra_version.replace(".", "_")
+        __version__ += (
+            "_" if "+" in __version__ else "+"
+        ) + f"nipype{n_ver}_nipype2pydra{n2p_ver}"
+
+
+__all__ = ["__version__"]
+"""
