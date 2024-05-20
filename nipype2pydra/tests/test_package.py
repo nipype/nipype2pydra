@@ -32,7 +32,7 @@ def package_spec(request):
     return EXAMPLE_PKG_GEN_DIR / f"{request.param}.yaml"
 
 
-@pytest.mark.xfail("Don't have time to debug at the moment")
+# @pytest.mark.xfail("Don't have time to debug at the moment")
 def test_package_complete(package_spec, cli_runner, tmp_path, tasks_template_args):
     pkg_name = package_spec.stem
     repo_output = tmp_path / "repo"
@@ -90,7 +90,8 @@ def test_package_complete(package_spec, cli_runner, tmp_path, tasks_template_arg
         pytest_output = sp.check_output(pytest_cmd).decode("utf-8")
     except sp.CalledProcessError:
         raise RuntimeError(
-            f"Tests of generated package '{pkg_name}' failed when running:\n{' '.join(pytest_cmd)}"
+            f"Tests of generated package '{pkg_name}' failed when running, "
+            f"'\n{' '.join(pytest_cmd)}':\n\n{pytest_output}"
         )
 
     assert "fail" not in pytest_output
