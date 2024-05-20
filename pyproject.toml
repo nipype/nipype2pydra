@@ -55,6 +55,7 @@ test = [
     "fileformats-medimage-fsl",
     "niworkflows",
     "mriqc",
+    "nipy",
     "nireports",
     "nitime",
     "datalad",
