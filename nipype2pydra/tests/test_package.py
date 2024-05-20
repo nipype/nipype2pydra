@@ -52,7 +52,7 @@ def package_spec(request):
     return EXAMPLE_PKG_GEN_DIR / f"{request.param}.yaml"
 
 
-@pytest.mark.xfail("Don't have time to debug at the moment")
+@pytest.mark.xfail(reason="Don't have time to debug at the moment")
 def test_package_complete(package_spec, cli_runner, tmp_path, tasks_template_args):
     pkg_name = package_spec.stem
     repo_output = tmp_path / "repo"
