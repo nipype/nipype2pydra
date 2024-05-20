@@ -32,7 +32,6 @@ def package_spec(request):
     return EXAMPLE_PKG_GEN_DIR / f"{request.param}.yaml"
 
 
-@pytest.mark.xfail(reason="Fails due to missing dependencies on PyPI")
 def test_package_complete(package_spec, cli_runner, tmp_path, tasks_template_args):
     pkg_name = package_spec.stem
     repo_output = tmp_path / "repo"
