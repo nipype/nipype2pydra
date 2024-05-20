@@ -158,6 +158,7 @@ jobs:
           - freesurfer
           - mriqc
           - niworkflows
+          - nireports
     steps:
 
     - name: Trigger post-release on downstream repos

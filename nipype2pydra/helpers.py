@@ -391,7 +391,7 @@ class ClassConverter(BaseHelperConverter):
 
         used_configs = set()
         parts = re.split(
-            r"\n    (?=[^\s])", replace_undefined(self.src), flags=re.MULTILINE
+            r"\n    (?!\s|\))", replace_undefined(self.src), flags=re.MULTILINE
         )
         converted_parts = []
         for part in parts:
