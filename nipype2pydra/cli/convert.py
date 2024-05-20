@@ -65,9 +65,16 @@ def convert(
 
     # Clean previous version of output dir
     package_dir = converter.package_dir(package_root)
-    output_dir = package_dir / "auto" if converter.interface_only else package_dir
-    if output_dir.exists():
-        shutil.rmtree(output_dir)
+    if converter.interface_only:
+        shutil.rmtree(package_dir / "auto")
+    else:
+        for fspath in package_dir.iterdir():
+            if fspath == package_dir / "__init__.py":
+                continue
+            if fspath.is_dir():
+                shutil.rmtree(fspath)
+            else:
+                fspath.unlink()
 
     # Load interface specs
     for fspath in interface_yamls:

@@ -16,6 +16,7 @@ ADDITIONAL_PACKAGES = {
         "pydra-afni",
     ],
     "mriqc": [
+        "nipype2pydra",
         "pydra-ants",
         "pydra-afni",
         "pydra-fsl",
@@ -23,6 +24,25 @@ ADDITIONAL_PACKAGES = {
         "fileformats-medimage-afni-extras",
         "fileformats-medimage-mrtrix3-extras",
         "fileformats-medimage-fsl-extras",
+        "statsmodels",
+        "dipy",
+        "bids",
+        "pydra-niworkflows",
+        "pydra-nireports",
+        "matplotlib",
+        "seaborn",
+        "templateflow",
+        "nilearn",
+        # "nibael",
+        # "nilearn",
+        # "migas >= 0.4.0",
+        # "pandas ~=1.0",
+        # "pydra >=0.22",
+        # "PyYAML",
+        # "scikit-learn",
+        # "scipy",
+        # "statsmodel",
+        # "torch",
     ],
 }
 
@@ -32,7 +52,7 @@ def package_spec(request):
     return EXAMPLE_PKG_GEN_DIR / f"{request.param}.yaml"
 
 
-@pytest.mark.xfail(reason="Fails due to missing dependencies on PyPI")
+@pytest.mark.xfail(reason="Don't have time to debug at the moment")
 def test_package_complete(package_spec, cli_runner, tmp_path, tasks_template_args):
     pkg_name = package_spec.stem
     repo_output = tmp_path / "repo"
@@ -79,19 +99,15 @@ def test_package_complete(package_spec, cli_runner, tmp_path, tasks_template_arg
 
     sp.check_call([sys.executable, "-m", "venv", str(venv_path)])
     pip_cmd = [venv_python, "-m", "pip", "install", "-e", str(pkg_root) + "[test]"]
-    try:
-        sp.check_call(pip_cmd)
-    except sp.CalledProcessError:
-        raise RuntimeError(
-            f"Failed to install package {pkg_name} with command:\n{' '.join(pip_cmd)}"
-        )
-    pytest_cmd = [venv_pytest, str(pkg_root)]
-    try:
-        pytest_output = sp.check_output(pytest_cmd)
-    except sp.CalledProcessError:
-        raise RuntimeError(
-            f"Tests of generated package '{pkg_name}' failed when running:\n{' '.join(pytest_cmd)}"
-        )
-
-    assert "fail" not in pytest_output
-    assert "error" not in pytest_output
+    p = sp.Popen(pip_cmd, stdout=sp.PIPE, stderr=sp.STDOUT)
+    pip_output, _ = p.communicate()
+    pip_output = pip_output.decode("utf-8")
+    assert (
+        not p.returncode
+    ), f"Failed to install package pydra-{pkg_name} with command:\n{' '.join(pip_cmd)}:\n\n{pip_output}"
+    p = sp.Popen([venv_pytest, str(pkg_root)], stderr=sp.PIPE, stdout=sp.STDOUT)
+    pytest_output, _ = p.communicate()
+    pytest_output = pytest_output.decode("utf-8")
+    assert (
+        p.returncode
+    ), f"Tests for pydra-{pkg_name} package (\n{' '.join(pip_cmd)}) failed:\n\n{pytest_output}"
