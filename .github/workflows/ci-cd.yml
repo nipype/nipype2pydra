@@ -37,7 +37,7 @@ jobs:
     strategy:
       matrix:
         os: [macos-latest, ubuntu-latest]
-        python-version: ["3.8", "3.11"]
+        python-version: ["3.8", "3.12"]
       fail-fast: false
     runs-on: ${{ matrix.os }}
     defaults:
@@ -120,7 +120,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: '3.11'
+        python-version: '3.12'
 
     - name: Install build tools
       run: python3 -m pip install --break-system-packages build twine

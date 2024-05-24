@@ -69,7 +69,7 @@ def convert(
         shutil.rmtree(package_dir / "auto")
     else:
         for fspath in package_dir.iterdir():
-            if fspath == package_dir / "__init__.py":
+            if fspath in (package_dir / "__init__.py", package_dir / "_version.py"):
                 continue
             if fspath.is_dir():
                 shutil.rmtree(fspath)
