@@ -539,6 +539,8 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
             if val is not None:
                 if key == "argstr" and "%" in val:
                     val = self.string_formats(argstr=val, name=nm)
+                elif key == "mandatory" and pydra_default is not None:
+                    val = False  # Overwrite mandatory to False if default is provided
                 pydra_metadata[pydra_key_nm] = val
 
         if getattr(field, "name_template"):
