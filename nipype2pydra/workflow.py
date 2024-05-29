@@ -71,6 +71,7 @@ class WorkflowInterfaceField:
         },
     )
     node_name: ty.Optional[str] = attrs.field(
+        default=None,
         metadata={
             "help": "The name of the node that the input/output is connected to",
         },
@@ -130,7 +131,7 @@ class WorkflowInterfaceField:
             elif issubclass(t, Field):
                 return t.primitive.__name__
             elif issubclass(t, FileSet):
-                return t.__name__
+                return t.type_name
             elif t.__module__ == "builtins":
                 return t.__name__
             else:
@@ -764,7 +765,9 @@ class WorkflowConverter:
             ),
             converted_code=self.test_code,
             used=self.test_used,
-            additional_imports=self.input_output_imports,
+            additional_imports=(
+                self.input_output_imports + parse_imports("import pytest")
+            ),
         )
 
         conftest_fspath = test_module_fspath.parent / "conftest.py"
@@ -931,22 +934,51 @@ class WorkflowConverter:
     def test_code(self):
         args_str = ", ".join(f"{n}={v}" for n, v in self.test_inputs.items())
 
-        return f"""
+        code_str = f"""
 
-def test_{self.name}():
+
+def test_{self.name}_build():
     workflow = {self.name}({args_str})
     assert isinstance(workflow, Workflow)
 """
 
+        inputs_dict = {}
+        for inpt in self.inputs.values():
+            if issubclass(inpt.type, FileSet):
+                inputs_dict[inpt.name] = inpt.type.type_name + ".sample()"
+            elif inpt.name in self.test_inputs:
+                inputs_dict[inpt.name] = self.test_inputs[inpt.name]
+        args_str = ", ".join(f"{n}={v}" for n, v in inputs_dict.items())
+
+        code_str += f"""
+
+@pytest.mark.skip(reason="Appropriate inputs for this workflow haven't been specified yet")
+def test_{self.name}_run():
+    workflow = {self.name}({args_str})
+    result = workflow(plugin='serial')
+    print(result.out)
+"""
+        return code_str
+
     @property
     def test_used(self):
+        nonstd_types = [
+            i.type for i in self.inputs.values() if issubclass(i.type, FileSet)
+        ]
+        nonstd_type_imports = []
+        for tp in itertools.chain(*(unwrap_nested_type(t) for t in nonstd_types)):
+            nonstd_type_imports.append(ImportStatement.from_object(tp))
+
         return UsedSymbols(
             module_name=self.nipype_module.__name__,
-            imports=parse_imports(
-                [
-                    f"from {self.output_module} import {self.name}",
-                    "from pydra.engine import Workflow",
-                ]
+            imports=(
+                nonstd_type_imports
+                + parse_imports(
+                    [
+                        f"from {self.output_module} import {self.name}",
+                        "from pydra.engine import Workflow",
+                    ]
+                )
             ),
         )
 
