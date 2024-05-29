@@ -575,7 +575,7 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
 
         pos = pydra_metadata.get("position", None)
 
-        if pydra_default is not None and not pydra_metadata.get("mandatory", None):
+        if pydra_default is not None:  # and not pydra_metadata.get("mandatory", None):
             return (pydra_type, pydra_default, pydra_metadata), pos
         else:
             return (pydra_type, pydra_metadata), pos

@@ -105,7 +105,14 @@ class FunctionInterfaceConverter(BaseInterfaceConverter):
         spec_str += ", ".join(f"'{n}': {t}" for n, t, _ in output_fields_str)
         spec_str += "}})\n"
         spec_str += f"def {self.task_name}("
-        spec_str += ", ".join(f"{i[0]}: {i[1]}" for i in input_fields_str)
+        spec_str += ", ".join(
+            (
+                f"{i[0]}: {i[1]} = {i[2]!r}"
+                if len(i) == 4
+                else f"{i[0]}: {i[1]} = attrs.NOTHING"
+            )
+            for i in input_fields_str
+        )
         spec_str += ")"
         if output_type_names:
             spec_str += "-> "
