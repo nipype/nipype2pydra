@@ -76,6 +76,9 @@ class FunctionInterfaceConverter(BaseInterfaceConverter):
         lo_src = "\n".join(lo_lines)
         method_body += "\n" + lo_src
         method_body = self.process_method_body(method_body, input_names, output_names)
+        method_body = re.sub(
+            r"self\._results\[(?:'|\")(\w+)(?:'|\")\]", r"\1", method_body
+        )
 
         used = UsedSymbols.find(
             self.nipype_module,

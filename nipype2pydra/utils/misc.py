@@ -317,6 +317,7 @@ def cleanup_function_body(function_body: str) -> str:
         function_body = re.sub(
             r"^" + " " * indent_reduction, "", function_body, flags=re.MULTILINE
         )
+
     # Other misc replacements
     # function_body = function_body.replace("LOGGER.", "logger.")
     return replace_undefined(function_body)
@@ -415,7 +416,7 @@ def split_source_into_statements(source_code: str) -> ty.List[str]:
             else:
                 # Handle dictionary assignments where the first open-closing bracket is
                 # before the assignment, e.g. outputs["out_file"] = [..."
-                if post and re.match(r"\s*=", post[1:]):
+                if post and re.match(r"\s*=|.*[\(\[\{\"'].*", post[1:]):
                     try:
                         extract_args(post[1:])
                     except (UnmatchedParensException, UnmatchedQuoteException):
