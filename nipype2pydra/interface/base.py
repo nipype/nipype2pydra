@@ -1094,15 +1094,11 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
                 re.findall(return_value + r"\[(?:'|\")(\w+)(?:'|\")\] *=", method_body)
             )
         for match in re.findall(r"super\([^\)]*\)\.(\w+)\(", method_body):
-            super_method = None
-            for base in self.nipype_interface.__mro__[1:]:
-                if match in base.__dict__:  # Found the match
-                    super_method = getattr(base, match)
-                    break
-            assert super_method is not None, (
-                f"Could not find super of '{match}' method in base classes of "
-                f"{self.nipype_interface}"
-            )
+            super_method, base = find_super_method(super_base, match)
+            if any(
+                base.__module__.startswith(m) for m in UsedSymbols.ALWAYS_OMIT_MODULES
+            ):
+                continue
             func_name = self._common_parent_pkg_prefix(base) + match
             if func_name not in referenced_supers:
                 referenced_supers[func_name] = (super_method, base)
@@ -1289,12 +1285,16 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
     def replace_supers(self, method_body, super_base=None):
         if super_base is None:
             super_base = self.nipype_interface
-        super_name_map = self.method_supers[super_base]
-        return re.sub(
-            r"super\([^\)]*\)\.(\w+)\(",
-            lambda m: super_name_map[m.group(1)] + "(",
-            method_body,
-        )
+        name_map = self.method_supers[super_base]
+
+        def replace_super(match):
+            super_method = find_super_method(super_base, match.group(1))[0]
+            try:
+                return self.SPECIAL_SUPER_MAPPINGS[super_method]
+            except KeyError:
+                return name_map[match.group(1)] + "(" + match.group(2) + ")"
+
+        return re.sub(r"super\([^\)]*\)\.(\w+)\(([^\)]*)\)", replace_super, method_body)
 
     def unwrap_nested_methods(self, method_body, additional_args=()):
         """
@@ -1354,7 +1354,7 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
         )
         return cleanup_function_body(method_body)
 
-    SUPER_MAPPINGS = {CommandLine: {"_list_outputs": "{}"}}
+    SPECIAL_SUPER_MAPPINGS = {CommandLine._list_outputs: "{}"}
 
     INPUT_KEYS = [
         "allowed_values",
@@ -1407,3 +1407,15 @@ if os.getenv("_PYTEST_RAISE", "0") != "0":
 else:
     CATCH_CLI_EXCEPTIONS = True
 """
+
+
+def find_super_method(
+    super_base: type, method_name: str
+) -> ty.Tuple[ty.Callable, type]:
+    for base in super_base.__mro__[1:]:
+        if method_name in base.__dict__:  # Found the match
+            return getattr(base, method_name), base
+    raise RuntimeError(
+        f"Could not find super of '{method_name}' method in base classes of "
+        f"{super_base}"
+    )

@@ -6,6 +6,7 @@ import logging
 from functools import cached_property
 from copy import copy
 from operator import attrgetter, itemgetter
+from importlib import import_module
 from nipype.interfaces.base import BaseInterface, TraitedSpec
 from .base import BaseInterfaceConverter
 from ..utils import (
@@ -162,14 +163,6 @@ class ShellCommandInterfaceConverter(BaseInterfaceConverter):
                 new_name=new_name,
             )
 
-        imports = self.construct_imports(
-            nonstd_types,
-            spec_str,
-            include_task=False,
-            base=base_imports,
-        )
-        # spec_str = "\n".join(str(i) for i in imports) + "\n\n" + spec_str
-
         used = UsedSymbols.find(
             self.nipype_module,
             [
@@ -188,7 +181,7 @@ class ShellCommandInterfaceConverter(BaseInterfaceConverter):
         )
         for super_method, base in self.referenced_supers.values():
             super_used = UsedSymbols.find(
-                base,
+                import_module(base.__module__),
                 [super_method],
                 omit_classes=self.package.omit_classes + [BaseInterface, TraitedSpec],
                 omit_modules=self.package.omit_modules,
@@ -197,10 +190,18 @@ class ShellCommandInterfaceConverter(BaseInterfaceConverter):
                 always_include=self.package.all_explicit,
                 translations=self.package.all_import_translations,
                 absolute_imports=True,
+                collapse_intra_pkg=True,
             )
             used.update(super_used)
 
-        used.imports.update(imports)
+        used.imports.update(
+            self.construct_imports(
+                nonstd_types,
+                spec_str,
+                include_task=False,
+                base=base_imports,
+            )
+        )
 
         return spec_str, used
 
