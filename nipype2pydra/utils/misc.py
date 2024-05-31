@@ -528,3 +528,13 @@ def unwrap_nested_type(t: type) -> ty.List[type]:
             unwrapped.extend(unwrap_nested_type(c))
         return unwrapped
     return [t]
+
+
+def get_return_line(func: ty.Union[str, ty.Callable]) -> str:
+    if not isinstance(func, str):
+        func = inspect.getsource(func)
+    return_line = func.strip().split("\n")[-1]
+    match = re.match(r"\s*return(.*)", return_line)
+    if not match:
+        return None
+    return match.group(1).strip()

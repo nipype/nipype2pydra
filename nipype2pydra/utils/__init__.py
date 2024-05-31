@@ -19,6 +19,7 @@ from .misc import (  # noqa: F401
     str_to_type,
     types_converter,
     unwrap_nested_type,
+    get_return_line,
     INBUILT_NIPYPE_TRAIT_NAMES,
 )
 from .symbols import (  # noqa: F401

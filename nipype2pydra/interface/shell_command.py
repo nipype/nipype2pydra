@@ -2,15 +2,27 @@ import re
 import typing as ty
 import attrs
 import inspect
+import logging
+from functools import cached_property
 from copy import copy
+from operator import attrgetter
+from nipype.interfaces.base import BaseInterface, TraitedSpec
 from .base import BaseInterfaceConverter
-from ..utils import UsedSymbols
+from ..utils import UsedSymbols, split_source_into_statements
 from fileformats.core.mixin import WithClassifiers
 from fileformats.generic import File, Directory
 
 
+logger = logging.getLogger("nipype2pydra")
+
+
 @attrs.define(slots=False)
 class ShellCommandInterfaceConverter(BaseInterfaceConverter):
+
+    _format_argstrs: ty.Dict[str, str] = attrs.field(factory=dict)
+
+    INCLUDED_METHODS = ("_parse_inputs", "_format_arg", "_list_outputs")
+
     def generate_code(self, input_fields, nonstd_types, output_fields) -> ty.Tuple[
         str,
         UsedSymbols,
@@ -80,10 +92,16 @@ class ShellCommandInterfaceConverter(BaseInterfaceConverter):
                 spec_fields_str.append(tuple(el))
             return spec_fields_str
 
-        input_fields_str = types_to_names(spec_fields=input_fields)
-        output_fields_str = types_to_names(spec_fields=output_fields)
+        input_names = [i[0] for i in input_fields]
+        output_names = [o[0] for o in output_fields]
+        input_fields_str = str(types_to_names(spec_fields=input_fields))
+        input_fields_str = re.sub(
+            r"'formatter': '(\w+)'", r"'formatter': \1", input_fields_str
+        )
+        output_fields_str = str(types_to_names(spec_fields=output_fields))
         functions_str = self.function_callables()
         spec_str = functions_str
+        spec_str += self.format_arg_code + self.parse_inputs_code
         spec_str += f"input_fields = {input_fields_str}\n"
         spec_str += f"{self.task_name}_input_spec = specs.SpecInfo(name='Input', fields=input_fields, bases=(specs.ShellSpec,))\n\n"
         spec_str += f"output_fields = {output_fields_str}\n"
@@ -101,6 +119,9 @@ class ShellCommandInterfaceConverter(BaseInterfaceConverter):
 
         spec_str = re.sub(r"'#([^'#]+)#'", r"\1", spec_str)
 
+        for m in sorted(self.referenced_methods, key=attrgetter("__name__")):
+            spec_str += "\n\n" + self.process_method(m, input_names, output_names)
+
         imports = self.construct_imports(
             nonstd_types,
             spec_str,
@@ -109,6 +130,148 @@ class ShellCommandInterfaceConverter(BaseInterfaceConverter):
         )
         # spec_str = "\n".join(str(i) for i in imports) + "\n\n" + spec_str
 
-        return spec_str, UsedSymbols(
-            module_name=self.nipype_module.__name__, imports=imports
+        used = UsedSymbols.find(
+            self.nipype_module,
+            [self.format_arg_code, self.parse_inputs_code, self.function_callables()],
+            omit_classes=self.package.omit_classes + [BaseInterface, TraitedSpec],
+            omit_modules=self.package.omit_modules,
+            omit_functions=self.package.omit_functions,
+            omit_constants=self.package.omit_constants,
+            always_include=self.package.all_explicit,
+            translations=self.package.all_import_translations,
+            absolute_imports=True,
         )
+        used.imports.update(imports)
+
+        return spec_str, used
+
+    @cached_property
+    def _convert_input_fields(self):
+        pydra_fields_l, has_template = super()._convert_input_fields
+        for field in pydra_fields_l:
+            if field[0] in self.formatted_input_fields:
+                field[-1]["formatter"] = f"{field[0]}_formatter"
+                self._format_argstrs[field[0]] = field[-1].pop("argstr")
+        return pydra_fields_l, has_template
+
+    @property
+    def formatted_input_fields(self):
+        return re.findall(r"name == \"(\w+)\"", self._format_arg_body)
+
+    @cached_property
+    def _format_arg_body(self):
+        if "_format_arg" not in self.nipype_interface.__dict__:
+            return ""
+        return _strip_doc_string(
+            inspect.getsource(self.nipype_interface._format_arg).split("\n", 1)[-1]
+        )
+
+    @property
+    def format_arg_code(self):
+        if not self._format_arg_body:
+            return ""
+        body = self._format_arg_body
+        # Replace self.inputs.<name> with <name> in the function body
+        input_re = re.compile(r"self\.inputs\.(\w+)\b(?!\()")
+        unrecognised_inputs = set(
+            m for m in input_re.findall(body) if m not in self.input_names
+        )
+        if unrecognised_inputs:
+            logger.warning(
+                "Found the following unrecognised (potentially dynamic) inputs %s in "
+                "'%s' task",
+                unrecognised_inputs,
+                self.task_name,
+            )
+
+        existing_args = list(
+            inspect.signature(self.nipype_interface._format_arg).parameters
+        )[1:]
+        name_arg, _, val_arg = existing_args
+        body = input_re.sub(r"inputs.\1", body)
+        body = re.sub(r"self\.(?!inputs)(\w+)", r"parsed_inputs['\1']", body)
+        body = re.sub(
+            r"trait_spec\.argstr % (.*)",
+            r"argstr.format(**{" + name_arg + r": \1})",
+            body,
+        )
+
+        # Strip out return value
+        body = re.sub(
+            (
+                r"\s*return super\((\w+,\s*self)?\)\._format_arg\("
+                + ", ".join(existing_args)
+                + r"\)\n"
+            ),
+            "",
+            body,
+        )
+        if not body:
+            return ""
+        body = self.unwrap_nested_methods(body)
+
+        code_str = f"""def _format_arg({name_arg}, {val_arg}, inputs, parsed_inputs, argstr):
+{body}
+    raise ValueError(f"Unrecognised field {{{name_arg}}}")
+
+
+"""
+        for field_name in self.formatted_input_fields:
+            code_str += f"def {field_name}_formatter(field, inputs):\n"
+            if self.parse_inputs_code:
+                code_str += "    parsed_inputs = _parse_inputs(inputs)\n"
+            else:
+                code_str += "    parsed_inputs = {}\n"
+
+            code_str += (
+                f"    return _format_arg({field_name!r}, field, inputs, "
+                f"parsed_inputs, argstr={self._format_argstrs[field_name]!r})\n\n\n"
+            )
+        return code_str
+
+    @property
+    def parse_inputs_code(self) -> str:
+        if "_parse_inputs" not in self.nipype_interface.__dict__:
+            return ""
+        body = _strip_doc_string(
+            inspect.getsource(self.nipype_interface._parse_inputs).split("\n", 1)[-1]
+        )
+        # Replace self.inputs.<name> with <name> in the function body
+        input_re = re.compile(r"self\.inputs\.(\w+)\b(?!\()")
+        unrecognised_inputs = set(
+            m for m in input_re.findall(body) if m not in self.input_names
+        )
+        if unrecognised_inputs:
+            logger.warning(
+                "Found the following unrecognised (potentially dynamic) inputs %s in "
+                "'%s' task",
+                unrecognised_inputs,
+                self.task_name,
+            )
+        body = re.sub(r"self\.inputs", r"inputs", body)
+        body = re.sub(r"self\.(\w+)\b(?!\()", r"parsed_inputs['\1']", body)
+        body = re.sub(
+            r"self.\_format_arg\((\w+), (\w+), (\w+)\)",
+            r"_format_arg(\1, \3, inputs, parsed_inputs, argstrs.get(\1))",
+            body,
+        )
+
+        # Strip out return value
+        body = re.sub(r"\s*return .*\n", "", body)
+        body = self.unwrap_nested_methods(body)
+
+        return f"""def _parse_inputs(inputs):
+    parsed_inputs = {{}}
+    argstrs = {self._format_argstrs!r}
+    skip = []
+{body}
+    return parsed_inputs
+
+
+"""
+
+
+def _strip_doc_string(body: str) -> str:
+    if re.match(r"\s*(\"|')", body):
+        body = "\n".join(split_source_into_statements(body)[1:])
+    return body

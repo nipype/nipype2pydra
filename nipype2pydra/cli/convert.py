@@ -66,7 +66,9 @@ def convert(
     # Clean previous version of output dir
     package_dir = converter.package_dir(package_root)
     if converter.interface_only:
-        shutil.rmtree(package_dir / "auto")
+        auto_dir = package_dir / "auto"
+        if auto_dir.exists():
+            shutil.rmtree(auto_dir)
     else:
         for fspath in package_dir.iterdir():
             if fspath.parent == package_dir and fspath.name in (
