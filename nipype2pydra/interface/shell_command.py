@@ -29,12 +29,21 @@ class ShellCommandInterfaceConverter(BaseInterfaceConverter):
 
     _format_argstrs: ty.Dict[str, str] = attrs.field(factory=dict)
 
-    INCLUDED_METHODS = (
-        "_parse_inputs",
-        "_format_arg",
-        "_list_outputs",
-        "_gen_filename",
-    )
+    @cached_property
+    def included_methods(self) -> ty.Tuple[str, ...]:
+        included = []
+        if not self.method_omitted("_parse_inputs"):
+            included.append("_parse_inputs"),
+        if not self.method_omitted("_format_arg"):
+            included.append("_format_arg")
+        if not self.method_omitted("_gen_filename"):
+            included.append("_gen_filename")
+        if self.callable_output_fields:
+            if not self.method_omitted("aggregate_outputs"):
+                included.append("aggregate_outputs")
+            if not self.method_omitted("_list_outputs"):
+                included.append("_list_outputs")
+        return tuple(included)
 
     def generate_code(self, input_fields, nonstd_types, output_fields) -> ty.Tuple[
         str,
@@ -142,7 +151,7 @@ class ShellCommandInterfaceConverter(BaseInterfaceConverter):
         spec_str = re.sub(r"'#([^'#]+)#'", r"\1", spec_str)
 
         for m in sorted(self.referenced_methods, key=attrgetter("__name__")):
-            if m.__name__ in self.INCLUDED_METHODS:
+            if m.__name__ in self.included_methods:
                 continue
             if self.method_stacks[m.__name__][0] == self.nipype_interface._list_outputs:
                 additional_args = CALLABLES_ARGS
@@ -251,7 +260,7 @@ class ShellCommandInterfaceConverter(BaseInterfaceConverter):
 
     @cached_property
     def _format_arg_body(self):
-        if "_format_arg" not in self.nipype_interface.__dict__:
+        if self.method_omitted("_format_arg"):
             return ""
         return _strip_doc_string(
             inspect.getsource(self.nipype_interface._format_arg).split("\n", 1)[-1]
@@ -259,7 +268,7 @@ class ShellCommandInterfaceConverter(BaseInterfaceConverter):
 
     @cached_property
     def _gen_filename_body(self):
-        if "_gen_filename" not in self.nipype_interface.__dict__:
+        if self.method_omitted("_gen_filename"):
             return ""
         return _strip_doc_string(
             inspect.getsource(self.nipype_interface._gen_filename).split("\n", 1)[-1]
@@ -267,7 +276,7 @@ class ShellCommandInterfaceConverter(BaseInterfaceConverter):
 
     @property
     def format_arg_code(self):
-        if not self._format_arg_body:
+        if "_format_arg" not in self.included_methods:
             return ""
         body = self._format_arg_body
         body = self._process_inputs(body)
@@ -296,7 +305,12 @@ class ShellCommandInterfaceConverter(BaseInterfaceConverter):
         if not body:
             return ""
         body = self.unwrap_nested_methods(body, inputs_as_dict=True)
-        body = self.replace_supers(body)
+        body = self.replace_supers(
+            body,
+            super_base=find_super_method(
+                self.nipype_interface, "_format_arg", include_class=True
+            )[1],
+        )
 
         code_str = f"""def _format_arg({name_arg}, {val_arg}, inputs, argstr):{self.parse_inputs_call}
     if {val_arg} is None:
@@ -318,7 +332,7 @@ class ShellCommandInterfaceConverter(BaseInterfaceConverter):
 
     @property
     def parse_inputs_code(self) -> str:
-        if "_parse_inputs" not in self.nipype_interface.__dict__:
+        if "_parse_inputs" not in self.included_methods:
             return ""
         body = _strip_doc_string(
             inspect.getsource(self.nipype_interface._parse_inputs).split("\n", 1)[-1]
@@ -336,7 +350,12 @@ class ShellCommandInterfaceConverter(BaseInterfaceConverter):
         if not body:
             return ""
         body = self.unwrap_nested_methods(body, inputs_as_dict=True)
-        body = self.replace_supers(body)
+        body = self.replace_supers(
+            body,
+            super_base=find_super_method(
+                self.nipype_interface, "_parse_inputs", include_class=True
+            )[1],
+        )
 
         code_str = "def _parse_inputs(inputs):\n    parsed_inputs = {}"
         if re.findall(r"\bargstrs\b", body):
@@ -352,7 +371,7 @@ class ShellCommandInterfaceConverter(BaseInterfaceConverter):
 
     @cached_property
     def defaults_code(self):
-        if not self.callable_default_input_field_names:
+        if "_gen_filename" not in self.included_methods:
             return ""
 
         body = _strip_doc_string(
@@ -364,7 +383,12 @@ class ShellCommandInterfaceConverter(BaseInterfaceConverter):
         if not body:
             return ""
         body = self.unwrap_nested_methods(body, inputs_as_dict=True)
-        body = self.replace_supers(body)
+        body = self.replace_supers(
+            body,
+            super_base=find_super_method(
+                self.nipype_interface, "_gen_filename", include_class=True
+            )[1],
+        )
 
         code_str = f"""def _gen_filename(name, inputs):{self.parse_inputs_call}
 {body}
@@ -387,10 +411,7 @@ class ShellCommandInterfaceConverter(BaseInterfaceConverter):
         if not self.callable_output_fields:
             return ""
         code_str = ""
-        if (
-            find_super_method(self.nipype_interface, "aggregate_outputs")[1]
-            is not BaseInterface
-        ):
+        if "aggregate_outputs" in self.included_methods:
             func_name = "aggregate_outputs"
             body = _strip_doc_string(
                 inspect.getsource(self.nipype_interface.aggregate_outputs).split(
@@ -406,7 +427,12 @@ class ShellCommandInterfaceConverter(BaseInterfaceConverter):
             body = self.unwrap_nested_methods(
                 body, additional_args=CALLABLES_ARGS, inputs_as_dict=True
             )
-            body = self.replace_supers(body)
+            body = self.replace_supers(
+                body,
+                super_base=find_super_method(
+                    self.nipype_interface, "aggregate_outputs", include_class=True
+                )[1],
+            )
 
             code_str += f"""def aggregate_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
     inputs = attrs.asdict(inputs){self.parse_inputs_call}
@@ -436,7 +462,12 @@ class ShellCommandInterfaceConverter(BaseInterfaceConverter):
             body = self.unwrap_nested_methods(
                 body, additional_args=CALLABLES_ARGS, inputs_as_dict=True
             )
-            body = self.replace_supers(body)
+            body = self.replace_supers(
+                body,
+                super_base=find_super_method(
+                    self.nipype_interface, "_list_outputs", include_class=True
+                )[1],
+            )
 
         code_str += f"""def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):{inputs_as_dict_call}{self.parse_inputs_call}
 {body}
@@ -475,6 +506,11 @@ class ShellCommandInterfaceConverter(BaseInterfaceConverter):
         if not self.parse_inputs_code:
             return ""
         return "\n    parsed_inputs = _parse_inputs(inputs) if inputs else {}"
+
+    def method_omitted(self, method_name: str) -> bool:
+        return self.package.is_omitted(
+            find_super_method(self.nipype_interface, method_name, include_class=True)[1]
+        )
 
 
 def _strip_doc_string(body: str) -> str:

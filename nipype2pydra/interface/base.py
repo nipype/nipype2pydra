@@ -492,20 +492,21 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
         method_stacks = {}
         method_supers = defaultdict(dict)
         already_processed = set(
-            getattr(self.nipype_interface, m) for m in self.INCLUDED_METHODS
+            getattr(self.nipype_interface, m) for m in self.included_methods
         )
-        for method_name in self.INCLUDED_METHODS:
+        for method_name in self.included_methods:
             method_args[method_name] = []
             method_returns[method_name] = []
             method_stacks[method_name] = ()
-        for method_name in self.INCLUDED_METHODS:
-            base = find_super_method(
+        for method_name in self.included_methods:
+            method = getattr(self.nipype_interface, method_name)
+            super_base = find_super_method(
                 self.nipype_interface, method_name, include_class=True
             )[1]
-            if self.package.is_omitted(base):
-                continue  # Don't include base methods
-            method = getattr(self.nipype_interface, method_name)
-            referenced_methods.add(method)
+            # if super_base is not self.nipype_interface:
+            #     method_supers[self.nipype_interface][method_name] = (
+            #         self._common_parent_pkg_prefix(super_base) + method_name
+            #     )
             self._get_referenced(
                 method,
                 referenced_funcs=referenced_funcs,
@@ -516,6 +517,7 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
                 method_stacks=method_stacks,
                 method_supers=method_supers,
                 already_processed=already_processed,
+                super_base=super_base,
             )
         return (
             referenced_funcs,
@@ -1095,7 +1097,14 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
 
         ref_method_names = re.findall(r"(?<=self\.)(\w+)\(", method_body)
         ref_methods = set(m for m in self.methods if m.__name__ in ref_method_names)
-
+        # Filter methods in omitted common base-classes like BaseInterface & CommandLine
+        ref_methods = [
+            m
+            for m in ref_methods
+            if not self.package.is_omitted(
+                find_super_method(super_base, m.__name__, include_class=True)[1]
+            )
+        ]
         referenced_funcs.update(ref_local_funcs)
         referenced_methods.update(ref_methods)
 
@@ -1107,7 +1116,7 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
             )
         for match in re.findall(r"super\([^\)]*\)\.(\w+)\(", method_body):
             super_method, base = find_super_method(super_base, match)
-            if self.package.is_omitted(super_method):
+            if self.package.is_omitted(base):
                 continue
             func_name = self._common_parent_pkg_prefix(base) + match
             if func_name not in referenced_supers:
@@ -1144,7 +1153,6 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
                 method_supers=method_supers,
                 already_processed=already_processed,
                 method_stack=method_stack,
-                super_base=super_base,
             )
             referenced_inputs.update(rf_inputs)
             referenced_outputs.update(rf_outputs)
@@ -1162,7 +1170,6 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
                 method_supers=method_supers,
                 already_processed=already_processed,
                 method_stack=method_stack,
-                super_base=super_base,
             )
             method_args[meth.__name__] = ref_inputs
             method_returns[meth.__name__] = ref_outputs
@@ -1215,13 +1222,12 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
             pass
         if "runtime" in args:
             args.remove("runtime")
-        if method.__name__ in self.method_args:
-            args += [
-                f"{a}=None"
-                for a in (
-                    list(self.method_args[method.__name__]) + list(additional_args)
-                )
-            ]
+        args_to_add = list(self.method_args.get(method.__name__, [])) + list(
+            additional_args
+        )
+        if args_to_add:
+            kwargs = [args.pop()] if args and args[-1].startswith("**") else []
+            args += [f"{a}=None" for a in args_to_add] + kwargs
         # Insert method args in signature if present
         return_types, method_body = post.split(":", maxsplit=1)
         method_body = method_body.split("\n", maxsplit=1)[1]
@@ -1255,6 +1261,8 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
         output_names: ty.List[str],
         super_base: ty.Optional[type] = None,
     ) -> str:
+        if not method_body:
+            return ""
         if super_base is None:
             super_base = self.nipype_interface
         return_value = get_return_line(method_body)
@@ -1330,7 +1338,7 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
         # Add args to the function signature of method calls
         method_re = re.compile(r"self\.(\w+)(?=\()", flags=re.MULTILINE | re.DOTALL)
         method_names = [m.__name__ for m in self.referenced_methods] + list(
-            self.INCLUDED_METHODS
+            self.included_methods
         )
         method_body = strip_comments(method_body)
         omitted_methods = {}
@@ -1345,9 +1353,16 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
         for name, args in zip(splits[1::2], splits[2::2]):
             if name in omitted_methods:
                 args, post = extract_args(args)[1:]
-                new_body += self.SPECIAL_SUPER_MAPPINGS[omitted_methods[name]].format(
-                    args=", ".join(args)
-                )
+                omitted_method = omitted_methods[name]
+                try:
+                    new_body += self.SPECIAL_SUPER_MAPPINGS[omitted_method].format(
+                        args=", ".join(args)
+                    )
+                except KeyError:
+                    raise KeyError(
+                        f"Require special mapping for {omitted_methods[name]} method "
+                        "as methods in that module are being omitted from the conversion"
+                    ) from None
                 new_body += post[1:]  # drop the leading parenthesis
                 continue
             # Assign additional return values (which were previously saved to member
@@ -1407,6 +1422,10 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
         CommandLine._filename_from_source: "{args} + '_generated'",
         BaseInterface._check_version_requirements: "[]",
         CommandLine._parse_inputs: "{{}}",
+        CommandLine._gen_filename: "",
+        BaseInterface.aggregate_outputs: "{{}}",
+        BaseInterface.run: "None",
+        BaseInterface._list_outputs: "{{}}",
     }
 
     INPUT_KEYS = [

@@ -8,7 +8,7 @@ import logging
 import attrs
 from nipype.interfaces.base import BaseInterface, TraitedSpec
 from .base import BaseInterfaceConverter
-from ..utils import UsedSymbols, get_return_line
+from ..utils import UsedSymbols, get_return_line, find_super_method
 
 
 logger = logging.getLogger("nipype2pydra")
@@ -17,7 +17,9 @@ logger = logging.getLogger("nipype2pydra")
 @attrs.define(slots=False)
 class FunctionInterfaceConverter(BaseInterfaceConverter):
 
-    INCLUDED_METHODS = ("_run_interface", "_list_outputs")
+    @property
+    def included_methods(self) -> ty.Tuple[str, ...]:
+        return ("_run_interface", "_list_outputs")
 
     def generate_code(self, input_fields, nonstd_types, output_fields) -> ty.Tuple[
         str,
@@ -68,14 +70,29 @@ class FunctionInterfaceConverter(BaseInterfaceConverter):
         if re.match(r"\s*return", method_lines[-1]):
             method_lines = method_lines[:-1]
         method_body = "\n".join(method_lines)
+        method_body = self.process_method_body(
+            method_body,
+            input_names,
+            output_names,
+            super_base=find_super_method(
+                self.nipype_interface, "_run_interface", include_class=True
+            )[1],
+        )
         lo_src = inspect.getsource(self.nipype_interface._list_outputs).strip()
         # Strip out method def and return statement
         lo_lines = lo_src.strip().split("\n")[1:]
         if re.match(r"\s*(return|raise NotImplementedError)", lo_lines[-1]):
             lo_lines = lo_lines[:-1]
         lo_src = "\n".join(lo_lines)
+        lo_src = self.process_method_body(
+            lo_src,
+            input_names,
+            output_names,
+            super_base=find_super_method(
+                self.nipype_interface, "_list_outputs", include_class=True
+            )[1],
+        )
         method_body += "\n" + lo_src
-        method_body = self.process_method_body(method_body, input_names, output_names)
         method_body = re.sub(
             r"self\._results\[(?:'|\")(\w+)(?:'|\")\]", r"\1", method_body
         )

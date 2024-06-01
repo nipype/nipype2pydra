@@ -361,7 +361,11 @@ def insert_args_in_signature(snippet: str, new_args: ty.Iterable[str]) -> str:
     pre, args, post = extract_args(snippet)
     if "runtime" in args:
         args.remove("runtime")
-    return pre + ", ".join(args + new_args) + post
+    if args and args[-1].startswith("**"):
+        kwargs = [args.pop()]
+    else:
+        kwargs = []
+    return pre + ", ".join(args + new_args + kwargs) + post
 
 
 def get_source_code(func_or_klass: ty.Union[ty.Callable, ty.Type]) -> str:
