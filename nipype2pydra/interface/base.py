@@ -31,6 +31,8 @@ from ..utils import (
     cleanup_function_body,
     insert_args_in_signature,
     extract_args,
+    strip_comments,
+    find_super_method,
 )
 from ..statements import (
     ImportStatement,
@@ -1021,6 +1023,11 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
         )
         body = re.sub(r"\bruntime\.(stdout|stderr)", r"\1", body)
         body = re.sub(r"\boutputs\.(\w+)", r"outputs['\1']", body)
+        body = re.sub(r"getattr\(inputs, ([^)]+)\)", r"inputs[\1]", body)
+        body = re.sub(
+            r"setattr\(outputs, ([^,]+), ([^)]+)\)", r"outputs[\1] = \2", body
+        )
+        body = body.replace("TraitError", "KeyError")
         body = body.replace("os.getcwd()", "output_dir")
         return body
 
@@ -1209,7 +1216,9 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
         if method.__name__ in self.method_args:
             args += [
                 f"{a}=None"
-                for a in (list(self.method_args[method.__name__]) + additional_args)
+                for a in (
+                    list(self.method_args[method.__name__]) + list(additional_args)
+                )
             ]
         # Insert method args in signature if present
         return_types, method_body = post.split(":", maxsplit=1)
@@ -1291,7 +1300,9 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
         def replace_super(match):
             super_method, base = find_super_method(super_base, match.group(1))
             try:
-                return self.SPECIAL_SUPER_MAPPINGS[super_method]
+                return self.SPECIAL_SUPER_MAPPINGS[super_method].format(
+                    args=match.group(2)
+                )
             except KeyError:
                 try:
                     return name_map[match.group(1)] + "(" + match.group(2) + ")"
@@ -1316,7 +1327,9 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
         """
         # Add args to the function signature of method calls
         method_re = re.compile(r"self\.(\w+)(?=\()", flags=re.MULTILINE | re.DOTALL)
-        method_names = [m.__name__ for m in self.referenced_methods]
+        method_names = [m.__name__ for m in self.referenced_methods] + list(
+            self.INCLUDED_METHODS
+        )
         method_body = strip_comments(method_body)
         omitted_methods = {}
         for method_name in set(
@@ -1329,8 +1342,11 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
         new_body = splits[0]
         for name, args in zip(splits[1::2], splits[2::2]):
             if name in omitted_methods:
-                new_body += self.SPECIAL_SUPER_MAPPINGS[omitted_methods[name]]
-                new_body += extract_args(args)[-1][1:]
+                args, post = extract_args(args)[1:]
+                new_body += self.SPECIAL_SUPER_MAPPINGS[omitted_methods[name]].format(
+                    args=", ".join(args)
+                )
+                new_body += post[1:]  # drop the leading parenthesis
                 continue
             # Assign additional return values (which were previously saved to member
             # attributes) to new variables from the method call
@@ -1375,8 +1391,9 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
         return cleanup_function_body(method_body)
 
     SPECIAL_SUPER_MAPPINGS = {
-        CommandLine._list_outputs: "{}",
+        CommandLine._list_outputs: "{{}}",
         CommandLine._format_arg: "argstr.format(**inputs)",
+        CommandLine._filename_from_source: "{args} + '_generated'",
         BaseInterface._check_version_requirements: "[]",
     }
 
@@ -1431,19 +1448,3 @@ if os.getenv("_PYTEST_RAISE", "0") != "0":
 else:
     CATCH_CLI_EXCEPTIONS = True
 """
-
-
-def find_super_method(
-    super_base: type, method_name: str
-) -> ty.Tuple[ty.Callable, type]:
-    for base in super_base.__mro__[1:]:
-        if method_name in base.__dict__:  # Found the match
-            return getattr(base, method_name), base
-    raise RuntimeError(
-        f"Could not find super of '{method_name}' method in base classes of "
-        f"{super_base}"
-    )
-
-
-def strip_comments(src: str) -> str:
-    return re.sub(r"\s*#.*", "", src)

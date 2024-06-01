@@ -13,6 +13,7 @@ from ..utils import (
     UsedSymbols,
     split_source_into_statements,
     INBUILT_NIPYPE_TRAIT_NAMES,
+    find_super_method,
 )
 from fileformats.core.mixin import WithClassifiers
 from fileformats.generic import File, Directory
@@ -243,6 +244,10 @@ class ShellCommandInterfaceConverter(BaseInterfaceConverter):
             )
         ]
 
+    @property
+    def callable_output_field_names(self):
+        return [f[0] for f in self.callable_output_fields]
+
     @cached_property
     def _format_arg_body(self):
         if "_format_arg" not in self.nipype_interface.__dict__:
@@ -295,7 +300,7 @@ class ShellCommandInterfaceConverter(BaseInterfaceConverter):
     if {val_arg} is None:
         return ""
 {body}
-
+    return argstr.format(**inputs)
 
 """
         for field_name in self.formatted_input_field_names:
@@ -326,7 +331,7 @@ class ShellCommandInterfaceConverter(BaseInterfaceConverter):
         body = self.unwrap_nested_methods(body, inputs_as_dict=True)
         body = self.replace_supers(body)
 
-        code_str = "def _parse_inputs(inputs):\n    parsed_inputs = {{}}"
+        code_str = "def _parse_inputs(inputs):\n    parsed_inputs = {}"
         if re.findall(r"\bargstrs\b", body):
             code_str += f"\n    argstrs = {self._format_argstrs!r}"
         code_str += f"""
@@ -374,32 +379,62 @@ class ShellCommandInterfaceConverter(BaseInterfaceConverter):
 
         if not self.callable_output_fields:
             return ""
-        if hasattr(self.nipype_interface, "aggregate_outputs"):
+        code_str = ""
+        if (
+            find_super_method(self.nipype_interface, "aggregate_outputs")[1]
+            is not BaseInterface
+        ):
             func_name = "aggregate_outputs"
             body = _strip_doc_string(
                 inspect.getsource(self.nipype_interface.aggregate_outputs).split(
                     "\n", 1
                 )[-1]
             )
+            need_list_outputs = bool(re.findall(r"\b_list_outputs\b", body))
+            body = self._process_inputs(body)
+            body = self._misc_cleanups(body)
+
+            if not body:
+                return ""
+            body = self.unwrap_nested_methods(
+                body, additional_args=CALLABLES_ARGS, inputs_as_dict=True
+            )
+            body = self.replace_supers(body)
+
+            code_str += f"""def aggregate_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
+    inputs = attrs.asdict(inputs){self.parse_inputs_call}
+    needed_outputs = {self.callable_output_field_names!r}
+{body}
+
+
+"""
+            inputs_as_dict_call = ""
+
         else:
             func_name = "_list_outputs"
+            inputs_as_dict_call = "\n    inputs = attrs.asdict(inputs)"
+            need_list_outputs = True
+
+        if need_list_outputs:
             body = _strip_doc_string(
                 inspect.getsource(self.nipype_interface._list_outputs).split("\n", 1)[
                     -1
                 ]
             )
-        body = self._process_inputs(body)
-        body = self._misc_cleanups(body)
+            body = self._process_inputs(body)
+            body = self._misc_cleanups(body)
 
-        if not body:
-            return ""
-        body = self.unwrap_nested_methods(
-            body, additional_args=CALLABLES_ARGS, inputs_as_dict=True
-        )
-        body = self.replace_supers(body)
+            if not body:
+                return ""
+            body = self.unwrap_nested_methods(
+                body, additional_args=CALLABLES_ARGS, inputs_as_dict=True
+            )
+            body = self.replace_supers(body)
 
-        code_str = f"""def {func_name}(inputs=None, stdout=None, stderr=None, output_dir=None):{self.parse_inputs_call}
+        code_str += f"""def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):{inputs_as_dict_call}{self.parse_inputs_call}
 {body}
+
+
 """
         # Create separate function for each output field in the "callables" section
         for output_field in self.callable_output_fields:
@@ -407,7 +442,7 @@ class ShellCommandInterfaceConverter(BaseInterfaceConverter):
             code_str += (
                 f"\n\n\ndef {output_name}_callable(output_dir, inputs, stdout, stderr):\n"
                 f"    outputs = {func_name}(output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr)\n"
-                '    return outputs["' + output_name + '"]\n\n'
+                '    return outputs.get("' + output_name + '", attrs.NOTHING)\n\n'
             )
         return code_str
 
@@ -432,7 +467,7 @@ class ShellCommandInterfaceConverter(BaseInterfaceConverter):
     def parse_inputs_call(self):
         if not self.parse_inputs_code:
             return ""
-        return "\n    _parse_inputs(inputs) if inputs else {}"
+        return "\n    parsed_inputs = _parse_inputs(inputs) if inputs else {}"
 
 
 def _strip_doc_string(body: str) -> str:

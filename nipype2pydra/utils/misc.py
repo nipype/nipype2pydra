@@ -539,3 +539,19 @@ def get_return_line(func: ty.Union[str, ty.Callable]) -> str:
     if not match:
         return None
     return match.group(1).strip()
+
+
+def find_super_method(
+    super_base: type, method_name: str
+) -> ty.Tuple[ty.Callable, type]:
+    for base in super_base.__mro__[1:]:
+        if method_name in base.__dict__:  # Found the match
+            return getattr(base, method_name), base
+    raise RuntimeError(
+        f"Could not find super of '{method_name}' method in base classes of "
+        f"{super_base}"
+    )
+
+
+def strip_comments(src: str) -> str:
+    return re.sub(r"\s+#.*", "", src)

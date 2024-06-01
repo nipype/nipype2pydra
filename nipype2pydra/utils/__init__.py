@@ -20,6 +20,8 @@ from .misc import (  # noqa: F401
     types_converter,
     unwrap_nested_type,
     get_return_line,
+    find_super_method,
+    strip_comments,
     INBUILT_NIPYPE_TRAIT_NAMES,
 )
 from .symbols import (  # noqa: F401
