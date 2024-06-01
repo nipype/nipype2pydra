@@ -414,7 +414,7 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
 
     @cached_property
     def output_fields(self):
-        return self.convert_output_spec(fields_from_template=self.input_templates)
+        return self._convert_output_fields(fields_from_template=self.input_templates)
 
     @cached_property
     def nonstd_types(self):
@@ -684,7 +684,7 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
         else:
             return (pydra_type, pydra_metadata), pos
 
-    def convert_output_spec(self, fields_from_template):
+    def _convert_output_fields(self, fields_from_template):
         """creating fields list for pydra input spec"""
         pydra_fields_l = []
         if not self.nipype_output_spec:
@@ -1288,11 +1288,22 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
         name_map = self.method_supers[super_base]
 
         def replace_super(match):
-            super_method = find_super_method(super_base, match.group(1))[0]
+            super_method, base = find_super_method(super_base, match.group(1))
             try:
                 return self.SPECIAL_SUPER_MAPPINGS[super_method]
             except KeyError:
-                return name_map[match.group(1)] + "(" + match.group(2) + ")"
+                try:
+                    return name_map[match.group(1)] + "(" + match.group(2) + ")"
+                except KeyError:
+                    if any(
+                        base.__module__.startswith(m)
+                        for m in UsedSymbols.ALWAYS_OMIT_MODULES
+                    ):
+                        raise KeyError(
+                            f"Require special mapping for {match.group(1)} in {base} class "
+                            "as methods in that module are being omitted from the conversion"
+                        ) from None
+                    raise
 
         return re.sub(r"super\([^\)]*\)\.(\w+)\(([^\)]*)\)", replace_super, method_body)
 

@@ -111,6 +111,9 @@ class ShellCommandInterfaceConverter(BaseInterfaceConverter):
             r"'formatter': '(\w+)'", r"'formatter': \1", input_fields_str
         )
         output_fields_str = str(types_to_names(spec_fields=output_fields))
+        output_fields_str = re.sub(
+            r"'callable': '(\w+)'", r"'callable': \1", output_fields_str
+        )
         # functions_str = self.function_callables()
         # functions_imports, functions_str = functions_str.split("\n\n", 1)
         # spec_str = functions_str
@@ -206,27 +209,34 @@ class ShellCommandInterfaceConverter(BaseInterfaceConverter):
         return spec_str, used
 
     @cached_property
-    def _convert_input_fields(self):
-        pydra_fields_l, has_template = super()._convert_input_fields
-        for field in pydra_fields_l:
-            if field[0] in self.formatted_input_fields:
+    def input_fields(self):
+        input_fields = super().input_fields
+        for field in input_fields:
+            if field[0] in self.formatted_input_field_names:
                 field[-1]["formatter"] = f"{field[0]}_formatter"
                 self._format_argstrs[field[0]] = field[-1].pop("argstr")
-        return pydra_fields_l, has_template
+        return input_fields
+
+    @cached_property
+    def output_fields(self):
+        output_fields = super().output_fields
+        for field in self.callable_output_fields:
+            field[-1]["callable"] = f"{field[0]}_callable"
+        return output_fields
 
     @property
-    def formatted_input_fields(self):
+    def formatted_input_field_names(self):
         return re.findall(r"name == \"(\w+)\"", self._format_arg_body)
 
     @property
-    def callable_default_input_fields(self):
+    def callable_default_input_field_names(self):
         return re.findall(r"name == \"(\w+)\"", self._gen_filename_body)
 
     @property
     def callable_output_fields(self):
         return [
             f
-            for f in self.output_fields
+            for f in super().output_fields
             if (
                 "output_file_template" not in f[-1]
                 and f[0] not in INBUILT_NIPYPE_TRAIT_NAMES
@@ -290,7 +300,7 @@ class ShellCommandInterfaceConverter(BaseInterfaceConverter):
 
 
 """
-        for field_name in self.formatted_input_fields:
+        for field_name in self.formatted_input_field_names:
             code_str += (
                 f"def {field_name}_formatter(field, inputs):\n"
                 f"    return _format_arg({field_name!r}, field, inputs, "
@@ -318,19 +328,21 @@ class ShellCommandInterfaceConverter(BaseInterfaceConverter):
         body = self.unwrap_nested_methods(body)
         body = self.replace_supers(body)
 
-        return f"""def _parse_inputs(inputs):
-    parsed_inputs = {{}}
-    argstrs = {self._format_argstrs!r}
+        code_str = "def _parse_inputs(inputs):\n    parsed_inputs = {{}}"
+        if re.findall(r"\bargstrs\b", body):
+            code_str += f"\n    argstrs = {self._format_argstrs!r}"
+        code_str += f"""
     skip = []
 {body}
     return parsed_inputs
 
 
 """
+        return code_str
 
     @cached_property
     def defaults_code(self):
-        if not self.callable_default_input_fields:
+        if not self.callable_default_input_field_names:
             return ""
 
         body = _strip_doc_string(
