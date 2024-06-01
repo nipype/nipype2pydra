@@ -288,11 +288,10 @@ class ShellCommandInterfaceConverter(BaseInterfaceConverter):
         )
         if not body:
             return ""
-        body = self.unwrap_nested_methods(body)
+        body = self.unwrap_nested_methods(body, inputs_as_dict=True)
         body = self.replace_supers(body)
 
-        code_str = f"""def _format_arg({name_arg}, {val_arg}, inputs, argstr):
-    parsed_inputs = _parse_inputs(inputs) if inputs else {{}}
+        code_str = f"""def _format_arg({name_arg}, {val_arg}, inputs, argstr):{self.parse_inputs_call}
     if {val_arg} is None:
         return ""
 {body}
@@ -324,7 +323,7 @@ class ShellCommandInterfaceConverter(BaseInterfaceConverter):
 
         # Strip out return value
         body = re.sub(r"\s*return .*\n", "", body)
-        body = self.unwrap_nested_methods(body)
+        body = self.unwrap_nested_methods(body, inputs_as_dict=True)
         body = self.replace_supers(body)
 
         code_str = "def _parse_inputs(inputs):\n    parsed_inputs = {{}}"
@@ -352,11 +351,10 @@ class ShellCommandInterfaceConverter(BaseInterfaceConverter):
 
         if not body:
             return ""
-        body = self.unwrap_nested_methods(body)
+        body = self.unwrap_nested_methods(body, inputs_as_dict=True)
         body = self.replace_supers(body)
 
-        code_str = f"""def _gen_filename(name, inputs):
-    parsed_inputs = _parse_inputs(inputs) if inputs else {{}}
+        code_str = f"""def _gen_filename(name, inputs):{self.parse_inputs_call}
 {body}
 """
         # Create separate default function for each input field with genfile, which
@@ -376,23 +374,31 @@ class ShellCommandInterfaceConverter(BaseInterfaceConverter):
 
         if not self.callable_output_fields:
             return ""
-
-        body = _strip_doc_string(
-            inspect.getsource(self.nipype_interface._list_outputs).split("\n", 1)[-1]
-        )
+        if hasattr(self.nipype_interface, "aggregate_outputs"):
+            func_name = "aggregate_outputs"
+            body = _strip_doc_string(
+                inspect.getsource(self.nipype_interface.aggregate_outputs).split(
+                    "\n", 1
+                )[-1]
+            )
+        else:
+            func_name = "_list_outputs"
+            body = _strip_doc_string(
+                inspect.getsource(self.nipype_interface._list_outputs).split("\n", 1)[
+                    -1
+                ]
+            )
         body = self._process_inputs(body)
         body = self._misc_cleanups(body)
 
         if not body:
             return ""
         body = self.unwrap_nested_methods(
-            body,
-            additional_args=CALLABLES_ARGS,
+            body, additional_args=CALLABLES_ARGS, inputs_as_dict=True
         )
         body = self.replace_supers(body)
 
-        code_str = f"""def _list_outputs(inputs=None, stdout=None, stderr=None, output_dir=None):
-    parsed_inputs = _parse_inputs(inputs) if inputs else {{}}
+        code_str = f"""def {func_name}(inputs=None, stdout=None, stderr=None, output_dir=None):{self.parse_inputs_call}
 {body}
 """
         # Create separate function for each output field in the "callables" section
@@ -400,7 +406,7 @@ class ShellCommandInterfaceConverter(BaseInterfaceConverter):
             output_name = output_field[0]
             code_str += (
                 f"\n\n\ndef {output_name}_callable(output_dir, inputs, stdout, stderr):\n"
-                "    outputs = _list_outputs(output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr)\n"
+                f"    outputs = {func_name}(output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr)\n"
                 '    return outputs["' + output_name + '"]\n\n'
             )
         return code_str
@@ -419,8 +425,14 @@ class ShellCommandInterfaceConverter(BaseInterfaceConverter):
                 self.task_name,
             )
         body = input_re.sub(r"inputs['\1']", body)
-        body = re.sub(r"self\.(?!inputs)(\w+)", r"parsed_inputs['\1']", body)
+        body = re.sub(r"self\.(?!inputs)(\w+)\b(?!\()", r"parsed_inputs['\1']", body)
         return body
+
+    @property
+    def parse_inputs_call(self):
+        if not self.parse_inputs_code:
+            return ""
+        return "\n    _parse_inputs(inputs) if inputs else {}"
 
 
 def _strip_doc_string(body: str) -> str:

@@ -14,7 +14,7 @@ from functools import cached_property
 import attrs
 from attrs.converters import default_if_none
 import nipype.interfaces.base
-from nipype.interfaces.base import traits_extension, CommandLine
+from nipype.interfaces.base import traits_extension, CommandLine, BaseInterface
 from pydra.engine import specs
 from pydra.engine.helpers import ensure_list
 from ..utils import (
@@ -1019,7 +1019,8 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
             body,
             flags=re.MULTILINE,
         )
-        body = re.sub(r"\w+runtime\.(stdout|stderr)", r"\1", body)
+        body = re.sub(r"\bruntime\.(stdout|stderr)", r"\1", body)
+        body = re.sub(r"\boutputs\.(\w+)", r"outputs['\1']", body)
         body = body.replace("os.getcwd()", "output_dir")
         return body
 
@@ -1307,22 +1308,30 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
 
         return re.sub(r"super\([^\)]*\)\.(\w+)\(([^\)]*)\)", replace_super, method_body)
 
-    def unwrap_nested_methods(self, method_body, additional_args=()):
+    def unwrap_nested_methods(
+        self, method_body, additional_args=(), inputs_as_dict: bool = False
+    ):
         """
         Converts nested method calls into function calls
         """
         # Add args to the function signature of method calls
         method_re = re.compile(r"self\.(\w+)(?=\()", flags=re.MULTILINE | re.DOTALL)
         method_names = [m.__name__ for m in self.referenced_methods]
-        unrecognised_methods = set(
+        method_body = strip_comments(method_body)
+        omitted_methods = {}
+        for method_name in set(
             m for m in method_re.findall(method_body) if m not in method_names
-        )
-        assert (
-            not unrecognised_methods
-        ), f"Found the following unrecognised methods {unrecognised_methods}"
+        ):
+            omitted_methods[method_name] = find_super_method(
+                self.nipype_interface, method_name
+            )[0]
         splits = method_re.split(method_body)
         new_body = splits[0]
         for name, args in zip(splits[1::2], splits[2::2]):
+            if name in omitted_methods:
+                new_body += self.SPECIAL_SUPER_MAPPINGS[omitted_methods[name]]
+                new_body += extract_args(args)[-1][1:]
+                continue
             # Assign additional return values (which were previously saved to member
             # attributes) to new variables from the method call
             if self.method_returns[name]:
@@ -1342,18 +1351,18 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
                     else:
                         new_body += ",".join(self.method_returns[name]) + " = "
                 else:
-                    raise NotImplementedError(
+                    logger.warning(
                         "Could not augment the return value of the method converted from "
-                        "a function with the previously assigned attributes as it is used "
-                        "directly. Need to replace the method call with a variable and "
-                        "assign the return value to it on a previous line"
+                        f"a function '{name}' with the previously assigned attributes "
+                        f"{self.method_returns[name]} as the method doesn't have a "
+                        f"singular return statement at the end of the method"
                     )
             # Insert additional arguments to the method call (which were previously
             # accessed via member attributes)
             new_body += name + insert_args_in_signature(
                 args,
                 [
-                    f"{a}={a}"
+                    f"{a}=inputs['{a}']" if inputs_as_dict else f"{a}={a}"
                     for a in (list(self.method_args[name]) + list(additional_args))
                 ],
             )
@@ -1368,6 +1377,7 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
     SPECIAL_SUPER_MAPPINGS = {
         CommandLine._list_outputs: "{}",
         CommandLine._format_arg: "argstr.format(**inputs)",
+        BaseInterface._check_version_requirements: "[]",
     }
 
     INPUT_KEYS = [
@@ -1433,3 +1443,7 @@ def find_super_method(
         f"Could not find super of '{method_name}' method in base classes of "
         f"{super_base}"
     )
+
+
+def strip_comments(src: str) -> str:
+    return re.sub(r"\s*#.*", "", src)
