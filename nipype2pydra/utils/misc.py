@@ -542,9 +542,12 @@ def get_return_line(func: ty.Union[str, ty.Callable]) -> str:
 
 
 def find_super_method(
-    super_base: type, method_name: str
+    super_base: type, method_name: str, include_class: bool = False
 ) -> ty.Tuple[ty.Callable, type]:
-    for base in super_base.__mro__[1:]:
+    mro = super_base.__mro__
+    if not include_class:
+        mro = mro[1:]
+    for base in mro:
         if method_name in base.__dict__:  # Found the match
             return getattr(base, method_name), base
     raise RuntimeError(
@@ -554,4 +557,4 @@ def find_super_method(
 
 
 def strip_comments(src: str) -> str:
-    return re.sub(r"\s+#.*", "", src)
+    return re.sub(r"^\s+#.*", "", src, flags=re.MULTILINE)

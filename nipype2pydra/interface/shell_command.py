@@ -174,7 +174,8 @@ class ShellCommandInterfaceConverter(BaseInterfaceConverter):
                 self.parse_inputs_code,
                 self.callables_code,
                 self.defaults_code,
-            ],
+            ]
+            + list(self.referenced_methods),
             omit_classes=self.package.omit_classes + [BaseInterface, TraitedSpec],
             omit_modules=self.package.omit_modules,
             omit_functions=self.package.omit_functions,
@@ -215,7 +216,7 @@ class ShellCommandInterfaceConverter(BaseInterfaceConverter):
         for field in input_fields:
             if field[0] in self.formatted_input_field_names:
                 field[-1]["formatter"] = f"{field[0]}_formatter"
-                self._format_argstrs[field[0]] = field[-1].pop("argstr")
+                self._format_argstrs[field[0]] = field[-1].pop("argstr", "")
         return input_fields
 
     @cached_property
@@ -284,12 +285,13 @@ class ShellCommandInterfaceConverter(BaseInterfaceConverter):
         # Strip out return value
         body = re.sub(
             (
-                r"\s*return super\((\w+,\s*self)?\)\._format_arg\("
+                r"^    return super\((\w+,\s*self)?\)\._format_arg\("
                 + ", ".join(existing_args)
                 + r"\)\n"
             ),
-            "",
+            "return argstr.format(**inputs)",
             body,
+            flags=re.MULTILINE,
         )
         if not body:
             return ""
@@ -299,10 +301,13 @@ class ShellCommandInterfaceConverter(BaseInterfaceConverter):
         code_str = f"""def _format_arg({name_arg}, {val_arg}, inputs, argstr):{self.parse_inputs_call}
     if {val_arg} is None:
         return ""
-{body}
-    return argstr.format(**inputs)
+{body}"""
 
-"""
+        if not code_str.rstrip().endswith("return argstr.format(**inputs)"):
+            code_str += "\n    return argstr.format(**inputs)"
+
+        code_str += "\n\n"
+
         for field_name in self.formatted_input_field_names:
             code_str += (
                 f"def {field_name}_formatter(field, inputs):\n"
@@ -328,6 +333,8 @@ class ShellCommandInterfaceConverter(BaseInterfaceConverter):
 
         # Strip out return value
         body = re.sub(r"\s*return .*\n", "", body)
+        if not body:
+            return ""
         body = self.unwrap_nested_methods(body, inputs_as_dict=True)
         body = self.replace_supers(body)
 

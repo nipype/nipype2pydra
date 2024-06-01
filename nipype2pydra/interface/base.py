@@ -42,6 +42,7 @@ from ..statements import (
 )
 from fileformats.generic import File
 import nipype2pydra.package
+from nipype2pydra.exceptions import UnmatchedParensException
 
 logger = logging.getLogger("nipype2pydra")
 
@@ -498,7 +499,10 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
             method_returns[method_name] = []
             method_stacks[method_name] = ()
         for method_name in self.INCLUDED_METHODS:
-            if method_name not in self.nipype_interface.__dict__:
+            base = find_super_method(
+                self.nipype_interface, method_name, include_class=True
+            )[1]
+            if self.package.is_omitted(base):
                 continue  # Don't include base methods
             method = getattr(self.nipype_interface, method_name)
             referenced_methods.add(method)
@@ -1103,9 +1107,7 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
             )
         for match in re.findall(r"super\([^\)]*\)\.(\w+)\(", method_body):
             super_method, base = find_super_method(super_base, match)
-            if any(
-                base.__module__.startswith(m) for m in UsedSymbols.ALWAYS_OMIT_MODULES
-            ):
+            if self.package.is_omitted(super_method):
                 continue
             func_name = self._common_parent_pkg_prefix(base) + match
             if func_name not in referenced_supers:
@@ -1296,28 +1298,28 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
         if super_base is None:
             super_base = self.nipype_interface
         name_map = self.method_supers[super_base]
-
-        def replace_super(match):
-            super_method, base = find_super_method(super_base, match.group(1))
+        splits = re.split(r"super\([^\)]*\)\.(\w+)(?=\()", method_body)
+        new_body = splits[0]
+        for name, block in zip(splits[1::2], splits[2::2]):
+            super_method, base = find_super_method(super_base, name)
+            _, args, post = extract_args(block)
+            arg_str = ", ".join(args)
             try:
-                return self.SPECIAL_SUPER_MAPPINGS[super_method].format(
-                    args=match.group(2)
+                new_body += self.SPECIAL_SUPER_MAPPINGS[super_method].format(
+                    args=arg_str
                 )
             except KeyError:
                 try:
-                    return name_map[match.group(1)] + "(" + match.group(2) + ")"
+                    new_body += name_map[name] + "(" + arg_str + ")"
                 except KeyError:
-                    if any(
-                        base.__module__.startswith(m)
-                        for m in UsedSymbols.ALWAYS_OMIT_MODULES
-                    ):
+                    if self.package.is_omitted(base):
                         raise KeyError(
-                            f"Require special mapping for '{match.group(1)}' in {base} class "
+                            f"Require special mapping for '{name}' in {base} class "
                             "as methods in that module are being omitted from the conversion"
                         ) from None
                     raise
-
-        return re.sub(r"super\([^\)]*\)\.(\w+)\(([^\)]*)\)", replace_super, method_body)
+            new_body += post[1:]
+        return new_body
 
     def unwrap_nested_methods(
         self, method_body, additional_args=(), inputs_as_dict: bool = False
@@ -1375,13 +1377,22 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
                     )
             # Insert additional arguments to the method call (which were previously
             # accessed via member attributes)
-            new_body += name + insert_args_in_signature(
-                args,
-                [
-                    f"{a}=inputs['{a}']" if inputs_as_dict else f"{a}={a}"
-                    for a in (list(self.method_args[name]) + list(additional_args))
-                ],
-            )
+            args_to_be_inserted = list(self.method_args[name]) + list(additional_args)
+            try:
+                new_body += name + insert_args_in_signature(
+                    args,
+                    [
+                        f"{a}=inputs['{a}']" if inputs_as_dict else f"{a}={a}"
+                        for a in args_to_be_inserted
+                    ],
+                )
+            except UnmatchedParensException:
+                logger.warning(
+                    f"Nested method call inside '{name}' in {self.full_address}, "
+                    "the following args will need to be manually inserted up after the "
+                    f"conversion: {args_to_be_inserted}"
+                )
+                new_body += name + args
         method_body = new_body
         # Convert assignment to self attributes into method-scoped variables (hopefully
         # there aren't any name clashes)
@@ -1395,6 +1406,7 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
         CommandLine._format_arg: "argstr.format(**inputs)",
         CommandLine._filename_from_source: "{args} + '_generated'",
         BaseInterface._check_version_requirements: "[]",
+        CommandLine._parse_inputs: "{{}}",
     }
 
     INPUT_KEYS = [

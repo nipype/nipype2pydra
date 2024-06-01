@@ -310,7 +310,7 @@ class PackageConverter:
 
     @property
     def all_omit_modules(self) -> ty.List[str]:
-        return self.omit_modules + ["nipype.interfaces.utility"]
+        return self.omit_modules + UsedSymbols.ALWAYS_OMIT_MODULES
 
     @property
     def all_explicit(self):
@@ -343,6 +343,17 @@ class PackageConverter:
             defaults.update(config_params.defaults)
             all_defaults[name] = defaults
         return all_defaults
+
+    def is_omitted(self, obj: ty.Any) -> bool:
+        if full_address(obj) in self.omit_classes + self.omit_functions:
+            return True
+        if inspect.ismodule(obj):
+            mod_name = obj.__name__
+        else:
+            mod_name = obj.__module__
+        if any(re.match(m + r"\b", mod_name) for m in self.all_omit_modules):
+            return True
+        return False
 
     def write(self, package_root: Path, to_include: ty.List[str] = None):
         """Writes the package to the specified package root"""
@@ -886,6 +897,7 @@ post_release = "{post_release}"
                 # Write to file for debugging
                 debug_file = "~/unparsable-nipype2pydra-output.py"
                 with open(Path(debug_file).expanduser(), "w") as f:
+                    f.write(f"# Attemping to convert {self.nipype_name}\n")
                     f.write(converted_code)
                 raise RuntimeError(
                     f"Black could not parse generated code (written to {debug_file}): "
