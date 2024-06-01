@@ -296,7 +296,6 @@ class ShellCommandInterfaceConverter(BaseInterfaceConverter):
     if {val_arg} is None:
         return ""
 {body}
-    return argstr.format(**inputs)
 
 
 """
@@ -358,7 +357,7 @@ class ShellCommandInterfaceConverter(BaseInterfaceConverter):
 
         code_str = f"""def _gen_filename(name, inputs):
     parsed_inputs = _parse_inputs(inputs) if inputs else {{}}
-    {body}
+{body}
 """
         # Create separate default function for each input field with genfile, which
         # reference the magic "_gen_filename" method

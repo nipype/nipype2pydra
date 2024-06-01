@@ -1300,7 +1300,7 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
                         for m in UsedSymbols.ALWAYS_OMIT_MODULES
                     ):
                         raise KeyError(
-                            f"Require special mapping for {match.group(1)} in {base} class "
+                            f"Require special mapping for '{match.group(1)}' in {base} class "
                             "as methods in that module are being omitted from the conversion"
                         ) from None
                     raise
@@ -1365,7 +1365,10 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
         )
         return cleanup_function_body(method_body)
 
-    SPECIAL_SUPER_MAPPINGS = {CommandLine._list_outputs: "{}"}
+    SPECIAL_SUPER_MAPPINGS = {
+        CommandLine._list_outputs: "{}",
+        CommandLine._format_arg: "argstr.format(**inputs)",
+    }
 
     INPUT_KEYS = [
         "allowed_values",
