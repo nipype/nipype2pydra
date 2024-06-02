@@ -97,7 +97,7 @@ class UsedSymbols:
             )
         else:
             self.local_functions.update(other.local_functions)
-            self.intra_pkg_classes.extend(
+            self.local_classes.extend(
                 c for c in other.local_classes if c not in self.local_classes
             )
 

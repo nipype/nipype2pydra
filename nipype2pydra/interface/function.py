@@ -3,7 +3,6 @@ import re
 import inspect
 from operator import attrgetter
 from functools import cached_property
-import itertools
 import logging
 import attrs
 from nipype.interfaces.base import BaseInterface, TraitedSpec
@@ -19,7 +18,7 @@ class FunctionInterfaceConverter(BaseInterfaceConverter):
 
     @property
     def included_methods(self) -> ty.Tuple[str, ...]:
-        return ("_run_interface", "_list_outputs")
+        return ("__init__", "_run_interface", "_list_outputs")
 
     def generate_code(self, input_fields, nonstd_types, output_fields) -> ty.Tuple[
         str,
