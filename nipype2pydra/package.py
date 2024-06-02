@@ -961,6 +961,7 @@ post_release = "{post_release}"
             # Write to file for debugging
             debug_file = "~/unparsable-nipype2pydra-output.py"
             with open(Path(debug_file).expanduser(), "w") as f:
+                f.write(f"# Attemping to convert {self.nipype_name}\n")
                 f.write(code_str)
             raise RuntimeError(
                 f"Black could not parse generated code (written to {debug_file}): {e}\n\n{code_str}"
@@ -1080,6 +1081,7 @@ post_release = "{post_release}"
                 # Write to file for debugging
                 debug_file = "~/unparsable-nipype2pydra-output.py"
                 with open(Path(debug_file).expanduser(), "w") as f:
+                    f.write(f"# Attemping to convert {self.nipype_name}\n")
                     f.write(code_str)
                 raise RuntimeError(
                     f"Black could not parse generated code (written to {debug_file}): "
@@ -1104,6 +1106,7 @@ post_release = "{post_release}"
                 # Write to file for debugging
                 debug_file = "~/unparsable-nipype2pydra-output.py"
                 with open(Path(debug_file).expanduser(), "w") as f:
+                    f.write(f"# Attemping to convert {self.nipype_name}\n")
                     f.write(code_str)
                 raise RuntimeError(
                     f"Black could not parse generated code (written to {debug_file}): "

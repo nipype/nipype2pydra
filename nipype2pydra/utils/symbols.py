@@ -74,25 +74,34 @@ class UsedSymbols:
         other: "UsedSymbols",
         absolute_imports: bool = False,
         to_be_inlined: bool = False,
+        from_other_module: bool = True,
     ):
-        if to_be_inlined:
+        if to_be_inlined or not from_other_module:
             self.imports.update(
                 i.absolute() if absolute_imports else i for i in other.imports
             )
         self.intra_pkg_funcs.update(other.intra_pkg_funcs)
-        self.intra_pkg_funcs.update((None, f) for f in other.local_functions)
         self.intra_pkg_classes.extend(
             c for c in other.intra_pkg_classes if c not in self.intra_pkg_classes
         )
-        self.intra_pkg_classes.extend(
-            (None, c)
-            for c in other.local_classes
-            if (None, c) not in self.intra_pkg_classes
-        )
-        self.intra_pkg_constants.update(
-            (other.module_name, None, c[0]) for c in other.constants
-        )
         self.intra_pkg_constants.update(other.intra_pkg_constants)
+        if from_other_module:
+            self.intra_pkg_funcs.update((None, f) for f in other.local_functions)
+            self.intra_pkg_classes.extend(
+                (None, c)
+                for c in other.local_classes
+                if (None, c) not in self.intra_pkg_classes
+            )
+            self.intra_pkg_constants.update(
+                (other.module_name, None, c[0]) for c in other.constants
+            )
+        else:
+            self.local_functions.update(other.local_functions)
+            self.intra_pkg_classes.extend(
+                c for c in other.local_classes if c not in self.local_classes
+            )
+
+            self.constants.update(other.constants)
 
     DEFAULT_FILTERED_CONSTANTS = (
         Undefined,

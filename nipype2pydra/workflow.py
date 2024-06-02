@@ -914,6 +914,7 @@ class WorkflowConverter:
             # Write to file for debugging
             debug_file = "~/unparsable-nipype2pydra-output.py"
             with open(Path(debug_file).expanduser(), "w") as f:
+                f.write(f"# Attemping to convert {self.full_address}\n")
                 f.write(code_str)
             raise RuntimeError(
                 f"Black could not parse generated code (written to {debug_file}): "

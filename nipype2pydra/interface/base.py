@@ -14,7 +14,12 @@ from functools import cached_property
 import attrs
 from attrs.converters import default_if_none
 import nipype.interfaces.base
-from nipype.interfaces.base import traits_extension, CommandLine, BaseInterface
+from nipype.interfaces.base import (
+    traits_extension,
+    CommandLine,
+    BaseInterface,
+)
+from nipype.interfaces.base.core import SimpleInterface
 from pydra.engine import specs
 from pydra.engine.helpers import ensure_list
 from ..utils import (
@@ -33,6 +38,7 @@ from ..utils import (
     extract_args,
     strip_comments,
     find_super_method,
+    min_indentation,
 )
 from ..statements import (
     ImportStatement,
@@ -364,6 +370,8 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
         },
     )
 
+    _output_name_mappings: ty.Dict[str, str] = attrs.field(factory=dict)
+
     def __attrs_post_init__(self):
         if self.output_module is None:
             if self.nipype_module.__name__.startswith("nipype.interfaces."):
@@ -682,6 +690,7 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
                     f"the filed {nm} has genfile=True, but no template or "
                     "`callables_default` function in the callables_module provided"
                 )
+        self._output_name_mappings[getattr(field, "output_name")] = nm
 
         pydra_metadata.update(metadata_extra_spec)
 
@@ -1021,18 +1030,26 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
         if hasattr(self.nipype_interface, "_cmd"):
             body = body.replace("self.cmd", f'"{self.nipype_interface._cmd}"')
 
-        body = re.sub(
-            r"outputs = self\.(output_spec|_outputs)\(\).*$",
-            r"outputs = {}",
-            body,
-            flags=re.MULTILINE,
-        )
+        body = body.replace("self.output_spec().get()", "{}")
+        body = body.replace("self._outputs()", "{}")
+        # body = re.sub(
+        #     r"outputs = self\.(output_spec|_outputs)\(\).*$",
+        #     r"outputs = {}",
+        #     body,
+        #     flags=re.MULTILINE,
+        # )
         body = re.sub(r"\bruntime\.(stdout|stderr)", r"\1", body)
         body = re.sub(r"\boutputs\.(\w+)", r"outputs['\1']", body)
         body = re.sub(r"getattr\(inputs, ([^)]+)\)", r"inputs[\1]", body)
         body = re.sub(
             r"setattr\(outputs, ([^,]+), ([^)]+)\)", r"outputs[\1] = \2", body
         )
+        body = re.sub(r"self\._results\[(?:'|\")(\w+)(?:'|\")\]", r"\1", body)
+        body = re.sub(r"\s+runtime.returncode = (.*)", "", body)
+        new_body = re.sub(r"self\.(\w+)\b(?!\()", r"self_dict['\1']", body)
+        if new_body != body:
+            body = " " * min_indentation(body) + "self_dict = {}\n" + new_body
+        body = body.replace("return runtime", "")
         body = body.replace("TraitError", "KeyError")
         body = body.replace("os.getcwd()", "output_dir")
         return body
@@ -1237,7 +1254,10 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
         if self.method_returns.get(method.__name__):
             return_args = self.method_returns[method.__name__]
             method_body = (
-                "    " + " = ".join(return_args) + " = attrs.NOTHING\n" + method_body
+                " " * min_indentation(method_body)
+                + " = ".join(return_args)
+                + " = attrs.NOTHING\n"
+                + method_body
             )
             method_lines = method_body.rstrip().splitlines()
             method_body = "\n".join(method_lines[:-1])
@@ -1295,12 +1315,9 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
                     self.task_name,
                 )
             method_body = output_re.sub(r"\1", method_body)
-            # Strip initialisation of outputs
-            method_body = re.sub(
-                r"outputs = self.output_spec().*", r"outputs = {}", method_body
-            )
-        method_body = self._misc_cleanups(method_body)
-        return self.unwrap_nested_methods(method_body)
+        method_body = self.unwrap_nested_methods(method_body)
+        # method_body = self._misc_cleanups(method_body)
+        return method_body
 
     def replace_supers(self, method_body, super_base=None):
         if super_base is None:
@@ -1335,6 +1352,7 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
         """
         Converts nested method calls into function calls
         """
+        method_body = self._misc_cleanups(method_body)
         # Add args to the function signature of method calls
         method_re = re.compile(r"self\.(\w+)(?=\()", flags=re.MULTILINE | re.DOTALL)
         method_names = [m.__name__ for m in self.referenced_methods] + list(
@@ -1426,6 +1444,10 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
         BaseInterface.aggregate_outputs: "{{}}",
         BaseInterface.run: "None",
         BaseInterface._list_outputs: "{{}}",
+        BaseInterface.__init__: "",
+        SimpleInterface.__init__: "",
+        BaseInterface._outputs: "{{}}",
+        None: "",
     }
 
     INPUT_KEYS = [

@@ -305,9 +305,7 @@ def cleanup_function_body(function_body: str) -> str:
         with_signature = True
     else:
         with_signature = False
-    # Detect the indentation of the source code in src and reduce it to 4 spaces
-    non_empty_lines = [ln for ln in function_body.splitlines() if ln]
-    indent_size = len(re.match(r"^( *)", non_empty_lines[0]).group(1))
+    indent_size = min_indentation(function_body)
     indent_reduction = indent_size - (0 if with_signature else 4)
     assert indent_reduction >= 0, (
         "Indentation reduction cannot be negative, probably didn't detect signature of "
@@ -321,6 +319,12 @@ def cleanup_function_body(function_body: str) -> str:
     # Other misc replacements
     # function_body = function_body.replace("LOGGER.", "logger.")
     return replace_undefined(function_body)
+
+
+def min_indentation(function_body: str) -> int:
+    # Detect the indentation of the source code in src and reduce it to 4 spaces
+    non_empty_lines = [ln for ln in function_body.splitlines() if ln]
+    return len(re.match(r"^( *)", non_empty_lines[0]).group(1))
 
 
 def replace_undefined(function_body: str) -> str:

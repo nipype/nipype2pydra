@@ -350,6 +350,7 @@ class FunctionConverter(BaseHelperConverter):
             # Write to file for debugging
             debug_file = "~/unparsable-nipype2pydra-output.py"
             with open(Path(debug_file).expanduser(), "w") as f:
+                f.write(f"# Attemping to convert {self.full_name}\n")
                 f.write(code_str)
             raise RuntimeError(
                 f"Black could not parse generated code (written to {debug_file}): "
@@ -413,6 +414,7 @@ class ClassConverter(BaseHelperConverter):
             # Write to file for debugging
             debug_file = "~/unparsable-nipype2pydra-output.py"
             with open(Path(debug_file).expanduser(), "w") as f:
+                f.write(f"# Attemping to convert {self.full_name}\n")
                 f.write(code_str)
             raise RuntimeError(
                 f"Black could not parse generated code (written to {debug_file}): "
