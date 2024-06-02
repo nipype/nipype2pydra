@@ -871,10 +871,6 @@ post_release = "{post_release}"
         existing_imports = parse_imports(existing_import_strs, relative_to=module_name)
         converter_imports = []
 
-        for const_name, const_val in sorted(used.constants):
-            if f"\n{const_name} = " not in code_str:
-                code_str += f"\n{const_name} = {const_val}\n"
-
         for klass in used.local_classes:
             if f"\nclass {klass.__name__}(" not in code_str:
                 try:
@@ -948,6 +944,10 @@ post_release = "{post_release}"
                 )
                 code_str += "\n\n" + cleanup_function_body(klass_src)
                 inlined_symbols.append(klass_name)
+
+        for const_name, const_val in sorted(used.constants):
+            if f"\n{const_name} = " not in code_str:
+                code_str += f"\n{const_name} = {const_val}\n"
 
         # We run the formatter before the find/replace so that the find/replace can be more
         # predictable
