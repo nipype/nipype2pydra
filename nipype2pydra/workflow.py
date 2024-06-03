@@ -36,6 +36,7 @@ from .statements import (
     WorkflowInitStatement,
     AssignmentStatement,
     OtherStatement,
+    DynamicField,
 )
 import nipype2pydra.package
 
@@ -94,8 +95,7 @@ class WorkflowInterfaceField:
         factory=list,
         metadata={
             "help": (
-                "node-name/field-name pairs of other fields that are to be routed to "
-                "from other node fields to this input/output",
+                "node-name/field-name pairs of additional fields that this input/output replaces",
             )
         },
     )
@@ -159,6 +159,11 @@ class WorkflowInterfaceField:
 @attrs.define
 class WorkflowInput(WorkflowInterfaceField):
 
+    connections: ty.Tuple[ty.Tuple[str, str]] = attrs.field(
+        converter=lambda lst: tuple(sorted(tuple(t) for t in lst)),
+        factory=list,
+        metadata={"help": ("Explicit connections to be made from this input field",)},
+    )
     out_conns: ty.List[ConnectionStatement] = attrs.field(
         factory=list,
         eq=False,
@@ -170,9 +175,7 @@ class WorkflowInput(WorkflowInterfaceField):
             )
         },
     )
-
     include: bool = attrs.field(
-        default=False,
         eq=False,
         hash=False,
         metadata={
@@ -183,6 +186,10 @@ class WorkflowInput(WorkflowInterfaceField):
         },
     )
 
+    @include.default
+    def _include_default(self) -> bool:
+        return bool(self.connections)
+
     def __hash__(self):
         return super().__hash__()
 
@@ -190,6 +197,11 @@ class WorkflowInput(WorkflowInterfaceField):
 @attrs.define
 class WorkflowOutput(WorkflowInterfaceField):
 
+    connection: ty.Tuple[str, str] = attrs.field(
+        converter=tuple,
+        factory=list,
+        metadata={"help": ("Explicit connection to be made to this output field",)},
+    )
     in_conns: ty.List[ConnectionStatement] = attrs.field(
         factory=list,
         eq=False,
@@ -413,6 +425,12 @@ class WorkflowConverter:
         """
         Returns the name of the input field in the workflow for the given node and field
         escaped by the prefix of the node if present"""
+        if isinstance(conn.source_out, DynamicField):
+            logger.warning(
+                f"Not able to connect inputs from {conn.source_name}:{conn.source_out}->"
+                f"{conn.target_name}:{conn.target_in} properly due to adynamic-field "
+                "just connecting to source input for now"
+            )
         try:
             return self.make_input(
                 field_name=conn.source_out,
@@ -1036,7 +1054,7 @@ def test_{self.name}_run():
                 # append to parsed statements so set_output can be set
                 self.parsed_statements.append(conn_stmt)
         while self._unprocessed_connections:
-            conn = self._unprocessed_connections.pop()
+            conn = self._unprocessed_connections.pop(0)
             try:
                 inpt = self.get_input_from_conn(conn)
             except KeyError:
@@ -1055,6 +1073,47 @@ def test_{self.name}_run():
                 conn.target_name = None
                 conn.target_in = outpt.name
                 outpt.in_conns.append(conn)
+
+        # Overwrite connections with explict connections
+        for inpt in list(self.inputs.values()):
+            for target_name, target_in in inpt.connections:
+                conn = ConnectionStatement(
+                    indent="    ",
+                    source_name=None,
+                    source_out=inpt.name,
+                    target_name=target_name,
+                    target_in=target_in,
+                    workflow_converter=self,
+                )
+                for tgt_node in self.nodes[conn.target_name]:
+                    try:
+                        existing_conn = next(
+                            c for c in tgt_node.in_conns if c.target_in == target_in
+                        )
+                    except StopIteration:
+                        pass
+                    else:
+                        tgt_node.in_conns.remove(existing_conn)
+                        self.inputs[existing_conn.source_out].out_conns.remove(
+                            existing_conn
+                        )
+                    inpt.out_conns.append(conn)
+                    tgt_node.add_input_connection(conn)
+
+        for outpt in list(self.outputs.values()):
+            if outpt.connection:
+                source_name, source_out = outpt.connection
+                conn = ConnectionStatement(
+                    indent="    ",
+                    source_name=source_name,
+                    source_out=source_out,
+                    target_name=None,
+                    target_in=outpt.name,
+                    workflow_converter=self,
+                )
+                for src_node in self.nodes[conn.source_name]:
+                    src_node.add_output_connection(conn)
+                    outpt.in_conns.append(conn)
 
     def _parse_statements(self, func_body: str) -> ty.Tuple[
         ty.List[

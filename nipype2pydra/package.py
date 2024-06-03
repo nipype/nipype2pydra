@@ -422,10 +422,10 @@ class PackageConverter:
             intra_pkg_modules[conv.nipype_module_name].add(conv.nipype_object)
             collect_intra_pkg_objects(conv.used_symbols)
 
-        for converter in tqdm(
+        for workflow in tqdm(
             workflows_to_include, "converting workflows from Nipype to Pydra syntax"
         ):
-            all_used = converter.write(
+            all_used = workflow.write(
                 package_root,
                 already_converted=already_converted,
             )

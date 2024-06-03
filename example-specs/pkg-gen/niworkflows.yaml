@@ -5,6 +5,7 @@ niworkflows:
     - niworkflows.interfaces.bids.ReadSidecarJSON
     - niworkflows.interfaces.fixes.FixHeaderApplyTransforms
     - niworkflows.interfaces.fixes.FixN4BiasFieldCorrection
+    - niworkflows.interfaces.fixes.FixHeaderRegistration
     - niworkflows.interfaces.header.SanitizeImage
     - niworkflows.interfaces.images.RobustAverage
     - niworkflows.interfaces.morphology.BinaryDilation
