@@ -465,6 +465,39 @@ class ImportStatement:
         )
 
 
+def translate(
+    module_name: str, translations: ty.Sequence[ty.Tuple[str, str]]
+) -> ty.Optional[str]:
+    for from_pkg, to_pkg in translations:
+        if re.match(from_pkg, module_name):
+            return re.sub(
+                from_pkg,
+                to_pkg,
+                module_name,
+                count=1,
+                flags=re.MULTILINE | re.DOTALL,
+            )
+    return None
+
+
+def make_imports_absolute(
+    src: str, modulepath: str, translations: ty.Sequence[ty.Tuple[str, str]] = ()
+) -> str:
+    parts = modulepath.split(".")
+
+    def replacer(match) -> str:
+        levels = len(match.group(2))
+        assert levels < len(parts)
+        abs_modulepath = ".".join(parts[:-levels]) + "." + match.group(3)
+        if translations:
+            newpath = translate(abs_modulepath, translations)
+            if newpath:
+                abs_modulepath = newpath
+        return f"{match.group(1)}from {abs_modulepath}"
+
+    return re.sub(r"(\s*)from\s+(\.+)(\w+)", replacer, src)
+
+
 def parse_imports(
     stmts: ty.Union[str, ty.Sequence[str]],
     relative_to: ty.Union[str, ModuleType, None] = None,
@@ -496,18 +529,6 @@ def parse_imports(
         relative_to = relative_to.__name__ + (
             ".__init__" if relative_to.__file__.endswith("__init__.py") else ""
         )
-
-    def translate(module_name: str) -> ty.Optional[str]:
-        for from_pkg, to_pkg in translations:
-            if re.match(from_pkg, module_name):
-                return re.sub(
-                    from_pkg,
-                    to_pkg,
-                    module_name,
-                    count=1,
-                    flags=re.MULTILINE | re.DOTALL,
-                )
-        return None
 
     parsed = []
     for stmt in stmts:
@@ -543,7 +564,7 @@ def parse_imports(
             )
             if absolute:
                 import_stmt = import_stmt.absolute()
-            import_stmt.translation = translate(import_stmt.module_name)
+            import_stmt.translation = translate(import_stmt.module_name, translations)
             parsed.append(import_stmt)
 
         else:
@@ -554,7 +575,7 @@ def parse_imports(
                     ImportStatement(
                         indent=match.group(1),
                         imported={imp.local_name: imp},
-                        translation=translate(imp.name),
+                        translation=translate(imp.name, translations),
                     )
                 )
     return parsed

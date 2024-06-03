@@ -16,6 +16,8 @@ logger = logging.getLogger("nipype2pydra")
 @attrs.define(slots=False)
 class FunctionInterfaceConverter(BaseInterfaceConverter):
 
+    converter_type = "function"
+
     @property
     def included_methods(self) -> ty.Tuple[str, ...]:
         return ("__init__", "_run_interface", "_list_outputs")
@@ -65,7 +67,7 @@ class FunctionInterfaceConverter(BaseInterfaceConverter):
         used = UsedSymbols.find(
             self.nipype_module,
             self.referenced_local_functions,
-            omit_classes=self.package.omit_classes,  # + [BaseInterface, TraitedSpec],
+            omit_classes=self.package.omit_classes,
             omit_modules=self.package.omit_modules,
             omit_functions=self.package.omit_functions,
             omit_constants=self.package.omit_constants,
@@ -81,7 +83,7 @@ class FunctionInterfaceConverter(BaseInterfaceConverter):
             method_used = UsedSymbols.find(
                 method_module,
                 [ref_method],
-                omit_classes=self.package.omit_classes,  #  + [BaseInterface, TraitedSpec],
+                omit_classes=self.package.omit_classes,
                 omit_modules=self.package.omit_modules,
                 omit_functions=self.package.omit_functions,
                 omit_constants=self.package.omit_constants,
@@ -153,7 +155,7 @@ class FunctionInterfaceConverter(BaseInterfaceConverter):
             run_interface_used = UsedSymbols.find(
                 run_interface_class.__module__,
                 [run_interface_code],
-                omit_classes=self.package.omit_classes,  #  + [BaseInterface, TraitedSpec],
+                omit_classes=self.package.omit_classes,
                 omit_modules=self.package.omit_modules,
                 omit_functions=self.package.omit_functions,
                 omit_constants=self.package.omit_constants,
@@ -187,7 +189,7 @@ class FunctionInterfaceConverter(BaseInterfaceConverter):
             list_outputs_used = UsedSymbols.find(
                 list_outputs_class.__module__,
                 [list_outputs_code],
-                omit_classes=self.package.omit_classes,  #  + [BaseInterface, TraitedSpec],
+                omit_classes=self.package.omit_classes,
                 omit_modules=self.package.omit_modules,
                 omit_functions=self.package.omit_functions,
                 omit_constants=self.package.omit_constants,
@@ -231,7 +233,14 @@ class FunctionInterfaceConverter(BaseInterfaceConverter):
         spec_str += "\n\n# Nipype methods converted into functions\n\n"
 
         for m in sorted(self.referenced_methods, key=attrgetter("__name__")):
-            spec_str += "\n\n" + self.process_method(m, input_names, output_names)
+            spec_str += "\n\n" + self.process_method(
+                m,
+                input_names,
+                output_names,
+                super_base=find_super_method(
+                    self.nipype_interface, m.__name__, include_class=True
+                )[1],
+            )
 
         # Replace runtime attributes
         additional_imports = set()

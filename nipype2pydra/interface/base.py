@@ -45,6 +45,7 @@ from ..statements import (
     parse_imports,
     ExplicitImport,
     from_list_to_imports,
+    make_imports_absolute,
 )
 from fileformats.generic import File
 import nipype2pydra.package
@@ -1319,6 +1320,11 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
                 )
             method_body = output_re.sub(r"\1", method_body)
         method_body = self.unwrap_nested_methods(method_body)
+        method_body = make_imports_absolute(
+            method_body,
+            super_base.__module__,
+            translations=self.package.all_import_translations,
+        )
         # method_body = self._misc_cleanups(method_body)
         return method_body
 
