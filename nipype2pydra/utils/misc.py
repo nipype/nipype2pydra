@@ -305,9 +305,7 @@ def cleanup_function_body(function_body: str) -> str:
         with_signature = True
     else:
         with_signature = False
-    # Detect the indentation of the source code in src and reduce it to 4 spaces
-    non_empty_lines = [ln for ln in function_body.splitlines() if ln]
-    indent_size = len(re.match(r"^( *)", non_empty_lines[0]).group(1))
+    indent_size = min_indentation(function_body)
     indent_reduction = indent_size - (0 if with_signature else 4)
     assert indent_reduction >= 0, (
         "Indentation reduction cannot be negative, probably didn't detect signature of "
@@ -317,9 +315,16 @@ def cleanup_function_body(function_body: str) -> str:
         function_body = re.sub(
             r"^" + " " * indent_reduction, "", function_body, flags=re.MULTILINE
         )
+
     # Other misc replacements
     # function_body = function_body.replace("LOGGER.", "logger.")
     return replace_undefined(function_body)
+
+
+def min_indentation(function_body: str) -> int:
+    # Detect the indentation of the source code in src and reduce it to 4 spaces
+    non_empty_lines = [ln for ln in function_body.splitlines() if ln]
+    return len(re.match(r"^( *)", non_empty_lines[0]).group(1))
 
 
 def replace_undefined(function_body: str) -> str:
@@ -360,7 +365,11 @@ def insert_args_in_signature(snippet: str, new_args: ty.Iterable[str]) -> str:
     pre, args, post = extract_args(snippet)
     if "runtime" in args:
         args.remove("runtime")
-    return pre + ", ".join(args + new_args) + post
+    if args and args[-1].startswith("**"):
+        kwargs = [args.pop()]
+    else:
+        kwargs = []
+    return pre + ", ".join(args + new_args + kwargs) + post
 
 
 def get_source_code(func_or_klass: ty.Union[ty.Callable, ty.Type]) -> str:
@@ -415,7 +424,7 @@ def split_source_into_statements(source_code: str) -> ty.List[str]:
             else:
                 # Handle dictionary assignments where the first open-closing bracket is
                 # before the assignment, e.g. outputs["out_file"] = [..."
-                if post and re.match(r"\s*=", post[1:]):
+                if post and re.match(r"\s*=|.*[\(\[\{\"'].*", post[1:]):
                     try:
                         extract_args(post[1:])
                     except (UnmatchedParensException, UnmatchedQuoteException):
@@ -528,3 +537,33 @@ def unwrap_nested_type(t: type) -> ty.List[type]:
             unwrapped.extend(unwrap_nested_type(c))
         return unwrapped
     return [t]
+
+
+def get_return_line(func: ty.Union[str, ty.Callable]) -> str:
+    if not isinstance(func, str):
+        func = inspect.getsource(func)
+    return_line = func.strip().split("\n")[-1]
+    match = re.match(r"\s*return(.*)", return_line)
+    if not match:
+        return None
+    return match.group(1).strip()
+
+
+def find_super_method(
+    super_base: type, method_name: str, include_class: bool = False
+) -> ty.Tuple[ty.Optional[ty.Callable], ty.Optional[type]]:
+    mro = super_base.__mro__
+    if not include_class:
+        mro = mro[1:]
+    for base in mro:
+        if method_name in base.__dict__:  # Found the match
+            return getattr(base, method_name), base
+    return None, None
+    # raise RuntimeError(
+    #     f"Could not find super of '{method_name}' method in base classes of "
+    #     f"{super_base}"
+    # )
+
+
+def strip_comments(src: str) -> str:
+    return re.sub(r"^\s+#.*", "", src, flags=re.MULTILINE)

@@ -403,7 +403,8 @@ class NipypeInterface:
                 if output_name not in INBUILT_NIPYPE_TRAIT_NAMES:
                     callables_str += (
                         f"def {output_name}_callable(output_dir, inputs, stdout, stderr):\n"
-                        "    outputs = _list_outputs(output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr)\n"
+                        "    parsed_inputs = {}\n"
+                        "    outputs = _list_outputs(output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr, parsed_inputs=parsed_inputs)\n"
                         '    return outputs["' + output_name + '"]\n\n'
                     )
 
@@ -421,7 +422,7 @@ class NipypeInterface:
                 callables_str, fast=False, mode=black.FileMode()
             )
         except black.parsing.InvalidInput as e:
-            with open(Path("~/Desktop/gen-code.py").expanduser(), "w") as f:
+            with open(Path("~/unparsable-gen-code.py").expanduser(), "w") as f:
                 f.write(callables_str)
             raise RuntimeError(
                 f"Black could not parse generated code: {e}\n\n{callables_str}"
@@ -922,7 +923,7 @@ def test_generate_sample_{frmt.lower()}_data():
 
 
 def get_callable_sources(
-    nipype_interface,
+    nipype_interface, attrs_as_parsed_inputs: bool = False
 ) -> ty.Tuple[ty.Set[str], ty.List[str], ty.Set[str], ty.Set[ty.Tuple[str, str]]]:
     """
     Convert the _gen_filename method of a nipype interface into a function that can be
@@ -1025,7 +1026,14 @@ def get_callable_sources(
         )
         if hasattr(nipype_interface, "_cmd"):
             body = body.replace("self.cmd", f'"{nipype_interface._cmd}"')
-        body = body.replace("self.", "")
+        body = re.sub(r"getattr\(self\.inputs, (\w+), None\)", r"inputs.get(\1)", body)
+        body = re.sub(r"getattr\(self\.inputs, (\w+)\)", r"inputs[\1]", body)
+        if attrs_as_parsed_inputs:
+            body = re.sub(
+                r"self\.(?!inputs)(\w+)\b(?!\()", r"parsed_inputs['\1']", body
+            )
+        else:
+            body = body.replace("self.", "")
         body = re.sub(
             r"super\([^\)]*\)\.(\w+)\(", lambda m: name_map[m.group(1)] + "(", body
         )

@@ -310,7 +310,7 @@ class PackageConverter:
 
     @property
     def all_omit_modules(self) -> ty.List[str]:
-        return self.omit_modules + ["nipype.interfaces.utility"]
+        return self.omit_modules + UsedSymbols.ALWAYS_OMIT_MODULES
 
     @property
     def all_explicit(self):
@@ -343,6 +343,17 @@ class PackageConverter:
             defaults.update(config_params.defaults)
             all_defaults[name] = defaults
         return all_defaults
+
+    def is_omitted(self, obj: ty.Any) -> bool:
+        if full_address(obj) in self.omit_classes + self.omit_functions:
+            return True
+        if inspect.ismodule(obj):
+            mod_name = obj.__name__
+        else:
+            mod_name = obj.__module__
+        if any(re.match(m + r"\b", mod_name) for m in self.all_omit_modules):
+            return True
+        return False
 
     def write(self, package_root: Path, to_include: ty.List[str] = None):
         """Writes the package to the specified package root"""
@@ -411,10 +422,10 @@ class PackageConverter:
             intra_pkg_modules[conv.nipype_module_name].add(conv.nipype_object)
             collect_intra_pkg_objects(conv.used_symbols)
 
-        for converter in tqdm(
+        for workflow in tqdm(
             workflows_to_include, "converting workflows from Nipype to Pydra syntax"
         ):
-            all_used = converter.write(
+            all_used = workflow.write(
                 package_root,
                 already_converted=already_converted,
             )
@@ -860,10 +871,6 @@ post_release = "{post_release}"
         existing_imports = parse_imports(existing_import_strs, relative_to=module_name)
         converter_imports = []
 
-        for const_name, const_val in sorted(used.constants):
-            if f"\n{const_name} = " not in code_str:
-                code_str += f"\n{const_name} = {const_val}\n"
-
         for klass in used.local_classes:
             if f"\nclass {klass.__name__}(" not in code_str:
                 try:
@@ -886,6 +893,7 @@ post_release = "{post_release}"
                 # Write to file for debugging
                 debug_file = "~/unparsable-nipype2pydra-output.py"
                 with open(Path(debug_file).expanduser(), "w") as f:
+                    f.write(f"# Attemping to convert {self.nipype_name}\n")
                     f.write(converted_code)
                 raise RuntimeError(
                     f"Black could not parse generated code (written to {debug_file}): "
@@ -937,6 +945,10 @@ post_release = "{post_release}"
                 code_str += "\n\n" + cleanup_function_body(klass_src)
                 inlined_symbols.append(klass_name)
 
+        for const_name, const_val in sorted(used.constants):
+            if f"\n{const_name} = " not in code_str:
+                code_str += f"\n{const_name} = {const_val}\n"
+
         # We run the formatter before the find/replace so that the find/replace can be more
         # predictable
         try:
@@ -949,6 +961,7 @@ post_release = "{post_release}"
             # Write to file for debugging
             debug_file = "~/unparsable-nipype2pydra-output.py"
             with open(Path(debug_file).expanduser(), "w") as f:
+                f.write(f"# Attemping to convert {self.nipype_name}\n")
                 f.write(code_str)
             raise RuntimeError(
                 f"Black could not parse generated code (written to {debug_file}): {e}\n\n{code_str}"
@@ -1068,6 +1081,7 @@ post_release = "{post_release}"
                 # Write to file for debugging
                 debug_file = "~/unparsable-nipype2pydra-output.py"
                 with open(Path(debug_file).expanduser(), "w") as f:
+                    f.write(f"# Attemping to convert {self.nipype_name}\n")
                     f.write(code_str)
                 raise RuntimeError(
                     f"Black could not parse generated code (written to {debug_file}): "
@@ -1092,6 +1106,7 @@ post_release = "{post_release}"
                 # Write to file for debugging
                 debug_file = "~/unparsable-nipype2pydra-output.py"
                 with open(Path(debug_file).expanduser(), "w") as f:
+                    f.write(f"# Attemping to convert {self.nipype_name}\n")
                     f.write(code_str)
                 raise RuntimeError(
                     f"Black could not parse generated code (written to {debug_file}): "

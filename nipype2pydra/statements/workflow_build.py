@@ -106,7 +106,7 @@ class DynamicField(VarField):
     callable: ty.Callable = attrs.field()
 
     def __repr__(self):
-        return f"DelayedVarField({self.varname}, callable={self.callable})"
+        return f"DynamicField({self.varname}, callable={self.callable})"
 
 
 @attrs.define

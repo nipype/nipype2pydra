@@ -36,6 +36,7 @@ from .statements import (
     WorkflowInitStatement,
     AssignmentStatement,
     OtherStatement,
+    DynamicField,
 )
 import nipype2pydra.package
 
@@ -71,6 +72,7 @@ class WorkflowInterfaceField:
         },
     )
     node_name: ty.Optional[str] = attrs.field(
+        default=None,
         metadata={
             "help": "The name of the node that the input/output is connected to",
         },
@@ -93,8 +95,7 @@ class WorkflowInterfaceField:
         factory=list,
         metadata={
             "help": (
-                "node-name/field-name pairs of other fields that are to be routed to "
-                "from other node fields to this input/output",
+                "node-name/field-name pairs of additional fields that this input/output replaces",
             )
         },
     )
@@ -130,7 +131,7 @@ class WorkflowInterfaceField:
             elif issubclass(t, Field):
                 return t.primitive.__name__
             elif issubclass(t, FileSet):
-                return t.__name__
+                return t.type_name
             elif t.__module__ == "builtins":
                 return t.__name__
             else:
@@ -158,6 +159,11 @@ class WorkflowInterfaceField:
 @attrs.define
 class WorkflowInput(WorkflowInterfaceField):
 
+    connections: ty.Tuple[ty.Tuple[str, str]] = attrs.field(
+        converter=lambda lst: tuple(sorted(tuple(t) for t in lst)),
+        factory=list,
+        metadata={"help": ("Explicit connections to be made from this input field",)},
+    )
     out_conns: ty.List[ConnectionStatement] = attrs.field(
         factory=list,
         eq=False,
@@ -169,9 +175,7 @@ class WorkflowInput(WorkflowInterfaceField):
             )
         },
     )
-
     include: bool = attrs.field(
-        default=False,
         eq=False,
         hash=False,
         metadata={
@@ -182,6 +186,10 @@ class WorkflowInput(WorkflowInterfaceField):
         },
     )
 
+    @include.default
+    def _include_default(self) -> bool:
+        return bool(self.connections)
+
     def __hash__(self):
         return super().__hash__()
 
@@ -189,6 +197,11 @@ class WorkflowInput(WorkflowInterfaceField):
 @attrs.define
 class WorkflowOutput(WorkflowInterfaceField):
 
+    connection: ty.Tuple[str, str] = attrs.field(
+        converter=tuple,
+        factory=list,
+        metadata={"help": ("Explicit connection to be made to this output field",)},
+    )
     in_conns: ty.List[ConnectionStatement] = attrs.field(
         factory=list,
         eq=False,
@@ -412,6 +425,12 @@ class WorkflowConverter:
         """
         Returns the name of the input field in the workflow for the given node and field
         escaped by the prefix of the node if present"""
+        if isinstance(conn.source_out, DynamicField):
+            logger.warning(
+                f"Not able to connect inputs from {conn.source_name}:{conn.source_out}->"
+                f"{conn.target_name}:{conn.target_in} properly due to adynamic-field "
+                "just connecting to source input for now"
+            )
         try:
             return self.make_input(
                 field_name=conn.source_out,
@@ -764,7 +783,9 @@ class WorkflowConverter:
             ),
             converted_code=self.test_code,
             used=self.test_used,
-            additional_imports=self.input_output_imports,
+            additional_imports=(
+                self.input_output_imports + parse_imports("import pytest")
+            ),
         )
 
         conftest_fspath = test_module_fspath.parent / "conftest.py"
@@ -911,6 +932,7 @@ class WorkflowConverter:
             # Write to file for debugging
             debug_file = "~/unparsable-nipype2pydra-output.py"
             with open(Path(debug_file).expanduser(), "w") as f:
+                f.write(f"# Attemping to convert {self.full_address}\n")
                 f.write(code_str)
             raise RuntimeError(
                 f"Black could not parse generated code (written to {debug_file}): "
@@ -931,22 +953,51 @@ class WorkflowConverter:
     def test_code(self):
         args_str = ", ".join(f"{n}={v}" for n, v in self.test_inputs.items())
 
-        return f"""
+        code_str = f"""
 
-def test_{self.name}():
+
+def test_{self.name}_build():
     workflow = {self.name}({args_str})
     assert isinstance(workflow, Workflow)
 """
 
+        inputs_dict = {}
+        for inpt in self.inputs.values():
+            if issubclass(inpt.type, FileSet):
+                inputs_dict[inpt.name] = inpt.type.type_name + ".sample()"
+            elif inpt.name in self.test_inputs:
+                inputs_dict[inpt.name] = self.test_inputs[inpt.name]
+        args_str = ", ".join(f"{n}={v}" for n, v in inputs_dict.items())
+
+        code_str += f"""
+
+@pytest.mark.skip(reason="Appropriate inputs for this workflow haven't been specified yet")
+def test_{self.name}_run():
+    workflow = {self.name}({args_str})
+    result = workflow(plugin='serial')
+    print(result.out)
+"""
+        return code_str
+
     @property
     def test_used(self):
+        nonstd_types = [
+            i.type for i in self.inputs.values() if issubclass(i.type, FileSet)
+        ]
+        nonstd_type_imports = []
+        for tp in itertools.chain(*(unwrap_nested_type(t) for t in nonstd_types)):
+            nonstd_type_imports.append(ImportStatement.from_object(tp))
+
         return UsedSymbols(
             module_name=self.nipype_module.__name__,
-            imports=parse_imports(
-                [
-                    f"from {self.output_module} import {self.name}",
-                    "from pydra.engine import Workflow",
-                ]
+            imports=(
+                nonstd_type_imports
+                + parse_imports(
+                    [
+                        f"from {self.output_module} import {self.name}",
+                        "from pydra.engine import Workflow",
+                    ]
+                )
             ),
         )
 
@@ -1003,7 +1054,7 @@ def test_{self.name}():
                 # append to parsed statements so set_output can be set
                 self.parsed_statements.append(conn_stmt)
         while self._unprocessed_connections:
-            conn = self._unprocessed_connections.pop()
+            conn = self._unprocessed_connections.pop(0)
             try:
                 inpt = self.get_input_from_conn(conn)
             except KeyError:
@@ -1022,6 +1073,47 @@ def test_{self.name}():
                 conn.target_name = None
                 conn.target_in = outpt.name
                 outpt.in_conns.append(conn)
+
+        # Overwrite connections with explict connections
+        for inpt in list(self.inputs.values()):
+            for target_name, target_in in inpt.connections:
+                conn = ConnectionStatement(
+                    indent="    ",
+                    source_name=None,
+                    source_out=inpt.name,
+                    target_name=target_name,
+                    target_in=target_in,
+                    workflow_converter=self,
+                )
+                for tgt_node in self.nodes[conn.target_name]:
+                    try:
+                        existing_conn = next(
+                            c for c in tgt_node.in_conns if c.target_in == target_in
+                        )
+                    except StopIteration:
+                        pass
+                    else:
+                        tgt_node.in_conns.remove(existing_conn)
+                        self.inputs[existing_conn.source_out].out_conns.remove(
+                            existing_conn
+                        )
+                    inpt.out_conns.append(conn)
+                    tgt_node.add_input_connection(conn)
+
+        for outpt in list(self.outputs.values()):
+            if outpt.connection:
+                source_name, source_out = outpt.connection
+                conn = ConnectionStatement(
+                    indent="    ",
+                    source_name=source_name,
+                    source_out=source_out,
+                    target_name=None,
+                    target_in=outpt.name,
+                    workflow_converter=self,
+                )
+                for src_node in self.nodes[conn.source_name]:
+                    src_node.add_output_connection(conn)
+                    outpt.in_conns.append(conn)
 
     def _parse_statements(self, func_body: str) -> ty.Tuple[
         ty.List[
