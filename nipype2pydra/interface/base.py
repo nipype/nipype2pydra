@@ -1280,12 +1280,12 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
         input_names: ty.List[str],
         output_names: ty.List[str],
         super_base: ty.Optional[type] = None,
+        unwrap_return_dict: bool = False,
     ) -> str:
         if not method_body:
             return ""
         if super_base is None:
             super_base = self.nipype_interface
-        return_value = get_return_line(method_body)
         method_body = method_body.replace("if self.output_spec:", "if True:")
         # Replace self.inputs.<name> with <name> in the function body
         input_re = re.compile(r"self\.inputs\.(\w+)\b(?!\()")
@@ -1302,7 +1302,10 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
         method_body = input_re.sub(r"\1", method_body)
         method_body = self.replace_supers(method_body, super_base)
 
-        if return_value:
+        if unwrap_return_dict:
+            return_value = get_return_line(method_body)
+            if return_value is None:
+                return_value = "outputs"
             output_re = re.compile(return_value + r"\[(?:'|\")(\w+)(?:'|\")\]")
             unrecognised_outputs = set(
                 m for m in output_re.findall(method_body) if m not in output_names

@@ -65,7 +65,7 @@ class FunctionInterfaceConverter(BaseInterfaceConverter):
         used = UsedSymbols.find(
             self.nipype_module,
             self.referenced_local_functions,
-            omit_classes=self.package.omit_classes + [BaseInterface, TraitedSpec],
+            omit_classes=self.package.omit_classes,  # + [BaseInterface, TraitedSpec],
             omit_modules=self.package.omit_modules,
             omit_functions=self.package.omit_functions,
             omit_constants=self.package.omit_constants,
@@ -81,7 +81,7 @@ class FunctionInterfaceConverter(BaseInterfaceConverter):
             method_used = UsedSymbols.find(
                 method_module,
                 [ref_method],
-                omit_classes=self.package.omit_classes + [BaseInterface, TraitedSpec],
+                omit_classes=self.package.omit_classes,  #  + [BaseInterface, TraitedSpec],
                 omit_modules=self.package.omit_modules,
                 omit_functions=self.package.omit_functions,
                 omit_constants=self.package.omit_constants,
@@ -92,6 +92,9 @@ class FunctionInterfaceConverter(BaseInterfaceConverter):
             used.update(method_used, from_other_module=False)
 
         method_body = ""
+        for field in input_fields:
+            if field[-1].get("copyfile"):
+                method_body += f"    {field[0]} = {field[0]}.copy(Path.cwd())\n"
         for field in output_fields:
             method_body += f"    {field[0]} = attrs.NOTHING\n"
 
@@ -150,7 +153,7 @@ class FunctionInterfaceConverter(BaseInterfaceConverter):
             run_interface_used = UsedSymbols.find(
                 run_interface_class.__module__,
                 [run_interface_code],
-                omit_classes=self.package.omit_classes + [BaseInterface, TraitedSpec],
+                omit_classes=self.package.omit_classes,  #  + [BaseInterface, TraitedSpec],
                 omit_modules=self.package.omit_modules,
                 omit_functions=self.package.omit_functions,
                 omit_constants=self.package.omit_constants,
@@ -178,12 +181,13 @@ class FunctionInterfaceConverter(BaseInterfaceConverter):
                 input_names,
                 output_names,
                 super_base=list_outputs_class,
+                unwrap_return_dict=True,
             )
 
             list_outputs_used = UsedSymbols.find(
                 list_outputs_class.__module__,
                 [list_outputs_code],
-                omit_classes=self.package.omit_classes + [BaseInterface, TraitedSpec],
+                omit_classes=self.package.omit_classes,  #  + [BaseInterface, TraitedSpec],
                 omit_modules=self.package.omit_modules,
                 omit_functions=self.package.omit_functions,
                 omit_constants=self.package.omit_constants,
