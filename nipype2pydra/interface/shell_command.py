@@ -13,6 +13,7 @@ from ..utils import (
     UsedSymbols,
     split_source_into_statements,
     INBUILT_NIPYPE_TRAIT_NAMES,
+    extract_args,
     find_super_method,
 )
 from fileformats.core.mixin import WithClassifiers
@@ -27,6 +28,7 @@ CALLABLES_ARGS = ["inputs", "stdout", "stderr", "output_dir"]
 @attrs.define(slots=False)
 class ShellCommandInterfaceConverter(BaseInterfaceConverter):
 
+    converter_type = "shell_command"
     _format_argstrs: ty.Dict[str, str] = attrs.field(factory=dict)
 
     @cached_property
@@ -237,11 +239,19 @@ class ShellCommandInterfaceConverter(BaseInterfaceConverter):
 
     @property
     def formatted_input_field_names(self):
-        return re.findall(r"name == \"(\w+)\"", self._format_arg_body)
+        if not self._format_arg_body:
+            return []
+        sig = inspect.getsource(self.nipype_interface._format_arg).split("\n", 1)[0]
+        name_arg = re.match(r"\s*def _format_arg\(self, (\w+),", sig).group(1)
+        return re.findall(name_arg + r" == \"(\w+)\"", self._format_arg_body)
 
     @property
     def callable_default_input_field_names(self):
-        return re.findall(r"name == \"(\w+)\"", self._gen_filename_body)
+        if not self._gen_filename_body:
+            return []
+        sig = inspect.getsource(self.nipype_interface._format_arg).split("\n", 1)[0]
+        name_arg = re.match(r"\s*def _gen_filename\((\w+),", sig).group(1)
+        return re.findall(name_arg + r" == \"(\w+)\"", self._gen_filename_body)
 
     @property
     def callable_output_fields(self):
@@ -262,17 +272,13 @@ class ShellCommandInterfaceConverter(BaseInterfaceConverter):
     def _format_arg_body(self):
         if self.method_omitted("_format_arg"):
             return ""
-        return _strip_doc_string(
-            inspect.getsource(self.nipype_interface._format_arg).split("\n", 1)[-1]
-        )
+        return self._unwrap_supers(self.nipype_interface._format_arg)
 
     @cached_property
     def _gen_filename_body(self):
         if self.method_omitted("_gen_filename"):
             return ""
-        return _strip_doc_string(
-            inspect.getsource(self.nipype_interface._gen_filename).split("\n", 1)[-1]
-        )
+        return self._unwrap_supers(self.nipype_interface._gen_filename)
 
     @property
     def format_arg_code(self):
@@ -333,9 +339,7 @@ class ShellCommandInterfaceConverter(BaseInterfaceConverter):
     def parse_inputs_code(self) -> str:
         if "_parse_inputs" not in self.included_methods:
             return ""
-        body = _strip_doc_string(
-            inspect.getsource(self.nipype_interface._parse_inputs).split("\n", 1)[-1]
-        )
+        body = self._unwrap_supers(self.nipype_interface._parse_inputs)
         body = self._process_inputs(body)
         body = re.sub(
             r"self.\_format_arg\((\w+), (\w+), (\w+)\)",
@@ -412,11 +416,7 @@ class ShellCommandInterfaceConverter(BaseInterfaceConverter):
         code_str = ""
         if "aggregate_outputs" in self.included_methods:
             func_name = "aggregate_outputs"
-            agg_body = _strip_doc_string(
-                inspect.getsource(self.nipype_interface.aggregate_outputs).split(
-                    "\n", 1
-                )[-1]
-            )
+            agg_body = self._unwrap_supers(self.nipype_interface.aggregate_outputs)
             need_list_outputs = bool(re.findall(r"\b_list_outputs\b", agg_body))
             agg_body = self._process_inputs(agg_body)
 
@@ -476,11 +476,7 @@ class ShellCommandInterfaceConverter(BaseInterfaceConverter):
 
                 return code_str
             else:
-                lo_body = _strip_doc_string(
-                    inspect.getsource(self.nipype_interface._list_outputs).split(
-                        "\n", 1
-                    )[-1]
-                )
+                lo_body = self._unwrap_supers(self.nipype_interface._list_outputs)
                 lo_body = self._process_inputs(lo_body)
 
                 if not lo_body:
@@ -537,6 +533,32 @@ class ShellCommandInterfaceConverter(BaseInterfaceConverter):
         return self.package.is_omitted(
             find_super_method(self.nipype_interface, method_name, include_class=True)[1]
         )
+
+    def _unwrap_supers(
+        self, method: ty.Callable, base=None, base_replacement="", arg_names=None
+    ) -> str:
+        if base is None:
+            base = self.nipype_interface
+        if self.package.is_omitted(base):
+            return base_replacement
+        method_name = method.__name__
+        sig, body = inspect.getsource(method).split("\n", 1)
+        body = _strip_doc_string(body)
+        args = extract_args(sig)[1][1:]
+        if arg_names:
+            for new, old in zip(args, arg_names):
+                if new != old:
+                    body = re.sub(r"\b" + old + r"\b", new, body)
+        super_re = re.compile(
+            r"\n\s*(return )?super\([^\)]*\)\." + method_name + r"\([^\)]+\)"
+        )
+        if super_re.search(body):
+            super_method, base = find_super_method(base, method_name)
+            super_body = self._unwrap_supers(
+                super_method, base, base_replacement, arg_names=args
+            )
+            body = super_re.sub("\n" + super_body, body)
+        return body
 
 
 def _strip_doc_string(body: str) -> str:

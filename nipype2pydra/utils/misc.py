@@ -551,14 +551,14 @@ def get_return_line(func: ty.Union[str, ty.Callable]) -> str:
 
 def find_super_method(
     super_base: type, method_name: str, include_class: bool = False
-) -> ty.Optional[ty.Tuple[ty.Callable, type]]:
+) -> ty.Tuple[ty.Optional[ty.Callable], ty.Optional[type]]:
     mro = super_base.__mro__
     if not include_class:
         mro = mro[1:]
     for base in mro:
         if method_name in base.__dict__:  # Found the match
             return getattr(base, method_name), base
-    return None
+    return None, None
     # raise RuntimeError(
     #     f"Could not find super of '{method_name}' method in base classes of "
     #     f"{super_base}"
