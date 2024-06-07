@@ -587,6 +587,8 @@ GENERIC_PYDRA_IMPORTS = parse_imports(
         "from fileformats.generic import File, Directory",
         "from pydra.engine.specs import MultiInputObj",
         "from pathlib import Path",
+        "import json",
+        "import yaml",
         "import logging",
         "import pydra.mark",
         "import typing as ty",

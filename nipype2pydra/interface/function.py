@@ -91,7 +91,7 @@ class FunctionInterfaceConverter(BaseInterfaceConverter):
                 translations=self.package.all_import_translations,
                 absolute_imports=True,
             )
-            used.update(method_used, from_other_module=False)
+            used.update(method_used)
 
         method_body = ""
         for field in input_fields:
@@ -129,7 +129,7 @@ class FunctionInterfaceConverter(BaseInterfaceConverter):
                 translations=self.package.all_import_translations,
                 absolute_imports=True,
             )
-            used.update(init_used, from_other_module=False)
+            used.update(init_used)
             method_body += init_code + "\n"
 
         # Combined src of run_interface and list_outputs
@@ -163,7 +163,7 @@ class FunctionInterfaceConverter(BaseInterfaceConverter):
                 translations=self.package.all_import_translations,
                 absolute_imports=True,
             )
-            used.update(run_interface_used, from_other_module=False)
+            used.update(run_interface_used)
             method_body += run_interface_code + "\n"
 
         list_outputs_code = inspect.getsource(
@@ -197,7 +197,7 @@ class FunctionInterfaceConverter(BaseInterfaceConverter):
                 translations=self.package.all_import_translations,
                 absolute_imports=True,
             )
-            used.update(list_outputs_used, from_other_module=False)
+            used.update(list_outputs_used)
             method_body += list_outputs_code + "\n"
 
         assert method_body, "Neither `run_interface` and `list_outputs` are defined"
@@ -250,12 +250,12 @@ class FunctionInterfaceConverter(BaseInterfaceConverter):
                 additional_imports.add(imprt)
                 spec_str = repl_spec_str
 
-        used.imports.update(
+        used.import_stmts.update(
             self.construct_imports(
                 nonstd_types,
                 spec_str,
                 include_task=False,
-                base=base_imports + list(used.imports) + list(additional_imports),
+                base=base_imports + list(used.import_stmts) + list(additional_imports),
             )
         )
 

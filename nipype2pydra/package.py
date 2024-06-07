@@ -400,7 +400,7 @@ class PackageConverter:
             workflow.prepare_connections()
 
         def collect_intra_pkg_objects(used: UsedSymbols, port_nipype: bool = True):
-            for _, klass in used.intra_pkg_classes:
+            for _, klass in used.imported_classes:
                 address = full_address(klass)
                 if address in self.nipype_port_converters:
                     if port_nipype:
@@ -412,10 +412,10 @@ class PackageConverter:
                         )
                 elif full_address(klass) not in self.interfaces:
                     intra_pkg_modules[klass.__module__].add(klass)
-            for _, func in used.intra_pkg_funcs:
+            for _, func in used.imported_funcs:
                 if full_address(func) not in list(self.workflows):
                     intra_pkg_modules[func.__module__].add(func)
-            for const_mod_address, _, const_name in used.intra_pkg_constants:
+            for const_mod_address, _, const_name in used.imported_constants:
                 intra_pkg_modules[const_mod_address].add(const_name)
 
         for conv in list(self.functions.values()) + list(self.classes.values()):
@@ -429,7 +429,7 @@ class PackageConverter:
                 package_root,
                 already_converted=already_converted,
             )
-            class_addrs = [full_address(c) for _, c in all_used.intra_pkg_classes]
+            class_addrs = [full_address(c) for _, c in all_used.imported_classes]
             included_addrs = [c.full_address for c in interfaces_to_include]
             interfaces_to_include.extend(
                 self.interfaces[a]
@@ -555,14 +555,12 @@ class PackageConverter:
                 always_include=self.all_explicit,
             )
 
-            classes = used.local_classes + [
-                o for o in objs if inspect.isclass(o) and o not in used.local_classes
+            classes = used.classes + [
+                o for o in objs if inspect.isclass(o) and o not in used.classes
             ]
 
-            functions = list(used.local_functions) + [
-                o
-                for o in objs
-                if inspect.isfunction(o) and o not in used.local_functions
+            functions = list(used.functions) + [
+                o for o in objs if inspect.isfunction(o) and o not in used.functions
             ]
 
             self.write_to_module(
@@ -570,10 +568,10 @@ class PackageConverter:
                 module_name=out_mod_name,
                 used=UsedSymbols(
                     module_name=mod_name,
-                    imports=used.imports,
+                    import_stmts=used.import_stmts,
                     constants=used.constants,
-                    local_classes=classes,
-                    local_functions=functions,
+                    classes=classes,
+                    functions=functions,
                 ),
                 find_replace=self.find_replace,
                 inline_intra_pkg=False,
@@ -871,11 +869,11 @@ post_release = "{post_release}"
         existing_imports = parse_imports(existing_import_strs, relative_to=module_name)
         converter_imports = []
 
-        for klass in used.local_classes:
+        for klass in used.classes:
             if f"\nclass {klass.__name__}(" not in code_str:
                 try:
                     class_converter = self.classes[full_address(klass)]
-                    converter_imports.extend(class_converter.used_symbols.imports)
+                    converter_imports.extend(class_converter.used_symbols.import_stmts)
                 except KeyError:
                     class_converter = ClassConverter.from_object(klass, self)
                 code_str += "\n" + class_converter.converted_code + "\n"
@@ -903,11 +901,13 @@ post_release = "{post_release}"
             if converted_code.strip() not in code_str:
                 code_str += "\n" + converted_code + "\n"
 
-        for func in sorted(used.local_functions, key=attrgetter("__name__")):
+        for func in sorted(used.functions, key=attrgetter("__name__")):
             if f"\ndef {func.__name__}(" not in code_str:
                 if func.__name__ in self.functions:
                     function_converter = self.functions[full_address(func)]
-                    converter_imports.extend(function_converter.used_symbols.imports)
+                    converter_imports.extend(
+                        function_converter.used_symbols.import_stmts
+                    )
                 else:
                     function_converter = FunctionConverter.from_object(func, self)
                 code_str += "\n" + function_converter.converted_code + "\n"
@@ -923,7 +923,7 @@ post_release = "{post_release}"
             code_str += (
                 "\n\n# Intra-package imports that have been inlined in this module\n\n"
             )
-            for func_name, func in sorted(used.intra_pkg_funcs, key=itemgetter(0)):
+            for func_name, func in sorted(used.imported_funcs, key=itemgetter(0)):
                 func_src = get_source_code(func)
                 func_src = re.sub(
                     r"^(#[^\n]+\ndef) (\w+)(?=\()",
@@ -934,7 +934,7 @@ post_release = "{post_release}"
                 code_str += "\n\n" + cleanup_function_body(func_src)
                 inlined_symbols.append(func_name)
 
-            for klass_name, klass in sorted(used.intra_pkg_classes, key=itemgetter(0)):
+            for klass_name, klass in sorted(used.imported_classes, key=itemgetter(0)):
                 klass_src = get_source_code(klass)
                 klass_src = re.sub(
                     r"^(#[^\n]+\nclass) (\w+)(?=\()",
@@ -973,7 +973,7 @@ post_release = "{post_release}"
         imports = ImportStatement.collate(
             existing_imports
             + converter_imports
-            + [i for i in used.imports if not i.indent]
+            + [i for i in used.import_stmts if not i.indent]
             + GENERIC_PYDRA_IMPORTS
             + additional_imports
         )

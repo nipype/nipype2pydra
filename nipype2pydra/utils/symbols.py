@@ -24,7 +24,9 @@ class UsedSymbols:
     A class to hold the used symbols in a module
 
     Parameters
-    -------
+    ----------
+    module_name: str
+        the name of the module containing the functions to be converted
     imports : list[str]
         the import statements that need to be included in the converted file
     local_functions: set[callable]
@@ -45,16 +47,31 @@ class UsedSymbols:
         set of all the constants defined within the package that are referenced by the
         function, (<path of the module>, <constant name>, <local-name>), where
         the local alias and the definition of the constant
+    methods: set[callable]
+        the names of the methods that are referenced, by default None is a function not
+        a method
+    class_constants: set[tuple[str, str]]
+        the names of the class attributes that are referenced by the method
+
+    class_name: str, optional
+        the name of the class that the methods originate from
     """
 
     module_name: str
-    imports: ty.Set[str] = attrs.field(factory=set)
-    local_functions: ty.Set[ty.Callable] = attrs.field(factory=set)
-    local_classes: ty.List[type] = attrs.field(factory=list)
+    import_stmts: ty.Set[str] = attrs.field(factory=set)
+    functions: ty.Set[ty.Callable] = attrs.field(factory=set)
+    classes: ty.List[type] = attrs.field(factory=list)
     constants: ty.Set[ty.Tuple[str, str]] = attrs.field(factory=set)
-    intra_pkg_funcs: ty.Set[ty.Tuple[str, ty.Callable]] = attrs.field(factory=set)
-    intra_pkg_classes: ty.List[ty.Tuple[str, ty.Callable]] = attrs.field(factory=list)
-    intra_pkg_constants: ty.Set[ty.Tuple[str, str, str]] = attrs.field(factory=set)
+    methods: ty.Set[ty.Callable] = attrs.field(factory=set)
+    class_attrs: ty.Set[ty.Tuple[str, str]] = attrs.field(factory=set)
+    imported_funcs: ty.Set[ty.Tuple[str, ty.Callable]] = attrs.field(factory=set)
+    imported_classes: ty.List[ty.Tuple[str, ty.Callable]] = attrs.field(factory=list)
+    imported_constants: ty.Set[ty.Tuple[str, str, str]] = attrs.field(factory=set)
+    super_methoods: ty.Set[ty.Tuple[type, ty.Callable]] = attrs.field(factory=set)
+    super_class_attrs: ty.Set[ty.Tuple[type, ty.Tuple[str, str]]] = attrs.field(
+        factory=set
+    )
+    klass: ty.Optional[type] = None
 
     ALWAYS_OMIT_MODULES = [
         "traits.trait_handlers",  # Old traits module, pre v6.0
@@ -74,34 +91,46 @@ class UsedSymbols:
         other: "UsedSymbols",
         absolute_imports: bool = False,
         to_be_inlined: bool = False,
-        from_other_module: bool = True,
     ):
-        if to_be_inlined or not from_other_module:
-            self.imports.update(
-                i.absolute() if absolute_imports else i for i in other.imports
+        if (self.module_name == other.module_name) or to_be_inlined:
+            self.import_stmts.update(
+                i.absolute() if absolute_imports else i for i in other.import_stmts
             )
-        self.intra_pkg_funcs.update(other.intra_pkg_funcs)
-        self.intra_pkg_classes.extend(
-            c for c in other.intra_pkg_classes if c not in self.intra_pkg_classes
+        self.imported_funcs.update(other.imported_funcs)
+        self.imported_classes.extend(
+            c for c in other.imported_classes if c not in self.imported_classes
         )
-        self.intra_pkg_constants.update(other.intra_pkg_constants)
-        if from_other_module:
-            self.intra_pkg_funcs.update((None, f) for f in other.local_functions)
-            self.intra_pkg_classes.extend(
+        self.imported_constants.update(other.imported_constants)
+        if self.module_name != other.module_name:
+            self.imported_funcs.update((None, f) for f in other.functions)
+            self.imported_classes.extend(
                 (None, c)
-                for c in other.local_classes
-                if (None, c) not in self.intra_pkg_classes
+                for c in other.classes
+                if (None, c) not in self.imported_classes
             )
-            self.intra_pkg_constants.update(
+            self.imported_constants.update(
                 (other.module_name, None, c[0]) for c in other.constants
             )
         else:
-            self.local_functions.update(other.local_functions)
-            self.local_classes.extend(
-                c for c in other.local_classes if c not in self.local_classes
-            )
-
+            self.functions.update(other.functions)
+            self.classes.extend(c for c in other.classes if c not in self.classes)
             self.constants.update(other.constants)
+        if other.klass:
+            if not self.klass:
+                raise ValueError(
+                    f"Attempting to merge class symbols for {other.klass} with module "
+                    f"symbols ({self.module_name}) with different names"
+                )
+            if self.klass is other.klass:
+                self.methods.update(other.methods)
+                self.constants.update(other.constants)
+            else:
+                self.super_methoods.update(
+                    (other.klass, m) for m in other.super_methoods
+                )
+                self.super_class_attrs.update(
+                    (other.klass, a) for a in other.super_class_attrs
+                )
 
     DEFAULT_FILTERED_CONSTANTS = (
         Undefined,
@@ -243,19 +272,19 @@ class UsedSymbols:
             for local_func in local_functions:
                 if (
                     local_func.__name__ in used_symbols
-                    and local_func not in used.local_functions
+                    and local_func not in used.functions
                 ):
-                    used.local_functions.add(local_func)
+                    used.functions.add(local_func)
                     cls._get_symbols(local_func, used_symbols)
                     all_src += "\n\n" + inspect.getsource(local_func)
             for local_class in local_classes:
                 if (
                     local_class.__name__ in used_symbols
-                    and local_class not in used.local_classes
+                    and local_class not in used.classes
                 ):
                     if issubclass(local_class, (BaseInterface, TraitedSpec)):
                         continue
-                    used.local_classes.append(local_class)
+                    used.classes.append(local_class)
                     class_body = inspect.getsource(local_class)
                     bases = extract_args(class_body)[1]
                     used_symbols.update(bases)
@@ -334,12 +363,12 @@ class UsedSymbols:
                     ) or inspect.isbuiltin(imported.object):
                         # Case where an object is a nested import from a different package
                         # which is imported in a chain from a neighbouring module
-                        used.imports.add(
+                        used.import_stmts.add(
                             imported.as_independent_statement(resolve=True)
                         )
                         stmt.drop(imported)
                     elif inspect.isfunction(imported.object):
-                        used.intra_pkg_funcs.add((imported.local_name, imported.object))
+                        used.imported_funcs.add((imported.local_name, imported.object))
                         # Recursively include objects imported in the module
                         intra_pkg_objs[import_module(imported.object.__module__)].add(
                             imported.object
@@ -353,8 +382,8 @@ class UsedSymbols:
                         # like we did for functions here because we need to preserve the
                         # order the classes are defined in the module in case one inherits
                         # from the other
-                        if class_def not in used.intra_pkg_classes:
-                            used.intra_pkg_classes.append(class_def)
+                        if class_def not in used.imported_classes:
+                            used.imported_classes.append(class_def)
                         # Recursively include objects imported in the module
                         intra_pkg_objs[import_module(imported.object.__module__)].add(
                             imported.object,
@@ -375,15 +404,15 @@ class UsedSymbols:
                             obj = getattr(imported.object, attr_name)
 
                             if inspect.isfunction(obj):
-                                used.intra_pkg_funcs.add((obj.__name__, obj))
+                                used.imported_funcs.add((obj.__name__, obj))
                                 intra_pkg_objs[imported.object.__name__].add(obj)
                             elif inspect.isclass(obj):
                                 class_def = (obj.__name__, obj)
-                                if class_def not in used.intra_pkg_classes:
-                                    used.intra_pkg_classes.append(class_def)
+                                if class_def not in used.imported_classes:
+                                    used.imported_classes.append(class_def)
                                 intra_pkg_objs[imported.object.__name__].add(obj)
                             else:
-                                used.intra_pkg_constants.add(
+                                used.imported_constants.add(
                                     (
                                         imported.object.__name__,
                                         attr_name,
@@ -397,7 +426,7 @@ class UsedSymbols:
                                 f"Cannot inline imported module in statement '{stmt}'"
                             )
                     else:
-                        used.intra_pkg_constants.add(
+                        used.imported_constants.add(
                             (
                                 stmt.module_name,
                                 imported.local_name,
@@ -423,7 +452,7 @@ class UsedSymbols:
                 )
                 used.update(used_in_mod, to_be_inlined=collapse_intra_pkg)
             if stmt:
-                used.imports.add(stmt)
+                used.import_stmts.add(stmt)
         return used
 
     @classmethod
@@ -495,7 +524,7 @@ class UsedSymbols:
         #     if not i.from_
         # }
         all_imported = {}
-        for stmt in self.imports:
+        for stmt in self.import_stmts:
             all_imported.update(stmt.imported)
         try:
             return all_imported[name].object
@@ -514,7 +543,7 @@ class UsedSymbols:
         if imported_obj is None:
             raise ImportError(
                 f"Could not find object named {name} in any of the imported modules:\n"
-                + "\n".join(str(i) for i in self.imports)
+                + "\n".join(str(i) for i in self.import_stmts)
             )
         for part in parts[-i:]:
             imported_obj = getattr(imported_obj, part)

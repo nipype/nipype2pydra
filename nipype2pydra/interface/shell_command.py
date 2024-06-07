@@ -210,7 +210,7 @@ class ShellCommandInterfaceConverter(BaseInterfaceConverter):
             )
             used.update(super_used)
 
-        used.imports.update(
+        used.import_stmts.update(
             self.construct_imports(
                 nonstd_types,
                 spec_str,

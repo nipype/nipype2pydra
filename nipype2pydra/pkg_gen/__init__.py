@@ -1123,13 +1123,13 @@ def get_callable_sources(
         mod = import_module(mod_name)
         used = UsedSymbols.find(mod, methods, omit_classes=(BaseInterface, TraitedSpec))
         all_funcs.update(methods)
-        for func in used.local_functions:
+        for func in used.functions:
             all_funcs.add(cleanup_function_body(get_source_code(func)))
-        for klass in used.local_classes:
+        for klass in used.classes:
             klass_src = cleanup_function_body(get_source_code(klass))
             if klass_src not in all_classes:
                 all_classes.append(klass_src)
-        for new_func_name, func in used.intra_pkg_funcs:
+        for new_func_name, func in used.imported_funcs:
             if new_func_name is None:
                 continue  # Not referenced directly in this module
             func_src = get_source_code(func)
@@ -1148,7 +1148,7 @@ def get_callable_sources(
                 + match.group(2)
             )
             all_funcs.add(cleanup_function_body(func_src))
-        for new_klass_name, klass in used.intra_pkg_classes:
+        for new_klass_name, klass in used.imported_classes:
             if new_klass_name is None:
                 continue  # Not referenced directly in this module
             klass_src = get_source_code(klass)
@@ -1169,7 +1169,7 @@ def get_callable_sources(
             klass_src = cleanup_function_body(klass_src)
             if klass_src not in all_classes:
                 all_classes.append(klass_src)
-        all_imports.update(used.imports)
+        all_imports.update(used.import_stmts)
         all_constants.update(used.constants)
     return (
         sorted(

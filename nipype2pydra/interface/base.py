@@ -657,7 +657,9 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
             val = getattr(field, key)
             if val is not None:
                 if key == "argstr" and "%" in val:
-                    val = self.string_formats(argstr=val, name=nm)
+                    val = self.string_formats(
+                        argstr=val, name=nm, type_=field.trait_type
+                    )
                 elif key == "mandatory" and pydra_default is not None:
                     val = False  # Overwrite mandatory to False if default is provided
                 pydra_metadata[pydra_key_nm] = val
@@ -666,7 +668,9 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
             template = getattr(field, "name_template")
             name_source = ensure_list(getattr(field, "name_source"))
             if name_source:
-                tmpl = self.string_formats(argstr=template, name=name_source[0])
+                tmpl = self.string_formats(
+                    argstr=template, name=name_source[0], type_=field.trait_type
+                )
             else:
                 tmpl = template
             if nm in self.nipype_interface.output_spec().class_trait_names():
@@ -829,11 +833,14 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
             pydra_type = ty.Any
         return pydra_type
 
-    def string_formats(self, argstr, name):
+    def string_formats(self, argstr, name, type_):
         keys = re.findall(r"(%[0-9\.]*(?:s|d|i|g|f))", argstr)
         new_argstr = argstr
         for i, key in enumerate(keys):
-            repl = f"{name}" if len(keys) == 1 else f"{name}[{i}]"
+            if isinstance(type_, traits.trait_types.Bool):
+                repl = f"{name}:d"
+            else:
+                repl = f"{name}" if len(keys) == 1 else f"{name}[{i}]"
             match = re.match(r"%([0-9\.]+)f", key)
             if match:
                 repl += ":" + match.group(1)
@@ -972,7 +979,7 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
         )
 
         return spec_str, UsedSymbols(
-            module_name=self.nipype_module.__name__, imports=imports
+            module_name=self.nipype_module.__name__, import_stmts=imports
         )
 
     def create_doctests(self, input_fields, nonstd_types):
@@ -1032,7 +1039,7 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
             body = body.replace("self.cmd", f'"{self.nipype_interface._cmd}"')
 
         body = body.replace("self.output_spec().get()", "{}")
-        body = body.replace("self._outputs()", "{}")
+        body = body.replace("self._outputs().get()", "{}")
         # body = re.sub(
         #     r"outputs = self\.(output_spec|_outputs)\(\).*$",
         #     r"outputs = {}",

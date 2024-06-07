@@ -133,7 +133,7 @@ class BaseHelperConverter:
             always_include=self.package.all_explicit,
             translations=self.package.all_import_translations,
         )
-        used.imports.update(i.to_statement() for i in self.imports)
+        used.import_stmts.update(i.to_statement() for i in self.imports)
         return used
 
     @cached_property
@@ -147,12 +147,10 @@ class BaseHelperConverter:
     @cached_property
     def nested_interfaces(self):
         potential_classes = {
-            full_address(c[1]): c[0]
-            for c in self.used_symbols.intra_pkg_classes
-            if c[0]
+            full_address(c[1]): c[0] for c in self.used_symbols.imported_classes if c[0]
         }
         potential_classes.update(
-            (full_address(c), c.__name__) for c in self.used_symbols.local_classes
+            (full_address(c), c.__name__) for c in self.used_symbols.classes
         )
         return {
             potential_classes[address]: workflow

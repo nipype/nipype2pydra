@@ -22,6 +22,7 @@ except ImportError:
 
 from importlib import import_module
 from logging import getLogger
+from pydra.engine.specs import MultiInputObj
 
 
 logger = getLogger("nipype2pydra")
@@ -482,12 +483,20 @@ def from_named_dicts_converter(
 def str_to_type(type_str: str) -> type:
     """Resolve a string representation of a type into a valid type"""
     if "/" in type_str:
+        if type_str.startswith("multi["):
+            assert type_str.endswith("]"), f"Invalid multi type: {type_str}"
+            type_str = type_str[6:-1]
+            multi = True
+        else:
+            multi = False
         tp = from_mime(type_str)
         try:
             # If datatype is a field, use its primitive instead
             tp = tp.primitive  # type: ignore
         except AttributeError:
             pass
+        if multi:
+            tp = MultiInputObj[tp]
     else:
 
         def resolve_type(type_str: str) -> type:

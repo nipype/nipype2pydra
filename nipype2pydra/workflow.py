@@ -666,10 +666,10 @@ class WorkflowConverter:
     @cached_property
     def nested_workflows(self):
         potential_funcs = {
-            full_address(f[1]): f[0] for f in self.used_symbols.intra_pkg_funcs if f[0]
+            full_address(f[1]): f[0] for f in self.used_symbols.imported_funcs if f[0]
         }
         potential_funcs.update(
-            (full_address(f), f.__name__) for f in self.used_symbols.local_functions
+            (full_address(f), f.__name__) for f in self.used_symbols.functions
         )
         return {
             potential_funcs[address]: workflow
@@ -731,7 +731,7 @@ class WorkflowConverter:
         # main workflow
         code_str = self.converted_code
 
-        local_func_names = {f.__name__ for f in used.local_functions}
+        local_func_names = {f.__name__ for f in used.functions}
         # Convert any nested workflows
         for name, conv in self.nested_workflows.items():
             if conv.address in already_converted:
@@ -990,7 +990,7 @@ def test_{self.name}_run():
 
         return UsedSymbols(
             module_name=self.nipype_module.__name__,
-            imports=(
+            import_stmts=(
                 nonstd_type_imports
                 + parse_imports(
                     [
