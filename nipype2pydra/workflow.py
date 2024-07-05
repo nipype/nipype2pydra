@@ -14,8 +14,8 @@ import attrs
 import yaml
 from fileformats.core import from_mime, FileSet, Field
 from fileformats.core.exceptions import FormatRecognitionError
+from .symbols import UsedSymbols
 from .utils import (
-    UsedSymbols,
     split_source_into_statements,
     extract_args,
     full_address,
@@ -622,17 +622,12 @@ class WorkflowConverter:
         self._add_output_conn(out_conn, "from")
 
     @cached_property
-    def used_symbols(self) -> UsedSymbols:
+    def used(self) -> UsedSymbols:
         return UsedSymbols.find(
             self.nipype_module,
             [self.func_body],
             collapse_intra_pkg=False,
-            omit_classes=self.package.omit_classes,
-            omit_modules=self.package.omit_modules,
-            omit_functions=self.package.omit_functions,
-            omit_constants=self.package.omit_constants,
-            always_include=self.package.all_explicit,
-            translations=self.package.all_import_translations,
+            package=self.package,
         )
 
     @property
@@ -666,10 +661,10 @@ class WorkflowConverter:
     @cached_property
     def nested_workflows(self):
         potential_funcs = {
-            full_address(f[1]): f[0] for f in self.used_symbols.imported_funcs if f[0]
+            full_address(f[1]): f[0] for f in self.used.imported_funcs if f[0]
         }
         potential_funcs.update(
-            (full_address(f), f.__name__) for f in self.used_symbols.functions
+            (full_address(f), f.__name__) for f in self.used.functions
         )
         return {
             potential_funcs[address]: workflow
@@ -724,8 +719,8 @@ class WorkflowConverter:
         if additional_funcs is None:
             additional_funcs = []
 
-        used = self.used_symbols.copy()
-        all_used = self.used_symbols.copy()
+        used = self.used.copy()
+        all_used = self.used.copy()
 
         # Start writing output module with used imports and converted function body of
         # main workflow
@@ -737,10 +732,10 @@ class WorkflowConverter:
             if conv.address in already_converted:
                 continue
             already_converted.add(conv.address)
-            all_used.update(conv.used_symbols)
+            all_used.update(conv.used)
             if name in local_func_names:
                 code_str += "\n\n\n" + conv.converted_code
-                used.update(conv.used_symbols)
+                used.update(conv.used)
             else:
                 conv_all_used = conv.write(
                     package_root,

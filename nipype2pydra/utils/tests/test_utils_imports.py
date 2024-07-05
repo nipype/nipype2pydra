@@ -1,5 +1,5 @@
 import pytest
-from nipype2pydra.utils.symbols import UsedSymbols
+from nipype2pydra.symbols import UsedSymbols
 from nipype2pydra.statements.imports import ImportStatement, parse_imports
 import nipype.interfaces.utility
 

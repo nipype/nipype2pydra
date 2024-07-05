@@ -33,8 +33,8 @@ from nipype2pydra.interface import (
     TestGenerator,
     DocTestGenerator,
 )
+from nipype2pydra.symbols import UsedSymbols
 from nipype2pydra.utils import (
-    UsedSymbols,
     extract_args,
     get_source_code,
     cleanup_function_body,

@@ -5,7 +5,6 @@ import logging
 from abc import ABCMeta, abstractmethod
 from importlib import import_module
 from types import ModuleType
-from collections import defaultdict
 import itertools
 import inspect
 import traits.trait_types
@@ -22,16 +21,14 @@ from nipype.interfaces.base import (
 from nipype.interfaces.base.core import SimpleInterface
 from pydra.engine import specs
 from pydra.engine.helpers import ensure_list
+from .. import symbols
 from ..utils import (
     import_module_from_path,
     is_fileset,
     to_snake_case,
-    UsedSymbols,
     types_converter,
     from_dict_converter,
     unwrap_nested_type,
-    get_local_functions,
-    get_local_constants,
     get_return_line,
     cleanup_function_body,
     insert_args_in_signature,
@@ -447,95 +444,21 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
             add_nonstd_types(f[1])
         return nonstd_types
 
-    @property
-    def converted_code(self):
-        return self._converted[0]
-
-    @property
-    def used_symbols(self):
-        return self._converted[1]
-
     @cached_property
-    def _converted(self):
-        """writing pydra task to the dile based on the input and output spec"""
-
+    def converted_code(self):
         return self.generate_code(
             self.input_fields, self.nonstd_types, self.output_fields
         )
 
-    @property
-    def referenced_local_functions(self):
-        return self._referenced_funcs_and_methods[0]
-
-    @property
-    def referenced_methods(self):
-        return self._referenced_funcs_and_methods[1]
-
-    @property
-    def referenced_supers(self):
-        return self._referenced_funcs_and_methods[2]
-
-    @property
-    def method_args(self):
-        return self._referenced_funcs_and_methods[3]
-
-    @property
-    def method_returns(self):
-        return self._referenced_funcs_and_methods[4]
-
-    @property
-    def method_stacks(self):
-        return self._referenced_funcs_and_methods[5]
-
-    @property
-    def method_supers(self):
-        return self._referenced_funcs_and_methods[6]
-
     @cached_property
-    def _referenced_funcs_and_methods(self):
-        referenced_funcs = set()
-        referenced_methods = set()
-        referenced_supers = {}
-        method_args = {}
-        method_returns = {}
-        method_stacks = {}
-        method_supers = defaultdict(dict)
-        already_processed = set(
-            getattr(self.nipype_interface, m) for m in self.included_methods
-        )
-        for method_name in self.included_methods:
-            method_args[method_name] = []
-            method_returns[method_name] = []
-            method_stacks[method_name] = ()
-        for method_name in self.included_methods:
-            method = getattr(self.nipype_interface, method_name)
-            super_base = find_super_method(
-                self.nipype_interface, method_name, include_class=True
-            )[1]
-            # if super_base is not self.nipype_interface:
-            #     method_supers[self.nipype_interface][method_name] = (
-            #         self._common_parent_pkg_prefix(super_base) + method_name
-            #     )
-            self._get_referenced(
-                method,
-                referenced_funcs=referenced_funcs,
-                referenced_methods=referenced_methods,
-                referenced_supers=referenced_supers,
-                method_args=method_args,
-                method_returns=method_returns,
-                method_stacks=method_stacks,
-                method_supers=method_supers,
-                already_processed=already_processed,
-                super_base=super_base,
-            )
-        return (
-            referenced_funcs,
-            referenced_methods,
-            referenced_supers,
-            method_args,
-            method_returns,
-            method_stacks,
-            method_supers,
+    def used(self) -> "symbols.UsedClassSymbols":
+        return symbols.UsedClassSymbols.find(
+            klass=self.nipype_interface,
+            method_names=self.included_methods,
+            package=self.package,
+            collapse_intra_pkg=False,
+            pull_out_inline_imports=True,
+            absolute_imports=True,
         )
 
     @cached_property
@@ -579,8 +502,7 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
             package_root=package_root,
             module_name=self.output_module,
             converted_code=self.converted_code,
-            used=self.used_symbols,
-            # inline_intra_pkg=True,
+            used=self.used,
             find_replace=self.find_replace + self.package.find_replace,
         )
 
@@ -591,8 +513,6 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
             depth=self.package.init_depth,
             auto_import_depth=self.package.auto_import_init_depth,
             import_find_replace=self.package.import_find_replace,
-            # + [f.__name__ for f in self.used_symbols.local_functions]
-            # + [c.__name__ for c in self.used_symbols.local_classes],
         )
 
         test_module_fspath = self.package.write_to_module(
@@ -601,7 +521,7 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
                 self.output_module, f".tests.test_{self.task_name.lower()}"
             ),
             converted_code=self.converted_test_code,
-            used=self.used_symbols_test,
+            used=self.used_test,
             inline_intra_pkg=False,
             find_replace=self.find_replace,
         )
@@ -850,14 +770,14 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
     @abstractmethod
     def generate_code(self, input_fields, nonstd_types, output_fields) -> ty.Tuple[
         str,
-        UsedSymbols,
+        "symbols.UsedSymbols",
     ]:
         """
         Returns
         -------
         converted_code : str
             the core converted code for the task
-        used_symbols: UsedSymbols
+        used: UsedSymbols
             symbols used in the code
         """
 
@@ -901,7 +821,7 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
         return self._converted_test[0]
 
     @property
-    def used_symbols_test(self):
+    def used_test(self):
         return self._converted_test[1]
 
     @cached_property
@@ -978,7 +898,7 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
             },
         )
 
-        return spec_str, UsedSymbols(
+        return spec_str, symbols.UsedSymbols(
             module_name=self.nipype_module.__name__, import_stmts=imports
         )
 
@@ -1059,172 +979,162 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
             body = " " * min_indentation(body) + "self_dict = {}\n" + new_body
         body = body.replace("return runtime", "")
         body = body.replace("TraitError", "KeyError")
-        body = body.replace("os.getcwd()", "output_dir")
         return body
 
-    def _get_referenced(
-        self,
-        method: ty.Callable,
-        referenced_funcs: ty.Set[ty.Callable],
-        referenced_methods: ty.Set[ty.Callable],
-        referenced_supers: ty.Dict[str, ty.Tuple[ty.Callable, type]],
-        method_args: ty.Dict[str, ty.List[str]] = None,
-        method_returns: ty.Dict[str, ty.List[str]] = None,
-        method_stacks: ty.Dict[str, ty.Tuple[ty.Callable]] = None,
-        method_supers: ty.Dict[type, ty.Dict[str, str]] = None,
-        already_processed: ty.Set[ty.Callable] = None,
-        method_stack: ty.Optional[ty.Tuple[ty.Callable]] = None,
-        super_base: ty.Optional[type] = None,
-    ) -> ty.Tuple[ty.Set, ty.Set]:
-        """Get the local functions referenced in the source code
+    # def _get_referenced(
+    #     self,
+    #     method: ty.Callable,
+    #     referenced_funcs: ty.Set[ty.Callable],
+    #     referenced_methods: ty.Set[ty.Callable],
+    #     referenced_supers: ty.Dict[str, ty.Tuple[ty.Callable, type]],
+    #     method_args: ty.Dict[str, ty.List[str]] = None,
+    #     method_returns: ty.Dict[str, ty.List[str]] = None,
+    #     method_stacks: ty.Dict[str, ty.Tuple[ty.Callable]] = None,
+    #     method_supers: ty.Dict[type, ty.Dict[str, str]] = None,
+    #     already_processed: ty.Set[ty.Callable] = None,
+    #     method_stack: ty.Optional[ty.Tuple[ty.Callable]] = None,
+    #     super_base: ty.Optional[type] = None,
+    # ) -> ty.Tuple[ty.Set, ty.Set]:
+    #     """Get the local functions referenced in the source code
 
-        Parameters
-        ----------
-        src: str
-            the source of the file to extract the import statements from
-        referenced_funcs: set[function]
-            the set of local functions that have been referenced so far
-        referenced_methods: set[function]
-            the set of methods that have been referenced so far
-        method_args: dict[str, list[str]]
-            a dictionary to hold additional arguments that need to be added to each method,
-            where the dictionary key is the names of the methods
-        method_returns: dict[str, list[str]]
-            a dictionary to hold the return values of each method,
-            where the dictionary key is the names of the methods
+    #     Parameters
+    #     ----------
+    #     src: str
+    #         the source of the file to extract the import statements from
+    #     referenced_funcs: set[function]
+    #         the set of local functions that have been referenced so far
+    #     referenced_methods: set[function]
+    #         the set of methods that have been referenced so far
+    #     method_args: dict[str, list[str]]
+    #         a dictionary to hold additional arguments that need to be added to each method,
+    #         where the dictionary key is the names of the methods
+    #     method_returns: dict[str, list[str]]
+    #         a dictionary to hold the return values of each method,
+    #         where the dictionary key is the names of the methods
 
-        Returns
-        -------
-        referenced_inputs: set[str]
-            inputs that have been referenced
-        referenced_outputs: set[str]
-            outputs that have been referenced
-        """
-        if already_processed:
-            already_processed.add(method)
-        else:
-            already_processed = {method}
-        if method_stack is None:
-            method_stack = (method,)
-        else:
-            method_stack += (method,)
-        if super_base is None:
-            super_base = self.nipype_interface
-        method_body = inspect.getsource(method)
-        method_body = re.sub(r"\s*#.*", "", method_body)  # Strip out comments
-        return_value = get_return_line(method_body)
-        ref_local_func_names = re.findall(r"(?<!self\.)(\w+)\(", method_body)
-        ref_local_funcs = set(
-            f
-            for f in self.local_functions
-            if f.__name__ in ref_local_func_names and f not in referenced_funcs
-        )
+    #     Returns
+    #     -------
+    #     referenced_inputs: set[str]
+    #         inputs that have been referenced
+    #     referenced_outputs: set[str]
+    #         outputs that have been referenced
+    #     """
+    #     if already_processed:
+    #         already_processed.add(method)
+    #     else:
+    #         already_processed = {method}
+    #     if method_stack is None:
+    #         method_stack = (method,)
+    #     else:
+    #         method_stack += (method,)
+    #     if super_base is None:
+    #         super_base = self.nipype_interface
+    #     method_body = inspect.getsource(method)
+    #     method_body = re.sub(r"\s*#.*", "", method_body)  # Strip out comments
+    #     return_value = get_return_line(method_body)
+    #     ref_local_func_names = re.findall(r"(?<!self\.)(\w+)\(", method_body)
+    #     ref_local_funcs = set(
+    #         f
+    #         for f in self.local_functions
+    #         if f.__name__ in ref_local_func_names and f not in referenced_funcs
+    #     )
 
-        ref_method_names = re.findall(r"(?<=self\.)(\w+)\(", method_body)
-        ref_methods = set(m for m in self.methods if m.__name__ in ref_method_names)
-        # Filter methods in omitted common base-classes like BaseInterface & CommandLine
-        ref_methods = [
-            m
-            for m in ref_methods
-            if not self.package.is_omitted(
-                find_super_method(super_base, m.__name__, include_class=True)[1]
-            )
-        ]
-        referenced_funcs.update(ref_local_funcs)
-        referenced_methods.update(ref_methods)
+    #     ref_method_names = re.findall(r"(?<=self\.)(\w+)\(", method_body)
+    #     ref_methods = set(m for m in self.methods if m.__name__ in ref_method_names)
+    #     # Filter methods in omitted common base-classes like BaseInterface & CommandLine
+    #     ref_methods = [
+    #         m
+    #         for m in ref_methods
+    #         if not self.package.is_omitted(
+    #             find_super_method(super_base, m.__name__, include_class=True)[1]
+    #         )
+    #     ]
+    #     referenced_funcs.update(ref_local_funcs)
+    #     referenced_methods.update(ref_methods)
 
-        referenced_inputs = set(re.findall(r"(?<=self\.inputs\.)(\w+)", method_body))
-        referenced_outputs = set(re.findall(r"self\.(\w+) *=", method_body))
-        if return_value and return_value.startswith("self."):
-            referenced_outputs.update(
-                re.findall(return_value + r"\[(?:'|\")(\w+)(?:'|\")\] *=", method_body)
-            )
-        for match in re.findall(r"super\([^\)]*\)\.(\w+)\(", method_body):
-            super_method, base = find_super_method(super_base, match)
-            if self.package.is_omitted(base):
-                continue
-            func_name = self._common_parent_pkg_prefix(base) + match
-            if func_name not in referenced_supers:
-                referenced_supers[func_name] = (super_method, base)
-                method_supers[super_base][match] = func_name
-                method_stacks[func_name] = method_stack
-                rf_inputs, rf_outputs = self._get_referenced(
-                    super_method,
-                    referenced_funcs,
-                    referenced_methods,
-                    referenced_supers=referenced_supers,
-                    method_args=method_args,
-                    method_returns=method_returns,
-                    method_stacks=method_stacks,
-                    method_supers=method_supers,
-                    already_processed=already_processed,
-                    method_stack=method_stack,
-                    super_base=base,
-                )
-                referenced_inputs.update(rf_inputs)
-                referenced_outputs.update(rf_outputs)
-                method_args[func_name] = rf_inputs
-                method_returns[func_name] = rf_outputs
-                method_stacks[func_name] = method_stack
-        for func in ref_local_funcs:
-            if func in already_processed:
-                continue
-            rf_inputs, rf_outputs = self._get_referenced(
-                func,
-                referenced_funcs,
-                referenced_methods,
-                referenced_supers=referenced_supers,
-                method_stacks=method_stacks,
-                method_supers=method_supers,
-                already_processed=already_processed,
-                method_stack=method_stack,
-            )
-            referenced_inputs.update(rf_inputs)
-            referenced_outputs.update(rf_outputs)
-        for meth in ref_methods:
-            if meth in already_processed:
-                continue
-            ref_inputs, ref_outputs = self._get_referenced(
-                meth,
-                referenced_funcs,
-                referenced_methods,
-                referenced_supers=referenced_supers,
-                method_args=method_args,
-                method_returns=method_returns,
-                method_stacks=method_stacks,
-                method_supers=method_supers,
-                already_processed=already_processed,
-                method_stack=method_stack,
-            )
-            method_args[meth.__name__] = ref_inputs
-            method_returns[meth.__name__] = ref_outputs
-            method_stacks[meth.__name__] = method_stack
-            referenced_inputs.update(ref_inputs)
-            referenced_outputs.update(ref_outputs)
-        return referenced_inputs, sorted(referenced_outputs)
+    #     referenced_inputs = set(re.findall(r"(?<=self\.inputs\.)(\w+)", method_body))
+    #     referenced_outputs = set(re.findall(r"self\.(\w+) *=", method_body))
+    #     if return_value and return_value.startswith("self."):
+    #         referenced_outputs.update(
+    #             re.findall(return_value + r"\[(?:'|\")(\w+)(?:'|\")\] *=", method_body)
+    #         )
+    #     for match in re.findall(r"super\([^\)]*\)\.(\w+)\(", method_body):
+    #         super_method, base = find_super_method(super_base, match)
+    #         if self.package.is_omitted(base):
+    #             continue
+    #         func_name = self._common_parent_pkg_prefix(base) + match
+    #         if func_name not in referenced_supers:
+    #             referenced_supers[func_name] = (super_method, base)
+    #             method_supers[super_base][match] = func_name
+    #             method_stacks[func_name] = method_stack
+    #             rf_inputs, rf_outputs = self._get_referenced(
+    #                 super_method,
+    #                 referenced_funcs,
+    #                 referenced_methods,
+    #                 referenced_supers=referenced_supers,
+    #                 method_args=method_args,
+    #                 method_returns=method_returns,
+    #                 method_stacks=method_stacks,
+    #                 method_supers=method_supers,
+    #                 already_processed=already_processed,
+    #                 method_stack=method_stack,
+    #                 super_base=base,
+    #             )
+    #             referenced_inputs.update(rf_inputs)
+    #             referenced_outputs.update(rf_outputs)
+    #             method_args[func_name] = rf_inputs
+    #             method_returns[func_name] = rf_outputs
+    #             method_stacks[func_name] = method_stack
+    #     for func in ref_local_funcs:
+    #         if func in already_processed:
+    #             continue
+    #         rf_inputs, rf_outputs = self._get_referenced(
+    #             func,
+    #             referenced_funcs,
+    #             referenced_methods,
+    #             referenced_supers=referenced_supers,
+    #             method_stacks=method_stacks,
+    #             method_supers=method_supers,
+    #             already_processed=already_processed,
+    #             method_stack=method_stack,
+    #         )
+    #         referenced_inputs.update(rf_inputs)
+    #         referenced_outputs.update(rf_outputs)
+    #     for meth in ref_methods:
+    #         if meth in already_processed:
+    #             continue
+    #         ref_inputs, ref_outputs = self._get_referenced(
+    #             meth,
+    #             referenced_funcs,
+    #             referenced_methods,
+    #             referenced_supers=referenced_supers,
+    #             method_args=method_args,
+    #             method_returns=method_returns,
+    #             method_stacks=method_stacks,
+    #             method_supers=method_supers,
+    #             already_processed=already_processed,
+    #             method_stack=method_stack,
+    #         )
+    #         method_args[meth.__name__] = ref_inputs
+    #         method_returns[meth.__name__] = ref_outputs
+    #         method_stacks[meth.__name__] = method_stack
+    #         referenced_inputs.update(ref_inputs)
+    #         referenced_outputs.update(ref_outputs)
+    #     return referenced_inputs, sorted(referenced_outputs)
 
-    def _common_parent_pkg_prefix(self, base: type) -> str:
-        """Return the common part of two package names"""
-        ref_parts = self.nipype_interface.__module__.split(".")
-        mod_parts = base.__module__.split(".")
-        common = []
-        for r_part, m_part in zip(ref_parts, mod_parts):
-            if r_part == m_part:
-                common.append(r_part)
-            else:
-                break
-        if not common:
-            return ""
-        return "_".join(common + [base.__name__]) + "__"
-
-    @cached_property
-    def local_functions(self):
-        """Get the functions defined in the same file as the interface"""
-        return get_local_functions(self.nipype_module)
-
-    @cached_property
-    def local_constants(self):
-        return get_local_constants(self.nipype_module)
+    # def _common_parent_pkg_prefix(self, base: type) -> str:
+    #     """Return the common part of two package names"""
+    #     ref_parts = self.nipype_interface.__module__.split(".")
+    #     mod_parts = base.__module__.split(".")
+    #     common = []
+    #     for r_part, m_part in zip(ref_parts, mod_parts):
+    #         if r_part == m_part:
+    #             common.append(r_part)
+    #         else:
+    #             break
+    #     if not common:
+    #         return ""
+    #     return "_".join(common + [base.__name__]) + "__"
 
     def process_method(
         self,
@@ -1247,7 +1157,7 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
             pass
         if "runtime" in args:
             args.remove("runtime")
-        args_to_add = list(self.method_args.get(method.__name__, [])) + list(
+        args_to_add = list(self.used.method_args.get(method.__name__, [])) + list(
             additional_args
         )
         if args_to_add:
@@ -1259,8 +1169,8 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
         method_body = self.process_method_body(
             method_body, input_names, output_names, super_base
         )
-        if self.method_returns.get(method.__name__):
-            return_args = self.method_returns[method.__name__]
+        if self.used.method_returns.get(method.__name__):
+            return_args = self.used.method_returns[method.__name__]
             method_body = (
                 " " * min_indentation(method_body)
                 + " = ".join(return_args)
@@ -1338,7 +1248,7 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
     def replace_supers(self, method_body, super_base=None):
         if super_base is None:
             super_base = self.nipype_interface
-        name_map = self.method_supers[super_base]
+        name_map = self.used.super_func_names.get(super_base)
         splits = re.split(r"super\([^\)]*\)\.(\w+)(?=\()", method_body)
         new_body = splits[0]
         for name, block in zip(splits[1::2], splits[2::2]):
@@ -1371,9 +1281,7 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
         method_body = self._misc_cleanups(method_body)
         # Add args to the function signature of method calls
         method_re = re.compile(r"self\.(\w+)(?=\()", flags=re.MULTILINE | re.DOTALL)
-        method_names = [m.__name__ for m in self.referenced_methods] + list(
-            self.included_methods
-        )
+        method_names = [m.__name__ for m in self.used.methods]
         method_body = strip_comments(method_body)
         omitted_methods = {}
         for method_name in set(
@@ -1401,7 +1309,7 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
                 continue
             # Assign additional return values (which were previously saved to member
             # attributes) to new variables from the method call
-            if self.method_returns[name]:
+            if self.used.method_returns[name]:
                 last_line = new_body.splitlines()[-1]
                 match = re.match(r" *([a-zA-Z0-9\,\.\_ ]+ *=)? *$", last_line)
                 if match:
@@ -1411,22 +1319,26 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
                         last_line = new_body_lines[-1]
                         new_body += "\n" + re.sub(
                             r"^( *)([a-zA-Z0-9\,\.\_ ]+) *= *$",
-                            r"\1\2, " + ",".join(self.method_returns[name]) + " = ",
+                            r"\1\2, "
+                            + ",".join(self.used.method_returns[name])
+                            + " = ",
                             last_line,
                             flags=re.MULTILINE,
                         )
                     else:
-                        new_body += ",".join(self.method_returns[name]) + " = "
+                        new_body += ",".join(self.used.method_returns[name]) + " = "
                 else:
                     logger.warning(
                         "Could not augment the return value of the method converted from "
                         f"a function '{name}' with the previously assigned attributes "
-                        f"{self.method_returns[name]} as the method doesn't have a "
+                        f"{self.used.method_returns[name]} as the method doesn't have a "
                         f"singular return statement at the end of the method"
                     )
             # Insert additional arguments to the method call (which were previously
             # accessed via member attributes)
-            args_to_be_inserted = list(self.method_args[name]) + list(additional_args)
+            args_to_be_inserted = list(self.used.method_args[name]) + list(
+                additional_args
+            )
             try:
                 new_body += name + insert_args_in_signature(
                     args,

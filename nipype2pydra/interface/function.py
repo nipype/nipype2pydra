@@ -7,7 +7,7 @@ import logging
 import attrs
 from nipype.interfaces.base import BaseInterface, TraitedSpec
 from .base import BaseInterfaceConverter
-from ..utils import UsedSymbols, get_return_line, find_super_method
+from ..symbols import UsedSymbols, get_return_line, find_super_method
 
 
 logger = logging.getLogger("nipype2pydra")
@@ -31,7 +31,7 @@ class FunctionInterfaceConverter(BaseInterfaceConverter):
         -------
         converted_code : str
             the core converted code for the task
-        used_symbols: UsedSymbols
+        used: UsedSymbols
             symbols used in the code
         """
 
@@ -64,35 +64,6 @@ class FunctionInterfaceConverter(BaseInterfaceConverter):
         output_names = [o[0] for o in output_fields]
         output_type_names = [o[1] for o in output_fields_str]
 
-        used = UsedSymbols.find(
-            self.nipype_module,
-            self.referenced_local_functions,
-            omit_classes=self.package.omit_classes,
-            omit_modules=self.package.omit_modules,
-            omit_functions=self.package.omit_functions,
-            omit_constants=self.package.omit_constants,
-            always_include=self.package.all_explicit,
-            translations=self.package.all_import_translations,
-            absolute_imports=True,
-        )
-
-        for ref_method in self.referenced_methods:
-            method_module = find_super_method(
-                self.nipype_interface, ref_method.__name__, include_class=True
-            )[1].__module__
-            method_used = UsedSymbols.find(
-                method_module,
-                [ref_method],
-                omit_classes=self.package.omit_classes,
-                omit_modules=self.package.omit_modules,
-                omit_functions=self.package.omit_functions,
-                omit_constants=self.package.omit_constants,
-                always_include=self.package.all_explicit,
-                translations=self.package.all_import_translations,
-                absolute_imports=True,
-            )
-            used.update(method_used)
-
         method_body = ""
         for field in input_fields:
             if field[-1].get("copyfile"):
@@ -100,12 +71,14 @@ class FunctionInterfaceConverter(BaseInterfaceConverter):
         for field in output_fields:
             method_body += f"    {field[0]} = attrs.NOTHING\n"
 
+        used_method_names = [m.__name__ for m in self.used.methods]
         # Combined src of init and list_outputs
-        init_code = inspect.getsource(self.nipype_interface.__init__).strip()
-        init_class = find_super_method(
-            self.nipype_interface, "__init__", include_class=True
-        )[1]
-        if not self.package.is_omitted(init_class):
+        if "__init__" in used_method_names:
+            init_code = inspect.getsource(self.nipype_interface.__init__).strip()
+            init_class = find_super_method(
+                self.nipype_interface, "__init__", include_class=True
+            )[1]
+            assert not self.package.is_omitted(init_class)
             # Strip out method def and return statement
             method_lines = init_code.strip().split("\n")[1:]
             if re.match(r"\s*return", method_lines[-1]):
@@ -117,29 +90,17 @@ class FunctionInterfaceConverter(BaseInterfaceConverter):
                 output_names,
                 super_base=init_class,
             )
-
-            init_used = UsedSymbols.find(
-                init_class.__module__,
-                [init_code],
-                omit_classes=self.package.omit_classes + [BaseInterface, TraitedSpec],
-                omit_modules=self.package.omit_modules,
-                omit_functions=self.package.omit_functions,
-                omit_constants=self.package.omit_constants,
-                always_include=self.package.all_explicit,
-                translations=self.package.all_import_translations,
-                absolute_imports=True,
-            )
-            used.update(init_used)
             method_body += init_code + "\n"
 
         # Combined src of run_interface and list_outputs
-        run_interface_code = inspect.getsource(
-            self.nipype_interface._run_interface
-        ).strip()
-        run_interface_class = find_super_method(
-            self.nipype_interface, "_run_interface", include_class=True
-        )[1]
-        if not self.package.is_omitted(run_interface_class):
+        if "_run_interface" in used_method_names:
+            run_interface_code = inspect.getsource(
+                self.nipype_interface._run_interface
+            ).strip()
+            run_interface_class = find_super_method(
+                self.nipype_interface, "_run_interface", include_class=True
+            )[1]
+            assert not self.package.is_omitted(run_interface_class)
             # Strip out method def and return statement
             method_lines = run_interface_code.strip().split("\n")[1:]
             if re.match(r"\s*return", method_lines[-1]):
@@ -151,28 +112,16 @@ class FunctionInterfaceConverter(BaseInterfaceConverter):
                 output_names,
                 super_base=run_interface_class,
             )
-
-            run_interface_used = UsedSymbols.find(
-                run_interface_class.__module__,
-                [run_interface_code],
-                omit_classes=self.package.omit_classes,
-                omit_modules=self.package.omit_modules,
-                omit_functions=self.package.omit_functions,
-                omit_constants=self.package.omit_constants,
-                always_include=self.package.all_explicit,
-                translations=self.package.all_import_translations,
-                absolute_imports=True,
-            )
-            used.update(run_interface_used)
             method_body += run_interface_code + "\n"
 
-        list_outputs_code = inspect.getsource(
-            self.nipype_interface._list_outputs
-        ).strip()
-        list_outputs_class = find_super_method(
-            self.nipype_interface, "_list_outputs", include_class=True
-        )[1]
-        if not self.package.is_omitted(list_outputs_class):
+        if "_list_outputs" in used_method_names:
+            list_outputs_code = inspect.getsource(
+                self.nipype_interface._list_outputs
+            ).strip()
+            list_outputs_class = find_super_method(
+                self.nipype_interface, "_list_outputs", include_class=True
+            )[1]
+            assert not self.package.is_omitted(list_outputs_class)
             # Strip out method def and return statement
             lo_lines = list_outputs_code.strip().split("\n")[1:]
             if re.match(r"\s*(return|raise NotImplementedError)", lo_lines[-1]):
@@ -185,19 +134,6 @@ class FunctionInterfaceConverter(BaseInterfaceConverter):
                 super_base=list_outputs_class,
                 unwrap_return_dict=True,
             )
-
-            list_outputs_used = UsedSymbols.find(
-                list_outputs_class.__module__,
-                [list_outputs_code],
-                omit_classes=self.package.omit_classes,
-                omit_modules=self.package.omit_modules,
-                omit_functions=self.package.omit_functions,
-                omit_constants=self.package.omit_constants,
-                always_include=self.package.all_explicit,
-                translations=self.package.all_import_translations,
-                absolute_imports=True,
-            )
-            used.update(list_outputs_used)
             method_body += list_outputs_code + "\n"
 
         assert method_body, "Neither `run_interface` and `list_outputs` are defined"
@@ -232,15 +168,16 @@ class FunctionInterfaceConverter(BaseInterfaceConverter):
 
         spec_str += "\n\n# Nipype methods converted into functions\n\n"
 
-        for m in sorted(self.referenced_methods, key=attrgetter("__name__")):
-            spec_str += "\n\n" + self.process_method(
-                m,
-                input_names,
-                output_names,
-                super_base=find_super_method(
-                    self.nipype_interface, m.__name__, include_class=True
-                )[1],
-            )
+        for m in sorted(self.used.methods, key=attrgetter("__name__")):
+            if m.__name__ not in self.included_methods:
+                spec_str += "\n\n" + self.process_method(
+                    m,
+                    input_names,
+                    output_names,
+                    super_base=find_super_method(
+                        self.nipype_interface, m.__name__, include_class=True
+                    )[1],
+                )
 
         # Replace runtime attributes
         additional_imports = set()
@@ -250,16 +187,18 @@ class FunctionInterfaceConverter(BaseInterfaceConverter):
                 additional_imports.add(imprt)
                 spec_str = repl_spec_str
 
-        used.import_stmts.update(
+        self.used.import_stmts.update(
             self.construct_imports(
                 nonstd_types,
                 spec_str,
                 include_task=False,
-                base=base_imports + list(used.import_stmts) + list(additional_imports),
+                base=base_imports
+                + list(self.used.import_stmts)
+                + list(additional_imports),
             )
         )
 
-        return spec_str, used
+        return spec_str
 
     def replace_attributes(self, function_body: ty.Callable) -> str:
         """Replace self.inputs.<name> with <name> in the function body and add args to the

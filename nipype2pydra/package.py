@@ -15,9 +15,10 @@ import black.parsing
 import black.report
 from tqdm import tqdm
 import yaml
+import nipype.utils.logger
 from . import interface
+from .symbols import UsedSymbols
 from .utils import (
-    UsedSymbols,
     full_address,
     to_snake_case,
     cleanup_function_body,
@@ -270,6 +271,10 @@ class PackageConverter:
         },
     )
 
+    def __attrs_post_init__(self):
+        # Adds in some default omissions
+        self.omit_constants.append("nipype.logging")
+
     @init_depth.default
     def _init_depth_default(self) -> int:
         if self.name.startswith("pydra.tasks."):
@@ -420,7 +425,7 @@ class PackageConverter:
 
         for conv in list(self.functions.values()) + list(self.classes.values()):
             intra_pkg_modules[conv.nipype_module_name].add(conv.nipype_object)
-            collect_intra_pkg_objects(conv.used_symbols)
+            collect_intra_pkg_objects(conv.used)
 
         for workflow in tqdm(
             workflows_to_include, "converting workflows from Nipype to Pydra syntax"
@@ -447,7 +452,7 @@ class PackageConverter:
                 package_root,
                 already_converted=already_converted,
             )
-            collect_intra_pkg_objects(converter.used_symbols)
+            collect_intra_pkg_objects(converter.used)
 
         for converter in tqdm(
             nipype_ports, "Porting interfaces from the core nipype package"
@@ -456,7 +461,7 @@ class PackageConverter:
                 package_root,
                 already_converted=already_converted,
             )
-            collect_intra_pkg_objects(converter.used_symbols, port_nipype=False)
+            collect_intra_pkg_objects(converter.used, port_nipype=False)
 
         # Write any additional functions in other modules in the package
         self.write_intra_pkg_modules(package_root, intra_pkg_modules)
@@ -547,12 +552,8 @@ class PackageConverter:
                 mod,
                 objs,
                 pull_out_inline_imports=False,
-                translations=self.all_import_translations,
-                omit_classes=self.omit_classes,
-                omit_modules=self.omit_modules,
-                omit_functions=self.omit_functions,
-                omit_constants=self.omit_constants,
                 always_include=self.all_explicit,
+                package=self,
             )
 
             classes = used.classes + [
@@ -873,7 +874,7 @@ post_release = "{post_release}"
             if f"\nclass {klass.__name__}(" not in code_str:
                 try:
                     class_converter = self.classes[full_address(klass)]
-                    converter_imports.extend(class_converter.used_symbols.import_stmts)
+                    converter_imports.extend(class_converter.used.import_stmts)
                 except KeyError:
                     class_converter = ClassConverter.from_object(klass, self)
                 code_str += "\n" + class_converter.converted_code + "\n"
@@ -905,9 +906,7 @@ post_release = "{post_release}"
             if f"\ndef {func.__name__}(" not in code_str:
                 if func.__name__ in self.functions:
                     function_converter = self.functions[full_address(func)]
-                    converter_imports.extend(
-                        function_converter.used_symbols.import_stmts
-                    )
+                    converter_imports.extend(function_converter.used.import_stmts)
                 else:
                     function_converter = FunctionConverter.from_object(func, self)
                 code_str += "\n" + function_converter.converted_code + "\n"

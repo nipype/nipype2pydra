@@ -157,7 +157,9 @@ def add_exc_note(e, note):
     return e
 
 
-def extract_args(snippet) -> ty.Tuple[str, ty.List[str], str]:
+def extract_args(
+    snippet, drop_parens: bool = False
+) -> ty.Tuple[str, ty.List[str], str]:
     """Splits the code snippet at the first opening brackets into a 3-tuple
     consisting of the preceding text + opening bracket, the arguments/items
     within the parenthesis/bracket pair, and the closing paren/bracket + trailing text.
@@ -256,7 +258,11 @@ def extract_args(snippet) -> ty.Tuple[str, ty.List[str], str]:
                 if matching_open == first and depth[matching_open] == 0:
                     if next_item:
                         contents.append(next_item)
-                    return pre, contents, "".join(splits[i:])
+                    post = "".join(splits[i:])
+                    if drop_parens:
+                        pre = pre[:-1]
+                        post = post[1:]
+                    return pre, contents, post
             if (
                 first
                 and depth[first] == 1

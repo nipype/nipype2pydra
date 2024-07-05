@@ -9,8 +9,8 @@ from importlib import import_module
 from types import ModuleType
 import black.report
 import yaml
+from .symbols import UsedSymbols
 from .utils import (
-    UsedSymbols,
     extract_args,
     full_address,
     multiline_comment,
@@ -121,17 +121,13 @@ class BaseHelperConverter:
         return getattr(self.nipype_module, self.nipype_name)
 
     @cached_property
-    def used_symbols(self) -> UsedSymbols:
+    def used(self) -> UsedSymbols:
         used = UsedSymbols.find(
             self.nipype_module,
             [self.src],
+            package=self.package,
             collapse_intra_pkg=False,
-            omit_classes=self.package.omit_classes,
-            omit_modules=self.package.omit_modules,
-            omit_functions=self.package.omit_functions,
-            omit_constants=self.package.omit_constants,
             always_include=self.package.all_explicit,
-            translations=self.package.all_import_translations,
         )
         used.import_stmts.update(i.to_statement() for i in self.imports)
         return used
@@ -147,10 +143,10 @@ class BaseHelperConverter:
     @cached_property
     def nested_interfaces(self):
         potential_classes = {
-            full_address(c[1]): c[0] for c in self.used_symbols.imported_classes if c[0]
+            full_address(c[1]): c[0] for c in self.used.imported_classes if c[0]
         }
         potential_classes.update(
-            (full_address(c), c.__name__) for c in self.used_symbols.classes
+            (full_address(c), c.__name__) for c in self.used.classes
         )
         return {
             potential_classes[address]: workflow
@@ -377,8 +373,7 @@ class ClassConverter(BaseHelperConverter):
 
     @cached_property
     def _converted_code(self) -> ty.Tuple[str, ty.List[str]]:
-        """Convert the Nipype workflow function to a Pydra workflow function and determine
-        the configuration parameters that are used
+        """Convert a class into Pydra-
 
         Returns
         -------
@@ -389,18 +384,30 @@ class ClassConverter(BaseHelperConverter):
         """
 
         used_configs = set()
-        parts = re.split(
-            r"\n    (?!\s|\))", replace_undefined(self.src), flags=re.MULTILINE
-        )
+
+        src = replace_undefined(self.src)[len("class ") :]
+        name, bases, class_body = extract_args(src, drop_parens=True)
+        bases = [
+            b
+            for b in bases
+            if not self.package.is_omitted(getattr(self.nipype_module, b))
+        ]
+
+        parts = re.split(r"\n    (?!\s|\))", class_body, flags=re.MULTILINE)
         converted_parts = []
-        for part in parts:
+        for part in parts[1:]:
             if part.startswith("def"):
                 converted_func, func_used_configs = self._convert_function(part)
                 converted_parts.append(converted_func)
                 used_configs.update(func_used_configs)
             else:
                 converted_parts.append(part)
-        code_str = "\n    ".join(converted_parts)
+        code_str = (
+            f"class {name}("
+            + ", ".join(bases)
+            + "):\n    "
+            + "\n    ".join(converted_parts)
+        )
         # Format the the code before the find and replace so it is more predictable
         try:
             code_str = black.format_file_contents(

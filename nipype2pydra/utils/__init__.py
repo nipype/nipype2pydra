@@ -25,9 +25,3 @@ from .misc import (  # noqa: F401
     min_indentation,
     INBUILT_NIPYPE_TRAIT_NAMES,
 )
-from .symbols import (  # noqa: F401
-    UsedSymbols,
-    get_local_functions,
-    get_local_classes,
-    get_local_constants,
-)

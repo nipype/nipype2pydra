@@ -539,9 +539,7 @@ class AddInterfaceStatement(AddNodeStatement):
         if intf_name.endswith("("):  # strip trailing parenthesis
             intf_name = intf_name[:-1]
         try:
-            imported_obj = workflow_converter.used_symbols.get_imported_object(
-                intf_name
-            )
+            imported_obj = workflow_converter.used.get_imported_object(intf_name)
         except ImportError:
             imported_obj = None
             is_factory = "already-initialised"
