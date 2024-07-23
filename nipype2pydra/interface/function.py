@@ -1,11 +1,10 @@
 import typing as ty
 import re
 import inspect
-from operator import attrgetter
+from operator import attrgetter, itemgetter
 from functools import cached_property
 import logging
 import attrs
-from nipype.interfaces.base import BaseInterface, TraitedSpec
 from .base import BaseInterfaceConverter
 from ..symbols import UsedSymbols, get_return_line, find_super_method
 
@@ -178,6 +177,17 @@ class FunctionInterfaceConverter(BaseInterfaceConverter):
                         self.nipype_interface, m.__name__, include_class=True
                     )[1],
                 )
+
+        for name, (m, super_base) in sorted(
+            self.used.supers.items(), key=itemgetter(0)
+        ):
+            spec_str += "\n\n" + self.process_method(
+                m,
+                input_names,
+                output_names,
+                super_base=super_base,
+                new_name=name,
+            )
 
         # Replace runtime attributes
         additional_imports = set()

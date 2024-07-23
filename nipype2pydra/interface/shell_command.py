@@ -533,9 +533,9 @@ class ShellCommandInterfaceConverter(BaseInterfaceConverter):
         body = inspect.getsource(method).split("\n", 1)[1]
         body = "\n" + _strip_doc_string(body)
         body = cleanup_function_body(body)
-        args = list(inspect.signature(method).parameters.keys())[1:]
+        defn_args = list(inspect.signature(method).parameters.keys())[1:]
         if arg_names:
-            for new, old in zip(args, arg_names):
+            for new, old in zip(defn_args, arg_names):
                 if new != old:
                     body = re.sub(r"\b" + old + r"\b", new, body)
         super_re = re.compile(
@@ -544,7 +544,7 @@ class ShellCommandInterfaceConverter(BaseInterfaceConverter):
         if super_re.search(body):
             super_method, base = find_super_method(base, method_name)
             super_body = self._unwrap_supers(
-                super_method, base, base_replacement, arg_names=args
+                super_method, base, base_replacement, arg_names=defn_args
             )
             return_indent = return_val = None
             if super_body:
@@ -562,7 +562,6 @@ class ShellCommandInterfaceConverter(BaseInterfaceConverter):
             for call, block in zip(splits[1::2], splits[2::2]):
                 _, args, post = extract_args(block)
                 indent = re.match(r"^(\s*)", call).group(1)
-                arg_str = ", ".join(args)
                 if "=" in call:
                     assert return_val
                     assigned_to_varname = call.split("=")[0].strip()
@@ -582,7 +581,7 @@ class ShellCommandInterfaceConverter(BaseInterfaceConverter):
                     continue
                 for o, n in zip(args, super_args):
                     replacement = re.sub(r"\b" + o + r"\b", n, replacement)
-                new_body += replacement + "(" + arg_str + post
+                new_body += replacement + post[1:]
             return new_body
         return body
 
