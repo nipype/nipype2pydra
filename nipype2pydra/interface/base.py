@@ -19,8 +19,9 @@ from nipype.interfaces.base import (
     BaseInterface,
 )
 from nipype.interfaces.base.core import SimpleInterface
-from pydra.engine import specs
-from pydra.engine.helpers import ensure_list
+from pydra.utils.typing import MultiInputObj, MultiOutputObj, MultiOutputFile
+from fileformats.generic import File, Directory
+from pydra.utils.general import ensure_list
 from .. import symbols
 from ..utils import (
     import_module_from_path,
@@ -44,7 +45,6 @@ from ..statements import (
     from_list_to_imports,
     make_imports_absolute,
 )
-from fileformats.generic import File
 import nipype2pydra.package
 from nipype2pydra.exceptions import UnmatchedParensException
 
@@ -131,7 +131,7 @@ class OutputsConverter(SpecConverter):
         names of methods/callable classes defined in the adjacent `*_callables.py`
         to set to the `callable` attribute of output fields
     templates : dict[str, str], optional
-        `output_file_template` values to be provided to output fields
+        `path_template` values to be provided to output fields
     requirements : dict[str, list[str]]
         input fields that are required to be provided for the output field to be present
     """
@@ -148,7 +148,7 @@ class OutputsConverter(SpecConverter):
         factory=dict,
         converter=default_if_none(factory=dict),  # type: ignore
         metadata={
-            "help": "`output_file_template` values to be provided to output fields"
+            "help": "`path_template` values to be provided to output fields"
         },
     )
     requirements: ty.Dict[str, ty.List[str]] = attrs.field(
@@ -544,7 +544,7 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
                 continue
             pydra_fld, pos = self.pydra_fld_input(fld, name)
             pydra_meta = pydra_fld[-1]
-            if "output_file_template" in pydra_meta:
+            if "path_template" in pydra_meta:
                 has_template.append(name)
             pydra_fields_dict[name] = (name,) + pydra_fld
             if pos is not None:
@@ -571,7 +571,7 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
         else:
             pydra_default = None
 
-        pydra_metadata = {"help_string": ""}
+        pydra_metadata = {"help": ""}
         for key in self.INPUT_KEYS:
             pydra_key_nm = self.NAME_MAPPING.get(key, key)
             val = getattr(field, key)
@@ -594,20 +594,20 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
             else:
                 tmpl = template
             if nm in self.nipype_interface.output_spec().class_trait_names():
-                pydra_metadata["output_file_template"] = tmpl
-            if pydra_type in [specs.File, specs.Directory]:
+                pydra_metadata["path_template"] = tmpl
+            if pydra_type in [File, Directory]:
                 pydra_type = Path
         elif getattr(field, "genfile"):
             if nm in self.outputs.templates:
                 try:
-                    pydra_metadata["output_file_template"] = self.outputs.templates[nm]
+                    pydra_metadata["path_template"] = self.outputs.templates[nm]
                 except KeyError:
                     raise Exception(
-                        f"{nm} is has genfile=True and therefore needs an 'output_file_template' value"
+                        f"{nm} is has genfile=True and therefore needs an 'path_template' value"
                     )
                 if pydra_type in [
-                    specs.File,
-                    specs.Directory,
+                    File,
+                    Directory
                 ]:  # since this is a template, the file doesn't exist
                     pydra_type = Path
             elif nm not in self.inputs.callable_defaults:
@@ -677,7 +677,7 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
                 pydra_metadata["requires"] = pydra_metadata["requires"][0]
 
         if name in self.outputs.templates:
-            pydra_metadata["output_file_template"] = self.interface_spec[
+            pydra_metadata["path_template"] = self.interface_spec[
                 "output_templates"
             ][name]
         elif name in self.outputs.callables:
@@ -728,25 +728,25 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
             if isinstance(field.inner_traits[0].trait_type, traits_extension.File):
                 pydra_type = ty.List[File]
             else:
-                pydra_type = specs.MultiInputObj
+                pydra_type = MultiInputObj
         elif isinstance(trait_tp, traits_extension.OutputMultiObject):
             if isinstance(field.inner_traits[0].trait_type, traits_extension.File):
-                pydra_type = specs.MultiOutputFile
+                pydra_type = MultiOutputFile
             else:
-                pydra_type = specs.MultiOutputObj
+                pydra_type = MultiOutputObj
         elif isinstance(trait_tp, traits.trait_types.List):
             if isinstance(field.inner_traits[0].trait_type, traits_extension.File):
                 if spec_type == "input":
                     pydra_type = ty.List[File]
                 else:
-                    pydra_type = specs.MultiOutputFile
+                    pydra_type = MultiOutputFile
             else:
                 pydra_type = list
         elif isinstance(trait_tp, traits_extension.File):
             if (
                 spec_type == "output" or trait_tp.exists is True
             ):  # TODO check the hash_file metadata in nipype
-                pydra_type = specs.File
+                pydra_type = File
             else:
                 pydra_type = Path
         else:
@@ -1391,7 +1391,7 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
         "xor",
     ]
     OUTPUT_KEYS = ["desc"]
-    NAME_MAPPING = {"desc": "help_string"}
+    NAME_MAPPING = {"desc": "help"}
 
     TRAITS_IRREL = [
         "output_type",

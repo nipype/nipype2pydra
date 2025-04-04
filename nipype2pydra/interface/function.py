@@ -35,33 +35,32 @@ class FunctionInterfaceConverter(BaseInterfaceConverter):
         """
 
         base_imports = [
-            "import pydra.mark",
             "import logging",
-            "from logging import getLogger",
-            "from pydra.engine.task import FunctionTask",
             "import attrs",
+            "from logging import getLogger",
+            "from pydra.compose import python",
         ]
 
-        def types_to_names(spec_fields):
-            spec_fields_str = []
-            for el in spec_fields:
-                el = list(el)
-                tp_str = str(el[1])
-                if tp_str.startswith("<class "):
-                    tp_str = el[1].__name__
-                else:
-                    # Alter modules in type string to match those that will be imported
-                    tp_str = tp_str.replace("typing", "ty")
-                    tp_str = re.sub(r"(\w+\.)+(?<!ty\.)(\w+)", r"\2", tp_str)
-                el[1] = tp_str
-                spec_fields_str.append(tuple(el))
-            return spec_fields_str
+        # def types_to_names(spec_fields):
+        #     spec_fields_str = []
+        #     for el in spec_fields:
+        #         el = list(el)
+        #         tp_str = str(el[1])
+        #         if tp_str.startswith("<class "):
+        #             tp_str = el[1].__name__
+        #         else:
+        #             # Alter modules in type string to match those that will be imported
+        #             tp_str = tp_str.replace("typing", "ty")
+        #             tp_str = re.sub(r"(\w+\.)+(?<!ty\.)(\w+)", r"\2", tp_str)
+        #         el[1] = tp_str
+        #         spec_fields_str.append(tuple(el))
+        #     return spec_fields_str
 
-        input_fields_str = types_to_names(spec_fields=input_fields)
-        output_fields_str = types_to_names(spec_fields=output_fields)
+        # input_fields_str = types_to_names(spec_fields=input_fields)
+        # output_fields_str = types_to_names(spec_fields=output_fields)
         input_names = [i[0] for i in input_fields]
         output_names = [o[0] for o in output_fields]
-        output_type_names = [o[1] for o in output_fields_str]
+        # output_type_names = [o[1] for o in output_fields_str]
 
         method_body = ""
         for field in input_fields:
@@ -137,35 +136,39 @@ class FunctionInterfaceConverter(BaseInterfaceConverter):
 
         assert method_body, "Neither `run_interface` and `list_outputs` are defined"
 
-        spec_str = "@pydra.mark.task\n"
-        spec_str += "@pydra.mark.annotate({'return': {"
-        spec_str += ", ".join(f"'{n}': {t}" for n, t, _ in output_fields_str)
-        spec_str += "}})\n"
-        spec_str += f"def {self.task_name}("
-        spec_str += ", ".join(
-            (
-                f"{i[0]}: {i[1]} = {i[2]!r}"
-                if len(i) == 4
-                else f"{i[0]}: {i[1]} = attrs.NOTHING"
-            )
-            for i in input_fields_str
-        )
-        spec_str += ")"
-        if output_type_names:
-            spec_str += "-> "
-            if len(output_type_names) > 1:
-                spec_str += "ty.Tuple[" + ", ".join(output_type_names) + "]"
-            else:
-                spec_str += output_type_names[0]
-        spec_str += ':\n    """\n'
+        spec_str = "@python.define"
+        spec_str += f"class {self.task_name}(python.Task['{self.task_name}.Outputs']):"
+        spec_str += '    """\n'
         spec_str += self.create_doctests(
             input_fields=input_fields, nonstd_types=nonstd_types
         )
         spec_str += '    """\n'
+
+        for inpt in input_fields:
+            if len(inpt) == 4:
+                name, type_, default, _ = inpt
+                spec_str += f"    {name}: {type_} = {default}\n"
+            else:
+                name, type_, _ = inpt
+                spec_str += f"    {name}: {type_}\n"
+
+        spec_str += "    @staticmethod\n"
+        spec_str += "    def function(" + ", ".join(f"{n}: {t}" for n, t, _ in input_fields) + ")"
+        output_types = [o[1] for o in output_fields]
+        if any(t is not ty.Any for t in output_types):
+            spec_str += "-> "
+            if len(output_types) > 1:
+                spec_str += "tuples[" + ", ".join(output_types) + "]"
+            else:
+                spec_str += output_types[0]
+        spec_str += ":\n"
         spec_str += method_body + "\n"
         spec_str += "\n    return {}".format(", ".join(output_names))
 
-        spec_str += "\n\n# Nipype methods converted into functions\n\n"
+        spec_str += "    class Outputs(python.Outputs):"
+        for outpt in output_fields:
+            name, type_, _ = outpt
+            spec_str += f"        {name}: {type_}\n"
 
         for m in sorted(self.used.methods, key=attrgetter("__name__")):
             if m.__name__ not in self.included_methods:

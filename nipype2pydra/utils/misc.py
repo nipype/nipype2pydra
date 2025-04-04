@@ -22,7 +22,7 @@ except ImportError:
 
 from importlib import import_module
 from logging import getLogger
-from pydra.engine.specs import MultiInputObj
+from pydra.utils.typing import MultiInputObj
 
 
 logger = getLogger("nipype2pydra")
@@ -582,3 +582,22 @@ def find_super_method(
 
 def strip_comments(src: str) -> str:
     return re.sub(r"^\s+#.*", "", src, flags=re.MULTILINE)
+
+
+def type_to_str(type_: type, mandatory: bool = False) -> str:
+    """Convert a type to a string representation"""
+    if hasattr(type_, "__name__"):
+        type_str = type_.__name__
+    else:
+        type_str = str(type_)
+    if origin := ty.get_origin(type):
+        args = [type_to_str(arg) for arg in ty.get_args(type_)]
+        type_str = f"{origin.__name__}[{', '.join(args)}]"
+        module = origin.__module__
+    else:
+        module = type_.__module__
+    if module == "typing":
+        type_str = "ty." + type_str
+    if not mandatory:
+        type_str += " | None"
+    return type_str

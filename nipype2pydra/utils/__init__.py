@@ -23,5 +23,6 @@ from .misc import (  # noqa: F401
     find_super_method,
     strip_comments,
     min_indentation,
+    type_to_str,
     INBUILT_NIPYPE_TRAIT_NAMES,
 )

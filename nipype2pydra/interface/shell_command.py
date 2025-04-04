@@ -13,6 +13,7 @@ from ..utils import (
     extract_args,
     find_super_method,
     cleanup_function_body,
+    type_to_str,
 )
 from fileformats.core.mixin import WithClassifiers
 from fileformats.generic import File, Directory
@@ -49,6 +50,16 @@ class ShellCommandInterfaceConverter(BaseInterfaceConverter):
 
     def generate_code(self, input_fields, nonstd_types, output_fields) -> str:
         """
+        Parameters
+        ----------
+        input_fields : list[tuple[str, type, dict] | tuple[str, type, object, dict]]
+            list of input fields, each field is a tuple of (name, type, metadata) or
+            (name, type, default, metadata)
+        nonstd_types : set[type]
+            set of non-standard types
+        output_fields : list[tuple[str, type, dict]]
+            list of output fields, each field is a tuple of (name, type, metadata)
+        
         Returns
         -------
         converted_code : str
@@ -58,12 +69,9 @@ class ShellCommandInterfaceConverter(BaseInterfaceConverter):
         """
 
         base_imports = [
-            "from pydra.engine import specs",
             "import os",
+            "from pydra.compose import shell",
         ]
-
-        task_base = "ShellCommandTask"
-        base_imports.append("from pydra.engine import ShellCommandTask")
 
         try:
             executable = self.nipype_interface._cmd
@@ -87,46 +95,76 @@ class ShellCommandInterfaceConverter(BaseInterfaceConverter):
 
         nonstd_types = copy(nonstd_types)
 
-        def types_to_names(spec_fields):
-            spec_fields_str = []
-            for el in spec_fields:
-                el = list(el)
-                field_type = el[1]
-                if inspect.isclass(field_type) and issubclass(
-                    field_type, WithClassifiers
-                ):
-                    field_type_str = unwrap_field_type(field_type)
-                else:
-                    field_type_str = str(field_type)
-                    if field_type_str.startswith("<class "):
-                        field_type_str = el[1].__name__
-                    else:
-                        # Alter modules in type string to match those that will be imported
-                        field_type_str = field_type_str.replace("typing", "ty")
-                        field_type_str = re.sub(
-                            r"(\w+\.)+(?<!ty\.)(\w+)", r"\2", field_type_str
-                        )
-                if field_type_str == "File":
-                    nonstd_types.add(File)
-                elif field_type_str == "Directory":
-                    nonstd_types.add(Directory)
-                el[1] = "#" + field_type_str + "#"
-                spec_fields_str.append(tuple(el))
-            return spec_fields_str
+        # def types_to_names(spec_fields):
+        #     spec_fields_str = []
+        #     for el in spec_fields:
+        #         el = list(el)
+        #         field_type = el[1]
+        #         if inspect.isclass(field_type) and issubclass(
+        #             field_type, WithClassifiers
+        #         ):
+        #             field_type_str = unwrap_field_type(field_type)
+        #         else:
+        #             field_type_str = str(field_type)
+        #             if field_type_str.startswith("<class "):
+        #                 field_type_str = el[1].__name__
+        #             else:
+        #                 # Alter modules in type string to match those that will be imported
+        #                 field_type_str = field_type_str.replace("typing", "ty")
+        #                 field_type_str = re.sub(
+        #                     r"(\w+\.)+(?<!ty\.)(\w+)", r"\2", field_type_str
+        #                 )
+        #         if field_type_str == "File":
+        #             nonstd_types.add(File)
+        #         elif field_type_str == "Directory":
+        #             nonstd_types.add(Directory)
+        #         el[1] = "#" + field_type_str + "#"
+        #         spec_fields_str.append(tuple(el))
+        #     return spec_fields_str
 
         input_names = [i[0] for i in input_fields]
         output_names = [o[0] for o in output_fields]
-        input_fields_str = str(types_to_names(spec_fields=input_fields))
-        input_fields_str = re.sub(
-            r"'formatter': '(\w+)'", r"'formatter': \1", input_fields_str
-        )
-        output_fields_str = str(types_to_names(spec_fields=output_fields))
-        output_fields_str = re.sub(
-            r"'callable': '(\w+)'", r"'callable': \1", output_fields_str
-        )
+        # input_fields_str = types_to_names(spec_fields=input_fields)
+        # input_fields_str = re.sub(
+        #     r"'formatter': '(\w+)'", r"'formatter': \1", input_fields_str
+        # )
+        # output_fields_str = types_to_names(spec_fields=output_fields)
+        # output_fields_str = re.sub(
+        #     r"'callable': '(\w+)'", r"'callable': \1", output_fields_str
+        # )
         # functions_str = self.function_callables()
         # functions_imports, functions_str = functions_str.split("\n\n", 1)
         # spec_str = functions_str
+
+        input_fields_str = ""
+        output_fields_str = ""
+        xor_sets = set()
+        for inpt in input_fields:
+            if len(inpt) == 3:
+                name, type_, mdata = inpt
+            else:
+                name, type_, default, mdata = inpt
+                mdata["default"] = default
+            type_str = type_to_str(type_, mdata.pop("mandatory", True))
+            if mdata.pop("copyfile", None):
+                nonstd_types.add(File)
+                mdata["copy_mode"] = "File.CopyMode.copy"
+            if xor := mdata.pop("xor", None):
+                xor_sets.add(frozenset(xor + [name]))
+            args_str = ", ".join(f"{k}={v!r}" for k, v in mdata.items())
+            if "path_template" in mdata:
+                output_fields_str = f"        {name}: {type_str} = shell.outarg({args_str})\n"
+            else:
+                input_fields_str += f"    {name}: {type_str} = shell.arg({args_str})\n"
+
+        for outpt in output_fields:
+            name, type_, mdata = outpt
+            cllble = mdata.pop("callable", None)
+            args_str = ", ".join(f"{k}={v!r}" for k, v in mdata.items())
+            if cllble:
+                args_str += f", callable={cllble}"
+            output_fields_str += f"        {name}: {type_to_str(type_)} = shell.out({args_str})\n"
+
         spec_str = (
             self.init_code
             + self.format_arg_code
@@ -134,22 +172,23 @@ class ShellCommandInterfaceConverter(BaseInterfaceConverter):
             + self.callables_code
             + self.defaults_code
         )
-        spec_str += f"input_fields = {input_fields_str}\n"
-        spec_str += f"{self.task_name}_input_spec = specs.SpecInfo(name='Input', fields=input_fields, bases=(specs.ShellSpec,))\n\n"
-        spec_str += f"output_fields = {output_fields_str}\n"
-        spec_str += f"{self.task_name}_output_spec = specs.SpecInfo(name='Output', fields=output_fields, bases=(specs.ShellOutSpec,))\n\n"
-        spec_str += f"class {self.task_name}({task_base}):\n"
+
+        spec_str += "@shell.define"
+        if xor_sets:
+            spec_str += f"(xor={[list(x) for x in xor_sets]})"
+        spec_str += f"\nclass {self.task_name}(shell.Task['{self.task_name}.Outputs']):\n"
         spec_str += '    """\n'
         spec_str += self.create_doctests(
             input_fields=input_fields, nonstd_types=nonstd_types
         )
         spec_str += '    """\n'
-        spec_str += f"    input_spec = {self.task_name}_input_spec\n"
-        spec_str += f"    output_spec = {self.task_name}_output_spec\n"
-        if task_base == "ShellCommandTask":
-            spec_str += f"    executable='{executable}'\n"
+        spec_str += f"    executable='{executable}'\n"
 
-        spec_str = re.sub(r"'#([^'#]+)#'", r"\1", spec_str)
+        spec_str += input_fields_str + "\n"
+        spec_str += "    class Outputs(shell.Outputs):\n"
+        spec_str += output_fields_str
+
+        # spec_str = re.sub(r"'#([^'#]+)#'", r"\1", spec_str)
 
         for m in sorted(self.used.methods, key=attrgetter("__name__")):
             if m.__name__ in self.included_methods:
@@ -216,7 +255,7 @@ class ShellCommandInterfaceConverter(BaseInterfaceConverter):
             f
             for f in super().output_fields
             if (
-                "output_file_template" not in f[-1]
+                "path_template" not in f[-1]
                 and f[0] not in INBUILT_NIPYPE_TRAIT_NAMES
             )
         ]
@@ -488,7 +527,7 @@ class ShellCommandInterfaceConverter(BaseInterfaceConverter):
             code_str += (
                 f"\n\n\ndef {output_name}_callable(output_dir, inputs, stdout, stderr):\n"
                 f"    outputs = {func_name}(output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr)\n"
-                '    return outputs.get("' + output_name + '", attrs.NOTHING)\n\n'
+                '    return outputs.get("' + output_name + '")\n\n'
             )
         return code_str
 
