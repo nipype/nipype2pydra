@@ -883,7 +883,7 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
                         spec_str += f"    task.inputs.{nm} = {value}\n"
             if hasattr(self.nipype_interface, "_cmd"):
                 spec_str += r'    print(f"CMDLINE: {task.cmdline}\n\n")' + "\n"
-            spec_str += "    res = task(plugin=PassAfterTimeoutWorker)\n"
+            spec_str += "    res = task(worker=PassAfterTimeoutWorker)\n"
             spec_str += "    print('RESULT: ', res)\n"
             for name, value in test.expected_outputs.items():
                 spec_str += f"    assert res.output.{name} == {value}\n"
