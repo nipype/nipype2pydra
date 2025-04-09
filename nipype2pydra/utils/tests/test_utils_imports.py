@@ -26,12 +26,12 @@ def test_import_statement2():
 
 
 def test_import_statement3():
-    import_stmt = "from pydra.engine.specs import MultiInputObj as MIO"
+    import_stmt = "from pydra.utils.typing import MultiInputObj as MIO"
     assert ImportStatement.matches(import_stmt)
     imports = parse_imports(import_stmt)
     assert len(imports) == 1
     stmt = imports[0]
-    assert stmt.module_name == "pydra.engine.specs"
+    assert stmt.module_name == "pydra.utils.typing"
     assert stmt.imported["MIO"].name == "MultiInputObj"
 
 

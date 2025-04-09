@@ -233,7 +233,7 @@ class ConnectionStatement:
             base_task_name = f"{self.source_name}_{self.source_out.varname}_to_{self.target_name}_{self.target_in}"
             intf_name = f"{base_task_name}_callable"
             code_str += (
-                f"\n{self.indent}@pydra.mark.task\n"
+                f"\n{self.indent}@python.define\n"
                 f"{self.indent}def {intf_name}(in_: ty.Any) -> ty.Any:\n"
                 f"{self.indent}    return {self.source_out.callable}(in_)\n\n"
                 f"{self.indent}{self.workflow_variable}.add("
@@ -255,7 +255,7 @@ class ConnectionStatement:
                 # to add an "identity" node to pass it through
                 intf_name = f"{base_task_name}_identity"
                 code_str += (
-                    f"\n{self.indent}@pydra.mark.task\n"
+                    f"\n{self.indent}@python.define\n"
                     f"{self.indent}def {intf_name}({self.wf_in_name}: ty.Any) -> ty.Any:\n"
                     f"{self.indent}    return {self.wf_in_name}\n\n"
                     f"{self.indent}{self.workflow_variable}.add("

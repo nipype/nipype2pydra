@@ -990,7 +990,7 @@ def test_{self.name}_run():
                 + parse_imports(
                     [
                         f"from {self.output_module} import {self.name}",
-                        "from pydra.engine import Workflow",
+                        "from pydra.compose import workflow",
                     ]
                 )
             ),

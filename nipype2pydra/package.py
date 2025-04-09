@@ -1116,10 +1116,8 @@ post_release = "{post_release}"
                 f.write(code_str)
 
     BASE_INIT_TEMPLATE = """\"\"\"
-This is a basic doctest demonstrating that the package and pydra can both be successfully
-imported.
+This is a basic doctest showing the package can be imported.
 
->>> import pydra.engine
 >>> import pydra.tasks.{pkg}
 \"\"\"
 
