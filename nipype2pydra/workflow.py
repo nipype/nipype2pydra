@@ -969,7 +969,7 @@ def test_{self.name}_build():
 @pytest.mark.skip(reason="Appropriate inputs for this workflow haven't been specified yet")
 def test_{self.name}_run():
     workflow = {self.name}({args_str})
-    result = workflow(worker='serial')
+    result = workflow(worker='debug')
     print(result.out)
 """
         return code_str
