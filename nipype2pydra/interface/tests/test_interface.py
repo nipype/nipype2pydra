@@ -5,7 +5,7 @@ from collections import defaultdict
 import logging
 from traceback import format_exc
 from tqdm import tqdm
-from pydra.utils import task_fields
+from pydra.utils import get_fields
 from nipype2pydra.utils import (
     add_to_sys_path,
     add_exc_note,
@@ -128,7 +128,7 @@ def test_interface_convert(
 
         assert sorted(
             f.name
-            for f in task_fields(pydra_task)
+            for f in get_fields(pydra_task)
             if f.name not in ["append_args", "executable", "function", "constructor"]
         ) == sorted(
             n
@@ -150,7 +150,7 @@ def test_interface_convert(
 
             assert sorted(
                 f.name
-                for f in task_fields(pydra_task.Outputs)
+                for f in get_fields(pydra_task.Outputs)
                 if f.name not in ["stdout", "stderr", "return_code"]
             ) == sorted(
                 n
