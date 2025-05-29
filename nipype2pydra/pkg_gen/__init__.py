@@ -93,7 +93,7 @@ class NipypeInterface:
     input_helps: ty.Dict[str, str] = attrs.field(factory=dict)
     output_helps: ty.Dict[str, str] = attrs.field(factory=dict)
     file_inputs: ty.List[str] = attrs.field(factory=list)
-    path_inputs: ty.List[str] = attrs.field(factory=list)
+    # path_inputs: ty.List[str] = attrs.field(factory=list)
     str_inputs: ty.List[str] = attrs.field(factory=list)
     file_outputs: ty.List[str] = attrs.field(factory=list)
     template_outputs: ty.List[str] = attrs.field(factory=list)
@@ -188,8 +188,8 @@ class NipypeInterface:
             parsed.input_helps[inpt_name] = f"{inpt_mdata}: {inpt_desc}"
             trait_type_name = type(inpt.trait_type).__name__
             if inpt.genfile:
-                if trait_type_name in ("File", "Directory"):
-                    parsed.path_inputs.append(inpt_name)
+                # if trait_type_name in ("File", "Directory"):
+                #     parsed.path_inputs.append(inpt_name)
                 if inpt_name in (parsed.file_outputs + parsed.dir_outputs):
                     parsed.template_outputs.append(inpt_name)
                 else:
@@ -204,8 +204,8 @@ class NipypeInterface:
                 ):
                     if "fix" in inpt_name:
                         parsed.str_inputs.append(inpt_name)
-                    else:
-                        parsed.path_inputs.append(inpt_name)
+                    # else:
+                    #     parsed.path_inputs.append(inpt_name)
                 else:
                     parsed.file_inputs.append(inpt_name)
             elif trait_type_name == "Directory" and inpt_name not in parsed.dir_outputs:
@@ -230,8 +230,8 @@ class NipypeInterface:
                 else:
                     parsed.dir_inputs.append(inpt_name)
                 parsed.multi_inputs.append(inpt_name)
-            elif trait_type_name in ("File", "Directory"):
-                parsed.path_inputs.append(inpt_name)
+            # elif trait_type_name in ("File", "Directory"):
+            #     parsed.path_inputs.append(inpt_name)
         return parsed
 
     def generate_yaml_spec(self) -> str:
@@ -239,7 +239,7 @@ class NipypeInterface:
 
         input_types = {i: File for i in self.file_inputs}
         input_types.update({i: Directory for i in self.dir_inputs})
-        input_types.update({i: Path for i in self.path_inputs})
+        # input_types.update({i: Path for i in self.path_inputs})
         input_types.update({i: str for i in self.str_inputs})
         output_types = {o: File for o in self.file_outputs}
         output_types.update({o: Directory for o in self.dir_outputs})
@@ -284,6 +284,8 @@ class NipypeInterface:
         non_mime = [Path, str]
 
         def type2str(tp):
+            if isinstance(tp, str):
+                return tp
             if tp in non_mime:
                 return tp.__name__
             return fileformats.core.to_mime(tp, official=False)
@@ -765,7 +767,11 @@ nipype2pydra convert $conv_dir/specs $conv_dir/.. $@
 
     # Replace "CHANGEME" string with pkg name
     for fspath in pkg_dir.glob("**/*"):
-        if fspath.is_dir() or fspath.suffix in (".pyc", ".pyo", ".pyd"):
+        if (
+            fspath.is_dir()
+            or fspath.suffix in (".pyc", ".pyo", ".pyd")
+            or fspath.name.startswith(".")
+        ):
             continue
         with open(fspath) as f:
             contents = f.read()
@@ -1121,7 +1127,15 @@ def get_callable_sources(
     all_constants = set()
     for mod_name, methods in grouped_methods.items():
         mod = import_module(mod_name)
-        used = UsedSymbols.find(mod, methods, omit_classes=(BaseInterface, TraitedSpec))
+        used = UsedSymbols.find(
+            mod,
+            methods,
+            package=PackageConverter(
+                name=mod_name.split(".")[-1],
+                nipype_name=mod_name,
+                omit_classes=(BaseInterface, TraitedSpec),
+            ),
+        )
         all_funcs.update(methods)
         for func in used.functions:
             all_funcs.add(cleanup_function_body(get_source_code(func)))

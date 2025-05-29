@@ -147,9 +147,7 @@ class OutputsConverter(SpecConverter):
     templates: ty.Dict[str, str] = attrs.field(
         factory=dict,
         converter=default_if_none(factory=dict),  # type: ignore
-        metadata={
-            "help": "`path_template` values to be provided to output fields"
-        },
+        metadata={"help": "`path_template` values to be provided to output fields"},
     )
     requirements: ty.Dict[str, ty.List[str]] = attrs.field(
         factory=dict,
@@ -284,7 +282,7 @@ def from_dict_to_outputs(obj: ty.Union[OutputsConverter, dict]) -> OutputsConver
 
 
 def from_list_to_tests(
-    obj: ty.Union[ty.List[TestGenerator], list]
+    obj: ty.Union[ty.List[TestGenerator], list],
 ) -> ty.List[TestGenerator]:
     if obj is None:
         return []
@@ -292,7 +290,7 @@ def from_list_to_tests(
 
 
 def from_list_to_doctests(
-    obj: ty.Union[ty.List[DocTestGenerator], list]
+    obj: ty.Union[ty.List[DocTestGenerator], list],
 ) -> ty.List[DocTestGenerator]:
     if obj is None:
         return []
@@ -607,7 +605,7 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
                     )
                 if pydra_type in [
                     File,
-                    Directory
+                    Directory,
                 ]:  # since this is a template, the file doesn't exist
                     pydra_type = Path
             elif nm not in self.inputs.callable_defaults:
@@ -677,9 +675,9 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
                 pydra_metadata["requires"] = pydra_metadata["requires"][0]
 
         if name in self.outputs.templates:
-            pydra_metadata["path_template"] = self.interface_spec[
-                "output_templates"
-            ][name]
+            pydra_metadata["path_template"] = self.interface_spec["output_templates"][
+                name
+            ]
         elif name in self.outputs.callables:
             pydra_metadata["callable"] = self.outputs.callables[name]
         return (pydra_type, pydra_metadata)
@@ -734,14 +732,17 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
                 pydra_type = MultiOutputFile
             else:
                 pydra_type = MultiOutputObj
-        elif isinstance(trait_tp, traits.trait_types.List):
+        elif isinstance(trait_tp, (traits.trait_types.List, traits.trait_types.Tuple)):
+            seq_type = list if isinstance(trait_tp, traits.trait_types.List) else tuple
             if isinstance(field.inner_traits[0].trait_type, traits_extension.File):
                 if spec_type == "input":
-                    pydra_type = ty.List[File]
+                    pydra_type = seq_type[File]
                 else:
                     pydra_type = MultiOutputFile
             else:
-                pydra_type = list
+                pydra_type = seq_type[
+                    self.pydra_type_converter(field.inner_traits[0], spec_type, name)
+                ]
         elif isinstance(trait_tp, traits_extension.File):
             if (
                 spec_type == "output" or trait_tp.exists is True

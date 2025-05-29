@@ -16,7 +16,8 @@ from ..utils import (
     type_to_str,
 )
 from fileformats.core.mixin import WithClassifiers
-from fileformats.generic import File, Directory
+from fileformats.generic import File
+from pydra.utils.typing import is_optional
 
 
 logger = logging.getLogger("nipype2pydra")
@@ -59,7 +60,7 @@ class ShellCommandInterfaceConverter(BaseInterfaceConverter):
             set of non-standard types
         output_fields : list[tuple[str, type, dict]]
             list of output fields, each field is a tuple of (name, type, metadata)
-        
+
         Returns
         -------
         converted_code : str
@@ -95,75 +96,65 @@ class ShellCommandInterfaceConverter(BaseInterfaceConverter):
 
         nonstd_types = copy(nonstd_types)
 
-        # def types_to_names(spec_fields):
-        #     spec_fields_str = []
-        #     for el in spec_fields:
-        #         el = list(el)
-        #         field_type = el[1]
-        #         if inspect.isclass(field_type) and issubclass(
-        #             field_type, WithClassifiers
-        #         ):
-        #             field_type_str = unwrap_field_type(field_type)
-        #         else:
-        #             field_type_str = str(field_type)
-        #             if field_type_str.startswith("<class "):
-        #                 field_type_str = el[1].__name__
-        #             else:
-        #                 # Alter modules in type string to match those that will be imported
-        #                 field_type_str = field_type_str.replace("typing", "ty")
-        #                 field_type_str = re.sub(
-        #                     r"(\w+\.)+(?<!ty\.)(\w+)", r"\2", field_type_str
-        #                 )
-        #         if field_type_str == "File":
-        #             nonstd_types.add(File)
-        #         elif field_type_str == "Directory":
-        #             nonstd_types.add(Directory)
-        #         el[1] = "#" + field_type_str + "#"
-        #         spec_fields_str.append(tuple(el))
-        #     return spec_fields_str
-
         input_names = [i[0] for i in input_fields]
         output_names = [o[0] for o in output_fields]
-        # input_fields_str = types_to_names(spec_fields=input_fields)
-        # input_fields_str = re.sub(
-        #     r"'formatter': '(\w+)'", r"'formatter': \1", input_fields_str
-        # )
-        # output_fields_str = types_to_names(spec_fields=output_fields)
-        # output_fields_str = re.sub(
-        #     r"'callable': '(\w+)'", r"'callable': \1", output_fields_str
-        # )
-        # functions_str = self.function_callables()
-        # functions_imports, functions_str = functions_str.split("\n\n", 1)
-        # spec_str = functions_str
 
-        input_fields_str = ""
-        output_fields_str = ""
+        # Pull out xor fields into task-level xor_sets
         xor_sets = set()
         for inpt in input_fields:
             if len(inpt) == 3:
+                name, _, mdata = inpt
+            else:
+                name, _, __, mdata = inpt
+            if "xor" in mdata:
+                xor_sets.add(frozenset(mdata["xor"] + [name]))
+
+        input_fields_str = ""
+        output_fields_str = ""
+
+        for inpt in input_fields:
+            if len(inpt) == 3:
                 name, type_, mdata = inpt
+                mdata = copy(mdata)  # Copy to avoid modifying the original
             else:
                 name, type_, default, mdata = inpt
+                mdata = copy(mdata)  # Copy to avoid modifying the original
                 mdata["default"] = default
+            if (
+                any(name in x for x in xor_sets)
+                and type_ is not bool
+                and not is_optional(type_)
+                and (inspect.isclass(type_) and not issubclass(type_, ty.Sequence))
+            ):
+                type_ = type_ | None
             type_str = type_to_str(type_, mdata.pop("mandatory", True))
             if mdata.pop("copyfile", None):
                 nonstd_types.add(File)
                 mdata["copy_mode"] = "File.CopyMode.copy"
-            if xor := mdata.pop("xor", None):
-                xor_sets.add(frozenset(xor + [name]))
+            mdata.pop("xor", None)
             args_str = ", ".join(f"{k}={v!r}" for k, v in mdata.items())
             if "path_template" in mdata:
-                output_fields_str = f"        {name}: {type_str} = shell.outarg({args_str})\n"
+                output_fields_str = (
+                    f"        {name}: {type_str} = shell.outarg({args_str})\n"
+                )
             else:
                 input_fields_str += f"    {name}: {type_str} = shell.arg({args_str})\n"
 
+        callable_fields = set(n for n, _, __ in self.callable_output_fields)
+
         for outpt in output_fields:
             name, type_, mdata = outpt
-            cllble = mdata.pop("callable", None)
+            cllble = mdata.pop(
+                "callable", f"{name}_callable" if name in callable_fields else None
+            )
             args_str = ", ".join(f"{k}={v!r}" for k, v in mdata.items())
+            if args_str:
+                args_str += ", "
             if cllble:
-                args_str += f", callable={cllble}"
-            output_fields_str += f"        {name}: {type_to_str(type_)} = shell.out({args_str})\n"
+                args_str += f"callable={cllble}"
+            output_fields_str += (
+                f"        {name}: {type_to_str(type_)} = shell.out({args_str})\n"
+            )
 
         spec_str = (
             self.init_code
@@ -176,7 +167,9 @@ class ShellCommandInterfaceConverter(BaseInterfaceConverter):
         spec_str += "@shell.define"
         if xor_sets:
             spec_str += f"(xor={[list(x) for x in xor_sets]})"
-        spec_str += f"\nclass {self.task_name}(shell.Task['{self.task_name}.Outputs']):\n"
+        spec_str += (
+            f"\nclass {self.task_name}(shell.Task['{self.task_name}.Outputs']):\n"
+        )
         spec_str += '    """\n'
         spec_str += self.create_doctests(
             input_fields=input_fields, nonstd_types=nonstd_types
@@ -254,10 +247,7 @@ class ShellCommandInterfaceConverter(BaseInterfaceConverter):
         return [
             f
             for f in super().output_fields
-            if (
-                "path_template" not in f[-1]
-                and f[0] not in INBUILT_NIPYPE_TRAIT_NAMES
-            )
+            if ("path_template" not in f[-1] and f[0] not in INBUILT_NIPYPE_TRAIT_NAMES)
         ]
 
     @property

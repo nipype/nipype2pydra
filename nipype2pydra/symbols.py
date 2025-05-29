@@ -401,7 +401,10 @@ class UsedSymbols:
                                 intra_pkg_objs[imported.object.__name__].add(obj)
                             elif inspect.isclass(obj):
                                 class_def = (obj.__name__, obj)
-                                if class_def not in self.imported_classes:
+                                if (
+                                    class_def
+                                    not in self.imported_classes + omit_classes
+                                ):
                                     self.imported_classes.append(class_def)
                                 intra_pkg_objs[imported.object.__name__].add(obj)
                             else:

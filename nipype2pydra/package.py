@@ -78,9 +78,12 @@ def resolve_objects(addresses: ty.Optional[ty.List[str]]) -> list:
         return []
     objs = []
     for address in addresses:
-        parts = address.split(".")
-        mod = import_module(".".join(parts[:-1]))
-        objs.append(getattr(mod, parts[-1]))
+        if not isinstance(address, str):
+            objs.append(address)
+        else:
+            parts = address.split(".")
+            mod = import_module(".".join(parts[:-1]))
+            objs.append(getattr(mod, parts[-1]))
     return objs
 
 
