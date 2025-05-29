@@ -7,11 +7,11 @@
 # ----
 # Use Freesurfer's mri_mask to apply a mask to an image.
 # 
-#     The mask file need not be binarized; it can be thresholded above a given
-#     value before application. It can also optionally be transformed into input
-#     space with an LTA matrix.
+# The mask file need not be binarized; it can be thresholded above a given
+# value before application. It can also optionally be transformed into input
+# space with an LTA matrix.
 # 
-#     
+# 
 task_name: ApplyMask
 nipype_name: ApplyMask
 nipype_module: nipype.interfaces.freesurfer.utils
@@ -30,9 +30,6 @@ inputs:
     # type=file|default=<undefined>: input image (will be masked)
     mask_file: generic/file
     # type=file|default=<undefined>: image defining mask space
-    out_file: Path
-    # type=file: masked image
-    # type=file|default=<undefined>: final image to write
     subjects_dir: generic/directory
     # type=directory|default=<undefined>: subjects directory
     xfm_file: generic/file
@@ -64,7 +61,7 @@ outputs:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
@@ -101,7 +98,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically

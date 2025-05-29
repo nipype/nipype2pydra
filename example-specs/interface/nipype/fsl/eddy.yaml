@@ -6,44 +6,44 @@
 # Docs
 # ----
 # 
-#     Interface for FSL eddy, a tool for estimating and correcting eddy
-#     currents induced distortions. `User guide
-#     <https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/eddy/UsersGuide>`__ and
-#     `more info regarding acqp file
-#     <https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/eddy/Faq#How_do_I_know_what_to_put_into_my_--acqp_file.3F>`_.
+# Interface for FSL eddy, a tool for estimating and correcting eddy
+# currents induced distortions. `User guide
+# <https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/eddy/UsersGuide>`__ and
+# `more info regarding acqp file
+# <https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/eddy/Faq#How_do_I_know_what_to_put_into_my_--acqp_file.3F>`_.
 # 
-#     Examples
-#     --------
+# Examples
+# --------
 # 
-#     >>> from nipype.interfaces.fsl import Eddy
+# >>> from nipype.interfaces.fsl import Eddy
 # 
-#     Running eddy on a CPU using OpenMP:
-#     >>> eddy = Eddy()
-#     >>> eddy.inputs.in_file = 'epi.nii'
-#     >>> eddy.inputs.in_mask  = 'epi_mask.nii'
-#     >>> eddy.inputs.in_index = 'epi_index.txt'
-#     >>> eddy.inputs.in_acqp  = 'epi_acqp.txt'
-#     >>> eddy.inputs.in_bvec  = 'bvecs.scheme'
-#     >>> eddy.inputs.in_bval  = 'bvals.scheme'
-#     >>> eddy.cmdline  # doctest: +ELLIPSIS
-#     'eddy_openmp --flm=quadratic --ff=10.0 --acqp=epi_acqp.txt --bvals=bvals.scheme --bvecs=bvecs.scheme --imain=epi.nii --index=epi_index.txt --mask=epi_mask.nii --interp=spline --resamp=jac --niter=5 --nvoxhp=1000 --out=.../eddy_corrected --slm=none'
+# Running eddy on a CPU using OpenMP:
+# >>> eddy = Eddy()
+# >>> eddy.inputs.in_file = 'epi.nii'
+# >>> eddy.inputs.in_mask  = 'epi_mask.nii'
+# >>> eddy.inputs.in_index = 'epi_index.txt'
+# >>> eddy.inputs.in_acqp  = 'epi_acqp.txt'
+# >>> eddy.inputs.in_bvec  = 'bvecs.scheme'
+# >>> eddy.inputs.in_bval  = 'bvals.scheme'
+# >>> eddy.cmdline  # doctest: +ELLIPSIS
+# 'eddy_openmp --flm=quadratic --ff=10.0 --acqp=epi_acqp.txt --bvals=bvals.scheme --bvecs=bvecs.scheme --imain=epi.nii --index=epi_index.txt --mask=epi_mask.nii --interp=spline --resamp=jac --niter=5 --nvoxhp=1000 --out=.../eddy_corrected --slm=none'
 # 
-#     Running eddy on an Nvidia GPU using cuda:
-#     >>> eddy.inputs.use_cuda = True
-#     >>> eddy.cmdline # doctest: +ELLIPSIS
-#     'eddy_cuda --flm=quadratic --ff=10.0 --acqp=epi_acqp.txt --bvals=bvals.scheme --bvecs=bvecs.scheme --imain=epi.nii --index=epi_index.txt --mask=epi_mask.nii --interp=spline --resamp=jac --niter=5 --nvoxhp=1000 --out=.../eddy_corrected --slm=none'
+# Running eddy on an Nvidia GPU using cuda:
+# >>> eddy.inputs.use_cuda = True
+# >>> eddy.cmdline # doctest: +ELLIPSIS
+# 'eddy_cuda --flm=quadratic --ff=10.0 --acqp=epi_acqp.txt --bvals=bvals.scheme --bvecs=bvecs.scheme --imain=epi.nii --index=epi_index.txt --mask=epi_mask.nii --interp=spline --resamp=jac --niter=5 --nvoxhp=1000 --out=.../eddy_corrected --slm=none'
 # 
-#     Running eddy with slice-to-volume motion correction:
-#     >>> eddy.inputs.mporder = 6
-#     >>> eddy.inputs.slice2vol_niter = 5
-#     >>> eddy.inputs.slice2vol_lambda = 1
-#     >>> eddy.inputs.slice2vol_interp = 'trilinear'
-#     >>> eddy.inputs.slice_order = 'epi_slspec.txt'
-#     >>> eddy.cmdline  # doctest: +ELLIPSIS
-#     'eddy_cuda --flm=quadratic --ff=10.0 --acqp=epi_acqp.txt --bvals=bvals.scheme --bvecs=bvecs.scheme --imain=epi.nii --index=epi_index.txt --mask=epi_mask.nii --interp=spline --resamp=jac --mporder=6 --niter=5 --nvoxhp=1000 --out=.../eddy_corrected --s2v_interp=trilinear --s2v_lambda=1 --s2v_niter=5 --slspec=epi_slspec.txt --slm=none'
-#     >>> res = eddy.run()     # doctest: +SKIP
+# Running eddy with slice-to-volume motion correction:
+# >>> eddy.inputs.mporder = 6
+# >>> eddy.inputs.slice2vol_niter = 5
+# >>> eddy.inputs.slice2vol_lambda = 1
+# >>> eddy.inputs.slice2vol_interp = 'trilinear'
+# >>> eddy.inputs.slice_order = 'epi_slspec.txt'
+# >>> eddy.cmdline  # doctest: +ELLIPSIS
+# 'eddy_cuda --flm=quadratic --ff=10.0 --acqp=epi_acqp.txt --bvals=bvals.scheme --bvecs=bvecs.scheme --imain=epi.nii --index=epi_index.txt --mask=epi_mask.nii --interp=spline --resamp=jac --mporder=6 --niter=5 --nvoxhp=1000 --out=.../eddy_corrected --s2v_interp=trilinear --s2v_lambda=1 --s2v_niter=5 --slspec=epi_slspec.txt --slm=none'
+# >>> res = eddy.run()     # doctest: +SKIP
 # 
-#     
+# 
 task_name: Eddy
 nipype_name: Eddy
 nipype_module: nipype.interfaces.fsl.epi
@@ -134,7 +134,7 @@ outputs:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
@@ -236,13 +236,13 @@ tests:
     residuals:
     # type=bool|default=False: Output Residuals
     output_type:
-    # type=enum|default='NIFTI'|allowed['NIFTI','NIFTI_GZ','NIFTI_PAIR','NIFTI_PAIR_GZ']: FSL output type
+    # type=enum|default='NIFTI'|allowed['GIFTI','NIFTI','NIFTI_GZ','NIFTI_PAIR','NIFTI_PAIR_GZ']: FSL output type
     args:
     # type=str|default='': Additional parameters to the command
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -264,7 +264,7 @@ tests:
     in_index:
     # type=file|default=<undefined>: File containing indices for all volumes in --imain into --acqp and --topup
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -284,7 +284,7 @@ tests:
     use_cuda: 'True'
     # type=bool|default=False: Run eddy using cuda gpu
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -303,16 +303,12 @@ tests:
   # (if not specified, will try to choose a sensible value)
     mporder: '6'
     # type=int|default=0: Order of slice-to-vol movement model
-    slice2vol_niter: '5'
-    # type=int|default=0: Number of iterations for slice-to-vol
     slice2vol_lambda: '1'
     # type=int|default=0: Regularisation weight for slice-to-vol movement (reasonable range 1-10)
-    slice2vol_interp: '"trilinear"'
-    # type=enum|default='trilinear'|allowed['spline','trilinear']: Slice-to-vol interpolation model for estimation step
     slice_order:
     # type=file|default='': Name of text file completely specifying slice/group acquisition
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -338,11 +334,11 @@ doctests:
     in_index: '"epi_index.txt"'
     # type=file|default=<undefined>: File containing indices for all volumes in --imain into --acqp and --topup
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS
-- cmdline: eddy_cuda --flm=quadratic --ff=10.0 --acqp=epi_acqp.txt --bvals=bvals.scheme --bvecs=bvecs.scheme --imain=epi.nii --index=epi_index.txt --mask=epi_mask.nii --interp=spline --resamp=jac --niter=5 --nvoxhp=1000 --out=.../eddy_corrected --slm=none
+- cmdline:
   # str - the expected cmdline output
   inputs:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
@@ -351,11 +347,11 @@ doctests:
     use_cuda: 'True'
     # type=bool|default=False: Run eddy using cuda gpu
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS
-- cmdline: eddy_cuda --flm=quadratic --ff=10.0 --acqp=epi_acqp.txt --bvals=bvals.scheme --bvecs=bvecs.scheme --imain=epi.nii --index=epi_index.txt --mask=epi_mask.nii --interp=spline --resamp=jac --mporder=6 --niter=5 --nvoxhp=1000 --out=.../eddy_corrected --s2v_interp=trilinear --s2v_lambda=1 --s2v_niter=5 --slspec=epi_slspec.txt --slm=none
+- cmdline:
   # str - the expected cmdline output
   inputs:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
@@ -363,16 +359,12 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     mporder: '6'
     # type=int|default=0: Order of slice-to-vol movement model
-    slice2vol_niter: '5'
-    # type=int|default=0: Number of iterations for slice-to-vol
     slice2vol_lambda: '1'
     # type=int|default=0: Regularisation weight for slice-to-vol movement (reasonable range 1-10)
-    slice2vol_interp: '"trilinear"'
-    # type=enum|default='trilinear'|allowed['spline','trilinear']: Slice-to-vol interpolation model for estimation step
     slice_order: '"epi_slspec.txt"'
     # type=file|default='': Name of text file completely specifying slice/group acquisition
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

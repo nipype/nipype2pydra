@@ -7,31 +7,31 @@
 # ----
 # Use 3dWarp for spatially transforming a dataset.
 # 
-#     Examples
-#     --------
-#     >>> from nipype.interfaces import afni
-#     >>> warp = afni.Warp()
-#     >>> warp.inputs.in_file = 'structural.nii'
-#     >>> warp.inputs.deoblique = True
-#     >>> warp.inputs.out_file = 'trans.nii.gz'
-#     >>> warp.cmdline
-#     '3dWarp -deoblique -prefix trans.nii.gz structural.nii'
-#     >>> res = warp.run()  # doctest: +SKIP
+# Examples
+# --------
+# >>> from nipype.interfaces import afni
+# >>> warp = afni.Warp()
+# >>> warp.inputs.in_file = 'structural.nii'
+# >>> warp.inputs.deoblique = True
+# >>> warp.inputs.out_file = 'trans.nii.gz'
+# >>> warp.cmdline
+# '3dWarp -deoblique -prefix trans.nii.gz structural.nii'
+# >>> res = warp.run()  # doctest: +SKIP
 # 
-#     >>> warp_2 = afni.Warp()
-#     >>> warp_2.inputs.in_file = 'structural.nii'
-#     >>> warp_2.inputs.newgrid = 1.0
-#     >>> warp_2.inputs.out_file = 'trans.nii.gz'
-#     >>> warp_2.cmdline
-#     '3dWarp -newgrid 1.000000 -prefix trans.nii.gz structural.nii'
-#     >>> res = warp_2.run()  # doctest: +SKIP
+# >>> warp_2 = afni.Warp()
+# >>> warp_2.inputs.in_file = 'structural.nii'
+# >>> warp_2.inputs.newgrid = 1.0
+# >>> warp_2.inputs.out_file = 'trans.nii.gz'
+# >>> warp_2.cmdline
+# '3dWarp -newgrid 1.000000 -prefix trans.nii.gz structural.nii'
+# >>> res = warp_2.run()  # doctest: +SKIP
 # 
-#     See Also
-#     --------
-#     For complete details, see the `3dWarp Documentation.
-#     <https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dWarp.html>`__.
+# See Also
+# --------
+# For complete details, see the `3dWarp Documentation.
+# <https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dWarp.html>`__.
 # 
-#     
+# 
 task_name: Warp
 nipype_name: Warp
 nipype_module: nipype.interfaces.afni.preprocess
@@ -54,9 +54,6 @@ inputs:
     # type=file|default=<undefined>: apply transformation from 3dWarpDrive
     oblique_parent: generic/file
     # type=file|default=<undefined>: Read in the oblique transformation matrix from an oblique dataset and make cardinal dataset oblique to match
-    out_file: Path
-    # type=file: Warped file.
-    # type=file|default=<undefined>: output image file name
   callable_defaults:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set as the `default` method of input fields
@@ -82,7 +79,7 @@ outputs:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
@@ -125,7 +122,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -144,13 +141,11 @@ tests:
   # (if not specified, will try to choose a sensible value)
     in_file:
     # type=file|default=<undefined>: input file to 3dWarp
-    deoblique: 'True'
-    # type=bool|default=False: transform dataset from oblique to cardinal
     out_file: '"trans.nii.gz"'
     # type=file: Warped file.
     # type=file|default=<undefined>: output image file name
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -169,13 +164,11 @@ tests:
   # (if not specified, will try to choose a sensible value)
     in_file:
     # type=file|default=<undefined>: input file to 3dWarp
-    newgrid: '1.0'
-    # type=float|default=0.0: specify grid of this size (mm)
     out_file: '"trans.nii.gz"'
     # type=file: Warped file.
     # type=file|default=<undefined>: output image file name
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -190,7 +183,7 @@ tests:
   # bool - whether the unittest is expected to fail or not. Set to false
   # when you are satisfied with the edits you have made to this file
 doctests:
-- cmdline: 3dWarp -deoblique -prefix trans.nii.gz structural.nii
+- cmdline:
   # str - the expected cmdline output
   inputs:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
@@ -198,13 +191,11 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     in_file: '"structural.nii"'
     # type=file|default=<undefined>: input file to 3dWarp
-    deoblique: 'True'
-    # type=bool|default=False: transform dataset from oblique to cardinal
     out_file: '"trans.nii.gz"'
     # type=file: Warped file.
     # type=file|default=<undefined>: output image file name
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS
@@ -216,13 +207,11 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     in_file: '"structural.nii"'
     # type=file|default=<undefined>: input file to 3dWarp
-    newgrid: '1.0'
-    # type=float|default=0.0: specify grid of this size (mm)
     out_file: '"trans.nii.gz"'
     # type=file: Warped file.
     # type=file|default=<undefined>: output image file name
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

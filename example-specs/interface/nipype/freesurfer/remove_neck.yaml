@@ -6,19 +6,19 @@
 # Docs
 # ----
 # 
-#     Crops the neck out of the mri image
+# Crops the neck out of the mri image
 # 
-#     Examples
-#     ========
+# Examples
+# ========
 # 
-#     >>> from nipype.interfaces.freesurfer import TalairachQC
-#     >>> remove_neck = RemoveNeck()
-#     >>> remove_neck.inputs.in_file = 'norm.mgz'
-#     >>> remove_neck.inputs.transform = 'trans.mat'
-#     >>> remove_neck.inputs.template = 'trans.mat'
-#     >>> remove_neck.cmdline
-#     'mri_remove_neck norm.mgz trans.mat trans.mat norm_noneck.mgz'
-#     
+# >>> from nipype.interfaces.freesurfer import TalairachQC
+# >>> remove_neck = RemoveNeck()
+# >>> remove_neck.inputs.in_file = 'norm.mgz'
+# >>> remove_neck.inputs.transform = 'trans.mat'
+# >>> remove_neck.inputs.template = 'trans.mat'
+# >>> remove_neck.cmdline
+# 'mri_remove_neck norm.mgz trans.mat trans.mat norm_noneck.mgz'
+# 
 task_name: RemoveNeck
 nipype_name: RemoveNeck
 nipype_module: nipype.interfaces.freesurfer.utils
@@ -35,14 +35,11 @@ inputs:
   # passed to the field in the automatically generated unittests.
     in_file: medimage/mgh-gz
     # type=file|default=<undefined>: Input file for RemoveNeck
-    out_file: Path
-    # type=file: Output file with neck removed
-    # type=file|default=<undefined>: Output file for RemoveNeck
     subjects_dir: generic/directory
     # type=directory|default=<undefined>: subjects directory
     template: datascience/text-matrix
     # type=file|default=<undefined>: Input template file for RemoveNeck
-    transform: datascience/text-matrix
+    transform: generic/file
     # type=file|default=<undefined>: Input transform file for RemoveNeck
   callable_defaults:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
@@ -67,7 +64,7 @@ outputs:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
@@ -92,7 +89,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -111,12 +108,10 @@ tests:
   # (if not specified, will try to choose a sensible value)
     in_file:
     # type=file|default=<undefined>: Input file for RemoveNeck
-    transform:
-    # type=file|default=<undefined>: Input transform file for RemoveNeck
     template:
     # type=file|default=<undefined>: Input template file for RemoveNeck
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -139,12 +134,10 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     in_file: '"norm.mgz"'
     # type=file|default=<undefined>: Input file for RemoveNeck
-    transform: '"trans.mat"'
-    # type=file|default=<undefined>: Input transform file for RemoveNeck
     template: '"trans.mat"'
     # type=file|default=<undefined>: Input template file for RemoveNeck
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

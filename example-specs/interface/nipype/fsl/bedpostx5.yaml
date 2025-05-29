@@ -6,29 +6,29 @@
 # Docs
 # ----
 # 
-#     BEDPOSTX stands for Bayesian Estimation of Diffusion Parameters Obtained
-#     using Sampling Techniques. The X stands for modelling Crossing Fibres.
-#     bedpostx runs Markov Chain Monte Carlo sampling to build up distributions
-#     on diffusion parameters at each voxel. It creates all the files necessary
-#     for running probabilistic tractography. For an overview of the modelling
-#     carried out within bedpostx see this `technical report
-#     <http://www.fmrib.ox.ac.uk/analysis/techrep/tr03tb1/tr03tb1/index.html>`_.
+# BEDPOSTX stands for Bayesian Estimation of Diffusion Parameters Obtained
+# using Sampling Techniques. The X stands for modelling Crossing Fibres.
+# bedpostx runs Markov Chain Monte Carlo sampling to build up distributions
+# on diffusion parameters at each voxel. It creates all the files necessary
+# for running probabilistic tractography. For an overview of the modelling
+# carried out within bedpostx see this `technical report
+# <http://www.fmrib.ox.ac.uk/analysis/techrep/tr03tb1/tr03tb1/index.html>`_.
 # 
 # 
-#     .. note:: Consider using
-#       :func:`niflow.nipype1.workflows.fsl.dmri.create_bedpostx_pipeline` instead.
+# .. note:: Consider using
+#   :func:`niflow.nipype1.workflows.fsl.dmri.create_bedpostx_pipeline` instead.
 # 
 # 
-#     Example
-#     -------
+# Example
+# -------
 # 
-#     >>> from nipype.interfaces import fsl
-#     >>> bedp = fsl.BEDPOSTX5(bvecs='bvecs', bvals='bvals', dwi='diffusion.nii',
-#     ...                     mask='mask.nii', n_fibres=1)
-#     >>> bedp.cmdline
-#     'bedpostx bedpostx -b 0 --burnin_noard=0 --forcedir -n 1 -j 5000 -s 1 --updateproposalevery=40'
+# >>> from nipype.interfaces import fsl
+# >>> bedp = fsl.BEDPOSTX5(bvecs='bvecs', bvals='bvals', dwi='diffusion.nii',
+# ...                     mask='mask.nii', n_fibres=1)
+# >>> bedp.cmdline
+# 'bedpostx bedpostx -b 0 --burnin_noard=0 --forcedir -n 1 -j 5000 -s 1 --updateproposalevery=40'
 # 
-#     
+# 
 task_name: BEDPOSTX5
 nipype_name: BEDPOSTX5
 nipype_module: nipype.interfaces.fsl.dti
@@ -78,7 +78,7 @@ outputs:
     dyads_dispersion: generic/file+list-of
     # type=outputmultiobject: Dispersion
     mean_S0samples: generic/file
-    # type=file: Mean of distribution on T2wbaseline signal intensity S0
+    # type=file: Mean of distribution on T2w baseline signal intensity S0
     mean_dsamples: generic/file
     # type=file: Mean of distribution on diffusivity d
     mean_fsamples: generic/file+list-of
@@ -97,7 +97,7 @@ outputs:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
@@ -159,13 +159,13 @@ tests:
     force_dir:
     # type=bool|default=True: use the actual directory name given (do not add + to make a new directory)
     output_type:
-    # type=enum|default='NIFTI'|allowed['NIFTI','NIFTI_GZ','NIFTI_PAIR','NIFTI_PAIR_GZ']: FSL output type
+    # type=enum|default='NIFTI'|allowed['GIFTI','NIFTI','NIFTI_GZ','NIFTI_PAIR','NIFTI_PAIR_GZ']: FSL output type
     args:
     # type=str|default='': Additional parameters to the command
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -193,7 +193,7 @@ tests:
     n_fibres: '1'
     # type=range|default=2: Maximum number of fibres to fit in each voxel
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -225,7 +225,7 @@ doctests:
     n_fibres: '1'
     # type=range|default=2: Maximum number of fibres to fit in each voxel
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

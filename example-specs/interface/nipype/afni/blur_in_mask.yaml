@@ -7,21 +7,21 @@
 # ----
 # Blurs a dataset spatially inside a mask.  That's all.  Experimental.
 # 
-#     For complete details, see the `3dBlurInMask Documentation.
-#     <https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dBlurInMask.html>`_
+# For complete details, see the `3dBlurInMask Documentation.
+# <https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dBlurInMask.html>`_
 # 
-#     Examples
-#     --------
-#     >>> from nipype.interfaces import afni
-#     >>> bim = afni.BlurInMask()
-#     >>> bim.inputs.in_file = 'functional.nii'
-#     >>> bim.inputs.mask = 'mask.nii'
-#     >>> bim.inputs.fwhm = 5.0
-#     >>> bim.cmdline  # doctest: +ELLIPSIS
-#     '3dBlurInMask -input functional.nii -FWHM 5.000000 -mask mask.nii -prefix functional_blur'
-#     >>> res = bim.run()  # doctest: +SKIP
+# Examples
+# --------
+# >>> from nipype.interfaces import afni
+# >>> bim = afni.BlurInMask()
+# >>> bim.inputs.in_file = 'functional.nii'
+# >>> bim.inputs.mask = 'mask.nii'
+# >>> bim.inputs.fwhm = 5.0
+# >>> bim.cmdline  # doctest: +ELLIPSIS
+# '3dBlurInMask -input functional.nii -FWHM 5.000000 -mask mask.nii -prefix functional_blur'
+# >>> res = bim.run()  # doctest: +SKIP
 # 
-#     
+# 
 task_name: BlurInMask
 nipype_name: BlurInMask
 nipype_module: nipype.interfaces.afni.preprocess
@@ -38,13 +38,10 @@ inputs:
   # passed to the field in the automatically generated unittests.
     in_file: medimage/nifti1
     # type=file|default=<undefined>: input file to 3dSkullStrip
-    mask: medimage/nifti1
+    mask: generic/file
     # type=file|default=<undefined>: Mask dataset, if desired.  Blurring will occur only within the mask. Voxels NOT in the mask will be set to zero in the output.
     multimask: generic/file
     # type=file|default=<undefined>: Multi-mask dataset -- each distinct nonzero value in dataset will be treated as a separate mask for blurring purposes.
-    out_file: Path
-    # type=file: output file
-    # type=file|default=<undefined>: output to the file
   callable_defaults:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set as the `default` method of input fields
@@ -68,7 +65,7 @@ outputs:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
@@ -103,7 +100,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -122,12 +119,10 @@ tests:
   # (if not specified, will try to choose a sensible value)
     in_file:
     # type=file|default=<undefined>: input file to 3dSkullStrip
-    mask:
-    # type=file|default=<undefined>: Mask dataset, if desired.  Blurring will occur only within the mask. Voxels NOT in the mask will be set to zero in the output.
     fwhm: '5.0'
     # type=float|default=0.0: fwhm kernel size
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -142,7 +137,7 @@ tests:
   # bool - whether the unittest is expected to fail or not. Set to false
   # when you are satisfied with the edits you have made to this file
 doctests:
-- cmdline: 3dBlurInMask -input functional.nii -FWHM 5.000000 -mask mask.nii -prefix functional_blur
+- cmdline:
   # str - the expected cmdline output
   inputs:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
@@ -150,12 +145,10 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     in_file: '"functional.nii"'
     # type=file|default=<undefined>: input file to 3dSkullStrip
-    mask: '"mask.nii"'
-    # type=file|default=<undefined>: Mask dataset, if desired.  Blurring will occur only within the mask. Voxels NOT in the mask will be set to zero in the output.
     fwhm: '5.0'
     # type=float|default=0.0: fwhm kernel size
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

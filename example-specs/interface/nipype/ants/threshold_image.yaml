@@ -6,29 +6,29 @@
 # Docs
 # ----
 # 
-#     Apply thresholds on images.
+# Apply thresholds on images.
 # 
-#     Examples
-#     --------
-#     >>> thres = ThresholdImage(dimension=3)
-#     >>> thres.inputs.input_image = 'structural.nii'
-#     >>> thres.inputs.output_image = 'output.nii.gz'
-#     >>> thres.inputs.th_low = 0.5
-#     >>> thres.inputs.th_high = 1.0
-#     >>> thres.inputs.inside_value = 1.0
-#     >>> thres.inputs.outside_value = 0.0
-#     >>> thres.cmdline  #doctest: +ELLIPSIS
-#     'ThresholdImage 3 structural.nii output.nii.gz 0.500000 1.000000 1.000000 0.000000'
+# Examples
+# --------
+# >>> thres = ThresholdImage(dimension=3)
+# >>> thres.inputs.input_image = 'structural.nii'
+# >>> thres.inputs.output_image = 'output.nii.gz'
+# >>> thres.inputs.th_low = 0.5
+# >>> thres.inputs.th_high = 1.0
+# >>> thres.inputs.inside_value = 1.0
+# >>> thres.inputs.outside_value = 0.0
+# >>> thres.cmdline  #doctest: +ELLIPSIS
+# 'ThresholdImage 3 structural.nii output.nii.gz 0.500000 1.000000 1.000000 0.000000'
 # 
-#     >>> thres = ThresholdImage(dimension=3)
-#     >>> thres.inputs.input_image = 'structural.nii'
-#     >>> thres.inputs.output_image = 'output.nii.gz'
-#     >>> thres.inputs.mode = 'Kmeans'
-#     >>> thres.inputs.num_thresholds = 4
-#     >>> thres.cmdline  #doctest: +ELLIPSIS
-#     'ThresholdImage 3 structural.nii output.nii.gz Kmeans 4'
+# >>> thres = ThresholdImage(dimension=3)
+# >>> thres.inputs.input_image = 'structural.nii'
+# >>> thres.inputs.output_image = 'output.nii.gz'
+# >>> thres.inputs.mode = 'Kmeans'
+# >>> thres.inputs.num_thresholds = 4
+# >>> thres.cmdline  #doctest: +ELLIPSIS
+# 'ThresholdImage 3 structural.nii output.nii.gz Kmeans 4'
 # 
-#     
+# 
 task_name: ThresholdImage
 nipype_name: ThresholdImage
 nipype_module: nipype.interfaces.ants.utils
@@ -47,9 +47,6 @@ inputs:
     # type=file|default=<undefined>: input image file
     input_mask: generic/file
     # type=file|default=<undefined>: input mask for Otsu, Kmeans
-    output_image: Path
-    # type=file: resampled file
-    # type=file|default=<undefined>: output image file
   callable_defaults:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set as the `default` method of input fields
@@ -66,14 +63,14 @@ outputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    output_image: medimage/nifti-gz
+    output_image: generic/file
     # type=file: resampled file
     # type=file|default=<undefined>: output image file
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
@@ -110,7 +107,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -129,21 +126,14 @@ tests:
   # (if not specified, will try to choose a sensible value)
     input_image:
     # type=file|default=<undefined>: input image file
-    output_image: '"output.nii.gz"'
-    # type=file: resampled file
-    # type=file|default=<undefined>: output image file
     th_low: '0.5'
     # type=float|default=0.0: lower threshold
-    th_high: '1.0'
-    # type=float|default=0.0: upper threshold
     inside_value: '1.0'
     # type=float|default=1: inside value
-    outside_value: '0.0'
-    # type=float|default=0: outside value
     dimension: '3'
     # type=int|default=3: dimension of output image
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -162,17 +152,12 @@ tests:
   # (if not specified, will try to choose a sensible value)
     input_image:
     # type=file|default=<undefined>: input image file
-    output_image: '"output.nii.gz"'
-    # type=file: resampled file
-    # type=file|default=<undefined>: output image file
     mode: '"Kmeans"'
     # type=enum|default='Otsu'|allowed['Kmeans','Otsu']: whether to run Otsu / Kmeans thresholding
-    num_thresholds: '4'
-    # type=int|default=0: number of thresholds
     dimension: '3'
     # type=int|default=3: dimension of output image
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -195,21 +180,14 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     input_image: '"structural.nii"'
     # type=file|default=<undefined>: input image file
-    output_image: '"output.nii.gz"'
-    # type=file: resampled file
-    # type=file|default=<undefined>: output image file
     th_low: '0.5'
     # type=float|default=0.0: lower threshold
-    th_high: '1.0'
-    # type=float|default=0.0: upper threshold
     inside_value: '1.0'
     # type=float|default=1: inside value
-    outside_value: '0.0'
-    # type=float|default=0: outside value
     dimension: '3'
     # type=int|default=3: dimension of output image
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS
@@ -221,17 +199,12 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     input_image: '"structural.nii"'
     # type=file|default=<undefined>: input image file
-    output_image: '"output.nii.gz"'
-    # type=file: resampled file
-    # type=file|default=<undefined>: output image file
     mode: '"Kmeans"'
     # type=enum|default='Otsu'|allowed['Kmeans','Otsu']: whether to run Otsu / Kmeans thresholding
-    num_thresholds: '4'
-    # type=int|default=0: number of thresholds
     dimension: '3'
     # type=int|default=3: dimension of output image
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

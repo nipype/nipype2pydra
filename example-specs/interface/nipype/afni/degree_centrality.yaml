@@ -6,24 +6,24 @@
 # Docs
 # ----
 # Performs degree centrality on a dataset using a given maskfile
-#     via 3dDegreeCentrality
+# via 3dDegreeCentrality
 # 
-#     For complete details, see the `3dDegreeCentrality Documentation.
-#     <https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dDegreeCentrality.html>`_
+# For complete details, see the `3dDegreeCentrality Documentation.
+# <https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dDegreeCentrality.html>`_
 # 
-#     Examples
-#     --------
-#     >>> from nipype.interfaces import afni
-#     >>> degree = afni.DegreeCentrality()
-#     >>> degree.inputs.in_file = 'functional.nii'
-#     >>> degree.inputs.mask = 'mask.nii'
-#     >>> degree.inputs.sparsity = 1 # keep the top one percent of connections
-#     >>> degree.inputs.out_file = 'out.nii'
-#     >>> degree.cmdline
-#     '3dDegreeCentrality -mask mask.nii -prefix out.nii -sparsity 1.000000 functional.nii'
-#     >>> res = degree.run()  # doctest: +SKIP
+# Examples
+# --------
+# >>> from nipype.interfaces import afni
+# >>> degree = afni.DegreeCentrality()
+# >>> degree.inputs.in_file = 'functional.nii'
+# >>> degree.inputs.mask = 'mask.nii'
+# >>> degree.inputs.sparsity = 1 # keep the top one percent of connections
+# >>> degree.inputs.out_file = 'out.nii'
+# >>> degree.cmdline
+# '3dDegreeCentrality -mask mask.nii -prefix out.nii -sparsity 1.000000 functional.nii'
+# >>> res = degree.run()  # doctest: +SKIP
 # 
-#     
+# 
 task_name: DegreeCentrality
 nipype_name: DegreeCentrality
 nipype_module: nipype.interfaces.afni.preprocess
@@ -40,11 +40,8 @@ inputs:
   # passed to the field in the automatically generated unittests.
     in_file: medimage/nifti1
     # type=file|default=<undefined>: input file to 3dDegreeCentrality
-    mask: medimage/nifti1
+    mask: generic/file
     # type=file|default=<undefined>: mask file to mask input data
-    out_file: Path
-    # type=file: output file
-    # type=file|default=<undefined>: output image file name
   callable_defaults:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set as the `default` method of input fields
@@ -64,14 +61,14 @@ outputs:
     oned_file: generic/file
     # type=file: The text output of the similarity matrix computed after thresholding with one-dimensional and ijk voxel indices, correlations, image extents, and affine matrix.
     # type=str|default='': output filepath to text dump of correlation matrix
-    out_file: medimage/nifti1
+    out_file: generic/file
     # type=file: output file
     # type=file|default=<undefined>: output image file name
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
@@ -107,7 +104,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -126,15 +123,10 @@ tests:
   # (if not specified, will try to choose a sensible value)
     in_file:
     # type=file|default=<undefined>: input file to 3dDegreeCentrality
-    mask:
-    # type=file|default=<undefined>: mask file to mask input data
     sparsity: '1 # keep the top one percent of connections'
     # type=float|default=0.0: only take the top percent of connections
-    out_file: '"out.nii"'
-    # type=file: output file
-    # type=file|default=<undefined>: output image file name
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -149,7 +141,7 @@ tests:
   # bool - whether the unittest is expected to fail or not. Set to false
   # when you are satisfied with the edits you have made to this file
 doctests:
-- cmdline: 3dDegreeCentrality -mask mask.nii -prefix out.nii -sparsity 1.000000 functional.nii
+- cmdline:
   # str - the expected cmdline output
   inputs:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
@@ -157,15 +149,10 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     in_file: '"functional.nii"'
     # type=file|default=<undefined>: input file to 3dDegreeCentrality
-    mask: '"mask.nii"'
-    # type=file|default=<undefined>: mask file to mask input data
     sparsity: '1 # keep the top one percent of connections'
     # type=float|default=0.0: only take the top percent of connections
-    out_file: '"out.nii"'
-    # type=file: output file
-    # type=file|default=<undefined>: output image file name
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

@@ -6,16 +6,16 @@
 # Docs
 # ----
 # 
-#     Examples
-#     --------
-#     >>> from nipype.interfaces.ants import CreateJacobianDeterminantImage
-#     >>> jacobian = CreateJacobianDeterminantImage()
-#     >>> jacobian.inputs.imageDimension = 3
-#     >>> jacobian.inputs.deformationField = 'ants_Warp.nii.gz'
-#     >>> jacobian.inputs.outputImage = 'out_name.nii.gz'
-#     >>> jacobian.cmdline
-#     'CreateJacobianDeterminantImage 3 ants_Warp.nii.gz out_name.nii.gz'
-#     
+# Examples
+# --------
+# >>> from nipype.interfaces.ants import CreateJacobianDeterminantImage
+# >>> jacobian = CreateJacobianDeterminantImage()
+# >>> jacobian.inputs.imageDimension = 3
+# >>> jacobian.inputs.deformationField = 'ants_Warp.nii.gz'
+# >>> jacobian.inputs.outputImage = 'out_name.nii.gz'
+# >>> jacobian.cmdline
+# 'CreateJacobianDeterminantImage 3 ants_Warp.nii.gz out_name.nii.gz'
+# 
 task_name: CreateJacobianDeterminantImage
 nipype_name: CreateJacobianDeterminantImage
 nipype_module: nipype.interfaces.ants.utils
@@ -30,7 +30,7 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    deformationField: medimage/nifti-gz
+    deformationField: generic/file
     # type=file|default=<undefined>: deformation transformation file
     outputImage: medimage/nifti-gz
     # type=file|default=<undefined>: output filename
@@ -56,7 +56,7 @@ outputs:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
@@ -80,7 +80,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -99,12 +99,10 @@ tests:
   # (if not specified, will try to choose a sensible value)
     imageDimension: '3'
     # type=enum|default=3|allowed[2,3]: image dimension (2 or 3)
-    deformationField:
-    # type=file|default=<undefined>: deformation transformation file
     outputImage:
     # type=file|default=<undefined>: output filename
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -119,7 +117,7 @@ tests:
   # bool - whether the unittest is expected to fail or not. Set to false
   # when you are satisfied with the edits you have made to this file
 doctests:
-- cmdline: CreateJacobianDeterminantImage 3 ants_Warp.nii.gz out_name.nii.gz
+- cmdline:
   # str - the expected cmdline output
   inputs:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
@@ -127,12 +125,10 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     imageDimension: '3'
     # type=enum|default=3|allowed[2,3]: image dimension (2 or 3)
-    deformationField: '"ants_Warp.nii.gz"'
-    # type=file|default=<undefined>: deformation transformation file
     outputImage: '"out_name.nii.gz"'
     # type=file|default=<undefined>: output filename
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

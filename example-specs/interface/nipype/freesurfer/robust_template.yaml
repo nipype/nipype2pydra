@@ -7,42 +7,42 @@
 # ----
 # construct an unbiased robust template for longitudinal volumes
 # 
-#     Examples
-#     --------
-#     >>> from nipype.interfaces.freesurfer import RobustTemplate
-#     >>> template = RobustTemplate()
-#     >>> template.inputs.in_files = ['structural.nii', 'functional.nii']
-#     >>> template.inputs.auto_detect_sensitivity = True
-#     >>> template.inputs.average_metric = 'mean'
-#     >>> template.inputs.initial_timepoint = 1
-#     >>> template.inputs.fixed_timepoint = True
-#     >>> template.inputs.no_iteration = True
-#     >>> template.inputs.subsample_threshold = 200
-#     >>> template.cmdline  #doctest:
-#     'mri_robust_template --satit --average 0 --fixtp --mov structural.nii functional.nii --inittp 1 --noit --template mri_robust_template_out.mgz --subsample 200'
-#     >>> template.inputs.out_file = 'T1.nii'
-#     >>> template.cmdline  #doctest:
-#     'mri_robust_template --satit --average 0 --fixtp --mov structural.nii functional.nii --inittp 1 --noit --template T1.nii --subsample 200'
+# Examples
+# --------
+# >>> from nipype.interfaces.freesurfer import RobustTemplate
+# >>> template = RobustTemplate()
+# >>> template.inputs.in_files = ['structural.nii', 'functional.nii']
+# >>> template.inputs.auto_detect_sensitivity = True
+# >>> template.inputs.average_metric = 'mean'
+# >>> template.inputs.initial_timepoint = 1
+# >>> template.inputs.fixed_timepoint = True
+# >>> template.inputs.no_iteration = True
+# >>> template.inputs.subsample_threshold = 200
+# >>> template.cmdline  #doctest:
+# 'mri_robust_template --satit --average 0 --fixtp --mov structural.nii functional.nii --inittp 1 --noit --template mri_robust_template_out.mgz --subsample 200'
+# >>> template.inputs.out_file = 'T1.nii'
+# >>> template.cmdline  #doctest:
+# 'mri_robust_template --satit --average 0 --fixtp --mov structural.nii functional.nii --inittp 1 --noit --template T1.nii --subsample 200'
 # 
-#     >>> template.inputs.transform_outputs = ['structural.lta',
-#     ...                                      'functional.lta']
-#     >>> template.inputs.scaled_intensity_outputs = ['structural-iscale.txt',
-#     ...                                             'functional-iscale.txt']
-#     >>> template.cmdline    #doctest: +ELLIPSIS
-#     'mri_robust_template --satit --average 0 --fixtp --mov structural.nii functional.nii --inittp 1 --noit --template T1.nii --iscaleout .../structural-iscale.txt .../functional-iscale.txt --subsample 200 --lta .../structural.lta .../functional.lta'
+# >>> template.inputs.transform_outputs = ['structural.lta',
+# ...                                      'functional.lta']
+# >>> template.inputs.scaled_intensity_outputs = ['structural-iscale.txt',
+# ...                                             'functional-iscale.txt']
+# >>> template.cmdline    #doctest: +ELLIPSIS
+# 'mri_robust_template --satit --average 0 --fixtp --mov structural.nii functional.nii --inittp 1 --noit --template T1.nii --iscaleout .../structural-iscale.txt .../functional-iscale.txt --subsample 200 --lta .../structural.lta .../functional.lta'
 # 
-#     >>> template.inputs.transform_outputs = True
-#     >>> template.inputs.scaled_intensity_outputs = True
-#     >>> template.cmdline    #doctest: +ELLIPSIS
-#     'mri_robust_template --satit --average 0 --fixtp --mov structural.nii functional.nii --inittp 1 --noit --template T1.nii --iscaleout .../is1.txt .../is2.txt --subsample 200 --lta .../tp1.lta .../tp2.lta'
+# >>> template.inputs.transform_outputs = True
+# >>> template.inputs.scaled_intensity_outputs = True
+# >>> template.cmdline    #doctest: +ELLIPSIS
+# 'mri_robust_template --satit --average 0 --fixtp --mov structural.nii functional.nii --inittp 1 --noit --template T1.nii --iscaleout .../is1.txt .../is2.txt --subsample 200 --lta .../tp1.lta .../tp2.lta'
 # 
-#     >>> template.run()  #doctest: +SKIP
+# >>> template.run()  #doctest: +SKIP
 # 
-#     References
-#     ----------
-#     [https://surfer.nmr.mgh.harvard.edu/fswiki/mri_robust_template]
+# References
+# ----------
+# [https://surfer.nmr.mgh.harvard.edu/fswiki/mri_robust_template]
 # 
-#     
+# 
 task_name: RobustTemplate
 nipype_name: RobustTemplate
 nipype_module: nipype.interfaces.freesurfer.longitudinal
@@ -63,9 +63,6 @@ inputs:
     # type=inputmultiobject|default=[]: use initial intensity scales
     initial_transforms: generic/file+list-of
     # type=inputmultiobject|default=[]: use initial transforms (lta) on source
-    out_file: Path
-    # type=file: output template volume (final mean/median image)
-    # type=file|default='mri_robust_template_out.mgz': output template volume (final mean/median image)
     subjects_dir: generic/directory
     # type=directory|default=<undefined>: subjects directory
   callable_defaults:
@@ -97,7 +94,7 @@ outputs:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
@@ -126,7 +123,7 @@ tests:
     average_metric:
     # type=enum|default='median'|allowed['mean','median']: construct template from: 0 Mean, 1 Median (default)
     initial_timepoint:
-    # type=int|default=0: use TP# for spacial init (default random), 0: no init
+    # type=int|default=0: use TP# for special init (default random), 0: no init
     fixed_timepoint:
     # type=bool|default=False: map everything to init TP# (init TP is not resampled)
     no_iteration:
@@ -144,7 +141,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -163,23 +160,17 @@ tests:
   # (if not specified, will try to choose a sensible value)
     in_files:
     # type=inputmultiobject|default=[]: input movable volumes to be aligned to common mean/median template
-    auto_detect_sensitivity: 'True'
-    # type=bool|default=False: auto-detect good sensitivity (recommended for head or full brain scans)
     average_metric: '"mean"'
     # type=enum|default='median'|allowed['mean','median']: construct template from: 0 Mean, 1 Median (default)
-    initial_timepoint: '1'
-    # type=int|default=0: use TP# for spacial init (default random), 0: no init
     fixed_timepoint: 'True'
     # type=bool|default=False: map everything to init TP# (init TP is not resampled)
-    no_iteration: 'True'
-    # type=bool|default=False: do not iterate, just create first template
     subsample_threshold: '200'
     # type=int|default=0: subsample if dim > # on all axes (default no subs.)
     out_file: '"T1.nii"'
     # type=file: output template volume (final mean/median image)
     # type=file|default='mri_robust_template_out.mgz': output template volume (final mean/median image)
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -196,14 +187,14 @@ tests:
 - inputs:
   # dict[str, str] - values to provide to inputs fields in the task initialisation
   # (if not specified, will try to choose a sensible value)
-    transform_outputs: '["structural.lta","functional.lta"]'
+    transform_outputs: '["structural.lta",'
     # type=outputmultiobject: output xform files from moving to template
     # type=traitcompound|default=[None]: output xforms to template (for each input)
-    scaled_intensity_outputs: '["structural-iscale.txt","functional-iscale.txt"]'
+    scaled_intensity_outputs: '["structural-iscale.txt",'
     # type=outputmultiobject: output final intensity scales
     # type=traitcompound|default=[None]: final intensity scales (will activate --iscale)
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -223,11 +214,8 @@ tests:
     transform_outputs: 'True'
     # type=outputmultiobject: output xform files from moving to template
     # type=traitcompound|default=[None]: output xforms to template (for each input)
-    scaled_intensity_outputs: 'True'
-    # type=outputmultiobject: output final intensity scales
-    # type=traitcompound|default=[None]: final intensity scales (will activate --iscale)
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -250,23 +238,17 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     in_files: '["structural.nii", "functional.nii"]'
     # type=inputmultiobject|default=[]: input movable volumes to be aligned to common mean/median template
-    auto_detect_sensitivity: 'True'
-    # type=bool|default=False: auto-detect good sensitivity (recommended for head or full brain scans)
     average_metric: '"mean"'
     # type=enum|default='median'|allowed['mean','median']: construct template from: 0 Mean, 1 Median (default)
-    initial_timepoint: '1'
-    # type=int|default=0: use TP# for spacial init (default random), 0: no init
     fixed_timepoint: 'True'
     # type=bool|default=False: map everything to init TP# (init TP is not resampled)
-    no_iteration: 'True'
-    # type=bool|default=False: do not iterate, just create first template
     subsample_threshold: '200'
     # type=int|default=0: subsample if dim > # on all axes (default no subs.)
     out_file: '"T1.nii"'
     # type=file: output template volume (final mean/median image)
     # type=file|default='mri_robust_template_out.mgz': output template volume (final mean/median image)
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS
@@ -276,14 +258,14 @@ doctests:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
   # If the field is of file-format type and the value is None, then the
   # '.mock()' method of the corresponding class is used instead.
-    transform_outputs: '["structural.lta","functional.lta"]'
+    transform_outputs: '["structural.lta",'
     # type=outputmultiobject: output xform files from moving to template
     # type=traitcompound|default=[None]: output xforms to template (for each input)
-    scaled_intensity_outputs: '["structural-iscale.txt","functional-iscale.txt"]'
+    scaled_intensity_outputs: '["structural-iscale.txt",'
     # type=outputmultiobject: output final intensity scales
     # type=traitcompound|default=[None]: final intensity scales (will activate --iscale)
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS
@@ -296,11 +278,8 @@ doctests:
     transform_outputs: 'True'
     # type=outputmultiobject: output xform files from moving to template
     # type=traitcompound|default=[None]: output xforms to template (for each input)
-    scaled_intensity_outputs: 'True'
-    # type=outputmultiobject: output final intensity scales
-    # type=traitcompound|default=[None]: final intensity scales (will activate --iscale)
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

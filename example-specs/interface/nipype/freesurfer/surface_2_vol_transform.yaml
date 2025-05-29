@@ -7,21 +7,21 @@
 # ----
 # Use FreeSurfer mri_surf2vol to apply a transform.
 # 
-#     Examples
-#     --------
+# Examples
+# --------
 # 
-#     >>> from nipype.interfaces.freesurfer import Surface2VolTransform
-#     >>> xfm2vol = Surface2VolTransform()
-#     >>> xfm2vol.inputs.source_file = 'lh.cope1.mgz'
-#     >>> xfm2vol.inputs.reg_file = 'register.mat'
-#     >>> xfm2vol.inputs.hemi = 'lh'
-#     >>> xfm2vol.inputs.template_file = 'cope1.nii.gz'
-#     >>> xfm2vol.inputs.subjects_dir = '.'
-#     >>> xfm2vol.cmdline
-#     'mri_surf2vol --hemi lh --volreg register.mat --surfval lh.cope1.mgz --sd . --template cope1.nii.gz --outvol lh.cope1_asVol.nii --vtxvol lh.cope1_asVol_vertex.nii'
-#     >>> res = xfm2vol.run()# doctest: +SKIP
+# >>> from nipype.interfaces.freesurfer import Surface2VolTransform
+# >>> xfm2vol = Surface2VolTransform()
+# >>> xfm2vol.inputs.source_file = 'lh.cope1.mgz'
+# >>> xfm2vol.inputs.reg_file = 'register.mat'
+# >>> xfm2vol.inputs.hemi = 'lh'
+# >>> xfm2vol.inputs.template_file = 'cope1.nii.gz'
+# >>> xfm2vol.inputs.subjects_dir = '.'
+# >>> xfm2vol.cmdline
+# 'mri_surf2vol --hemi lh --volreg register.mat --surfval lh.cope1.mgz --sd . --template cope1.nii.gz --outvol lh.cope1_asVol.nii --vtxvol lh.cope1_asVol_vertex.nii'
+# >>> res = xfm2vol.run()# doctest: +SKIP
 # 
-#     
+# 
 task_name: Surface2VolTransform
 nipype_name: Surface2VolTransform
 nipype_module: nipype.interfaces.freesurfer.utils
@@ -36,18 +36,12 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    reg_file: datascience/text-matrix
+    reg_file: generic/file
     # type=file|default=<undefined>: tkRAS-to-tkRAS matrix   (tkregister2 format)
     source_file: medimage/mgh-gz
     # type=file|default=<undefined>: This is the source of the surface values
-    template_file: medimage/nifti-gz
+    template_file: generic/file
     # type=file|default=<undefined>: Output template volume
-    transformed_file: Path
-    # type=file: Path to output file if used normally
-    # type=file|default=<undefined>: Output volume
-    vertexvol_file: Path
-    # type=file: vertex map volume path id. Optional
-    # type=file|default=<undefined>: Path name of the vertex output volume, which is the same as output volume except that the value of each voxel is the vertex-id that is mapped to that voxel.
   callable_defaults:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set as the `default` method of input fields
@@ -74,7 +68,7 @@ outputs:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
@@ -110,7 +104,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -129,16 +123,12 @@ tests:
   # (if not specified, will try to choose a sensible value)
     source_file:
     # type=file|default=<undefined>: This is the source of the surface values
-    reg_file:
-    # type=file|default=<undefined>: tkRAS-to-tkRAS matrix   (tkregister2 format)
     hemi: '"lh"'
     # type=str|default='': hemisphere of data
-    template_file:
-    # type=file|default=<undefined>: Output template volume
     subjects_dir: '"."'
     # type=str|default='': freesurfer subjects directory defaults to $SUBJECTS_DIR
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -161,16 +151,12 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     source_file: '"lh.cope1.mgz"'
     # type=file|default=<undefined>: This is the source of the surface values
-    reg_file: '"register.mat"'
-    # type=file|default=<undefined>: tkRAS-to-tkRAS matrix   (tkregister2 format)
     hemi: '"lh"'
     # type=str|default='': hemisphere of data
-    template_file: '"cope1.nii.gz"'
-    # type=file|default=<undefined>: Output template volume
     subjects_dir: '"."'
     # type=str|default='': freesurfer subjects directory defaults to $SUBJECTS_DIR
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

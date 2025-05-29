@@ -6,22 +6,22 @@
 # Docs
 # ----
 # Computes size of a box that fits around the volume.
-#     Also can be used to crop the volume to that box.
+# Also can be used to crop the volume to that box.
 # 
-#     For complete details, see the `3dAutobox Documentation.
-#     <https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dAutobox.html>`_
+# For complete details, see the `3dAutobox Documentation.
+# <https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dAutobox.html>`_
 # 
-#     Examples
-#     --------
-#     >>> from nipype.interfaces import afni
-#     >>> abox = afni.Autobox()
-#     >>> abox.inputs.in_file = 'structural.nii'
-#     >>> abox.inputs.padding = 5
-#     >>> abox.cmdline
-#     '3dAutobox -input structural.nii -prefix structural_autobox -npad 5'
-#     >>> res = abox.run()  # doctest: +SKIP
+# Examples
+# --------
+# >>> from nipype.interfaces import afni
+# >>> abox = afni.Autobox()
+# >>> abox.inputs.in_file = 'structural.nii'
+# >>> abox.inputs.padding = 5
+# >>> abox.cmdline
+# '3dAutobox -input structural.nii -prefix structural_autobox -npad 5'
+# >>> res = abox.run()  # doctest: +SKIP
 # 
-#     
+# 
 task_name: Autobox
 nipype_name: Autobox
 nipype_module: nipype.interfaces.afni.utils
@@ -38,9 +38,6 @@ inputs:
   # passed to the field in the automatically generated unittests.
     in_file: medimage/nifti1
     # type=file|default=<undefined>: input file
-    out_file: Path
-    # type=file: output file
-    # type=file|default=<undefined>: 
   callable_defaults:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set as the `default` method of input fields
@@ -76,7 +73,7 @@ outputs:
     z_min: z_min_callable
     # type=int: 
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
@@ -101,7 +98,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -120,10 +117,8 @@ tests:
   # (if not specified, will try to choose a sensible value)
     in_file:
     # type=file|default=<undefined>: input file
-    padding: '5'
-    # type=int|default=0: Number of extra voxels to pad on each side of box
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -138,7 +133,7 @@ tests:
   # bool - whether the unittest is expected to fail or not. Set to false
   # when you are satisfied with the edits you have made to this file
 doctests:
-- cmdline: 3dAutobox -input structural.nii -prefix structural_autobox -npad 5
+- cmdline:
   # str - the expected cmdline output
   inputs:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
@@ -146,10 +141,8 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     in_file: '"structural.nii"'
     # type=file|default=<undefined>: input file
-    padding: '5'
-    # type=int|default=0: Number of extra voxels to pad on each side of box
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

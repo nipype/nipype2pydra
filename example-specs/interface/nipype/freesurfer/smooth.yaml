@@ -7,24 +7,24 @@
 # ----
 # Use FreeSurfer mris_volsmooth to smooth a volume
 # 
-#     This function smoothes cortical regions on a surface and non-cortical
-#     regions in volume.
+# This function smoothes cortical regions on a surface and non-cortical
+# regions in volume.
 # 
-#     .. note::
-#        Cortical voxels are mapped to the surface (3D->2D) and then the
-#        smoothed values from the surface are put back into the volume to fill
-#        the cortical ribbon. If data is smoothed with this algorithm, one has to
-#        be careful about how further processing is interpreted.
+# .. note::
+#    Cortical voxels are mapped to the surface (3D->2D) and then the
+#    smoothed values from the surface are put back into the volume to fill
+#    the cortical ribbon. If data is smoothed with this algorithm, one has to
+#    be careful about how further processing is interpreted.
 # 
-#     Examples
-#     --------
+# Examples
+# --------
 # 
-#     >>> from nipype.interfaces.freesurfer import Smooth
-#     >>> smoothvol = Smooth(in_file='functional.nii', smoothed_file = 'foo_out.nii', reg_file='register.dat', surface_fwhm=10, vol_fwhm=6)
-#     >>> smoothvol.cmdline
-#     'mris_volsmooth --i functional.nii --reg register.dat --o foo_out.nii --fwhm 10.000000 --vol-fwhm 6.000000'
+# >>> from nipype.interfaces.freesurfer import Smooth
+# >>> smoothvol = Smooth(in_file='functional.nii', smoothed_file = 'foo_out.nii', reg_file='register.dat', surface_fwhm=10, vol_fwhm=6)
+# >>> smoothvol.cmdline
+# 'mris_volsmooth --i functional.nii --reg register.dat --o foo_out.nii --fwhm 10.000000 --vol-fwhm 6.000000'
 # 
-#     
+# 
 task_name: Smooth
 nipype_name: Smooth
 nipype_module: nipype.interfaces.freesurfer.preprocess
@@ -41,11 +41,8 @@ inputs:
   # passed to the field in the automatically generated unittests.
     in_file: medimage/nifti1
     # type=file|default=<undefined>: source volume
-    reg_file: datascience/dat-file
+    reg_file: fileformats.medimage_freesurfer.Dat
     # type=file|default=<undefined>: registers volume to surface anatomical 
-    smoothed_file: Path
-    # type=file: smoothed input volume
-    # type=file|default=<undefined>: output volume
     subjects_dir: generic/directory
     # type=directory|default=<undefined>: subjects directory
   callable_defaults:
@@ -71,7 +68,7 @@ outputs:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
     smoothed_file: '"foo_out.nii"'
     # type=file: smoothed input volume
     # type=file|default=<undefined>: output volume
@@ -105,7 +102,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -134,7 +131,7 @@ tests:
     vol_fwhm: '6'
     # type=range|default=0.0: volume smoothing outside of surface
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -167,7 +164,7 @@ doctests:
     vol_fwhm: '6'
     # type=range|default=0.0: volume smoothing outside of surface
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

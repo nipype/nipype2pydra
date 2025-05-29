@@ -6,17 +6,17 @@
 # Docs
 # ----
 # 
-#     Uses Freesurfer's mris_convert to convert surface files to various formats
+# Uses Freesurfer's mris_convert to convert surface files to various formats
 # 
-#     Example
-#     -------
+# Example
+# -------
 # 
-#     >>> import nipype.interfaces.freesurfer as fs
-#     >>> mris = fs.MRIsConvert()
-#     >>> mris.inputs.in_file = 'lh.pial'
-#     >>> mris.inputs.out_datatype = 'gii'
-#     >>> mris.run() # doctest: +SKIP
-#     
+# >>> import nipype.interfaces.freesurfer as fs
+# >>> mris = fs.MRIsConvert()
+# >>> mris.inputs.in_file = 'lh.pial'
+# >>> mris.inputs.out_datatype = 'gii'
+# >>> mris.run() # doctest: +SKIP
+# 
 task_name: MRIsConvert
 nipype_name: MRIsConvert
 nipype_module: nipype.interfaces.freesurfer.utils
@@ -41,8 +41,6 @@ inputs:
     # type=file|default=<undefined>: infile is .label file, label is name of this label
     labelstats_outfile: generic/file
     # type=file|default=<undefined>: outfile is name of gifti file to which label stats will be written
-    out_file: Path
-    # type=file|default=<undefined>: output filename or True to generate one
     parcstats_file: generic/file
     # type=file|default=<undefined>: infile is name of text file containing label/val pairs
     scalarcurv_file: generic/file
@@ -73,7 +71,7 @@ outputs:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
@@ -127,7 +125,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically

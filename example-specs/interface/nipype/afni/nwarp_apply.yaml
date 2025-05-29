@@ -6,24 +6,24 @@
 # Docs
 # ----
 # Program to apply a nonlinear 3D warp saved from 3dQwarp
-#     (or 3dNwarpCat, etc.) to a 3D dataset, to produce a warped
-#     version of the source dataset.
+# (or 3dNwarpCat, etc.) to a 3D dataset, to produce a warped
+# version of the source dataset.
 # 
-#     For complete details, see the `3dNwarpApply Documentation.
-#     <https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dNwarpApply.html>`_
+# For complete details, see the `3dNwarpApply Documentation.
+# <https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dNwarpApply.html>`_
 # 
-#     Examples
-#     --------
-#     >>> from nipype.interfaces import afni
-#     >>> nwarp = afni.NwarpApply()
-#     >>> nwarp.inputs.in_file = 'Fred+orig'
-#     >>> nwarp.inputs.master = 'NWARP'
-#     >>> nwarp.inputs.warp = "'Fred_WARP+tlrc Fred.Xaff12.1D'"
-#     >>> nwarp.cmdline
-#     "3dNwarpApply -source Fred+orig -interp wsinc5 -master NWARP -prefix Fred+orig_Nwarp -nwarp 'Fred_WARP+tlrc Fred.Xaff12.1D'"
-#     >>> res = nwarp.run()  # doctest: +SKIP
+# Examples
+# --------
+# >>> from nipype.interfaces import afni
+# >>> nwarp = afni.NwarpApply()
+# >>> nwarp.inputs.in_file = 'Fred+orig'
+# >>> nwarp.inputs.master = 'NWARP'
+# >>> nwarp.inputs.warp = "'Fred_WARP+tlrc Fred.Xaff12.1D'"
+# >>> nwarp.cmdline
+# "3dNwarpApply -source Fred+orig -interp wsinc5 -master NWARP -prefix Fred+orig_Nwarp -nwarp 'Fred_WARP+tlrc Fred.Xaff12.1D'"
+# >>> res = nwarp.run()  # doctest: +SKIP
 # 
-#     
+# 
 task_name: NwarpApply
 nipype_name: NwarpApply
 nipype_module: nipype.interfaces.afni.utils
@@ -40,9 +40,6 @@ inputs:
   # passed to the field in the automatically generated unittests.
     master: generic/file
     # type=file|default=<undefined>: the name of the master dataset, which defines the output grid
-    out_file: Path
-    # type=file: output file
-    # type=file|default=<undefined>: output image file name
   callable_defaults:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set as the `default` method of input fields
@@ -66,7 +63,7 @@ outputs:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
@@ -99,7 +96,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -118,12 +115,10 @@ tests:
   # (if not specified, will try to choose a sensible value)
     in_file: '"Fred+orig"'
     # type=traitcompound|default=None: the name of the dataset to be warped can be multiple datasets
-    master:
-    # type=file|default=<undefined>: the name of the master dataset, which defines the output grid
     warp: '"''Fred_WARP+tlrc Fred.Xaff12.1D''"'
     # type=string|default='': the name of the warp dataset. multiple warps can be concatenated (make sure they exist)
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -138,7 +133,7 @@ tests:
   # bool - whether the unittest is expected to fail or not. Set to false
   # when you are satisfied with the edits you have made to this file
 doctests:
-- cmdline: 3dNwarpApply -source Fred+orig -interp wsinc5 -master NWARP -prefix Fred+orig_Nwarp -nwarp "Fred_WARP+tlrc Fred.Xaff12.1D"
+- cmdline:
   # str - the expected cmdline output
   inputs:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
@@ -146,12 +141,10 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     in_file: '"Fred+orig"'
     # type=traitcompound|default=None: the name of the dataset to be warped can be multiple datasets
-    master: '"NWARP"'
-    # type=file|default=<undefined>: the name of the master dataset, which defines the output grid
     warp: '"''Fred_WARP+tlrc Fred.Xaff12.1D''"'
     # type=string|default='': the name of the warp dataset. multiple warps can be concatenated (make sure they exist)
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

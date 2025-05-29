@@ -7,30 +7,30 @@
 # ----
 # Smooth a surface image with mri_surf2surf.
 # 
-#     The surface is smoothed by an iterative process of averaging the
-#     value at each vertex with those of its adjacent neighbors. You may supply
-#     either the number of iterations to run or a desired effective FWHM of the
-#     smoothing process.  If the latter, the underlying program will calculate
-#     the correct number of iterations internally.
+# The surface is smoothed by an iterative process of averaging the
+# value at each vertex with those of its adjacent neighbors. You may supply
+# either the number of iterations to run or a desired effective FWHM of the
+# smoothing process.  If the latter, the underlying program will calculate
+# the correct number of iterations internally.
 # 
-#     See Also
-#     --------
-#     `nipype.interfaces.freesurfer.utils.SmoothTessellation`_ interface for
-#     smoothing a tessellated surface (e.g. in gifti or .stl)
+# See Also
+# --------
+# `nipype.interfaces.freesurfer.utils.SmoothTessellation`_ interface for
+# smoothing a tessellated surface (e.g. in gifti or .stl)
 # 
-#     Examples
-#     --------
-#     >>> import nipype.interfaces.freesurfer as fs
-#     >>> smoother = fs.SurfaceSmooth()
-#     >>> smoother.inputs.in_file = "lh.cope1.mgz"
-#     >>> smoother.inputs.subject_id = "subj_1"
-#     >>> smoother.inputs.hemi = "lh"
-#     >>> smoother.inputs.fwhm = 5
-#     >>> smoother.cmdline # doctest: +ELLIPSIS
-#     'mri_surf2surf --cortex --fwhm 5.0000 --hemi lh --sval lh.cope1.mgz --tval ...lh.cope1_smooth5.mgz --s subj_1'
-#     >>> smoother.run() # doctest: +SKIP
+# Examples
+# --------
+# >>> import nipype.interfaces.freesurfer as fs
+# >>> smoother = fs.SurfaceSmooth()
+# >>> smoother.inputs.in_file = "lh.cope1.mgz"
+# >>> smoother.inputs.subject_id = "subj_1"
+# >>> smoother.inputs.hemi = "lh"
+# >>> smoother.inputs.fwhm = 5
+# >>> smoother.cmdline # doctest: +ELLIPSIS
+# 'mri_surf2surf --cortex --fwhm 5.0000 --hemi lh --sval lh.cope1.mgz --tval ...lh.cope1_smooth5.mgz --s subj_1'
+# >>> smoother.run() # doctest: +SKIP
 # 
-#     
+# 
 task_name: SurfaceSmooth
 nipype_name: SurfaceSmooth
 nipype_module: nipype.interfaces.freesurfer.utils
@@ -47,9 +47,6 @@ inputs:
   # passed to the field in the automatically generated unittests.
     in_file: medimage/mgh-gz
     # type=file|default=<undefined>: source surface file
-    out_file: Path
-    # type=file: smoothed surface file
-    # type=file|default=<undefined>: surface file to write
     subjects_dir: generic/directory
     # type=directory|default=<undefined>: subjects directory
   callable_defaults:
@@ -75,7 +72,7 @@ outputs:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
     out_file: out_file
     # type=file: smoothed surface file
     # type=file|default=<undefined>: surface file to write
@@ -109,7 +106,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -128,14 +125,10 @@ tests:
   # (if not specified, will try to choose a sensible value)
     in_file:
     # type=file|default=<undefined>: source surface file
-    subject_id: '"subj_1"'
-    # type=string|default='': subject id of surface file
     hemi: '"lh"'
     # type=enum|default='lh'|allowed['lh','rh']: hemisphere to operate on
-    fwhm: '5'
-    # type=float|default=0.0: effective FWHM of the smoothing process
   imports: &id001
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   - module: nipype.interfaces.freesurfer as fs
   expected_outputs:
@@ -151,7 +144,7 @@ tests:
   # bool - whether the unittest is expected to fail or not. Set to false
   # when you are satisfied with the edits you have made to this file
 doctests:
-- cmdline: mri_surf2surf --cortex --fwhm 5.0000 --hemi lh --sval lh.cope1.mgz --tval ...lh.cope1_smooth5.mgz --s subj_1
+- cmdline:
   # str - the expected cmdline output
   inputs:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
@@ -159,14 +152,10 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     in_file: '"lh.cope1.mgz"'
     # type=file|default=<undefined>: source surface file
-    subject_id: '"subj_1"'
-    # type=string|default='': subject id of surface file
     hemi: '"lh"'
     # type=enum|default='lh'|allowed['lh','rh']: hemisphere to operate on
-    fwhm: '5'
-    # type=float|default=0.0: effective FWHM of the smoothing process
   imports: *id001
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

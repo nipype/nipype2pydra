@@ -6,30 +6,30 @@
 # Docs
 # ----
 # 
-#     For a single subject, produces an annotation file, in which each
-#     cortical surface vertex is assigned a neuroanatomical label.This
-#     automatic procedure employs data from a previously-prepared atlas
-#     file. An atlas file is created from a training set, capturing region
-#     data manually drawn by neuroanatomists combined with statistics on
-#     variability correlated to geometric information derived from the
-#     cortical model (sulcus and curvature). Besides the atlases provided
-#     with FreeSurfer, new ones can be prepared using mris_ca_train).
+# For a single subject, produces an annotation file, in which each
+# cortical surface vertex is assigned a neuroanatomical label.This
+# automatic procedure employs data from a previously-prepared atlas
+# file. An atlas file is created from a training set, capturing region
+# data manually drawn by neuroanatomists combined with statistics on
+# variability correlated to geometric information derived from the
+# cortical model (sulcus and curvature). Besides the atlases provided
+# with FreeSurfer, new ones can be prepared using mris_ca_train).
 # 
-#     Examples
-#     ========
+# Examples
+# ========
 # 
-#     >>> from nipype.interfaces import freesurfer
-#     >>> ca_label = freesurfer.MRIsCALabel()
-#     >>> ca_label.inputs.subject_id = "test"
-#     >>> ca_label.inputs.hemisphere = "lh"
-#     >>> ca_label.inputs.canonsurf = "lh.pial"
-#     >>> ca_label.inputs.curv = "lh.pial"
-#     >>> ca_label.inputs.sulc = "lh.pial"
-#     >>> ca_label.inputs.classifier = "im1.nii" # in pracice, use .gcs extension
-#     >>> ca_label.inputs.smoothwm = "lh.pial"
-#     >>> ca_label.cmdline
-#     'mris_ca_label test lh lh.pial im1.nii lh.aparc.annot'
-#     
+# >>> from nipype.interfaces import freesurfer
+# >>> ca_label = freesurfer.MRIsCALabel()
+# >>> ca_label.inputs.subject_id = "test"
+# >>> ca_label.inputs.hemisphere = "lh"
+# >>> ca_label.inputs.canonsurf = "lh.pial"
+# >>> ca_label.inputs.curv = "lh.pial"
+# >>> ca_label.inputs.sulc = "lh.pial"
+# >>> ca_label.inputs.classifier = "im1.nii" # in pracice, use .gcs extension
+# >>> ca_label.inputs.smoothwm = "lh.pial"
+# >>> ca_label.cmdline
+# 'mris_ca_label test lh lh.pial im1.nii lh.aparc.annot'
+# 
 task_name: MRIsCALabel
 nipype_name: MRIsCALabel
 nipype_module: nipype.interfaces.freesurfer.preprocess
@@ -46,22 +46,19 @@ inputs:
   # passed to the field in the automatically generated unittests.
     aseg: generic/file
     # type=file|default=<undefined>: Undocumented flag. Autorecon3 uses ../mri/aseg.presurf.mgz as input file
-    canonsurf: medimage-freesurfer/pial
+    canonsurf: fileformats.medimage_freesurfer.Pial
     # type=file|default=<undefined>: Input canonical surface file
-    classifier: medimage/nifti1
+    classifier: generic/file
     # type=file|default=<undefined>: Classifier array input file
-    curv: medimage-freesurfer/pial
+    curv: generic/file
     # type=file|default=<undefined>: implicit input {hemisphere}.curv
     label: generic/file
     # type=file|default=<undefined>: Undocumented flag. Autorecon3 uses ../label/{hemisphere}.cortex.label as input file
-    out_file: Path
-    # type=file: Output volume from MRIsCALabel
-    # type=file|default=<undefined>: Annotated surface output file
-    smoothwm: medimage-freesurfer/pial
+    smoothwm: fileformats.medimage_freesurfer.Pial
     # type=file|default=<undefined>: implicit input {hemisphere}.smoothwm
     subjects_dir: generic/directory
     # type=directory|default=<undefined>: subjects directory
-    sulc: medimage-freesurfer/pial
+    sulc: fileformats.medimage_freesurfer.Pial
     # type=file|default=<undefined>: implicit input {hemisphere}.sulc
   callable_defaults:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
@@ -86,7 +83,7 @@ outputs:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
@@ -127,7 +124,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -146,20 +143,14 @@ tests:
   # (if not specified, will try to choose a sensible value)
     subject_id: '"test"'
     # type=string|default='subject_id': Subject name or ID
-    hemisphere: '"lh"'
-    # type=enum|default='lh'|allowed['lh','rh']: Hemisphere ('lh' or 'rh')
     canonsurf:
     # type=file|default=<undefined>: Input canonical surface file
-    curv:
-    # type=file|default=<undefined>: implicit input {hemisphere}.curv
     sulc:
     # type=file|default=<undefined>: implicit input {hemisphere}.sulc
-    classifier:
-    # type=file|default=<undefined>: Classifier array input file
     smoothwm:
     # type=file|default=<undefined>: implicit input {hemisphere}.smoothwm
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -182,20 +173,14 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     subject_id: '"test"'
     # type=string|default='subject_id': Subject name or ID
-    hemisphere: '"lh"'
-    # type=enum|default='lh'|allowed['lh','rh']: Hemisphere ('lh' or 'rh')
     canonsurf: '"lh.pial"'
     # type=file|default=<undefined>: Input canonical surface file
-    curv: '"lh.pial"'
-    # type=file|default=<undefined>: implicit input {hemisphere}.curv
     sulc: '"lh.pial"'
     # type=file|default=<undefined>: implicit input {hemisphere}.sulc
-    classifier: '"im1.nii" # in pracice, use .gcs extension'
-    # type=file|default=<undefined>: Classifier array input file
     smoothwm: '"lh.pial"'
     # type=file|default=<undefined>: implicit input {hemisphere}.smoothwm
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

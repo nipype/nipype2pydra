@@ -7,30 +7,30 @@
 # ----
 # Use FSL film_gls command to fit a design matrix to voxel timeseries
 # 
-#     Examples
-#     --------
+# Examples
+# --------
 # 
-#     Initialize with no options, assigning them when calling run:
+# Initialize with no options, assigning them when calling run:
 # 
-#     >>> from nipype.interfaces import fsl
-#     >>> fgls = fsl.FILMGLS()
-#     >>> res = fgls.run('in_file', 'design_file', 'thresh', rn='stats') #doctest: +SKIP
+# >>> from nipype.interfaces import fsl
+# >>> fgls = fsl.FILMGLS()
+# >>> res = fgls.run('in_file', 'design_file', 'thresh', rn='stats') #doctest: +SKIP
 # 
-#     Assign options through the ``inputs`` attribute:
+# Assign options through the ``inputs`` attribute:
 # 
-#     >>> fgls = fsl.FILMGLS()
-#     >>> fgls.inputs.in_file = 'functional.nii'
-#     >>> fgls.inputs.design_file = 'design.mat'
-#     >>> fgls.inputs.threshold = 10
-#     >>> fgls.inputs.results_dir = 'stats'
-#     >>> res = fgls.run() #doctest: +SKIP
+# >>> fgls = fsl.FILMGLS()
+# >>> fgls.inputs.in_file = 'functional.nii'
+# >>> fgls.inputs.design_file = 'design.mat'
+# >>> fgls.inputs.threshold = 10
+# >>> fgls.inputs.results_dir = 'stats'
+# >>> res = fgls.run() #doctest: +SKIP
 # 
-#     Specify options when creating an instance:
+# Specify options when creating an instance:
 # 
-#     >>> fgls = fsl.FILMGLS(in_file='functional.nii', design_file='design.mat', threshold=10, results_dir='stats')
-#     >>> res = fgls.run() #doctest: +SKIP
+# >>> fgls = fsl.FILMGLS(in_file='functional.nii', design_file='design.mat', threshold=10, results_dir='stats')
+# >>> res = fgls.run() #doctest: +SKIP
 # 
-#     
+# 
 task_name: FILMGLS
 nipype_name: FILMGLS
 nipype_module: nipype.interfaces.fsl.model
@@ -51,9 +51,6 @@ inputs:
     # type=file|default=<undefined>: contrast file containing F-contrasts
     in_file: generic/file
     # type=file|default=<undefined>: input data file
-    results_dir: Path
-    # type=directory: directory storing model estimation output
-    # type=directory|default='results': directory to store results in
     surface: generic/file
     # type=file|default=<undefined>: input surface for autocorr smoothing in surface-based analyses
     tcon_file: generic/file
@@ -105,7 +102,7 @@ outputs:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
@@ -152,13 +149,13 @@ tests:
     # type=directory: directory storing model estimation output
     # type=directory|default='results': directory to store results in
     output_type:
-    # type=enum|default='NIFTI'|allowed['NIFTI','NIFTI_GZ','NIFTI_PAIR','NIFTI_PAIR_GZ']: FSL output type
+    # type=enum|default='NIFTI'|allowed['GIFTI','NIFTI','NIFTI_GZ','NIFTI_PAIR','NIFTI_PAIR_GZ']: FSL output type
     args:
     # type=str|default='': Additional parameters to the command
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically

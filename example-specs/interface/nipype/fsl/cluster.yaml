@@ -7,18 +7,18 @@
 # ----
 # Uses FSL cluster to perform clustering on statistical output
 # 
-#     Examples
-#     --------
+# Examples
+# --------
 # 
-#     >>> cl = Cluster()
-#     >>> cl.inputs.threshold = 2.3
-#     >>> cl.inputs.in_file = 'zstat1.nii.gz'
-#     >>> cl.inputs.out_localmax_txt_file = 'stats.txt'
-#     >>> cl.inputs.use_mm = True
-#     >>> cl.cmdline
-#     'cluster --in=zstat1.nii.gz --olmax=stats.txt --thresh=2.3000000000 --mm'
+# >>> cl = Cluster()
+# >>> cl.inputs.threshold = 2.3
+# >>> cl.inputs.in_file = 'zstat1.nii.gz'
+# >>> cl.inputs.out_localmax_txt_file = 'stats.txt'
+# >>> cl.inputs.use_mm = True
+# >>> cl.cmdline
+# 'cluster --in=zstat1.nii.gz --olmax=stats.txt --thresh=2.3000000000 --mm'
 # 
-#     
+# 
 task_name: Cluster
 nipype_name: Cluster
 nipype_module: nipype.interfaces.fsl.model
@@ -35,12 +35,12 @@ inputs:
   # passed to the field in the automatically generated unittests.
     cope_file: generic/file
     # type=file|default=<undefined>: cope volume
-    in_file: medimage/nifti-gz
+    in_file: generic/file
     # type=file|default=<undefined>: input volume
     std_space_file: generic/file
     # type=file|default=<undefined>: filename for standard-space volume
     warpfield_file: generic/file
-    # type=file|default=<undefined>: file contining warpfield
+    # type=file|default=<undefined>: file containing warpfield
     xfm_file: generic/file
     # type=file|default=<undefined>: filename for Linear: input->standard-space transform. Non-linear: input->highres transform
   callable_defaults:
@@ -79,7 +79,7 @@ outputs:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
@@ -135,15 +135,15 @@ tests:
     num_maxima:
     # type=int|default=0: no of local maxima to report
     warpfield_file:
-    # type=file|default=<undefined>: file contining warpfield
+    # type=file|default=<undefined>: file containing warpfield
     output_type:
-    # type=enum|default='NIFTI'|allowed['NIFTI','NIFTI_GZ','NIFTI_PAIR','NIFTI_PAIR_GZ']: FSL output type
+    # type=enum|default='NIFTI'|allowed['GIFTI','NIFTI','NIFTI_GZ','NIFTI_PAIR','NIFTI_PAIR_GZ']: FSL output type
     args:
     # type=str|default='': Additional parameters to the command
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -162,14 +162,10 @@ tests:
   # (if not specified, will try to choose a sensible value)
     threshold: '2.3'
     # type=float|default=0.0: threshold for input volume
-    in_file:
-    # type=file|default=<undefined>: input volume
     out_localmax_txt_file: '"stats.txt"'
     # type=traitcompound|default=None: local maxima text file
-    use_mm: 'True'
-    # type=bool|default=False: use mm, not voxel, coordinates
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -192,14 +188,10 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     threshold: '2.3'
     # type=float|default=0.0: threshold for input volume
-    in_file: '"zstat1.nii.gz"'
-    # type=file|default=<undefined>: input volume
     out_localmax_txt_file: '"stats.txt"'
     # type=traitcompound|default=None: local maxima text file
-    use_mm: 'True'
-    # type=bool|default=False: use mm, not voxel, coordinates
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

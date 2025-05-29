@@ -7,19 +7,19 @@
 # ----
 # This program registers a surface to an average surface template.
 # 
-#     Examples
-#     ========
-#     >>> from nipype.interfaces.freesurfer import Register
-#     >>> register = Register()
-#     >>> register.inputs.in_surf = 'lh.pial'
-#     >>> register.inputs.in_smoothwm = 'lh.pial'
-#     >>> register.inputs.in_sulc = 'lh.pial'
-#     >>> register.inputs.target = 'aseg.mgz'
-#     >>> register.inputs.out_file = 'lh.pial.reg'
-#     >>> register.inputs.curv = True
-#     >>> register.cmdline
-#     'mris_register -curv lh.pial aseg.mgz lh.pial.reg'
-#     
+# Examples
+# ========
+# >>> from nipype.interfaces.freesurfer import Register
+# >>> register = Register()
+# >>> register.inputs.in_surf = 'lh.pial'
+# >>> register.inputs.in_smoothwm = 'lh.pial'
+# >>> register.inputs.in_sulc = 'lh.pial'
+# >>> register.inputs.target = 'aseg.mgz'
+# >>> register.inputs.out_file = 'lh.pial.reg'
+# >>> register.inputs.curv = True
+# >>> register.cmdline
+# 'mris_register -curv lh.pial aseg.mgz lh.pial.reg'
+# 
 task_name: Register
 nipype_name: Register
 nipype_module: nipype.interfaces.freesurfer.registration
@@ -34,18 +34,15 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    in_smoothwm: medimage-freesurfer/pial
+    in_smoothwm: generic/file
     # type=file|default=<undefined>: Undocumented input file ${SUBJECTS_DIR}/surf/{hemisphere}.smoothwm 
-    in_sulc: medimage-freesurfer/pial
+    in_sulc: fileformats.medimage_freesurfer.Pial
     # type=file|default=<undefined>: Undocumented mandatory input file ${SUBJECTS_DIR}/surf/{hemisphere}.sulc 
-    in_surf: medimage-freesurfer/pial
+    in_surf: fileformats.medimage_freesurfer.Pial
     # type=file|default=<undefined>: Surface to register, often {hemi}.sphere
-    out_file: Path
-    # type=file: Output surface file to capture registration
-    # type=file|default=<undefined>: Output surface file to capture registration
     subjects_dir: generic/directory
     # type=directory|default=<undefined>: subjects directory
-    target: medimage/mgh-gz
+    target: generic/file
     # type=file|default=<undefined>: The data to register to. In normal recon-all usage, this is a template file for average surface.
   callable_defaults:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
@@ -63,14 +60,14 @@ outputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    out_file: medimage-freesurfer/reg
+    out_file: fileformats.medimage_freesurfer.Reg
     # type=file: Output surface file to capture registration
     # type=file|default=<undefined>: Output surface file to capture registration
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
     out_file: '"lh.pial.reg"'
     # type=file: Output surface file to capture registration
     # type=file|default=<undefined>: Output surface file to capture registration
@@ -100,7 +97,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -119,19 +116,13 @@ tests:
   # (if not specified, will try to choose a sensible value)
     in_surf:
     # type=file|default=<undefined>: Surface to register, often {hemi}.sphere
-    in_smoothwm:
-    # type=file|default=<undefined>: Undocumented input file ${SUBJECTS_DIR}/surf/{hemisphere}.smoothwm 
     in_sulc:
     # type=file|default=<undefined>: Undocumented mandatory input file ${SUBJECTS_DIR}/surf/{hemisphere}.sulc 
-    target:
-    # type=file|default=<undefined>: The data to register to. In normal recon-all usage, this is a template file for average surface.
     out_file: '"lh.pial.reg"'
     # type=file: Output surface file to capture registration
     # type=file|default=<undefined>: Output surface file to capture registration
-    curv: 'True'
-    # type=bool|default=False: Use smoothwm curvature for final alignment
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -146,7 +137,7 @@ tests:
   # bool - whether the unittest is expected to fail or not. Set to false
   # when you are satisfied with the edits you have made to this file
 doctests:
-- cmdline: mris_register -curv lh.pial aseg.mgz lh.pial.reg
+- cmdline:
   # str - the expected cmdline output
   inputs:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
@@ -154,19 +145,13 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     in_surf: '"lh.pial"'
     # type=file|default=<undefined>: Surface to register, often {hemi}.sphere
-    in_smoothwm: '"lh.pial"'
-    # type=file|default=<undefined>: Undocumented input file ${SUBJECTS_DIR}/surf/{hemisphere}.smoothwm 
     in_sulc: '"lh.pial"'
     # type=file|default=<undefined>: Undocumented mandatory input file ${SUBJECTS_DIR}/surf/{hemisphere}.sulc 
-    target: '"aseg.mgz"'
-    # type=file|default=<undefined>: The data to register to. In normal recon-all usage, this is a template file for average surface.
     out_file: '"lh.pial.reg"'
     # type=file: Output surface file to capture registration
     # type=file|default=<undefined>: Output surface file to capture registration
-    curv: 'True'
-    # type=bool|default=False: Use smoothwm curvature for final alignment
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

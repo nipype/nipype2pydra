@@ -6,24 +6,24 @@
 # Docs
 # ----
 # 
-#     Uses Freesurfer's mri_pretess to prepare volumes to be tessellated.
+# Uses Freesurfer's mri_pretess to prepare volumes to be tessellated.
 # 
-#     Changes white matter (WM) segmentation so that the neighbors of all
-#     voxels labeled as WM have a face in common - no edges or corners
-#     allowed.
+# Changes white matter (WM) segmentation so that the neighbors of all
+# voxels labeled as WM have a face in common - no edges or corners
+# allowed.
 # 
-#     Example
-#     -------
-#     >>> import nipype.interfaces.freesurfer as fs
-#     >>> pretess = fs.MRIPretess()
-#     >>> pretess.inputs.in_filled = 'wm.mgz'
-#     >>> pretess.inputs.in_norm = 'norm.mgz'
-#     >>> pretess.inputs.nocorners = True
-#     >>> pretess.cmdline
-#     'mri_pretess -nocorners wm.mgz wm norm.mgz wm_pretesswm.mgz'
-#     >>> pretess.run() # doctest: +SKIP
+# Example
+# -------
+# >>> import nipype.interfaces.freesurfer as fs
+# >>> pretess = fs.MRIPretess()
+# >>> pretess.inputs.in_filled = 'wm.mgz'
+# >>> pretess.inputs.in_norm = 'norm.mgz'
+# >>> pretess.inputs.nocorners = True
+# >>> pretess.cmdline
+# 'mri_pretess -nocorners wm.mgz wm norm.mgz wm_pretesswm.mgz'
+# >>> pretess.run() # doctest: +SKIP
 # 
-#     
+# 
 task_name: MRIPretess
 nipype_name: MRIPretess
 nipype_module: nipype.interfaces.freesurfer.utils
@@ -40,11 +40,8 @@ inputs:
   # passed to the field in the automatically generated unittests.
     in_filled: medimage/mgh-gz
     # type=file|default=<undefined>: filled volume, usually wm.mgz
-    in_norm: medimage/mgh-gz
+    in_norm: generic/file
     # type=file|default=<undefined>: the normalized, brain-extracted T1w image. Usually norm.mgz
-    out_file: Path
-    # type=file: output file after mri_pretess
-    # type=file|default=<undefined>: the output file after mri_pretess.
     subjects_dir: generic/directory
     # type=directory|default=<undefined>: subjects directory
   callable_defaults:
@@ -70,7 +67,7 @@ outputs:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
@@ -99,7 +96,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -118,12 +115,10 @@ tests:
   # (if not specified, will try to choose a sensible value)
     in_filled:
     # type=file|default=<undefined>: filled volume, usually wm.mgz
-    in_norm:
-    # type=file|default=<undefined>: the normalized, brain-extracted T1w image. Usually norm.mgz
     nocorners: 'True'
     # type=bool|default=False: do not remove corner configurations in addition to edge ones.
   imports: &id001
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   - module: nipype.interfaces.freesurfer as fs
   expected_outputs:
@@ -139,7 +134,7 @@ tests:
   # bool - whether the unittest is expected to fail or not. Set to false
   # when you are satisfied with the edits you have made to this file
 doctests:
-- cmdline: mri_pretess -nocorners wm.mgz wm norm.mgz wm_pretesswm.mgz
+- cmdline:
   # str - the expected cmdline output
   inputs:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
@@ -147,12 +142,10 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     in_filled: '"wm.mgz"'
     # type=file|default=<undefined>: filled volume, usually wm.mgz
-    in_norm: '"norm.mgz"'
-    # type=file|default=<undefined>: the normalized, brain-extracted T1w image. Usually norm.mgz
     nocorners: 'True'
     # type=bool|default=False: do not remove corner configurations in addition to edge ones.
   imports: *id001
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

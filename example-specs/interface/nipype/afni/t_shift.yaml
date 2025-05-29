@@ -6,93 +6,93 @@
 # Docs
 # ----
 # Shifts voxel time series from input so that separate slices are aligned
-#     to the same temporal origin.
+# to the same temporal origin.
 # 
-#     For complete details, see the `3dTshift Documentation.
-#     <https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dTshift.html>`_
+# For complete details, see the `3dTshift Documentation.
+# <https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dTshift.html>`_
 # 
-#     Examples
-#     --------
-#     Slice timing details may be specified explicitly via the ``slice_timing``
-#     input:
+# Examples
+# --------
+# Slice timing details may be specified explicitly via the ``slice_timing``
+# input:
 # 
-#     >>> from nipype.interfaces import afni
-#     >>> TR = 2.5
-#     >>> tshift = afni.TShift()
-#     >>> tshift.inputs.in_file = 'functional.nii'
-#     >>> tshift.inputs.tzero = 0.0
-#     >>> tshift.inputs.tr = '%.1fs' % TR
-#     >>> tshift.inputs.slice_timing = list(np.arange(40) / TR)
-#     >>> tshift.cmdline
-#     '3dTshift -prefix functional_tshift -tpattern @slice_timing.1D -TR 2.5s -tzero 0.0 functional.nii'
+# >>> from nipype.interfaces import afni
+# >>> TR = 2.5
+# >>> tshift = afni.TShift()
+# >>> tshift.inputs.in_file = 'functional.nii'
+# >>> tshift.inputs.tzero = 0.0
+# >>> tshift.inputs.tr = '%.1fs' % TR
+# >>> tshift.inputs.slice_timing = list(np.arange(40) / TR)
+# >>> tshift.cmdline
+# '3dTshift -prefix functional_tshift -tpattern @slice_timing.1D -TR 2.5s -tzero 0.0 functional.nii'
 # 
-#     When the ``slice_timing`` input is used, the ``timing_file`` output is populated,
-#     in this case with the generated file.
+# When the ``slice_timing`` input is used, the ``timing_file`` output is populated,
+# in this case with the generated file.
 # 
-#     >>> tshift._list_outputs()['timing_file']  # doctest: +ELLIPSIS
-#     '.../slice_timing.1D'
+# >>> tshift._list_outputs()['timing_file']  # doctest: +ELLIPSIS
+# '.../slice_timing.1D'
 # 
-#     >>> np.loadtxt(tshift._list_outputs()['timing_file']).tolist()[:5]
-#     [0.0, 0.4, 0.8, 1.2, 1.6]
+# >>> np.loadtxt(tshift._list_outputs()['timing_file']).tolist()[:5]
+# [0.0, 0.4, 0.8, 1.2, 1.6]
 # 
-#     If ``slice_encoding_direction`` is set to ``'k-'``, the slice timing is reversed:
+# If ``slice_encoding_direction`` is set to ``'k-'``, the slice timing is reversed:
 # 
-#     >>> tshift.inputs.slice_encoding_direction = 'k-'
-#     >>> tshift.cmdline
-#     '3dTshift -prefix functional_tshift -tpattern @slice_timing.1D -TR 2.5s -tzero 0.0 functional.nii'
-#     >>> np.loadtxt(tshift._list_outputs()['timing_file']).tolist()[:5]
-#     [15.6, 15.2, 14.8, 14.4, 14.0]
+# >>> tshift.inputs.slice_encoding_direction = 'k-'
+# >>> tshift.cmdline
+# '3dTshift -prefix functional_tshift -tpattern @slice_timing.1D -TR 2.5s -tzero 0.0 functional.nii'
+# >>> np.loadtxt(tshift._list_outputs()['timing_file']).tolist()[:5]
+# [15.6, 15.2, 14.8, 14.4, 14.0]
 # 
-#     This method creates a ``slice_timing.1D`` file to be passed to ``3dTshift``.
-#     A pre-existing slice-timing file may be used in the same way:
+# This method creates a ``slice_timing.1D`` file to be passed to ``3dTshift``.
+# A pre-existing slice-timing file may be used in the same way:
 # 
-#     >>> tshift = afni.TShift()
-#     >>> tshift.inputs.in_file = 'functional.nii'
-#     >>> tshift.inputs.tzero = 0.0
-#     >>> tshift.inputs.tr = '%.1fs' % TR
-#     >>> tshift.inputs.slice_timing = 'slice_timing.1D'
-#     >>> tshift.cmdline
-#     '3dTshift -prefix functional_tshift -tpattern @slice_timing.1D -TR 2.5s -tzero 0.0 functional.nii'
+# >>> tshift = afni.TShift()
+# >>> tshift.inputs.in_file = 'functional.nii'
+# >>> tshift.inputs.tzero = 0.0
+# >>> tshift.inputs.tr = '%.1fs' % TR
+# >>> tshift.inputs.slice_timing = 'slice_timing.1D'
+# >>> tshift.cmdline
+# '3dTshift -prefix functional_tshift -tpattern @slice_timing.1D -TR 2.5s -tzero 0.0 functional.nii'
 # 
-#     When a pre-existing file is provided, ``timing_file`` is simply passed through.
+# When a pre-existing file is provided, ``timing_file`` is simply passed through.
 # 
-#     >>> tshift._list_outputs()['timing_file']  # doctest: +ELLIPSIS
-#     '.../slice_timing.1D'
+# >>> tshift._list_outputs()['timing_file']  # doctest: +ELLIPSIS
+# '.../slice_timing.1D'
 # 
-#     Alternatively, pre-specified slice timing patterns may be specified with the
-#     ``tpattern`` input.
-#     For example, to specify an alternating, ascending slice timing pattern:
+# Alternatively, pre-specified slice timing patterns may be specified with the
+# ``tpattern`` input.
+# For example, to specify an alternating, ascending slice timing pattern:
 # 
-#     >>> tshift = afni.TShift()
-#     >>> tshift.inputs.in_file = 'functional.nii'
-#     >>> tshift.inputs.tzero = 0.0
-#     >>> tshift.inputs.tr = '%.1fs' % TR
-#     >>> tshift.inputs.tpattern = 'alt+z'
-#     >>> tshift.cmdline
-#     '3dTshift -prefix functional_tshift -tpattern alt+z -TR 2.5s -tzero 0.0 functional.nii'
+# >>> tshift = afni.TShift()
+# >>> tshift.inputs.in_file = 'functional.nii'
+# >>> tshift.inputs.tzero = 0.0
+# >>> tshift.inputs.tr = '%.1fs' % TR
+# >>> tshift.inputs.tpattern = 'alt+z'
+# >>> tshift.cmdline
+# '3dTshift -prefix functional_tshift -tpattern alt+z -TR 2.5s -tzero 0.0 functional.nii'
 # 
-#     For backwards compatibility, ``tpattern`` may also take filenames prefixed
-#     with ``@``.
-#     However, in this case, filenames are not validated, so this usage will be
-#     deprecated in future versions of Nipype.
+# For backwards compatibility, ``tpattern`` may also take filenames prefixed
+# with ``@``.
+# However, in this case, filenames are not validated, so this usage will be
+# deprecated in future versions of Nipype.
 # 
-#     >>> tshift = afni.TShift()
-#     >>> tshift.inputs.in_file = 'functional.nii'
-#     >>> tshift.inputs.tzero = 0.0
-#     >>> tshift.inputs.tr = '%.1fs' % TR
-#     >>> tshift.inputs.tpattern = '@slice_timing.1D'
-#     >>> tshift.cmdline
-#     '3dTshift -prefix functional_tshift -tpattern @slice_timing.1D -TR 2.5s -tzero 0.0 functional.nii'
+# >>> tshift = afni.TShift()
+# >>> tshift.inputs.in_file = 'functional.nii'
+# >>> tshift.inputs.tzero = 0.0
+# >>> tshift.inputs.tr = '%.1fs' % TR
+# >>> tshift.inputs.tpattern = '@slice_timing.1D'
+# >>> tshift.cmdline
+# '3dTshift -prefix functional_tshift -tpattern @slice_timing.1D -TR 2.5s -tzero 0.0 functional.nii'
 # 
-#     In these cases, ``timing_file`` is undefined.
+# In these cases, ``timing_file`` is undefined.
 # 
-#     >>> tshift._list_outputs()['timing_file']  # doctest: +ELLIPSIS
-#     <undefined>
+# >>> tshift._list_outputs()['timing_file']  # doctest: +ELLIPSIS
+# <undefined>
 # 
-#     In any configuration, the interface may be run as usual:
+# In any configuration, the interface may be run as usual:
 # 
-#     >>> res = tshift.run()  # doctest: +SKIP
-#     
+# >>> res = tshift.run()  # doctest: +SKIP
+# 
 task_name: TShift
 nipype_name: TShift
 nipype_module: nipype.interfaces.afni.preprocess
@@ -109,9 +109,6 @@ inputs:
   # passed to the field in the automatically generated unittests.
     in_file: medimage/nifti1
     # type=file|default=<undefined>: input file to 3dTshift
-    out_file: Path
-    # type=file: output file
-    # type=file|default=<undefined>: output image file name
   callable_defaults:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set as the `default` method of input fields
@@ -137,7 +134,7 @@ outputs:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
@@ -178,7 +175,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -197,14 +194,10 @@ tests:
   # (if not specified, will try to choose a sensible value)
     in_file:
     # type=file|default=<undefined>: input file to 3dTshift
-    tzero: '0.0'
-    # type=float|default=0.0: align each slice to given time offset
     tr: '"%.1fs" % TR'
     # type=str|default='': manually set the TR. You can attach suffix "s" for seconds or "ms" for milliseconds.
-    slice_timing: list(np.arange(40) / TR)
-    # type=traitcompound|default=None: time offsets from the volume acquisition onset for each slice
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -224,7 +217,7 @@ tests:
     slice_encoding_direction: '"k-"'
     # type=enum|default='k'|allowed['k','k-']: Direction in which slice_timing is specified (default: k). If negative,slice_timing is defined in reverse order, that is, the first entry corresponds to the slice with the largest index, and the final entry corresponds to slice index zero. Only in effect when slice_timing is passed as list, not when it is passed as file.
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -243,14 +236,10 @@ tests:
   # (if not specified, will try to choose a sensible value)
     in_file:
     # type=file|default=<undefined>: input file to 3dTshift
-    tzero: '0.0'
-    # type=float|default=0.0: align each slice to given time offset
     tr: '"%.1fs" % TR'
     # type=str|default='': manually set the TR. You can attach suffix "s" for seconds or "ms" for milliseconds.
-    slice_timing: '"slice_timing.1D"'
-    # type=traitcompound|default=None: time offsets from the volume acquisition onset for each slice
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -269,14 +258,10 @@ tests:
   # (if not specified, will try to choose a sensible value)
     in_file:
     # type=file|default=<undefined>: input file to 3dTshift
-    tzero: '0.0'
-    # type=float|default=0.0: align each slice to given time offset
     tr: '"%.1fs" % TR'
     # type=str|default='': manually set the TR. You can attach suffix "s" for seconds or "ms" for milliseconds.
-    tpattern: '"alt+z"'
-    # type=traitcompound|default=None: use specified slice time pattern rather than one in header
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -295,14 +280,10 @@ tests:
   # (if not specified, will try to choose a sensible value)
     in_file:
     # type=file|default=<undefined>: input file to 3dTshift
-    tzero: '0.0'
-    # type=float|default=0.0: align each slice to given time offset
     tr: '"%.1fs" % TR'
     # type=str|default='': manually set the TR. You can attach suffix "s" for seconds or "ms" for milliseconds.
-    tpattern: '"@slice_timing.1D"'
-    # type=traitcompound|default=None: use specified slice time pattern rather than one in header
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -325,14 +306,10 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     in_file: '"functional.nii"'
     # type=file|default=<undefined>: input file to 3dTshift
-    tzero: '0.0'
-    # type=float|default=0.0: align each slice to given time offset
     tr: '"%.1fs" % TR'
     # type=str|default='': manually set the TR. You can attach suffix "s" for seconds or "ms" for milliseconds.
-    slice_timing: list(np.arange(40) / TR)
-    # type=traitcompound|default=None: time offsets from the volume acquisition onset for each slice
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS
@@ -345,7 +322,7 @@ doctests:
     slice_encoding_direction: '"k-"'
     # type=enum|default='k'|allowed['k','k-']: Direction in which slice_timing is specified (default: k). If negative,slice_timing is defined in reverse order, that is, the first entry corresponds to the slice with the largest index, and the final entry corresponds to slice index zero. Only in effect when slice_timing is passed as list, not when it is passed as file.
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS
@@ -357,14 +334,10 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     in_file: '"functional.nii"'
     # type=file|default=<undefined>: input file to 3dTshift
-    tzero: '0.0'
-    # type=float|default=0.0: align each slice to given time offset
     tr: '"%.1fs" % TR'
     # type=str|default='': manually set the TR. You can attach suffix "s" for seconds or "ms" for milliseconds.
-    slice_timing: '"slice_timing.1D"'
-    # type=traitcompound|default=None: time offsets from the volume acquisition onset for each slice
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS
@@ -376,14 +349,10 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     in_file: '"functional.nii"'
     # type=file|default=<undefined>: input file to 3dTshift
-    tzero: '0.0'
-    # type=float|default=0.0: align each slice to given time offset
     tr: '"%.1fs" % TR'
     # type=str|default='': manually set the TR. You can attach suffix "s" for seconds or "ms" for milliseconds.
-    tpattern: '"alt+z"'
-    # type=traitcompound|default=None: use specified slice time pattern rather than one in header
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS
@@ -395,14 +364,10 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     in_file: '"functional.nii"'
     # type=file|default=<undefined>: input file to 3dTshift
-    tzero: '0.0'
-    # type=float|default=0.0: align each slice to given time offset
     tr: '"%.1fs" % TR'
     # type=str|default='': manually set the TR. You can attach suffix "s" for seconds or "ms" for milliseconds.
-    tpattern: '"@slice_timing.1D"'
-    # type=traitcompound|default=None: use specified slice time pattern rather than one in header
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

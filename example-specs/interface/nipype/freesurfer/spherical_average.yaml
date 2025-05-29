@@ -6,25 +6,25 @@
 # Docs
 # ----
 # 
-#     This program will add a template into an average surface.
+# This program will add a template into an average surface.
 # 
-#     Examples
-#     --------
-#     >>> from nipype.interfaces.freesurfer import SphericalAverage
-#     >>> sphericalavg = SphericalAverage()
-#     >>> sphericalavg.inputs.out_file = 'test.out'
-#     >>> sphericalavg.inputs.in_average = '.'
-#     >>> sphericalavg.inputs.in_surf = 'lh.pial'
-#     >>> sphericalavg.inputs.hemisphere = 'lh'
-#     >>> sphericalavg.inputs.fname = 'lh.entorhinal'
-#     >>> sphericalavg.inputs.which = 'label'
-#     >>> sphericalavg.inputs.subject_id = '10335'
-#     >>> sphericalavg.inputs.erode = 2
-#     >>> sphericalavg.inputs.threshold = 5
-#     >>> sphericalavg.cmdline
-#     'mris_spherical_average -erode 2 -o 10335 -t 5.0 label lh.entorhinal lh pial . test.out'
+# Examples
+# --------
+# >>> from nipype.interfaces.freesurfer import SphericalAverage
+# >>> sphericalavg = SphericalAverage()
+# >>> sphericalavg.inputs.out_file = 'test.out'
+# >>> sphericalavg.inputs.in_average = '.'
+# >>> sphericalavg.inputs.in_surf = 'lh.pial'
+# >>> sphericalavg.inputs.hemisphere = 'lh'
+# >>> sphericalavg.inputs.fname = 'lh.entorhinal'
+# >>> sphericalavg.inputs.which = 'label'
+# >>> sphericalavg.inputs.subject_id = '10335'
+# >>> sphericalavg.inputs.erode = 2
+# >>> sphericalavg.inputs.threshold = 5
+# >>> sphericalavg.cmdline
+# 'mris_spherical_average -erode 2 -o 10335 -t 5.0 label lh.entorhinal lh pial . test.out'
 # 
-#     
+# 
 task_name: SphericalAverage
 nipype_name: SphericalAverage
 nipype_module: nipype.interfaces.freesurfer.model
@@ -39,15 +39,10 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    in_average: Path
-    # type=directory|default=<undefined>: Average subject
     in_orig: generic/file
     # type=file|default=<undefined>: Original surface filename
-    in_surf: medimage-freesurfer/pial
+    in_surf: fileformats.medimage_freesurfer.Pial
     # type=file|default=<undefined>: Input surface file
-    out_file: Path
-    # type=file: Output label
-    # type=file|default=<undefined>: Output filename
     subjects_dir: generic/directory
     # type=directory|default=<undefined>: subjects directory
   callable_defaults:
@@ -68,14 +63,14 @@ outputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    out_file: medimage-freesurfer/out
+    out_file: fileformats.medimage_freesurfer.Out
     # type=file: Output label
     # type=file|default=<undefined>: Output filename
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
     out_file: '"test.out"'
     # type=file: Output label
     # type=file|default=<undefined>: Output filename
@@ -113,7 +108,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -133,24 +128,16 @@ tests:
     out_file: '"test.out"'
     # type=file: Output label
     # type=file|default=<undefined>: Output filename
-    in_average: '"."'
-    # type=directory|default=<undefined>: Average subject
     in_surf:
     # type=file|default=<undefined>: Input surface file
-    hemisphere: '"lh"'
-    # type=enum|default='lh'|allowed['lh','rh']: Input hemisphere
     fname: '"lh.entorhinal"'
     # type=string|default='': Filename from the average subject directory. Example: to use rh.entorhinal.label as the input label filename, set fname to 'rh.entorhinal' and which to 'label'. The program will then search for ``<in_average>/label/rh.entorhinal.label``
-    which: '"label"'
-    # type=enum|default='coords'|allowed['area','coords','curv','label','vals']: No documentation
     subject_id: '"10335"'
     # type=string|default='': Output subject id
-    erode: '2'
-    # type=int|default=0: Undocumented
     threshold: '5'
     # type=float|default=0.0: Undocumented
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -165,7 +152,7 @@ tests:
   # bool - whether the unittest is expected to fail or not. Set to false
   # when you are satisfied with the edits you have made to this file
 doctests:
-- cmdline: mris_spherical_average -erode 2 -o 10335 -t 5.0 label lh.entorhinal lh pial . test.out
+- cmdline:
   # str - the expected cmdline output
   inputs:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
@@ -174,24 +161,16 @@ doctests:
     out_file: '"test.out"'
     # type=file: Output label
     # type=file|default=<undefined>: Output filename
-    in_average: '"."'
-    # type=directory|default=<undefined>: Average subject
     in_surf: '"lh.pial"'
     # type=file|default=<undefined>: Input surface file
-    hemisphere: '"lh"'
-    # type=enum|default='lh'|allowed['lh','rh']: Input hemisphere
     fname: '"lh.entorhinal"'
     # type=string|default='': Filename from the average subject directory. Example: to use rh.entorhinal.label as the input label filename, set fname to 'rh.entorhinal' and which to 'label'. The program will then search for ``<in_average>/label/rh.entorhinal.label``
-    which: '"label"'
-    # type=enum|default='coords'|allowed['area','coords','curv','label','vals']: No documentation
     subject_id: '"10335"'
     # type=string|default='': Output subject id
-    erode: '2'
-    # type=int|default=0: Undocumented
     threshold: '5'
     # type=float|default=0.0: Undocumented
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

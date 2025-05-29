@@ -6,23 +6,23 @@
 # Docs
 # ----
 # Shifts voxel time series from input so that separate slices are aligned
-#     to the same temporal origin.
+# to the same temporal origin.
 # 
-#     For complete details, see the `3dTnorm Documentation.
-#     <https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dTnorm.html>`_
+# For complete details, see the `3dTnorm Documentation.
+# <https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dTnorm.html>`_
 # 
-#     Examples
-#     --------
-#     >>> from nipype.interfaces import afni
-#     >>> tnorm = afni.TNorm()
-#     >>> tnorm.inputs.in_file = 'functional.nii'
-#     >>> tnorm.inputs.norm2 = True
-#     >>> tnorm.inputs.out_file = 'rm.errts.unit errts+tlrc'
-#     >>> tnorm.cmdline
-#     '3dTnorm -norm2 -prefix rm.errts.unit errts+tlrc functional.nii'
-#     >>> res = tshift.run()  # doctest: +SKIP
+# Examples
+# --------
+# >>> from nipype.interfaces import afni
+# >>> tnorm = afni.TNorm()
+# >>> tnorm.inputs.in_file = 'functional.nii'
+# >>> tnorm.inputs.norm2 = True
+# >>> tnorm.inputs.out_file = 'rm.errts.unit errts+tlrc'
+# >>> tnorm.cmdline
+# '3dTnorm -norm2 -prefix rm.errts.unit errts+tlrc functional.nii'
+# >>> res = tshift.run()  # doctest: +SKIP
 # 
-#     
+# 
 task_name: TNorm
 nipype_name: TNorm
 nipype_module: nipype.interfaces.afni.preprocess
@@ -39,9 +39,6 @@ inputs:
   # passed to the field in the automatically generated unittests.
     in_file: medimage/nifti1
     # type=file|default=<undefined>: input file to 3dTNorm
-    out_file: Path
-    # type=file: output file
-    # type=file|default=<undefined>: output image file name
   callable_defaults:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set as the `default` method of input fields
@@ -65,7 +62,7 @@ outputs:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
@@ -98,7 +95,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -117,13 +114,11 @@ tests:
   # (if not specified, will try to choose a sensible value)
     in_file:
     # type=file|default=<undefined>: input file to 3dTNorm
-    norm2: 'True'
-    # type=bool|default=False: L2 normalize (sum of squares = 1) [DEFAULT]
     out_file: '"rm.errts.unit errts+tlrc"'
     # type=file: output file
     # type=file|default=<undefined>: output image file name
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -138,7 +133,7 @@ tests:
   # bool - whether the unittest is expected to fail or not. Set to false
   # when you are satisfied with the edits you have made to this file
 doctests:
-- cmdline: 3dTnorm -norm2 -prefix rm.errts.unit errts+tlrc functional.nii
+- cmdline:
   # str - the expected cmdline output
   inputs:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
@@ -146,13 +141,11 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     in_file: '"functional.nii"'
     # type=file|default=<undefined>: input file to 3dTNorm
-    norm2: 'True'
-    # type=bool|default=False: L2 normalize (sum of squares = 1) [DEFAULT]
     out_file: '"rm.errts.unit errts+tlrc"'
     # type=file: output file
     # type=file|default=<undefined>: output image file name
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

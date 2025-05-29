@@ -6,29 +6,29 @@
 # Docs
 # ----
 # 
-#     Interface for FSL eddy_quad, a tool for generating single subject reports
-#     and storing the quality assessment indices for each subject.
-#     `User guide <https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/eddyqc/UsersGuide>`__
+# Interface for FSL eddy_quad, a tool for generating single subject reports
+# and storing the quality assessment indices for each subject.
+# `User guide <https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/eddyqc/UsersGuide>`__
 # 
-#     Examples
-#     --------
+# Examples
+# --------
 # 
-#     >>> from nipype.interfaces.fsl import EddyQuad
-#     >>> quad = EddyQuad()
-#     >>> quad.inputs.base_name  = 'eddy_corrected'
-#     >>> quad.inputs.idx_file   = 'epi_index.txt'
-#     >>> quad.inputs.param_file = 'epi_acqp.txt'
-#     >>> quad.inputs.mask_file  = 'epi_mask.nii'
-#     >>> quad.inputs.bval_file  = 'bvals.scheme'
-#     >>> quad.inputs.bvec_file  = 'bvecs.scheme'
-#     >>> quad.inputs.output_dir = 'eddy_corrected.qc'
-#     >>> quad.inputs.field      = 'fieldmap_phase_fslprepared.nii'
-#     >>> quad.inputs.verbose    = True
-#     >>> quad.cmdline
-#     'eddy_quad eddy_corrected --bvals bvals.scheme --bvecs bvecs.scheme --field fieldmap_phase_fslprepared.nii --eddyIdx epi_index.txt --mask epi_mask.nii --output-dir eddy_corrected.qc --eddyParams epi_acqp.txt --verbose'
-#     >>> res = quad.run() # doctest: +SKIP
+# >>> from nipype.interfaces.fsl import EddyQuad
+# >>> quad = EddyQuad()
+# >>> quad.inputs.base_name  = 'eddy_corrected'
+# >>> quad.inputs.idx_file   = 'epi_index.txt'
+# >>> quad.inputs.param_file = 'epi_acqp.txt'
+# >>> quad.inputs.mask_file  = 'epi_mask.nii'
+# >>> quad.inputs.bval_file  = 'bvals.scheme'
+# >>> quad.inputs.bvec_file  = 'bvecs.scheme'
+# >>> quad.inputs.output_dir = 'eddy_corrected.qc'
+# >>> quad.inputs.field      = 'fieldmap_phase_fslprepared.nii'
+# >>> quad.inputs.verbose    = True
+# >>> quad.cmdline
+# 'eddy_quad eddy_corrected --bvals bvals.scheme --bvecs bvecs.scheme --field fieldmap_phase_fslprepared.nii --eddyIdx epi_index.txt --mask epi_mask.nii --output-dir eddy_corrected.qc --eddyParams epi_acqp.txt --verbose'
+# >>> res = quad.run() # doctest: +SKIP
 # 
-#     
+# 
 task_name: EddyQuad
 nipype_name: EddyQuad
 nipype_module: nipype.interfaces.fsl.epi
@@ -93,7 +93,7 @@ outputs:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
@@ -121,13 +121,13 @@ tests:
     verbose:
     # type=bool|default=False: Display debug messages
     output_type:
-    # type=enum|default='NIFTI'|allowed['NIFTI','NIFTI_GZ','NIFTI_PAIR','NIFTI_PAIR_GZ']: FSL output type
+    # type=enum|default='NIFTI'|allowed['GIFTI','NIFTI','NIFTI_GZ','NIFTI_PAIR','NIFTI_PAIR_GZ']: FSL output type
     args:
     # type=str|default='': Additional parameters to the command
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -149,7 +149,7 @@ tests:
     output_dir: '"eddy_corrected.qc"'
     # type=str|default='': Output directory - default = '<base_name>.qc'
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -175,7 +175,7 @@ doctests:
     output_dir: '"eddy_corrected.qc"'
     # type=str|default='': Output directory - default = '<base_name>.qc'
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

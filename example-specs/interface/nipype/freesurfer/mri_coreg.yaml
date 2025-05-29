@@ -7,38 +7,38 @@
 # ----
 # This program registers one volume to another
 # 
-#     mri_coreg is a C reimplementation of spm_coreg in FreeSurfer
+# mri_coreg is a C reimplementation of spm_coreg in FreeSurfer
 # 
-#     Examples
-#     ========
-#     >>> from nipype.interfaces.freesurfer import MRICoreg
-#     >>> coreg = MRICoreg()
-#     >>> coreg.inputs.source_file = 'moving1.nii'
-#     >>> coreg.inputs.reference_file = 'fixed1.nii'
-#     >>> coreg.inputs.subjects_dir = '.'
-#     >>> coreg.cmdline # doctest: +ELLIPSIS
-#     'mri_coreg --lta .../registration.lta --ref fixed1.nii --mov moving1.nii --sd .'
+# Examples
+# ========
+# >>> from nipype.interfaces.freesurfer import MRICoreg
+# >>> coreg = MRICoreg()
+# >>> coreg.inputs.source_file = 'moving1.nii'
+# >>> coreg.inputs.reference_file = 'fixed1.nii'
+# >>> coreg.inputs.subjects_dir = '.'
+# >>> coreg.cmdline # doctest: +ELLIPSIS
+# 'mri_coreg --lta .../registration.lta --ref fixed1.nii --mov moving1.nii --sd .'
 # 
-#     If passing a subject ID, the reference mask may be disabled:
+# If passing a subject ID, the reference mask may be disabled:
 # 
-#     >>> coreg = MRICoreg()
-#     >>> coreg.inputs.source_file = 'moving1.nii'
-#     >>> coreg.inputs.subjects_dir = '.'
-#     >>> coreg.inputs.subject_id = 'fsaverage'
-#     >>> coreg.inputs.reference_mask = False
-#     >>> coreg.cmdline # doctest: +ELLIPSIS
-#     'mri_coreg --s fsaverage --no-ref-mask --lta .../registration.lta --mov moving1.nii --sd .'
+# >>> coreg = MRICoreg()
+# >>> coreg.inputs.source_file = 'moving1.nii'
+# >>> coreg.inputs.subjects_dir = '.'
+# >>> coreg.inputs.subject_id = 'fsaverage'
+# >>> coreg.inputs.reference_mask = False
+# >>> coreg.cmdline # doctest: +ELLIPSIS
+# 'mri_coreg --s fsaverage --no-ref-mask --lta .../registration.lta --mov moving1.nii --sd .'
 # 
-#     Spatial scales may be specified as a list of one or two separations:
+# Spatial scales may be specified as a list of one or two separations:
 # 
-#     >>> coreg.inputs.sep = [4]
-#     >>> coreg.cmdline # doctest: +ELLIPSIS
-#     'mri_coreg --s fsaverage --no-ref-mask --lta .../registration.lta --sep 4 --mov moving1.nii --sd .'
+# >>> coreg.inputs.sep = [4]
+# >>> coreg.cmdline # doctest: +ELLIPSIS
+# 'mri_coreg --s fsaverage --no-ref-mask --lta .../registration.lta --sep 4 --mov moving1.nii --sd .'
 # 
-#     >>> coreg.inputs.sep = [4, 5]
-#     >>> coreg.cmdline # doctest: +ELLIPSIS
-#     'mri_coreg --s fsaverage --no-ref-mask --lta .../registration.lta --sep 4 --sep 5 --mov moving1.nii --sd .'
-#     
+# >>> coreg.inputs.sep = [4, 5]
+# >>> coreg.cmdline # doctest: +ELLIPSIS
+# 'mri_coreg --s fsaverage --no-ref-mask --lta .../registration.lta --sep 4 --sep 5 --mov moving1.nii --sd .'
+# 
 task_name: MRICoreg
 nipype_name: MRICoreg
 nipype_module: nipype.interfaces.freesurfer.registration
@@ -53,7 +53,7 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    reference_file: medimage/nifti1
+    reference_file: generic/file
     # type=file|default=<undefined>: reference (target) file
     source_file: medimage/nifti1
     # type=file|default=<undefined>: source file to be registered
@@ -88,7 +88,7 @@ outputs:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
@@ -163,7 +163,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -182,12 +182,10 @@ tests:
   # (if not specified, will try to choose a sensible value)
     source_file:
     # type=file|default=<undefined>: source file to be registered
-    reference_file:
-    # type=file|default=<undefined>: reference (target) file
     subjects_dir: '"."'
     # type=directory|default=<undefined>: FreeSurfer SUBJECTS_DIR
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -206,14 +204,10 @@ tests:
   # (if not specified, will try to choose a sensible value)
     source_file:
     # type=file|default=<undefined>: source file to be registered
-    subjects_dir: '"."'
-    # type=directory|default=<undefined>: FreeSurfer SUBJECTS_DIR
     subject_id: '"fsaverage"'
     # type=str|default='': freesurfer subject ID (implies ``reference_mask == aparc+aseg.mgz`` unless otherwise specified)
-    reference_mask: 'False'
-    # type=traitcompound|default=None: mask reference volume with given mask, or None if ``False``
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -233,7 +227,7 @@ tests:
     sep: '[4]'
     # type=list|default=[]: set spatial scales, in voxels (default [2, 4])
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -253,7 +247,7 @@ tests:
     sep: '[4, 5]'
     # type=list|default=[]: set spatial scales, in voxels (default [2, 4])
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -268,7 +262,7 @@ tests:
   # bool - whether the unittest is expected to fail or not. Set to false
   # when you are satisfied with the edits you have made to this file
 doctests:
-- cmdline: mri_coreg --lta .../registration.lta --ref fixed1.nii --mov moving1.nii --sd .
+- cmdline:
   # str - the expected cmdline output
   inputs:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
@@ -276,12 +270,10 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     source_file: '"moving1.nii"'
     # type=file|default=<undefined>: source file to be registered
-    reference_file: '"fixed1.nii"'
-    # type=file|default=<undefined>: reference (target) file
     subjects_dir: '"."'
     # type=directory|default=<undefined>: FreeSurfer SUBJECTS_DIR
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS
@@ -293,14 +285,10 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     source_file: '"moving1.nii"'
     # type=file|default=<undefined>: source file to be registered
-    subjects_dir: '"."'
-    # type=directory|default=<undefined>: FreeSurfer SUBJECTS_DIR
     subject_id: '"fsaverage"'
     # type=str|default='': freesurfer subject ID (implies ``reference_mask == aparc+aseg.mgz`` unless otherwise specified)
-    reference_mask: 'False'
-    # type=traitcompound|default=None: mask reference volume with given mask, or None if ``False``
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS
@@ -313,7 +301,7 @@ doctests:
     sep: '[4]'
     # type=list|default=[]: set spatial scales, in voxels (default [2, 4])
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS
@@ -326,7 +314,7 @@ doctests:
     sep: '[4, 5]'
     # type=list|default=[]: set spatial scales, in voxels (default [2, 4])
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

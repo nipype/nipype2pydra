@@ -6,82 +6,82 @@
 # Docs
 # ----
 # 
-#     A multivariate n-class segmentation algorithm.
+# A multivariate n-class segmentation algorithm.
 # 
-#     A finite mixture modeling (FMM) segmentation approach with possibilities for
-#     specifying prior constraints. These prior constraints include the specification
-#     of a prior label image, prior probability images (one for each class), and/or an
-#     MRF prior to enforce spatial smoothing of the labels. Similar algorithms include
-#     FAST and SPM.
+# A finite mixture modeling (FMM) segmentation approach with possibilities for
+# specifying prior constraints. These prior constraints include the specification
+# of a prior label image, prior probability images (one for each class), and/or an
+# MRF prior to enforce spatial smoothing of the labels. Similar algorithms include
+# FAST and SPM.
 # 
-#     Examples
-#     --------
-#     >>> from nipype.interfaces.ants import Atropos
-#     >>> at = Atropos(
-#     ...     dimension=3, intensity_images='structural.nii', mask_image='mask.nii',
-#     ...     number_of_tissue_classes=2, likelihood_model='Gaussian', save_posteriors=True,
-#     ...     mrf_smoothing_factor=0.2, mrf_radius=[1, 1, 1], icm_use_synchronous_update=True,
-#     ...     maximum_number_of_icm_terations=1, n_iterations=5, convergence_threshold=0.000001,
-#     ...     posterior_formulation='Socrates', use_mixture_model_proportions=True)
-#     >>> at.inputs.initialization = 'Random'
-#     >>> at.cmdline
-#     'Atropos --image-dimensionality 3 --icm [1,1]
-#     --initialization Random[2] --intensity-image structural.nii
-#     --likelihood-model Gaussian --mask-image mask.nii --mrf [0.2,1x1x1] --convergence [5,1e-06]
-#     --output [structural_labeled.nii,POSTERIOR_%02d.nii.gz] --posterior-formulation Socrates[1]
-#     --use-random-seed 1'
+# Examples
+# --------
+# >>> from nipype.interfaces.ants import Atropos
+# >>> at = Atropos(
+# ...     dimension=3, intensity_images='structural.nii', mask_image='mask.nii',
+# ...     number_of_tissue_classes=2, likelihood_model='Gaussian', save_posteriors=True,
+# ...     mrf_smoothing_factor=0.2, mrf_radius=[1, 1, 1], icm_use_synchronous_update=True,
+# ...     maximum_number_of_icm_terations=1, n_iterations=5, convergence_threshold=0.000001,
+# ...     posterior_formulation='Socrates', use_mixture_model_proportions=True)
+# >>> at.inputs.initialization = 'Random'
+# >>> at.cmdline
+# 'Atropos --image-dimensionality 3 --icm [1,1]
+# --initialization Random[2] --intensity-image structural.nii
+# --likelihood-model Gaussian --mask-image mask.nii --mrf [0.2,1x1x1] --convergence [5,1e-06]
+# --output [structural_labeled.nii,POSTERIOR_%02d.nii.gz] --posterior-formulation Socrates[1]
+# --use-random-seed 1'
 # 
-#     >>> at = Atropos(
-#     ...     dimension=3, intensity_images='structural.nii', mask_image='mask.nii',
-#     ...     number_of_tissue_classes=2, likelihood_model='Gaussian', save_posteriors=True,
-#     ...     mrf_smoothing_factor=0.2, mrf_radius=[1, 1, 1], icm_use_synchronous_update=True,
-#     ...     maximum_number_of_icm_terations=1, n_iterations=5, convergence_threshold=0.000001,
-#     ...     posterior_formulation='Socrates', use_mixture_model_proportions=True)
-#     >>> at.inputs.initialization = 'KMeans'
-#     >>> at.inputs.kmeans_init_centers = [100, 200]
-#     >>> at.cmdline
-#     'Atropos --image-dimensionality 3 --icm [1,1]
-#     --initialization KMeans[2,100,200] --intensity-image structural.nii
-#     --likelihood-model Gaussian --mask-image mask.nii --mrf [0.2,1x1x1] --convergence [5,1e-06]
-#     --output [structural_labeled.nii,POSTERIOR_%02d.nii.gz] --posterior-formulation Socrates[1]
-#     --use-random-seed 1'
+# >>> at = Atropos(
+# ...     dimension=3, intensity_images='structural.nii', mask_image='mask.nii',
+# ...     number_of_tissue_classes=2, likelihood_model='Gaussian', save_posteriors=True,
+# ...     mrf_smoothing_factor=0.2, mrf_radius=[1, 1, 1], icm_use_synchronous_update=True,
+# ...     maximum_number_of_icm_terations=1, n_iterations=5, convergence_threshold=0.000001,
+# ...     posterior_formulation='Socrates', use_mixture_model_proportions=True)
+# >>> at.inputs.initialization = 'KMeans'
+# >>> at.inputs.kmeans_init_centers = [100, 200]
+# >>> at.cmdline
+# 'Atropos --image-dimensionality 3 --icm [1,1]
+# --initialization KMeans[2,100,200] --intensity-image structural.nii
+# --likelihood-model Gaussian --mask-image mask.nii --mrf [0.2,1x1x1] --convergence [5,1e-06]
+# --output [structural_labeled.nii,POSTERIOR_%02d.nii.gz] --posterior-formulation Socrates[1]
+# --use-random-seed 1'
 # 
-#     >>> at = Atropos(
-#     ...     dimension=3, intensity_images='structural.nii', mask_image='mask.nii',
-#     ...     number_of_tissue_classes=2, likelihood_model='Gaussian', save_posteriors=True,
-#     ...     mrf_smoothing_factor=0.2, mrf_radius=[1, 1, 1], icm_use_synchronous_update=True,
-#     ...     maximum_number_of_icm_terations=1, n_iterations=5, convergence_threshold=0.000001,
-#     ...     posterior_formulation='Socrates', use_mixture_model_proportions=True)
-#     >>> at.inputs.initialization = 'PriorProbabilityImages'
-#     >>> at.inputs.prior_image = 'BrainSegmentationPrior%02d.nii.gz'
-#     >>> at.inputs.prior_weighting = 0.8
-#     >>> at.inputs.prior_probability_threshold = 0.0000001
-#     >>> at.cmdline
-#     'Atropos --image-dimensionality 3 --icm [1,1]
-#     --initialization PriorProbabilityImages[2,BrainSegmentationPrior%02d.nii.gz,0.8,1e-07]
-#     --intensity-image structural.nii --likelihood-model Gaussian --mask-image mask.nii
-#     --mrf [0.2,1x1x1] --convergence [5,1e-06]
-#     --output [structural_labeled.nii,POSTERIOR_%02d.nii.gz]
-#     --posterior-formulation Socrates[1] --use-random-seed 1'
+# >>> at = Atropos(
+# ...     dimension=3, intensity_images='structural.nii', mask_image='mask.nii',
+# ...     number_of_tissue_classes=2, likelihood_model='Gaussian', save_posteriors=True,
+# ...     mrf_smoothing_factor=0.2, mrf_radius=[1, 1, 1], icm_use_synchronous_update=True,
+# ...     maximum_number_of_icm_terations=1, n_iterations=5, convergence_threshold=0.000001,
+# ...     posterior_formulation='Socrates', use_mixture_model_proportions=True)
+# >>> at.inputs.initialization = 'PriorProbabilityImages'
+# >>> at.inputs.prior_image = 'BrainSegmentationPrior%02d.nii.gz'
+# >>> at.inputs.prior_weighting = 0.8
+# >>> at.inputs.prior_probability_threshold = 0.0000001
+# >>> at.cmdline
+# 'Atropos --image-dimensionality 3 --icm [1,1]
+# --initialization PriorProbabilityImages[2,BrainSegmentationPrior%02d.nii.gz,0.8,1e-07]
+# --intensity-image structural.nii --likelihood-model Gaussian --mask-image mask.nii
+# --mrf [0.2,1x1x1] --convergence [5,1e-06]
+# --output [structural_labeled.nii,POSTERIOR_%02d.nii.gz]
+# --posterior-formulation Socrates[1] --use-random-seed 1'
 # 
-#     >>> at = Atropos(
-#     ...     dimension=3, intensity_images='structural.nii', mask_image='mask.nii',
-#     ...     number_of_tissue_classes=2, likelihood_model='Gaussian', save_posteriors=True,
-#     ...     mrf_smoothing_factor=0.2, mrf_radius=[1, 1, 1], icm_use_synchronous_update=True,
-#     ...     maximum_number_of_icm_terations=1, n_iterations=5, convergence_threshold=0.000001,
-#     ...     posterior_formulation='Socrates', use_mixture_model_proportions=True)
-#     >>> at.inputs.initialization = 'PriorLabelImage'
-#     >>> at.inputs.prior_image = 'segmentation0.nii.gz'
-#     >>> at.inputs.number_of_tissue_classes = 2
-#     >>> at.inputs.prior_weighting = 0.8
-#     >>> at.cmdline
-#     'Atropos --image-dimensionality 3 --icm [1,1]
-#     --initialization PriorLabelImage[2,segmentation0.nii.gz,0.8] --intensity-image structural.nii
-#     --likelihood-model Gaussian --mask-image mask.nii --mrf [0.2,1x1x1] --convergence [5,1e-06]
-#     --output [structural_labeled.nii,POSTERIOR_%02d.nii.gz] --posterior-formulation Socrates[1]
-#     --use-random-seed 1'
+# >>> at = Atropos(
+# ...     dimension=3, intensity_images='structural.nii', mask_image='mask.nii',
+# ...     number_of_tissue_classes=2, likelihood_model='Gaussian', save_posteriors=True,
+# ...     mrf_smoothing_factor=0.2, mrf_radius=[1, 1, 1], icm_use_synchronous_update=True,
+# ...     maximum_number_of_icm_terations=1, n_iterations=5, convergence_threshold=0.000001,
+# ...     posterior_formulation='Socrates', use_mixture_model_proportions=True)
+# >>> at.inputs.initialization = 'PriorLabelImage'
+# >>> at.inputs.prior_image = 'segmentation0.nii.gz'
+# >>> at.inputs.number_of_tissue_classes = 2
+# >>> at.inputs.prior_weighting = 0.8
+# >>> at.cmdline
+# 'Atropos --image-dimensionality 3 --icm [1,1]
+# --initialization PriorLabelImage[2,segmentation0.nii.gz,0.8] --intensity-image structural.nii
+# --likelihood-model Gaussian --mask-image mask.nii --mrf [0.2,1x1x1] --convergence [5,1e-06]
+# --output [structural_labeled.nii,POSTERIOR_%02d.nii.gz] --posterior-formulation Socrates[1]
+# --use-random-seed 1'
 # 
-#     
+# 
 task_name: Atropos
 nipype_name: Atropos
 nipype_module: nipype.interfaces.ants.segmentation
@@ -99,8 +99,6 @@ inputs:
     intensity_images: medimage/nifti1+list-of
     # type=inputmultiobject|default=[]: 
     mask_image: medimage/nifti1
-    # type=file|default=<undefined>: 
-    out_classified_image_name: Path
     # type=file|default=<undefined>: 
   callable_defaults:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
@@ -128,7 +126,7 @@ outputs:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
@@ -186,7 +184,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -234,7 +232,7 @@ tests:
     use_mixture_model_proportions: 'True'
     # type=bool|default=False: 
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -253,8 +251,6 @@ tests:
   # (if not specified, will try to choose a sensible value)
     initialization: '"KMeans"'
     # type=enum|default='Random'|allowed['KMeans','Otsu','PriorLabelImage','PriorProbabilityImages','Random']: 
-    kmeans_init_centers: '[100, 200]'
-    # type=list|default=[]: 
     dimension: '3'
     # type=enum|default=3|allowed[2,3,4]: image dimension (2, 3, or 4)
     intensity_images:
@@ -284,7 +280,7 @@ tests:
     use_mixture_model_proportions: 'True'
     # type=bool|default=False: 
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -303,11 +299,7 @@ tests:
   # (if not specified, will try to choose a sensible value)
     initialization: '"PriorProbabilityImages"'
     # type=enum|default='Random'|allowed['KMeans','Otsu','PriorLabelImage','PriorProbabilityImages','Random']: 
-    prior_image: '"BrainSegmentationPrior%02d.nii.gz"'
-    # type=traitcompound|default=None: either a string pattern (e.g., 'prior%02d.nii') or an existing vector-image file.
     prior_weighting: '0.8'
-    # type=float|default=0.0: 
-    prior_probability_threshold: '0.0000001'
     # type=float|default=0.0: 
     dimension: '3'
     # type=enum|default=3|allowed[2,3,4]: image dimension (2, 3, or 4)
@@ -338,7 +330,7 @@ tests:
     use_mixture_model_proportions: 'True'
     # type=bool|default=False: 
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -357,12 +349,8 @@ tests:
   # (if not specified, will try to choose a sensible value)
     initialization: '"PriorLabelImage"'
     # type=enum|default='Random'|allowed['KMeans','Otsu','PriorLabelImage','PriorProbabilityImages','Random']: 
-    prior_image: '"segmentation0.nii.gz"'
-    # type=traitcompound|default=None: either a string pattern (e.g., 'prior%02d.nii') or an existing vector-image file.
     number_of_tissue_classes: '2'
     # type=int|default=0: 
-    prior_weighting: '0.8'
-    # type=float|default=0.0: 
     dimension: '3'
     # type=enum|default=3|allowed[2,3,4]: image dimension (2, 3, or 4)
     intensity_images:
@@ -390,7 +378,7 @@ tests:
     use_mixture_model_proportions: 'True'
     # type=bool|default=False: 
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -405,7 +393,7 @@ tests:
   # bool - whether the unittest is expected to fail or not. Set to false
   # when you are satisfied with the edits you have made to this file
 doctests:
-- cmdline: Atropos --image-dimensionality 3 --icm [1,1] --initialization Random[2] --intensity-image structural.nii --likelihood-model Gaussian --mask-image mask.nii --mrf [0.2,1x1x1] --convergence [5,1e-06] --output [structural_labeled.nii,POSTERIOR_%02d.nii.gz] --posterior-formulation Socrates[1] --use-random-seed 1
+- cmdline:
   # str - the expected cmdline output
   inputs:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
@@ -442,7 +430,7 @@ doctests:
     use_mixture_model_proportions: 'True'
     # type=bool|default=False: 
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS
@@ -454,8 +442,6 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     initialization: '"KMeans"'
     # type=enum|default='Random'|allowed['KMeans','Otsu','PriorLabelImage','PriorProbabilityImages','Random']: 
-    kmeans_init_centers: '[100, 200]'
-    # type=list|default=[]: 
     dimension: '3'
     # type=enum|default=3|allowed[2,3,4]: image dimension (2, 3, or 4)
     intensity_images: '"structural.nii"'
@@ -485,7 +471,7 @@ doctests:
     use_mixture_model_proportions: 'True'
     # type=bool|default=False: 
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS
@@ -497,11 +483,7 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     initialization: '"PriorProbabilityImages"'
     # type=enum|default='Random'|allowed['KMeans','Otsu','PriorLabelImage','PriorProbabilityImages','Random']: 
-    prior_image: '"BrainSegmentationPrior%02d.nii.gz"'
-    # type=traitcompound|default=None: either a string pattern (e.g., 'prior%02d.nii') or an existing vector-image file.
     prior_weighting: '0.8'
-    # type=float|default=0.0: 
-    prior_probability_threshold: '0.0000001'
     # type=float|default=0.0: 
     dimension: '3'
     # type=enum|default=3|allowed[2,3,4]: image dimension (2, 3, or 4)
@@ -532,7 +514,7 @@ doctests:
     use_mixture_model_proportions: 'True'
     # type=bool|default=False: 
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS
@@ -544,12 +526,8 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     initialization: '"PriorLabelImage"'
     # type=enum|default='Random'|allowed['KMeans','Otsu','PriorLabelImage','PriorProbabilityImages','Random']: 
-    prior_image: '"segmentation0.nii.gz"'
-    # type=traitcompound|default=None: either a string pattern (e.g., 'prior%02d.nii') or an existing vector-image file.
     number_of_tissue_classes: '2'
     # type=int|default=0: 
-    prior_weighting: '0.8'
-    # type=float|default=0.0: 
     dimension: '3'
     # type=enum|default=3|allowed[2,3,4]: image dimension (2, 3, or 4)
     intensity_images: '"structural.nii"'
@@ -577,7 +555,7 @@ doctests:
     use_mixture_model_proportions: 'True'
     # type=bool|default=False: 
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

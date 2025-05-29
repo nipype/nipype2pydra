@@ -6,16 +6,16 @@
 # Docs
 # ----
 # 
-#     Initialize an affine transform (as in antsBrainExtraction.sh)
+# Initialize an affine transform (as in antsBrainExtraction.sh)
 # 
-#     >>> from nipype.interfaces.ants import AffineInitializer
-#     >>> init = AffineInitializer()
-#     >>> init.inputs.fixed_image = 'fixed1.nii'
-#     >>> init.inputs.moving_image = 'moving1.nii'
-#     >>> init.cmdline
-#     'antsAffineInitializer 3 fixed1.nii moving1.nii transform.mat 15.000000 0.100000 0 10'
+# >>> from nipype.interfaces.ants import AffineInitializer
+# >>> init = AffineInitializer()
+# >>> init.inputs.fixed_image = 'fixed1.nii'
+# >>> init.inputs.moving_image = 'moving1.nii'
+# >>> init.cmdline
+# 'antsAffineInitializer 3 fixed1.nii moving1.nii transform.mat 15.000000 0.100000 0 10'
 # 
-#     
+# 
 task_name: AffineInitializer
 nipype_name: AffineInitializer
 nipype_module: nipype.interfaces.ants.utils
@@ -32,11 +32,8 @@ inputs:
   # passed to the field in the automatically generated unittests.
     fixed_image: medimage/nifti1
     # type=file|default=<undefined>: reference image
-    moving_image: medimage/nifti1
+    moving_image: generic/file
     # type=file|default=<undefined>: moving image
-    out_file: Path
-    # type=file: output transform file
-    # type=file|default='transform.mat': output transform file
   callable_defaults:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set as the `default` method of input fields
@@ -60,7 +57,7 @@ outputs:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
@@ -91,7 +88,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -110,10 +107,8 @@ tests:
   # (if not specified, will try to choose a sensible value)
     fixed_image:
     # type=file|default=<undefined>: reference image
-    moving_image:
-    # type=file|default=<undefined>: moving image
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -136,10 +131,8 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     fixed_image: '"fixed1.nii"'
     # type=file|default=<undefined>: reference image
-    moving_image: '"moving1.nii"'
-    # type=file|default=<undefined>: moving image
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

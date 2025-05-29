@@ -7,21 +7,21 @@
 # ----
 # Generates a multi-dimensional talairach transform from a gca file and talairach.lta file
 # 
-#     See Also
-#     --------
-#     For complete details, see the `FS Documentation
-#     <http://surfer.nmr.mgh.harvard.edu/fswiki/mri_ca_register>`__
+# See Also
+# --------
+# For complete details, see the `FS Documentation
+# <http://surfer.nmr.mgh.harvard.edu/fswiki/mri_ca_register>`__
 # 
-#     Examples
-#     --------
-#     >>> from nipype.interfaces import freesurfer
-#     >>> ca_register = freesurfer.CARegister()
-#     >>> ca_register.inputs.in_file = "norm.mgz"
-#     >>> ca_register.inputs.out_file = "talairach.m3z"
-#     >>> ca_register.cmdline
-#     'mri_ca_register norm.mgz talairach.m3z'
+# Examples
+# --------
+# >>> from nipype.interfaces import freesurfer
+# >>> ca_register = freesurfer.CARegister()
+# >>> ca_register.inputs.in_file = "norm.mgz"
+# >>> ca_register.inputs.out_file = "talairach.m3z"
+# >>> ca_register.cmdline
+# 'mri_ca_register norm.mgz talairach.m3z'
 # 
-#     
+# 
 task_name: CARegister
 nipype_name: CARegister
 nipype_module: nipype.interfaces.freesurfer.preprocess
@@ -42,9 +42,6 @@ inputs:
     # type=inputmultiobject|default=[]: undocumented flag used in longitudinal processing
     mask: generic/file
     # type=file|default=<undefined>: Specifies volume to use as mask
-    out_file: Path
-    # type=file: The output file for CARegister
-    # type=file|default=<undefined>: The output volume for CARegister
     subjects_dir: generic/directory
     # type=directory|default=<undefined>: subjects directory
     template: generic/file
@@ -67,15 +64,15 @@ outputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    out_file: medimage-freesurfer/m3z
+    out_file: generic/file
     # type=file: The output file for CARegister
     # type=file|default=<undefined>: The output volume for CARegister
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
-    out_file: '"talairach.m3z"'
+  # dict[str, str] - `path_template` values to be provided to output fields
+    out_file: out_file
     # type=file: The output file for CARegister
     # type=file|default=<undefined>: The output volume for CARegister
   requirements:
@@ -116,7 +113,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -135,11 +132,8 @@ tests:
   # (if not specified, will try to choose a sensible value)
     in_file:
     # type=file|default=<undefined>: The input volume for CARegister
-    out_file: '"talairach.m3z"'
-    # type=file: The output file for CARegister
-    # type=file|default=<undefined>: The output volume for CARegister
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -154,7 +148,7 @@ tests:
   # bool - whether the unittest is expected to fail or not. Set to false
   # when you are satisfied with the edits you have made to this file
 doctests:
-- cmdline: mri_ca_register norm.mgz talairach.m3z
+- cmdline:
   # str - the expected cmdline output
   inputs:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
@@ -162,11 +156,8 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     in_file: '"norm.mgz"'
     # type=file|default=<undefined>: The input volume for CARegister
-    out_file: '"talairach.m3z"'
-    # type=file: The output file for CARegister
-    # type=file|default=<undefined>: The output volume for CARegister
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

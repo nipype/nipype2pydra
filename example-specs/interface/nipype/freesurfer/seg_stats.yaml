@@ -7,19 +7,19 @@
 # ----
 # Use FreeSurfer mri_segstats for ROI analysis
 # 
-#     Examples
-#     --------
-#     >>> import nipype.interfaces.freesurfer as fs
-#     >>> ss = fs.SegStats()
-#     >>> ss.inputs.annot = ('PWS04', 'lh', 'aparc')
-#     >>> ss.inputs.in_file = 'functional.nii'
-#     >>> ss.inputs.subjects_dir = '.'
-#     >>> ss.inputs.avgwf_txt_file = 'avgwf.txt'
-#     >>> ss.inputs.summary_file = 'summary.stats'
-#     >>> ss.cmdline
-#     'mri_segstats --annot PWS04 lh aparc --avgwf ./avgwf.txt --i functional.nii --sum ./summary.stats'
+# Examples
+# --------
+# >>> import nipype.interfaces.freesurfer as fs
+# >>> ss = fs.SegStats()
+# >>> ss.inputs.annot = ('PWS04', 'lh', 'aparc')
+# >>> ss.inputs.in_file = 'functional.nii'
+# >>> ss.inputs.subjects_dir = '.'
+# >>> ss.inputs.avgwf_txt_file = 'avgwf.txt'
+# >>> ss.inputs.summary_file = 'summary.stats'
+# >>> ss.cmdline
+# 'mri_segstats --annot PWS04 lh aparc --avgwf ./avgwf.txt --i functional.nii --sum ./summary.stats'
 # 
-#     
+# 
 task_name: SegStats
 nipype_name: SegStats
 nipype_module: nipype.interfaces.freesurfer.model
@@ -40,7 +40,7 @@ inputs:
     # type=file|default=<undefined>: color table file with seg id names
     gca_color_table: generic/file
     # type=file|default=<undefined>: get color table from GCA (CMA)
-    in_file: medimage/nifti1
+    in_file: generic/file
     # type=file|default=<undefined>: Use the segmentation to report stats on this volume
     in_intensity: generic/file
     # type=file|default=<undefined>: Undocumented input norm.mgz file
@@ -52,9 +52,6 @@ inputs:
     # type=file|default=<undefined>: segmentation volume path
     subjects_dir: generic/directory
     # type=directory|default=<undefined>: subjects directory
-    summary_file: Path
-    # type=file: Segmentation summary statistics table
-    # type=file|default=<undefined>: Segmentation stats summary table file
   callable_defaults:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set as the `default` method of input fields
@@ -74,20 +71,20 @@ outputs:
     avgwf_file: generic/file
     # type=file: Volume with functional statistics averaged over segs
     # type=traitcompound|default=None: Save as binary volume (bool or filename)
-    avgwf_txt_file: text/text-file
+    avgwf_txt_file: generic/file
     # type=file: Text file with functional statistics averaged over segs
     # type=traitcompound|default=None: Save average waveform into file (bool or filename)
     sf_avg_file: generic/file
     # type=file: Text file with func statistics averaged over segs and framss
     # type=traitcompound|default=None: Save mean across space and time
-    summary_file: medimage-freesurfer/stats
+    summary_file: fileformats.medimage_freesurfer.Stats
     # type=file: Segmentation summary statistics table
     # type=file|default=<undefined>: Segmentation stats summary table file
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
     summary_file: '"summary.stats"'
     # type=file: Segmentation summary statistics table
     # type=file|default=<undefined>: Segmentation stats summary table file
@@ -188,7 +185,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -207,18 +204,13 @@ tests:
   # (if not specified, will try to choose a sensible value)
     annot: ("PWS04", "lh", "aparc")
     # type=tuple|default=('', 'lh', ''): subject hemi parc : use surface parcellation
-    in_file:
-    # type=file|default=<undefined>: Use the segmentation to report stats on this volume
     subjects_dir: '"."'
     # type=directory|default=<undefined>: subjects directory
-    avgwf_txt_file: '"avgwf.txt"'
-    # type=file: Text file with functional statistics averaged over segs
-    # type=traitcompound|default=None: Save average waveform into file (bool or filename)
     summary_file: '"summary.stats"'
     # type=file: Segmentation summary statistics table
     # type=file|default=<undefined>: Segmentation stats summary table file
   imports: &id001
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   - module: nipype.interfaces.freesurfer as fs
   expected_outputs:
@@ -234,7 +226,7 @@ tests:
   # bool - whether the unittest is expected to fail or not. Set to false
   # when you are satisfied with the edits you have made to this file
 doctests:
-- cmdline: mri_segstats --annot PWS04 lh aparc --avgwf ./avgwf.txt --i functional.nii --sum ./summary.stats
+- cmdline:
   # str - the expected cmdline output
   inputs:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
@@ -242,18 +234,13 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     annot: ("PWS04", "lh", "aparc")
     # type=tuple|default=('', 'lh', ''): subject hemi parc : use surface parcellation
-    in_file: '"functional.nii"'
-    # type=file|default=<undefined>: Use the segmentation to report stats on this volume
     subjects_dir: '"."'
     # type=directory|default=<undefined>: subjects directory
-    avgwf_txt_file: '"avgwf.txt"'
-    # type=file: Text file with functional statistics averaged over segs
-    # type=traitcompound|default=None: Save average waveform into file (bool or filename)
     summary_file: '"summary.stats"'
     # type=file: Segmentation summary statistics table
     # type=file|default=<undefined>: Segmentation stats summary table file
   imports: *id001
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

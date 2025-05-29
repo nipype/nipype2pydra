@@ -7,13 +7,13 @@
 # ----
 # Use FreeSurfer mri_binarize to threshold an input volume
 # 
-#     Examples
-#     --------
-#     >>> binvol = Binarize(in_file='structural.nii', min=10, binary_file='foo_out.nii')
-#     >>> binvol.cmdline
-#     'mri_binarize --o foo_out.nii --i structural.nii --min 10.000000'
+# Examples
+# --------
+# >>> binvol = Binarize(in_file='structural.nii', min=10, binary_file='foo_out.nii')
+# >>> binvol.cmdline
+# 'mri_binarize --o foo_out.nii --i structural.nii --min 10.000000'
 # 
-#     
+# 
 task_name: Binarize
 nipype_name: Binarize
 nipype_module: nipype.interfaces.freesurfer.model
@@ -28,9 +28,6 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    binary_file: Path
-    # type=file: binarized output volume
-    # type=file|default=<undefined>: binary output volume
     in_file: medimage/nifti1
     # type=file|default=<undefined>: input volume
     mask_file: generic/file
@@ -65,7 +62,7 @@ outputs:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
     binary_file: '"foo_out.nii"'
     # type=file: binarized output volume
     # type=file|default=<undefined>: binary output volume
@@ -136,7 +133,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -161,7 +158,7 @@ tests:
     # type=file: binarized output volume
     # type=file|default=<undefined>: binary output volume
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -176,7 +173,7 @@ tests:
   # bool - whether the unittest is expected to fail or not. Set to false
   # when you are satisfied with the edits you have made to this file
 doctests:
-- cmdline: mri_binarize --o foo_out.nii --i structural.nii --min 10.000000
+- cmdline:
   # str - the expected cmdline output
   inputs:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
@@ -190,7 +187,7 @@ doctests:
     # type=file: binarized output volume
     # type=file|default=<undefined>: binary output volume
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

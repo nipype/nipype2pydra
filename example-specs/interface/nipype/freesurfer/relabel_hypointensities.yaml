@@ -6,19 +6,19 @@
 # Docs
 # ----
 # 
-#     Relabel Hypointensities
+# Relabel Hypointensities
 # 
-#     Examples
-#     ========
-#     >>> from nipype.interfaces.freesurfer import RelabelHypointensities
-#     >>> relabelhypos = RelabelHypointensities()
-#     >>> relabelhypos.inputs.lh_white = 'lh.pial'
-#     >>> relabelhypos.inputs.rh_white = 'lh.pial'
-#     >>> relabelhypos.inputs.surf_directory = '.'
-#     >>> relabelhypos.inputs.aseg = 'aseg.mgz'
-#     >>> relabelhypos.cmdline
-#     'mri_relabel_hypointensities aseg.mgz . aseg.hypos.mgz'
-#     
+# Examples
+# ========
+# >>> from nipype.interfaces.freesurfer import RelabelHypointensities
+# >>> relabelhypos = RelabelHypointensities()
+# >>> relabelhypos.inputs.lh_white = 'lh.pial'
+# >>> relabelhypos.inputs.rh_white = 'lh.pial'
+# >>> relabelhypos.inputs.surf_directory = '.'
+# >>> relabelhypos.inputs.aseg = 'aseg.mgz'
+# >>> relabelhypos.cmdline
+# 'mri_relabel_hypointensities aseg.mgz . aseg.hypos.mgz'
+# 
 task_name: RelabelHypointensities
 nipype_name: RelabelHypointensities
 nipype_module: nipype.interfaces.freesurfer.utils
@@ -33,14 +33,11 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    aseg: medimage/mgh-gz
+    aseg: generic/file
     # type=file|default=<undefined>: Input aseg file
-    lh_white: medimage-freesurfer/pial
+    lh_white: fileformats.medimage_freesurfer.Pial
     # type=file|default=<undefined>: Implicit input file must be lh.white
-    out_file: Path
-    # type=file: Output aseg file
-    # type=file|default=<undefined>: Output aseg file
-    rh_white: medimage-freesurfer/pial
+    rh_white: generic/file
     # type=file|default=<undefined>: Implicit input file must be rh.white
     subjects_dir: generic/directory
     # type=directory|default=<undefined>: subjects directory
@@ -69,7 +66,7 @@ outputs:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
@@ -94,7 +91,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -113,14 +110,10 @@ tests:
   # (if not specified, will try to choose a sensible value)
     lh_white:
     # type=file|default=<undefined>: Implicit input file must be lh.white
-    rh_white:
-    # type=file|default=<undefined>: Implicit input file must be rh.white
     surf_directory: '"."'
     # type=directory|default='.': Directory containing lh.white and rh.white
-    aseg:
-    # type=file|default=<undefined>: Input aseg file
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -135,7 +128,7 @@ tests:
   # bool - whether the unittest is expected to fail or not. Set to false
   # when you are satisfied with the edits you have made to this file
 doctests:
-- cmdline: mri_relabel_hypointensities aseg.mgz . aseg.hypos.mgz
+- cmdline:
   # str - the expected cmdline output
   inputs:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
@@ -143,14 +136,10 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     lh_white: '"lh.pial"'
     # type=file|default=<undefined>: Implicit input file must be lh.white
-    rh_white: '"lh.pial"'
-    # type=file|default=<undefined>: Implicit input file must be rh.white
     surf_directory: '"."'
     # type=directory|default='.': Directory containing lh.white and rh.white
-    aseg: '"aseg.mgz"'
-    # type=file|default=<undefined>: Input aseg file
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

@@ -7,13 +7,13 @@
 # ----
 # Make a binary volume from a Freesurfer label
 # 
-#     Examples
-#     --------
-#     >>> binvol = Label2Vol(label_file='cortex.label', template_file='structural.nii', reg_file='register.dat', fill_thresh=0.5, vol_label_file='foo_out.nii')
-#     >>> binvol.cmdline
-#     'mri_label2vol --fillthresh 0.5 --label cortex.label --reg register.dat --temp structural.nii --o foo_out.nii'
+# Examples
+# --------
+# >>> binvol = Label2Vol(label_file='cortex.label', template_file='structural.nii', reg_file='register.dat', fill_thresh=0.5, vol_label_file='foo_out.nii')
+# >>> binvol.cmdline
+# 'mri_label2vol --fillthresh 0.5 --label cortex.label --reg register.dat --temp structural.nii --o foo_out.nii'
 # 
-#     
+# 
 task_name: Label2Vol
 nipype_name: Label2Vol
 nipype_module: nipype.interfaces.freesurfer.model
@@ -36,7 +36,7 @@ inputs:
     # type=file|default=<undefined>: file with each frame is nhits for a label
     map_label_stat: generic/file
     # type=file|default=<undefined>: map the label stats field into the vol
-    reg_file: datascience/dat-file
+    reg_file: fileformats.medimage_freesurfer.Dat
     # type=file|default=<undefined>: tkregister style matrix VolXYZ = R*LabelXYZ
     reg_header: generic/file
     # type=file|default=<undefined>: label template volume
@@ -46,9 +46,6 @@ inputs:
     # type=directory|default=<undefined>: subjects directory
     template_file: medimage/nifti1
     # type=file|default=<undefined>: output template volume
-    vol_label_file: Path
-    # type=file: output volume
-    # type=file|default=<undefined>: output volume
   callable_defaults:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set as the `default` method of input fields
@@ -72,7 +69,7 @@ outputs:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
     vol_label_file: '"foo_out.nii"'
     # type=file: output volume
     # type=file|default=<undefined>: output volume
@@ -128,7 +125,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -157,7 +154,7 @@ tests:
     # type=file: output volume
     # type=file|default=<undefined>: output volume
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -172,7 +169,7 @@ tests:
   # bool - whether the unittest is expected to fail or not. Set to false
   # when you are satisfied with the edits you have made to this file
 doctests:
-- cmdline: mri_label2vol --fillthresh 0.5 --label cortex.label --reg register.dat --temp structural.nii --o foo_out.nii
+- cmdline:
   # str - the expected cmdline output
   inputs:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
@@ -190,7 +187,7 @@ doctests:
     # type=file: output volume
     # type=file|default=<undefined>: output volume
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

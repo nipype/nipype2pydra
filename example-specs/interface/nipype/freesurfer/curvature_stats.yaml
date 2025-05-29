@@ -6,42 +6,42 @@
 # Docs
 # ----
 # 
-#     In its simplest usage, 'mris_curvature_stats' will compute a set
-#     of statistics on its input <curvFile>. These statistics are the
-#     mean and standard deviation of the particular curvature on the
-#     surface, as well as the results from several surface-based
-#     integrals.
+# In its simplest usage, 'mris_curvature_stats' will compute a set
+# of statistics on its input <curvFile>. These statistics are the
+# mean and standard deviation of the particular curvature on the
+# surface, as well as the results from several surface-based
+# integrals.
 # 
-#     Additionally, 'mris_curvature_stats' can report the max/min
-#     curvature values, and compute a simple histogram based on
-#     all curvature values.
+# Additionally, 'mris_curvature_stats' can report the max/min
+# curvature values, and compute a simple histogram based on
+# all curvature values.
 # 
-#     Curvatures can also be normalised and constrained to a given
-#     range before computation.
+# Curvatures can also be normalised and constrained to a given
+# range before computation.
 # 
-#     Principal curvature (K, H, k1 and k2) calculations on a surface
-#     structure can also be performed, as well as several functions
-#     derived from k1 and k2.
+# Principal curvature (K, H, k1 and k2) calculations on a surface
+# structure can also be performed, as well as several functions
+# derived from k1 and k2.
 # 
-#     Finally, all output to the console, as well as any new
-#     curvatures that result from the above calculations can be
-#     saved to a series of text and binary-curvature files.
+# Finally, all output to the console, as well as any new
+# curvatures that result from the above calculations can be
+# saved to a series of text and binary-curvature files.
 # 
-#     Examples
-#     ========
-#     >>> from nipype.interfaces.freesurfer import CurvatureStats
-#     >>> curvstats = CurvatureStats()
-#     >>> curvstats.inputs.hemisphere = 'lh'
-#     >>> curvstats.inputs.curvfile1 = 'lh.pial'
-#     >>> curvstats.inputs.curvfile2 = 'lh.pial'
-#     >>> curvstats.inputs.surface = 'lh.pial'
-#     >>> curvstats.inputs.out_file = 'lh.curv.stats'
-#     >>> curvstats.inputs.values = True
-#     >>> curvstats.inputs.min_max = True
-#     >>> curvstats.inputs.write = True
-#     >>> curvstats.cmdline
-#     'mris_curvature_stats -m -o lh.curv.stats -F pial -G --writeCurvatureFiles subject_id lh pial pial'
-#     
+# Examples
+# ========
+# >>> from nipype.interfaces.freesurfer import CurvatureStats
+# >>> curvstats = CurvatureStats()
+# >>> curvstats.inputs.hemisphere = 'lh'
+# >>> curvstats.inputs.curvfile1 = 'lh.pial'
+# >>> curvstats.inputs.curvfile2 = 'lh.pial'
+# >>> curvstats.inputs.surface = 'lh.pial'
+# >>> curvstats.inputs.out_file = 'lh.curv.stats'
+# >>> curvstats.inputs.values = True
+# >>> curvstats.inputs.min_max = True
+# >>> curvstats.inputs.write = True
+# >>> curvstats.cmdline
+# 'mris_curvature_stats -m -o lh.curv.stats -F pial -G --writeCurvatureFiles subject_id lh pial pial'
+# 
 task_name: CurvatureStats
 nipype_name: CurvatureStats
 nipype_module: nipype.interfaces.freesurfer.utils
@@ -56,16 +56,13 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    curvfile1: medimage-freesurfer/pial
+    curvfile1: generic/file
     # type=file|default=<undefined>: Input file for CurvatureStats
-    curvfile2: medimage-freesurfer/pial
+    curvfile2: fileformats.medimage_freesurfer.Pial
     # type=file|default=<undefined>: Input file for CurvatureStats
-    out_file: Path
-    # type=file: Output curvature stats file
-    # type=file|default=<undefined>: Output curvature stats file
     subjects_dir: generic/directory
     # type=directory|default=<undefined>: subjects directory
-    surface: medimage-freesurfer/pial
+    surface: generic/file
     # type=file|default=<undefined>: Specify surface file for CurvatureStats
   callable_defaults:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
@@ -83,14 +80,14 @@ outputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    out_file: medimage-freesurfer/stats
+    out_file: fileformats.medimage_freesurfer.Stats
     # type=file: Output curvature stats file
     # type=file|default=<undefined>: Output curvature stats file
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
@@ -117,7 +114,7 @@ tests:
     write:
     # type=bool|default=False: Write curvature files
     copy_inputs:
-    # type=bool|default=False: If running as a node, set this to True.This will copy the input files to the node directory.
+    # type=bool|default=False: If running as a node, set this to True. This will copy the input files to the node  directory.
     subjects_dir:
     # type=directory|default=<undefined>: subjects directory
     args:
@@ -125,7 +122,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -144,23 +141,15 @@ tests:
   # (if not specified, will try to choose a sensible value)
     hemisphere: '"lh"'
     # type=enum|default='lh'|allowed['lh','rh']: Hemisphere being processed
-    curvfile1:
-    # type=file|default=<undefined>: Input file for CurvatureStats
     curvfile2:
     # type=file|default=<undefined>: Input file for CurvatureStats
-    surface:
-    # type=file|default=<undefined>: Specify surface file for CurvatureStats
     out_file: '"lh.curv.stats"'
     # type=file: Output curvature stats file
     # type=file|default=<undefined>: Output curvature stats file
-    values: 'True'
-    # type=bool|default=False: Triggers a series of derived curvature values
     min_max: 'True'
     # type=bool|default=False: Output min / max information for the processed curvature.
-    write: 'True'
-    # type=bool|default=False: Write curvature files
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -175,7 +164,7 @@ tests:
   # bool - whether the unittest is expected to fail or not. Set to false
   # when you are satisfied with the edits you have made to this file
 doctests:
-- cmdline: mris_curvature_stats -m -o lh.curv.stats -F pial -G --writeCurvatureFiles subject_id lh pial pial
+- cmdline:
   # str - the expected cmdline output
   inputs:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
@@ -183,23 +172,15 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     hemisphere: '"lh"'
     # type=enum|default='lh'|allowed['lh','rh']: Hemisphere being processed
-    curvfile1: '"lh.pial"'
-    # type=file|default=<undefined>: Input file for CurvatureStats
     curvfile2: '"lh.pial"'
     # type=file|default=<undefined>: Input file for CurvatureStats
-    surface: '"lh.pial"'
-    # type=file|default=<undefined>: Specify surface file for CurvatureStats
     out_file: '"lh.curv.stats"'
     # type=file: Output curvature stats file
     # type=file|default=<undefined>: Output curvature stats file
-    values: 'True'
-    # type=bool|default=False: Triggers a series of derived curvature values
     min_max: 'True'
     # type=bool|default=False: Output min / max information for the processed curvature.
-    write: 'True'
-    # type=bool|default=False: Write curvature files
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

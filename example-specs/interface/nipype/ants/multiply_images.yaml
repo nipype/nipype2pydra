@@ -6,17 +6,17 @@
 # Docs
 # ----
 # 
-#     Examples
-#     --------
-#     >>> from nipype.interfaces.ants import MultiplyImages
-#     >>> test = MultiplyImages()
-#     >>> test.inputs.dimension = 3
-#     >>> test.inputs.first_input = 'moving2.nii'
-#     >>> test.inputs.second_input = 0.25
-#     >>> test.inputs.output_product_image = "out.nii"
-#     >>> test.cmdline
-#     'MultiplyImages 3 moving2.nii 0.25 out.nii'
-#     
+# Examples
+# --------
+# >>> from nipype.interfaces.ants import MultiplyImages
+# >>> test = MultiplyImages()
+# >>> test.inputs.dimension = 3
+# >>> test.inputs.first_input = 'moving2.nii'
+# >>> test.inputs.second_input = 0.25
+# >>> test.inputs.output_product_image = "out.nii"
+# >>> test.cmdline
+# 'MultiplyImages 3 moving2.nii 0.25 out.nii'
+# 
 task_name: MultiplyImages
 nipype_name: MultiplyImages
 nipype_module: nipype.interfaces.ants.utils
@@ -31,11 +31,8 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    first_input: medimage/nifti1
+    first_input: generic/file
     # type=file|default=<undefined>: image 1
-    output_product_image: Path
-    # type=file: average image file
-    # type=file|default=<undefined>: Outputfname.nii.gz: the name of the resulting image.
   callable_defaults:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set as the `default` method of input fields
@@ -52,14 +49,14 @@ outputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    output_product_image: medimage/nifti1
+    output_product_image: generic/file
     # type=file: average image file
     # type=file|default=<undefined>: Outputfname.nii.gz: the name of the resulting image.
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
@@ -82,7 +79,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -101,15 +98,10 @@ tests:
   # (if not specified, will try to choose a sensible value)
     dimension: '3'
     # type=enum|default=3|allowed[2,3]: image dimension (2 or 3)
-    first_input:
-    # type=file|default=<undefined>: image 1
     second_input: '0.25'
     # type=traitcompound|default=None: image 2 or multiplication weight
-    output_product_image: '"out.nii"'
-    # type=file: average image file
-    # type=file|default=<undefined>: Outputfname.nii.gz: the name of the resulting image.
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -124,7 +116,7 @@ tests:
   # bool - whether the unittest is expected to fail or not. Set to false
   # when you are satisfied with the edits you have made to this file
 doctests:
-- cmdline: MultiplyImages 3 moving2.nii 0.25 out.nii
+- cmdline:
   # str - the expected cmdline output
   inputs:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
@@ -132,15 +124,10 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     dimension: '3'
     # type=enum|default=3|allowed[2,3]: image dimension (2 or 3)
-    first_input: '"moving2.nii"'
-    # type=file|default=<undefined>: image 1
     second_input: '0.25'
     # type=traitcompound|default=None: image 2 or multiplication weight
-    output_product_image: '"out.nii"'
-    # type=file: average image file
-    # type=file|default=<undefined>: Outputfname.nii.gz: the name of the resulting image.
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

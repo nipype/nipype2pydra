@@ -7,18 +7,18 @@
 # ----
 # FSL's applywarp wrapper to apply the results of a FNIRT registration
 # 
-#     Examples
-#     --------
-#     >>> from nipype.interfaces import fsl
-#     >>> from nipype.testing import example_data
-#     >>> aw = fsl.ApplyWarp()
-#     >>> aw.inputs.in_file = example_data('structural.nii')
-#     >>> aw.inputs.ref_file = example_data('mni.nii')
-#     >>> aw.inputs.field_file = 'my_coefficients_filed.nii' #doctest: +SKIP
-#     >>> res = aw.run() #doctest: +SKIP
+# Examples
+# --------
+# >>> from nipype.interfaces import fsl
+# >>> from nipype.testing import example_data
+# >>> aw = fsl.ApplyWarp()
+# >>> aw.inputs.in_file = example_data('structural.nii')
+# >>> aw.inputs.ref_file = example_data('mni.nii')
+# >>> aw.inputs.field_file = 'my_coefficients_filed.nii' #doctest: +SKIP
+# >>> res = aw.run() #doctest: +SKIP
 # 
 # 
-#     
+# 
 task_name: ApplyWarp
 nipype_name: ApplyWarp
 nipype_module: nipype.interfaces.fsl.preprocess
@@ -39,9 +39,6 @@ inputs:
     # type=file|default=<undefined>: image to be warped
     mask_file: generic/file
     # type=file|default=<undefined>: filename for mask image (in reference space)
-    out_file: Path
-    # type=file: Warped output file
-    # type=file|default=<undefined>: output filename
     postmat: generic/file
     # type=file|default=<undefined>: filename for post-transform (affine matrix)
     premat: generic/file
@@ -71,7 +68,7 @@ outputs:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
     out_file: out_file
     # type=file: Warped output file
     # type=file|default=<undefined>: output filename
@@ -109,13 +106,13 @@ tests:
     interp:
     # type=enum|default='nn'|allowed['nn','sinc','spline','trilinear']: interpolation method
     output_type:
-    # type=enum|default='NIFTI'|allowed['NIFTI','NIFTI_GZ','NIFTI_PAIR','NIFTI_PAIR_GZ']: FSL output type
+    # type=enum|default='NIFTI'|allowed['GIFTI','NIFTI','NIFTI_GZ','NIFTI_PAIR','NIFTI_PAIR_GZ']: FSL output type
     args:
     # type=str|default='': Additional parameters to the command
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically

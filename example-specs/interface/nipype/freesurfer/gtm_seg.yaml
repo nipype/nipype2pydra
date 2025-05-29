@@ -7,13 +7,13 @@
 # ----
 # create an anatomical segmentation for the geometric transfer matrix (GTM).
 # 
-#     Examples
-#     --------
-#     >>> gtmseg = GTMSeg()
-#     >>> gtmseg.inputs.subject_id = 'subject_id'
-#     >>> gtmseg.cmdline
-#     'gtmseg --o gtmseg.mgz --s subject_id'
-#     
+# Examples
+# --------
+# >>> gtmseg = GTMSeg()
+# >>> gtmseg.inputs.subject_id = 'subject_id'
+# >>> gtmseg.cmdline
+# 'gtmseg --o gtmseg.mgz --s subject_id'
+# 
 task_name: GTMSeg
 nipype_name: GTMSeg
 nipype_module: nipype.interfaces.freesurfer.petsurfer
@@ -30,9 +30,6 @@ inputs:
   # passed to the field in the automatically generated unittests.
     colortable: generic/file
     # type=file|default=<undefined>: colortable
-    out_file: Path
-    # type=file: GTM segmentation
-    # type=file|default='gtmseg.mgz': output volume relative to subject/mri
     subjects_dir: generic/directory
     # type=directory|default=<undefined>: subjects directory
   callable_defaults:
@@ -58,7 +55,7 @@ outputs:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
@@ -107,7 +104,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -127,7 +124,7 @@ tests:
     subject_id: '"subject_id"'
     # type=string|default='': subject id
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -142,7 +139,7 @@ tests:
   # bool - whether the unittest is expected to fail or not. Set to false
   # when you are satisfied with the edits you have made to this file
 doctests:
-- cmdline: gtmseg --o gtmseg.mgz --s subject_id
+- cmdline:
   # str - the expected cmdline output
   inputs:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
@@ -151,7 +148,7 @@ doctests:
     subject_id: '"subject_id"'
     # type=string|default='': subject id
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

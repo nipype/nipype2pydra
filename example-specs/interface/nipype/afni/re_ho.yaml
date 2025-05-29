@@ -6,23 +6,23 @@
 # Docs
 # ----
 # Compute regional homogeneity for a given neighbourhood.l,
-#     based on a local neighborhood of that voxel.
+# based on a local neighborhood of that voxel.
 # 
-#     For complete details, see the `3dReHo Documentation.
-#     <https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dReHo.html>`_
+# For complete details, see the `3dReHo Documentation.
+# <https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dReHo.html>`_
 # 
-#     Examples
-#     --------
-#     >>> from nipype.interfaces import afni
-#     >>> reho = afni.ReHo()
-#     >>> reho.inputs.in_file = 'functional.nii'
-#     >>> reho.inputs.out_file = 'reho.nii.gz'
-#     >>> reho.inputs.neighborhood = 'vertices'
-#     >>> reho.cmdline
-#     '3dReHo -prefix reho.nii.gz -inset functional.nii -nneigh 27'
-#     >>> res = reho.run()  # doctest: +SKIP
+# Examples
+# --------
+# >>> from nipype.interfaces import afni
+# >>> reho = afni.ReHo()
+# >>> reho.inputs.in_file = 'functional.nii'
+# >>> reho.inputs.out_file = 'reho.nii.gz'
+# >>> reho.inputs.neighborhood = 'vertices'
+# >>> reho.cmdline
+# '3dReHo -prefix reho.nii.gz -inset functional.nii -nneigh 27'
+# >>> res = reho.run()  # doctest: +SKIP
 # 
-#     
+# 
 task_name: ReHo
 nipype_name: ReHo
 nipype_module: nipype.interfaces.afni.utils
@@ -43,9 +43,6 @@ inputs:
     # type=file|default=<undefined>: a set of ROIs, each labelled with distinct integers. ReHo will then be calculated per ROI.
     mask_file: generic/file
     # type=file|default=<undefined>: Mask within which ReHo should be calculated voxelwise
-    out_file: Path
-    # type=file: Voxelwise regional homogeneity map
-    # type=file|default=<undefined>: Output dataset.
   callable_defaults:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set as the `default` method of input fields
@@ -62,7 +59,7 @@ outputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    out_file: medimage/nifti-gz
+    out_file: generic/file
     # type=file: Voxelwise regional homogeneity map
     # type=file|default=<undefined>: Output dataset.
     out_vals: generic/file
@@ -71,7 +68,7 @@ outputs:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
@@ -102,7 +99,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -121,13 +118,10 @@ tests:
   # (if not specified, will try to choose a sensible value)
     in_file:
     # type=file|default=<undefined>: input dataset
-    out_file: '"reho.nii.gz"'
-    # type=file: Voxelwise regional homogeneity map
-    # type=file|default=<undefined>: Output dataset.
     neighborhood: '"vertices"'
     # type=enum|default='faces'|allowed['edges','faces','vertices']:  voxels in neighborhood. can be: ``faces`` (for voxel and 6 facewise neighbors, only), ``edges`` (for voxel and 18 face- and edge-wise neighbors), ``vertices`` (for voxel and 26 face-, edge-, and node-wise neighbors).
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -142,7 +136,7 @@ tests:
   # bool - whether the unittest is expected to fail or not. Set to false
   # when you are satisfied with the edits you have made to this file
 doctests:
-- cmdline: 3dReHo -prefix reho.nii.gz -inset functional.nii -nneigh 27
+- cmdline:
   # str - the expected cmdline output
   inputs:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
@@ -150,13 +144,10 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     in_file: '"functional.nii"'
     # type=file|default=<undefined>: input dataset
-    out_file: '"reho.nii.gz"'
-    # type=file: Voxelwise regional homogeneity map
-    # type=file|default=<undefined>: Output dataset.
     neighborhood: '"vertices"'
     # type=enum|default='faces'|allowed['edges','faces','vertices']:  voxels in neighborhood. can be: ``faces`` (for voxel and 6 facewise neighbors, only), ``edges`` (for voxel and 18 face- and edge-wise neighbors), ``vertices`` (for voxel and 26 face-, edge-, and node-wise neighbors).
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

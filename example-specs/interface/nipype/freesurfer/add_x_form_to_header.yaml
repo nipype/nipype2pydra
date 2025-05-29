@@ -6,32 +6,32 @@
 # Docs
 # ----
 # 
-#     Just adds specified xform to the volume header.
+# Just adds specified xform to the volume header.
 # 
-#     .. danger ::
+# .. danger ::
 # 
-#         Input transform **MUST** be an absolute path to a DataSink'ed transform or
-#         the output will reference a transform in the workflow cache directory!
+#     Input transform **MUST** be an absolute path to a DataSink'ed transform or
+#     the output will reference a transform in the workflow cache directory!
 # 
-#     Examples
-#     --------
-#     >>> from nipype.interfaces.freesurfer import AddXFormToHeader
-#     >>> adder = AddXFormToHeader()
-#     >>> adder.inputs.in_file = 'norm.mgz'
-#     >>> adder.inputs.transform = 'trans.mat'
-#     >>> adder.cmdline
-#     'mri_add_xform_to_header trans.mat norm.mgz output.mgz'
+# Examples
+# --------
+# >>> from nipype.interfaces.freesurfer import AddXFormToHeader
+# >>> adder = AddXFormToHeader()
+# >>> adder.inputs.in_file = 'norm.mgz'
+# >>> adder.inputs.transform = 'trans.mat'
+# >>> adder.cmdline
+# 'mri_add_xform_to_header trans.mat norm.mgz output.mgz'
 # 
-#     >>> adder.inputs.copy_name = True
-#     >>> adder.cmdline
-#     'mri_add_xform_to_header -c trans.mat norm.mgz output.mgz'
-#     >>> adder.run()   # doctest: +SKIP
+# >>> adder.inputs.copy_name = True
+# >>> adder.cmdline
+# 'mri_add_xform_to_header -c trans.mat norm.mgz output.mgz'
+# >>> adder.run()   # doctest: +SKIP
 # 
-#     References
-#     ----------
-#     [https://surfer.nmr.mgh.harvard.edu/fswiki/mri_add_xform_to_header]
+# References
+# ----------
+# [https://surfer.nmr.mgh.harvard.edu/fswiki/mri_add_xform_to_header]
 # 
-#     
+# 
 task_name: AddXFormToHeader
 nipype_name: AddXFormToHeader
 nipype_module: nipype.interfaces.freesurfer.utils
@@ -48,12 +48,9 @@ inputs:
   # passed to the field in the automatically generated unittests.
     in_file: medimage/mgh-gz
     # type=file|default=<undefined>: input volume
-    out_file: Path
-    # type=file: output volume
-    # type=file|default='output.mgz': output volume
     subjects_dir: generic/directory
     # type=directory|default=<undefined>: subjects directory
-    transform: datascience/text-matrix
+    transform: generic/file
     # type=file|default=<undefined>: xfm file
   callable_defaults:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
@@ -78,7 +75,7 @@ outputs:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
@@ -103,7 +100,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -122,10 +119,8 @@ tests:
   # (if not specified, will try to choose a sensible value)
     in_file:
     # type=file|default=<undefined>: input volume
-    transform:
-    # type=file|default=<undefined>: xfm file
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -145,7 +140,7 @@ tests:
     copy_name: 'True'
     # type=bool|default=False: do not try to load the xfmfile, just copy name
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -160,7 +155,7 @@ tests:
   # bool - whether the unittest is expected to fail or not. Set to false
   # when you are satisfied with the edits you have made to this file
 doctests:
-- cmdline: mri_add_xform_to_header trans.mat norm.mgz output.mgz
+- cmdline:
   # str - the expected cmdline output
   inputs:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
@@ -168,10 +163,8 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     in_file: '"norm.mgz"'
     # type=file|default=<undefined>: input volume
-    transform: '"trans.mat"'
-    # type=file|default=<undefined>: xfm file
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS
@@ -184,7 +177,7 @@ doctests:
     copy_name: 'True'
     # type=bool|default=False: do not try to load the xfmfile, just copy name
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

@@ -7,22 +7,22 @@
 # ----
 # Merge or edit volumes using AFNI 3dmerge command
 # 
-#     For complete details, see the `3dmerge Documentation.
-#     <https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dmerge.html>`_
+# For complete details, see the `3dmerge Documentation.
+# <https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dmerge.html>`_
 # 
-#     Examples
-#     --------
-#     >>> from nipype.interfaces import afni
-#     >>> merge = afni.Merge()
-#     >>> merge.inputs.in_files = ['functional.nii', 'functional2.nii']
-#     >>> merge.inputs.blurfwhm = 4
-#     >>> merge.inputs.doall = True
-#     >>> merge.inputs.out_file = 'e7.nii'
-#     >>> merge.cmdline
-#     '3dmerge -1blur_fwhm 4 -doall -prefix e7.nii functional.nii functional2.nii'
-#     >>> res = merge.run()  # doctest: +SKIP
+# Examples
+# --------
+# >>> from nipype.interfaces import afni
+# >>> merge = afni.Merge()
+# >>> merge.inputs.in_files = ['functional.nii', 'functional2.nii']
+# >>> merge.inputs.blurfwhm = 4
+# >>> merge.inputs.doall = True
+# >>> merge.inputs.out_file = 'e7.nii'
+# >>> merge.cmdline
+# '3dmerge -1blur_fwhm 4 -doall -prefix e7.nii functional.nii functional2.nii'
+# >>> res = merge.run()  # doctest: +SKIP
 # 
-#     
+# 
 task_name: Merge
 nipype_name: Merge
 nipype_module: nipype.interfaces.afni.utils
@@ -39,9 +39,6 @@ inputs:
   # passed to the field in the automatically generated unittests.
     in_files: medimage/nifti1+list-of
     # type=inputmultiobject|default=[]: 
-    out_file: Path
-    # type=file: output file
-    # type=file|default=<undefined>: output image file name
   callable_defaults:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set as the `default` method of input fields
@@ -58,14 +55,14 @@ outputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    out_file: medimage/nifti1
+    out_file: generic/file
     # type=file: output file
     # type=file|default=<undefined>: output image file name
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
@@ -90,7 +87,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -109,15 +106,10 @@ tests:
   # (if not specified, will try to choose a sensible value)
     in_files:
     # type=inputmultiobject|default=[]: 
-    blurfwhm: '4'
-    # type=int|default=0: FWHM blur value (mm)
     doall: 'True'
     # type=bool|default=False: apply options to all sub-bricks in dataset
-    out_file: '"e7.nii"'
-    # type=file: output file
-    # type=file|default=<undefined>: output image file name
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -132,7 +124,7 @@ tests:
   # bool - whether the unittest is expected to fail or not. Set to false
   # when you are satisfied with the edits you have made to this file
 doctests:
-- cmdline: 3dmerge -1blur_fwhm 4 -doall -prefix e7.nii functional.nii functional2.nii
+- cmdline:
   # str - the expected cmdline output
   inputs:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
@@ -140,15 +132,10 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     in_files: '["functional.nii", "functional2.nii"]'
     # type=inputmultiobject|default=[]: 
-    blurfwhm: '4'
-    # type=int|default=0: FWHM blur value (mm)
     doall: 'True'
     # type=bool|default=False: apply options to all sub-bricks in dataset
-    out_file: '"e7.nii"'
-    # type=file: output file
-    # type=file|default=<undefined>: output image file name
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

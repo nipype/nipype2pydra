@@ -6,17 +6,17 @@
 # Docs
 # ----
 # 
-#     Examples
-#     --------
-#     >>> from nipype.interfaces.ants import AverageAffineTransform
-#     >>> avg = AverageAffineTransform()
-#     >>> avg.inputs.dimension = 3
-#     >>> avg.inputs.transforms = ['trans.mat', 'func_to_struct.mat']
-#     >>> avg.inputs.output_affine_transform = 'MYtemplatewarp.mat'
-#     >>> avg.cmdline
-#     'AverageAffineTransform 3 MYtemplatewarp.mat trans.mat func_to_struct.mat'
+# Examples
+# --------
+# >>> from nipype.interfaces.ants import AverageAffineTransform
+# >>> avg = AverageAffineTransform()
+# >>> avg.inputs.dimension = 3
+# >>> avg.inputs.transforms = ['trans.mat', 'func_to_struct.mat']
+# >>> avg.inputs.output_affine_transform = 'MYtemplatewarp.mat'
+# >>> avg.cmdline
+# 'AverageAffineTransform 3 MYtemplatewarp.mat trans.mat func_to_struct.mat'
 # 
-#     
+# 
 task_name: AverageAffineTransform
 nipype_name: AverageAffineTransform
 nipype_module: nipype.interfaces.ants.utils
@@ -31,9 +31,7 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    output_affine_transform: Path
-    # type=file|default=<undefined>: Outputfname.txt: the name of the resulting transform.
-    transforms: datascience/text-matrix+list-of
+    transforms: generic/file+list-of
     # type=inputmultiobject|default=[]: transforms to average
   callable_defaults:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
@@ -57,7 +55,7 @@ outputs:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
@@ -77,7 +75,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -96,12 +94,10 @@ tests:
   # (if not specified, will try to choose a sensible value)
     dimension: '3'
     # type=enum|default=3|allowed[2,3]: image dimension (2 or 3)
-    transforms:
-    # type=inputmultiobject|default=[]: transforms to average
     output_affine_transform: '"MYtemplatewarp.mat"'
     # type=file|default=<undefined>: Outputfname.txt: the name of the resulting transform.
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -116,7 +112,7 @@ tests:
   # bool - whether the unittest is expected to fail or not. Set to false
   # when you are satisfied with the edits you have made to this file
 doctests:
-- cmdline: AverageAffineTransform 3 MYtemplatewarp.mat trans.mat func_to_struct.mat
+- cmdline:
   # str - the expected cmdline output
   inputs:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
@@ -124,12 +120,10 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     dimension: '3'
     # type=enum|default=3|allowed[2,3]: image dimension (2 or 3)
-    transforms: '["trans.mat", "func_to_struct.mat"]'
-    # type=inputmultiobject|default=[]: transforms to average
     output_affine_transform: '"MYtemplatewarp.mat"'
     # type=file|default=<undefined>: Outputfname.txt: the name of the resulting transform.
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

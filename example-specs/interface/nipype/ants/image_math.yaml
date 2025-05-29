@@ -6,60 +6,60 @@
 # Docs
 # ----
 # 
-#     Operations over images.
+# Operations over images.
 # 
-#     Examples
-#     --------
-#     >>> ImageMath(
-#     ...     op1='structural.nii',
-#     ...     operation='+',
-#     ...     op2='2').cmdline
-#     'ImageMath 3 structural_maths.nii + structural.nii 2'
+# Examples
+# --------
+# >>> ImageMath(
+# ...     op1='structural.nii',
+# ...     operation='+',
+# ...     op2='2').cmdline
+# 'ImageMath 3 structural_maths.nii + structural.nii 2'
 # 
-#     >>> ImageMath(
-#     ...     op1='structural.nii',
-#     ...     operation='Project',
-#     ...     op2='1 2').cmdline
-#     'ImageMath 3 structural_maths.nii Project structural.nii 1 2'
+# >>> ImageMath(
+# ...     op1='structural.nii',
+# ...     operation='Project',
+# ...     op2='1 2').cmdline
+# 'ImageMath 3 structural_maths.nii Project structural.nii 1 2'
 # 
-#     >>> ImageMath(
-#     ...     op1='structural.nii',
-#     ...     operation='G',
-#     ...     op2='4').cmdline
-#     'ImageMath 3 structural_maths.nii G structural.nii 4'
+# >>> ImageMath(
+# ...     op1='structural.nii',
+# ...     operation='G',
+# ...     op2='4').cmdline
+# 'ImageMath 3 structural_maths.nii G structural.nii 4'
 # 
-#     >>> ImageMath(
-#     ...     op1='structural.nii',
-#     ...     operation='TruncateImageIntensity',
-#     ...     op2='0.005 0.999 256').cmdline
-#     'ImageMath 3 structural_maths.nii TruncateImageIntensity structural.nii 0.005 0.999 256'
+# >>> ImageMath(
+# ...     op1='structural.nii',
+# ...     operation='TruncateImageIntensity',
+# ...     op2='0.005 0.999 256').cmdline
+# 'ImageMath 3 structural_maths.nii TruncateImageIntensity structural.nii 0.005 0.999 256'
 # 
-#     By default, Nipype copies headers from the first input image (``op1``)
-#     to the output image.
-#     For some operations, as the ``PadImage`` operation, the header cannot be copied from inputs to
-#     outputs, and so ``copy_header`` option is automatically set to ``False``.
+# By default, Nipype copies headers from the first input image (``op1``)
+# to the output image.
+# For some operations, as the ``PadImage`` operation, the header cannot be copied from inputs to
+# outputs, and so ``copy_header`` option is automatically set to ``False``.
 # 
-#     >>> pad = ImageMath(
-#     ...     op1='structural.nii',
-#     ...     operation='PadImage')
-#     >>> pad.inputs.copy_header
-#     False
+# >>> pad = ImageMath(
+# ...     op1='structural.nii',
+# ...     operation='PadImage')
+# >>> pad.inputs.copy_header
+# False
 # 
-#     While the operation is set to ``PadImage``,
-#     setting ``copy_header = True`` will have no effect.
+# While the operation is set to ``PadImage``,
+# setting ``copy_header = True`` will have no effect.
 # 
-#     >>> pad.inputs.copy_header = True
-#     >>> pad.inputs.copy_header
-#     False
+# >>> pad.inputs.copy_header = True
+# >>> pad.inputs.copy_header
+# False
 # 
-#     For any other operation, ``copy_header`` can be enabled/disabled normally:
+# For any other operation, ``copy_header`` can be enabled/disabled normally:
 # 
-#     >>> pad.inputs.operation = "ME"
-#     >>> pad.inputs.copy_header = True
-#     >>> pad.inputs.copy_header
-#     True
+# >>> pad.inputs.operation = "ME"
+# >>> pad.inputs.copy_header = True
+# >>> pad.inputs.copy_header
+# True
 # 
-#     
+# 
 task_name: ImageMath
 nipype_name: ImageMath
 nipype_module: nipype.interfaces.ants.utils
@@ -76,9 +76,6 @@ inputs:
   # passed to the field in the automatically generated unittests.
     op1: medimage/nifti1
     # type=file|default=<undefined>: first operator
-    output_image: Path
-    # type=file: output image file
-    # type=file|default=<undefined>: output image file
   callable_defaults:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set as the `default` method of input fields
@@ -102,7 +99,7 @@ outputs:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
@@ -129,7 +126,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -153,7 +150,7 @@ tests:
     op2: '"2"'
     # type=traitcompound|default=None: second operator
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -177,7 +174,7 @@ tests:
     op2: '"1 2"'
     # type=traitcompound|default=None: second operator
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -201,7 +198,7 @@ tests:
     op2: '"4"'
     # type=traitcompound|default=None: second operator
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -225,7 +222,7 @@ tests:
     op2: '"0.005 0.999 256"'
     # type=traitcompound|default=None: second operator
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -240,7 +237,7 @@ tests:
   # bool - whether the unittest is expected to fail or not. Set to false
   # when you are satisfied with the edits you have made to this file
 doctests:
-- cmdline: ImageMath 3 structural_maths.nii + structural.nii 2
+- cmdline:
   # str - the expected cmdline output
   inputs:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
@@ -253,7 +250,7 @@ doctests:
     op2: '"2"'
     # type=traitcompound|default=None: second operator
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS
@@ -270,7 +267,7 @@ doctests:
     op2: '"1 2"'
     # type=traitcompound|default=None: second operator
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS
@@ -287,7 +284,7 @@ doctests:
     op2: '"4"'
     # type=traitcompound|default=None: second operator
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS
@@ -304,7 +301,7 @@ doctests:
     op2: '"0.005 0.999 256"'
     # type=traitcompound|default=None: second operator
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

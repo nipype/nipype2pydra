@@ -6,21 +6,21 @@
 # Docs
 # ----
 # 
-#     Convert scalar images to RGB.
+# Convert scalar images to RGB.
 # 
-#     Examples
-#     --------
-#     >>> from nipype.interfaces.ants.visualization import ConvertScalarImageToRGB
-#     >>> converter = ConvertScalarImageToRGB()
-#     >>> converter.inputs.dimension = 3
-#     >>> converter.inputs.input_image = 'T1.nii.gz'
-#     >>> converter.inputs.colormap = 'jet'
-#     >>> converter.inputs.minimum_input = 0
-#     >>> converter.inputs.maximum_input = 6
-#     >>> converter.cmdline
-#     'ConvertScalarImageToRGB 3 T1.nii.gz rgb.nii.gz none jet none 0 6 0 255'
+# Examples
+# --------
+# >>> from nipype.interfaces.ants.visualization import ConvertScalarImageToRGB
+# >>> converter = ConvertScalarImageToRGB()
+# >>> converter.inputs.dimension = 3
+# >>> converter.inputs.input_image = 'T1.nii.gz'
+# >>> converter.inputs.colormap = 'jet'
+# >>> converter.inputs.minimum_input = 0
+# >>> converter.inputs.maximum_input = 6
+# >>> converter.cmdline
+# 'ConvertScalarImageToRGB 3 T1.nii.gz rgb.nii.gz none jet none 0 6 0 255'
 # 
-#     
+# 
 task_name: ConvertScalarImageToRGB
 nipype_name: ConvertScalarImageToRGB
 nipype_module: nipype.interfaces.ants.visualization
@@ -35,7 +35,7 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    input_image: medimage/nifti-gz
+    input_image: generic/file
     # type=file|default=<undefined>: Main input is a 3-D grayscale image.
   callable_defaults:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
@@ -60,7 +60,7 @@ outputs:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
@@ -95,7 +95,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -114,16 +114,12 @@ tests:
   # (if not specified, will try to choose a sensible value)
     dimension: '3'
     # type=enum|default=3|allowed[2,3]: image dimension (2 or 3)
-    input_image:
-    # type=file|default=<undefined>: Main input is a 3-D grayscale image.
     colormap: '"jet"'
     # type=enum|default='grey'|allowed['autumn','blue','cool','copper','custom','green','grey','hot','hsv','jet','overunder','red','spring','summer','winter']: Select a colormap
-    minimum_input: '0'
-    # type=int|default=0: minimum input
     maximum_input: '6'
     # type=int|default=0: maximum input
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -138,7 +134,7 @@ tests:
   # bool - whether the unittest is expected to fail or not. Set to false
   # when you are satisfied with the edits you have made to this file
 doctests:
-- cmdline: ConvertScalarImageToRGB 3 T1.nii.gz rgb.nii.gz none jet none 0 6 0 255
+- cmdline:
   # str - the expected cmdline output
   inputs:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
@@ -146,16 +142,12 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     dimension: '3'
     # type=enum|default=3|allowed[2,3]: image dimension (2 or 3)
-    input_image: '"T1.nii.gz"'
-    # type=file|default=<undefined>: Main input is a 3-D grayscale image.
     colormap: '"jet"'
     # type=enum|default='grey'|allowed['autumn','blue','cool','copper','custom','green','grey','hot','hsv','jet','overunder','red','spring','summer','winter']: Select a colormap
-    minimum_input: '0'
-    # type=int|default=0: minimum input
     maximum_input: '6'
     # type=int|default=0: maximum input
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

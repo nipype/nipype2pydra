@@ -6,9 +6,9 @@
 # Docs
 # ----
 # 
-#     Perform model parameters estimation for local (voxelwise) diffusion
-#     parameters
-#     
+# Perform model parameters estimation for local (voxelwise) diffusion
+# parameters
+# 
 task_name: XFibres5
 nipype_name: XFibres5
 nipype_module: nipype.interfaces.fsl.dti
@@ -56,7 +56,7 @@ outputs:
     fsamples: generic/file+list-of
     # type=outputmultiobject: Samples from the distribution on f anisotropy
     mean_S0samples: generic/file
-    # type=file: Mean of distribution on T2wbaseline signal intensity S0
+    # type=file: Mean of distribution on T2w baseline signal intensity S0
     mean_dsamples: generic/file
     # type=file: Mean of distribution on diffusivity d
     mean_fsamples: generic/file+list-of
@@ -71,7 +71,7 @@ outputs:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
@@ -127,13 +127,13 @@ tests:
     force_dir:
     # type=bool|default=True: use the actual directory name given (do not add + to make a new directory)
     output_type:
-    # type=enum|default='NIFTI'|allowed['NIFTI','NIFTI_GZ','NIFTI_PAIR','NIFTI_PAIR_GZ']: FSL output type
+    # type=enum|default='NIFTI'|allowed['GIFTI','NIFTI','NIFTI_GZ','NIFTI_PAIR','NIFTI_PAIR_GZ']: FSL output type
     args:
     # type=str|default='': Additional parameters to the command
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically

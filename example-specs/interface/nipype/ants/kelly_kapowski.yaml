@@ -6,29 +6,29 @@
 # Docs
 # ----
 # 
-#     Nipype Interface to ANTs' KellyKapowski, also known as DiReCT.
+# Nipype Interface to ANTs' KellyKapowski, also known as DiReCT.
 # 
-#     DiReCT is a registration based estimate of cortical thickness. It was published
-#     in S. R. Das, B. B. Avants, M. Grossman, and J. C. Gee, Registration based
-#     cortical thickness measurement, Neuroimage 2009, 45:867--879.
+# DiReCT is a registration based estimate of cortical thickness. It was published
+# in S. R. Das, B. B. Avants, M. Grossman, and J. C. Gee, Registration based
+# cortical thickness measurement, Neuroimage 2009, 45:867--879.
 # 
-#     Examples
-#     --------
-#     >>> from nipype.interfaces.ants.segmentation import KellyKapowski
-#     >>> kk = KellyKapowski()
-#     >>> kk.inputs.dimension = 3
-#     >>> kk.inputs.segmentation_image = "segmentation0.nii.gz"
-#     >>> kk.inputs.convergence = "[45,0.0,10]"
-#     >>> kk.inputs.thickness_prior_estimate = 10
-#     >>> kk.cmdline
-#     'KellyKapowski --convergence "[45,0.0,10]"
-#     --output "[segmentation0_cortical_thickness.nii.gz,segmentation0_warped_white_matter.nii.gz]"
-#     --image-dimensionality 3 --gradient-step 0.025000
-#     --maximum-number-of-invert-displacement-field-iterations 20 --number-of-integration-points 10
-#     --segmentation-image "[segmentation0.nii.gz,2,3]" --smoothing-variance 1.000000
-#     --smoothing-velocity-field-parameter 1.500000 --thickness-prior-estimate 10.000000'
+# Examples
+# --------
+# >>> from nipype.interfaces.ants.segmentation import KellyKapowski
+# >>> kk = KellyKapowski()
+# >>> kk.inputs.dimension = 3
+# >>> kk.inputs.segmentation_image = "segmentation0.nii.gz"
+# >>> kk.inputs.convergence = "[45,0.0,10]"
+# >>> kk.inputs.thickness_prior_estimate = 10
+# >>> kk.cmdline
+# 'KellyKapowski --convergence "[45,0.0,10]"
+# --output "[segmentation0_cortical_thickness.nii.gz,segmentation0_warped_white_matter.nii.gz]"
+# --image-dimensionality 3 --gradient-step 0.025000
+# --maximum-number-of-invert-displacement-field-iterations 20 --number-of-integration-points 10
+# --segmentation-image "[segmentation0.nii.gz,2,3]" --smoothing-variance 1.000000
+# --smoothing-velocity-field-parameter 1.500000 --thickness-prior-estimate 10.000000'
 # 
-#     
+# 
 task_name: KellyKapowski
 nipype_name: KellyKapowski
 nipype_module: nipype.interfaces.ants.segmentation
@@ -43,18 +43,12 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    cortical_thickness: Path
-    # type=file: A thickness map defined in the segmented gray matter.
-    # type=file|default=<undefined>: Filename for the cortical thickness.
     gray_matter_prob_image: generic/file
     # type=file|default=<undefined>: In addition to the segmentation image, a gray matter probability image can be used. If no such image is supplied, one is created using the segmentation image and a variance of 1.0 mm.
-    segmentation_image: medimage/nifti-gz
+    segmentation_image: generic/file
     # type=file|default=<undefined>: A segmentation image must be supplied labeling the gray and white matters. Default values = 2 and 3, respectively.
     thickness_prior_image: generic/file
     # type=file|default=<undefined>: An image containing spatially varying prior thickness values.
-    warped_white_matter: Path
-    # type=file: A warped white matter image.
-    # type=file|default=<undefined>: Filename for the warped white matter file.
     white_matter_prob_image: generic/file
     # type=file|default=<undefined>: In addition to the segmentation image, a white matter probability image can be used. If no such image is supplied, one is created using the segmentation image and a variance of 1.0 mm.
   callable_defaults:
@@ -83,7 +77,7 @@ outputs:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
@@ -133,7 +127,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -152,14 +146,10 @@ tests:
   # (if not specified, will try to choose a sensible value)
     dimension: '3'
     # type=enum|default=3|allowed[2,3]: image dimension (2 or 3)
-    segmentation_image:
-    # type=file|default=<undefined>: A segmentation image must be supplied labeling the gray and white matters. Default values = 2 and 3, respectively.
     convergence: '"[45,0.0,10]"'
     # type=str|default='[50,0.001,10]': Convergence is determined by fitting a line to the normalized energy profile of the last N iterations (where N is specified by the window size) and determining the slope which is then compared with the convergence threshold.
-    thickness_prior_estimate: '10'
-    # type=float|default=10: Provides a prior constraint on the final thickness measurement in mm.
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -174,7 +164,7 @@ tests:
   # bool - whether the unittest is expected to fail or not. Set to false
   # when you are satisfied with the edits you have made to this file
 doctests:
-- cmdline: KellyKapowski --convergence "[45,0.0,10]" --output "[segmentation0_cortical_thickness.nii.gz,segmentation0_warped_white_matter.nii.gz]" --image-dimensionality 3 --gradient-step 0.025000 --maximum-number-of-invert-displacement-field-iterations 20 --number-of-integration-points 10 --segmentation-image "[segmentation0.nii.gz,2,3]" --smoothing-variance 1.000000 --smoothing-velocity-field-parameter 1.500000 --thickness-prior-estimate 10.000000
+- cmdline:
   # str - the expected cmdline output
   inputs:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
@@ -182,14 +172,10 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     dimension: '3'
     # type=enum|default=3|allowed[2,3]: image dimension (2 or 3)
-    segmentation_image: '"segmentation0.nii.gz"'
-    # type=file|default=<undefined>: A segmentation image must be supplied labeling the gray and white matters. Default values = 2 and 3, respectively.
     convergence: '"[45,0.0,10]"'
     # type=str|default='[50,0.001,10]': Convergence is determined by fitting a line to the normalized energy profile of the last N iterations (where N is specified by the window size) and determining the slope which is then compared with the convergence threshold.
-    thickness_prior_estimate: '10'
-    # type=float|default=10: Provides a prior constraint on the final thickness measurement in mm.
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

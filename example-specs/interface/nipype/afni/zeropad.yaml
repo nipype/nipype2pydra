@@ -7,26 +7,26 @@
 # ----
 # Adds planes of zeros to a dataset (i.e., pads it out).
 # 
-#     For complete details, see the `3dZeropad Documentation.
-#     <https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dZeropad.html>`__
+# For complete details, see the `3dZeropad Documentation.
+# <https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dZeropad.html>`__
 # 
-#     Examples
-#     --------
-#     >>> from nipype.interfaces import afni
-#     >>> zeropad = afni.Zeropad()
-#     >>> zeropad.inputs.in_files = 'functional.nii'
-#     >>> zeropad.inputs.out_file = 'pad_functional.nii'
-#     >>> zeropad.inputs.I = 10
-#     >>> zeropad.inputs.S = 10
-#     >>> zeropad.inputs.A = 10
-#     >>> zeropad.inputs.P = 10
-#     >>> zeropad.inputs.R = 10
-#     >>> zeropad.inputs.L = 10
-#     >>> zeropad.cmdline
-#     '3dZeropad -A 10 -I 10 -L 10 -P 10 -R 10 -S 10 -prefix pad_functional.nii functional.nii'
-#     >>> res = zeropad.run()  # doctest: +SKIP
+# Examples
+# --------
+# >>> from nipype.interfaces import afni
+# >>> zeropad = afni.Zeropad()
+# >>> zeropad.inputs.in_files = 'functional.nii'
+# >>> zeropad.inputs.out_file = 'pad_functional.nii'
+# >>> zeropad.inputs.I = 10
+# >>> zeropad.inputs.S = 10
+# >>> zeropad.inputs.A = 10
+# >>> zeropad.inputs.P = 10
+# >>> zeropad.inputs.R = 10
+# >>> zeropad.inputs.L = 10
+# >>> zeropad.cmdline
+# '3dZeropad -A 10 -I 10 -L 10 -P 10 -R 10 -S 10 -prefix pad_functional.nii functional.nii'
+# >>> res = zeropad.run()  # doctest: +SKIP
 # 
-#     
+# 
 task_name: Zeropad
 nipype_name: Zeropad
 nipype_module: nipype.interfaces.afni.utils
@@ -45,9 +45,6 @@ inputs:
     # type=file|default=<undefined>: input dataset
     master: generic/file
     # type=file|default=<undefined>: match the volume described in dataset 'mset', where mset must have the same orientation and grid spacing as dataset to be padded. the goal of -master is to make the output dataset from 3dZeropad match the spatial 'extents' of mset by adding or subtracting slices as needed. You can't use -I,-S,..., or -mm with -master
-    out_file: Path
-    # type=file: output file
-    # type=file|default=<undefined>: output dataset prefix name (default 'zeropad')
   callable_defaults:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set as the `default` method of input fields
@@ -64,14 +61,14 @@ outputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    out_file: medimage/nifti1
+    out_file: generic/file
     # type=file: output file
     # type=file|default=<undefined>: output dataset prefix name (default 'zeropad')
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
@@ -116,7 +113,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -135,23 +132,14 @@ tests:
   # (if not specified, will try to choose a sensible value)
     in_files:
     # type=file|default=<undefined>: input dataset
-    out_file: '"pad_functional.nii"'
-    # type=file: output file
-    # type=file|default=<undefined>: output dataset prefix name (default 'zeropad')
     I: '10'
     # type=int|default=0: adds 'n' planes of zero at the Inferior edge
-    S: '10'
-    # type=int|default=0: adds 'n' planes of zero at the Superior edge
     A: '10'
     # type=int|default=0: adds 'n' planes of zero at the Anterior edge
-    P: '10'
-    # type=int|default=0: adds 'n' planes of zero at the Posterior edge
     R: '10'
     # type=int|default=0: adds 'n' planes of zero at the Right edge
-    L: '10'
-    # type=int|default=0: adds 'n' planes of zero at the Left edge
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -166,7 +154,7 @@ tests:
   # bool - whether the unittest is expected to fail or not. Set to false
   # when you are satisfied with the edits you have made to this file
 doctests:
-- cmdline: 3dZeropad -A 10 -I 10 -L 10 -P 10 -R 10 -S 10 -prefix pad_functional.nii functional.nii
+- cmdline:
   # str - the expected cmdline output
   inputs:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
@@ -174,23 +162,14 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     in_files: '"functional.nii"'
     # type=file|default=<undefined>: input dataset
-    out_file: '"pad_functional.nii"'
-    # type=file: output file
-    # type=file|default=<undefined>: output dataset prefix name (default 'zeropad')
     I: '10'
     # type=int|default=0: adds 'n' planes of zero at the Inferior edge
-    S: '10'
-    # type=int|default=0: adds 'n' planes of zero at the Superior edge
     A: '10'
     # type=int|default=0: adds 'n' planes of zero at the Anterior edge
-    P: '10'
-    # type=int|default=0: adds 'n' planes of zero at the Posterior edge
     R: '10'
     # type=int|default=0: adds 'n' planes of zero at the Right edge
-    L: '10'
-    # type=int|default=0: adds 'n' planes of zero at the Left edge
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

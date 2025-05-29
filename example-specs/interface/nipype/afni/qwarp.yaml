@@ -6,95 +6,95 @@
 # Docs
 # ----
 # 
-#     Allineate your images prior to passing them to this workflow.
+# Allineate your images prior to passing them to this workflow.
 # 
-#     Examples
-#     --------
-#     >>> from nipype.interfaces import afni
-#     >>> qwarp = afni.Qwarp()
-#     >>> qwarp.inputs.in_file = 'sub-01_dir-LR_epi.nii.gz'
-#     >>> qwarp.inputs.nopadWARP = True
-#     >>> qwarp.inputs.base_file = 'sub-01_dir-RL_epi.nii.gz'
-#     >>> qwarp.inputs.plusminus = True
-#     >>> qwarp.cmdline
-#     '3dQwarp -base sub-01_dir-RL_epi.nii.gz -source sub-01_dir-LR_epi.nii.gz -nopadWARP -prefix ppp_sub-01_dir-LR_epi -plusminus'
-#     >>> res = qwarp.run()  # doctest: +SKIP
+# Examples
+# --------
+# >>> from nipype.interfaces import afni
+# >>> qwarp = afni.Qwarp()
+# >>> qwarp.inputs.in_file = 'sub-01_dir-LR_epi.nii.gz'
+# >>> qwarp.inputs.nopadWARP = True
+# >>> qwarp.inputs.base_file = 'sub-01_dir-RL_epi.nii.gz'
+# >>> qwarp.inputs.plusminus = True
+# >>> qwarp.cmdline
+# '3dQwarp -base sub-01_dir-RL_epi.nii.gz -source sub-01_dir-LR_epi.nii.gz -nopadWARP -prefix ppp_sub-01_dir-LR_epi -plusminus'
+# >>> res = qwarp.run()  # doctest: +SKIP
 # 
-#     >>> from nipype.interfaces import afni
-#     >>> qwarp = afni.Qwarp()
-#     >>> qwarp.inputs.in_file = 'structural.nii'
-#     >>> qwarp.inputs.base_file = 'mni.nii'
-#     >>> qwarp.inputs.resample = True
-#     >>> qwarp.cmdline
-#     '3dQwarp -base mni.nii -source structural.nii -prefix ppp_structural -resample'
-#     >>> res = qwarp.run()  # doctest: +SKIP
+# >>> from nipype.interfaces import afni
+# >>> qwarp = afni.Qwarp()
+# >>> qwarp.inputs.in_file = 'structural.nii'
+# >>> qwarp.inputs.base_file = 'mni.nii'
+# >>> qwarp.inputs.resample = True
+# >>> qwarp.cmdline
+# '3dQwarp -base mni.nii -source structural.nii -prefix ppp_structural -resample'
+# >>> res = qwarp.run()  # doctest: +SKIP
 # 
-#     >>> from nipype.interfaces import afni
-#     >>> qwarp = afni.Qwarp()
-#     >>> qwarp.inputs.in_file = 'structural.nii'
-#     >>> qwarp.inputs.base_file = 'epi.nii'
-#     >>> qwarp.inputs.out_file = 'anatSSQ.nii.gz'
-#     >>> qwarp.inputs.resample = True
-#     >>> qwarp.inputs.lpc = True
-#     >>> qwarp.inputs.verb = True
-#     >>> qwarp.inputs.iwarp = True
-#     >>> qwarp.inputs.blur = [0,3]
-#     >>> qwarp.cmdline
-#     '3dQwarp -base epi.nii -blur 0.0 3.0 -source structural.nii -iwarp -prefix anatSSQ.nii.gz -resample -verb -lpc'
+# >>> from nipype.interfaces import afni
+# >>> qwarp = afni.Qwarp()
+# >>> qwarp.inputs.in_file = 'structural.nii'
+# >>> qwarp.inputs.base_file = 'epi.nii'
+# >>> qwarp.inputs.out_file = 'anatSSQ.nii.gz'
+# >>> qwarp.inputs.resample = True
+# >>> qwarp.inputs.lpc = True
+# >>> qwarp.inputs.verb = True
+# >>> qwarp.inputs.iwarp = True
+# >>> qwarp.inputs.blur = [0,3]
+# >>> qwarp.cmdline
+# '3dQwarp -base epi.nii -blur 0.0 3.0 -source structural.nii -iwarp -prefix anatSSQ.nii.gz -resample -verb -lpc'
 # 
-#     >>> res = qwarp.run()  # doctest: +SKIP
+# >>> res = qwarp.run()  # doctest: +SKIP
 # 
-#     >>> from nipype.interfaces import afni
-#     >>> qwarp = afni.Qwarp()
-#     >>> qwarp.inputs.in_file = 'structural.nii'
-#     >>> qwarp.inputs.base_file = 'mni.nii'
-#     >>> qwarp.inputs.duplo = True
-#     >>> qwarp.inputs.blur = [0,3]
-#     >>> qwarp.cmdline
-#     '3dQwarp -base mni.nii -blur 0.0 3.0 -duplo -source structural.nii -prefix ppp_structural'
+# >>> from nipype.interfaces import afni
+# >>> qwarp = afni.Qwarp()
+# >>> qwarp.inputs.in_file = 'structural.nii'
+# >>> qwarp.inputs.base_file = 'mni.nii'
+# >>> qwarp.inputs.duplo = True
+# >>> qwarp.inputs.blur = [0,3]
+# >>> qwarp.cmdline
+# '3dQwarp -base mni.nii -blur 0.0 3.0 -duplo -source structural.nii -prefix ppp_structural'
 # 
-#     >>> res = qwarp.run()  # doctest: +SKIP
+# >>> res = qwarp.run()  # doctest: +SKIP
 # 
-#     >>> from nipype.interfaces import afni
-#     >>> qwarp = afni.Qwarp()
-#     >>> qwarp.inputs.in_file = 'structural.nii'
-#     >>> qwarp.inputs.base_file = 'mni.nii'
-#     >>> qwarp.inputs.duplo = True
-#     >>> qwarp.inputs.minpatch = 25
-#     >>> qwarp.inputs.blur = [0,3]
-#     >>> qwarp.inputs.out_file = 'Q25'
-#     >>> qwarp.cmdline
-#     '3dQwarp -base mni.nii -blur 0.0 3.0 -duplo -source structural.nii -minpatch 25 -prefix Q25'
+# >>> from nipype.interfaces import afni
+# >>> qwarp = afni.Qwarp()
+# >>> qwarp.inputs.in_file = 'structural.nii'
+# >>> qwarp.inputs.base_file = 'mni.nii'
+# >>> qwarp.inputs.duplo = True
+# >>> qwarp.inputs.minpatch = 25
+# >>> qwarp.inputs.blur = [0,3]
+# >>> qwarp.inputs.out_file = 'Q25'
+# >>> qwarp.cmdline
+# '3dQwarp -base mni.nii -blur 0.0 3.0 -duplo -source structural.nii -minpatch 25 -prefix Q25'
 # 
-#     >>> res = qwarp.run()  # doctest: +SKIP
-#     >>> qwarp2 = afni.Qwarp()
-#     >>> qwarp2.inputs.in_file = 'structural.nii'
-#     >>> qwarp2.inputs.base_file = 'mni.nii'
-#     >>> qwarp2.inputs.blur = [0,2]
-#     >>> qwarp2.inputs.out_file = 'Q11'
-#     >>> qwarp2.inputs.inilev = 7
-#     >>> qwarp2.inputs.iniwarp = ['Q25_warp+tlrc.HEAD']
-#     >>> qwarp2.cmdline
-#     '3dQwarp -base mni.nii -blur 0.0 2.0 -source structural.nii -inilev 7 -iniwarp Q25_warp+tlrc.HEAD -prefix Q11'
+# >>> res = qwarp.run()  # doctest: +SKIP
+# >>> qwarp2 = afni.Qwarp()
+# >>> qwarp2.inputs.in_file = 'structural.nii'
+# >>> qwarp2.inputs.base_file = 'mni.nii'
+# >>> qwarp2.inputs.blur = [0,2]
+# >>> qwarp2.inputs.out_file = 'Q11'
+# >>> qwarp2.inputs.inilev = 7
+# >>> qwarp2.inputs.iniwarp = ['Q25_warp+tlrc.HEAD']
+# >>> qwarp2.cmdline
+# '3dQwarp -base mni.nii -blur 0.0 2.0 -source structural.nii -inilev 7 -iniwarp Q25_warp+tlrc.HEAD -prefix Q11'
 # 
-#     >>> res2 = qwarp2.run()  # doctest: +SKIP
-#     >>> res2 = qwarp2.run()  # doctest: +SKIP
-#     >>> qwarp3 = afni.Qwarp()
-#     >>> qwarp3.inputs.in_file = 'structural.nii'
-#     >>> qwarp3.inputs.base_file = 'mni.nii'
-#     >>> qwarp3.inputs.allineate = True
-#     >>> qwarp3.inputs.allineate_opts = '-cose lpa -verb'
-#     >>> qwarp3.cmdline
-#     "3dQwarp -allineate -allineate_opts '-cose lpa -verb' -base mni.nii -source structural.nii -prefix ppp_structural"
+# >>> res2 = qwarp2.run()  # doctest: +SKIP
+# >>> res2 = qwarp2.run()  # doctest: +SKIP
+# >>> qwarp3 = afni.Qwarp()
+# >>> qwarp3.inputs.in_file = 'structural.nii'
+# >>> qwarp3.inputs.base_file = 'mni.nii'
+# >>> qwarp3.inputs.allineate = True
+# >>> qwarp3.inputs.allineate_opts = '-cose lpa -verb'
+# >>> qwarp3.cmdline
+# "3dQwarp -allineate -allineate_opts '-cose lpa -verb' -base mni.nii -source structural.nii -prefix ppp_structural"
 # 
-#     >>> res3 = qwarp3.run()  # doctest: +SKIP
+# >>> res3 = qwarp3.run()  # doctest: +SKIP
 # 
-#     See Also
-#     --------
-#     For complete details, see the `3dQwarp Documentation.
-#     <https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dQwarp.html>`__
+# See Also
+# --------
+# For complete details, see the `3dQwarp Documentation.
+# <https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dQwarp.html>`__
 # 
-#     
+# 
 task_name: Qwarp
 nipype_name: Qwarp
 nipype_module: nipype.interfaces.afni.preprocess
@@ -109,7 +109,7 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    base_file: medimage/nifti1,medimage/nifti-gz
+    base_file: medimage/nifti-gz
     # type=file|default=<undefined>: Base image (opposite phase encoding direction than source image).
     emask: generic/file
     # type=file|default=<undefined>: Here, 'ee' is a dataset to specify a mask of voxelsto EXCLUDE from the analysis -- all voxels in 'ee'that are NONZERO will not be used in the alignment.The base image always automasked -- the emask isextra, to indicate voxels you definitely DON'T wantincluded in the matching process, even if they areinside the brain.
@@ -117,12 +117,8 @@ inputs:
     # type=file|default=<undefined>: This option provides an alternate way to specify the patch grid sizes used in the warp optimization process. 'gl' is a 1D file with a list of patches to use -- in most cases, you will want to use it in the following form: ``-gridlist '1D: 0 151 101 75 51'``  * Here, a 0 patch size means the global domain. Patch sizes   otherwise should be odd integers >= 5. * If you use the '0' patch size again after the first position,   you will actually get an iteration at the size of the   default patch level 1, where the patch sizes are 75% of   the volume dimension.  There is no way to force the program   to literally repeat the sui generis step of lev=0.  
     in_file: medimage/nifti1,medimage/nifti-gz
     # type=file|default=<undefined>: Source image (opposite phase encoding direction than base image).
-    iniwarp: medimage-afni/head+list-of
+    iniwarp: generic/file+list-of
     # type=list|default=[]: A dataset with an initial nonlinear warp to use.  * If this option is not used, the initial warp is the identity. * You can specify a catenation of warps (in quotes) here, as in   program 3dNwarpApply. * As a special case, if you just input an affine matrix in a .1D   file, that will work also -- it is treated as giving the initial   warp via the string "IDENT(base_dataset) matrix_file.aff12.1D". * You CANNOT use this option with -duplo !! * -iniwarp is usually used with -inilev to re-start 3dQwarp from   a previous stopping point.  
-    out_file: Path
-    # type=file|default=<undefined>: Sets the prefix/suffix for the output datasets.  * The source dataset is warped to match the base   and gets prefix 'ppp'. (Except if '-plusminus' is used * The final interpolation to this output dataset is   done using the 'wsinc5' method.  See the output of   3dAllineate -HELP   (in the "Modifying '-final wsinc5'" section) for   the lengthy technical details. * The 3D warp used is saved in a dataset with   prefix 'ppp_WARP' -- this dataset can be used   with 3dNwarpApply and 3dNwarpCat, for example. * To be clear, this is the warp from source dataset   coordinates to base dataset coordinates, where the   values at each base grid point are the xyz displacements   needed to move that grid point's xyz values to the   corresponding xyz values in the source dataset:   base( (x,y,z) + WARP(x,y,z) ) matches source(x,y,z)   Another way to think of this warp is that it 'pulls'   values back from source space to base space. * 3dNwarpApply would use 'ppp_WARP' to transform datasets   aligned with the source dataset to be aligned with the   base dataset.  **If you do NOT want this warp saved, use the option '-nowarp'**. (However, this warp is usually the most valuable possible output!)  * If you want to calculate and save the inverse 3D warp,   use the option '-iwarp'.  This inverse warp will then be   saved in a dataset with prefix 'ppp_WARPINV'. * This inverse warp could be used to transform data from base   space to source space, if you need to do such an operation. * You can easily compute the inverse later, say by a command like   3dNwarpCat -prefix Z_WARPINV 'INV(Z_WARP+tlrc)'   or the inverse can be computed as needed in 3dNwarpApply, like   3dNwarpApply -nwarp 'INV(Z_WARP+tlrc)' -source Dataset.nii ...  
-    out_weight_file: Path
-    # type=file|default=<undefined>: Write the weight volume to disk as a dataset
     weight: generic/file
     # type=file|default=<undefined>: Instead of computing the weight from the base dataset,directly input the weight volume from dataset 'www'.Useful if you know what over parts of the base image youwant to emphasize or de-emphasize the matching functional.
   callable_defaults:
@@ -155,7 +151,7 @@ outputs:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
@@ -192,6 +188,8 @@ tests:
     # type=file|default=<undefined>: Instead of computing the weight from the base dataset,directly input the weight volume from dataset 'www'.Useful if you know what over parts of the base image youwant to emphasize or de-emphasize the matching functional.
     wball:
     # type=list|default=[]: "``-wball x y z r f`` Enhance automatic weight from '-useweight' by a factor of 1+f\*Gaussian(FWHM=r) centered in the base image at DICOM coordinates (x,y,z) and with radius 'r'. The goal of this option is to try and make the alignment better in a specific part of the brain. Example:  -wball 0 14 6 30 40 to emphasize the thalamic area (in MNI/Talairach space).  * The 'r' parameter must be positive! * The 'f' parameter must be between 1 and 100 (inclusive). * '-wball' does nothing if you input your own weight   with the '-weight' option. * '-wball' does change the binary weight created by   the '-noweight' option. * You can only use '-wball' once in a run of 3dQwarp.  **The effect of '-wball' is not dramatic.** The example above makes the average brain image across a collection of subjects a little sharper in the thalamic area, which might have some small value.  If you care enough about alignment to use '-wball', then you should examine the results from 3dQwarp for each subject, to see if the alignments are good enough for your purposes.
+    bandpass:
+    # type=tuple|default=None: 
     wmask:
     # type=tuple|default=None: Similar to '-wball', but here, you provide a dataset 'ws' that indicates where to increase the weight.  * The 'ws' dataset must be on the same 3D grid as the base dataset. * 'ws' is treated as a mask -- it only matters where it   is nonzero -- otherwise, the values inside are not used. * After 'ws' comes the factor 'f' by which to increase the   automatically computed weight.  Where 'ws' is nonzero,   the weighting will be multiplied by (1+f). * As with '-wball', the factor 'f' should be between 1 and 100.  
     out_weight_file:
@@ -265,7 +263,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -284,14 +282,10 @@ tests:
   # (if not specified, will try to choose a sensible value)
     in_file:
     # type=file|default=<undefined>: Source image (opposite phase encoding direction than base image).
-    nopadWARP: 'True'
-    # type=bool|default=False: If for some reason you require the warp volume tomatch the base volume, then use this option to have the outputWARP dataset(s) truncated.
     base_file:
     # type=file|default=<undefined>: Base image (opposite phase encoding direction than source image).
-    plusminus: 'True'
-    # type=bool|default=False: Normally, the warp displacements dis(x) are defined to match base(x) to source(x+dis(x)).  With this option, the match is between base(x-dis(x)) and source(x+dis(x)) -- the two images 'meet in the middle'.  * One goal is to mimic the warping done to MRI EPI data by   field inhomogeneities, when registering between a 'blip up'   and a 'blip down' down volume, which will have opposite   distortions. * Define Wp(x) = x+dis(x) and Wm(x) = x-dis(x).  Then since   base(Wm(x)) matches source(Wp(x)), by substituting INV(Wm(x))   wherever we see x, we have base(x) matches source(Wp(INV(Wm(x))));   that is, the warp V(x) that one would get from the 'usual' way   of running 3dQwarp is V(x) = Wp(INV(Wm(x))). * Conversely, we can calculate Wp(x) in terms of V(x) as follows:   If V(x) = x + dv(x), define Vh(x) = x + dv(x)/2;   then Wp(x) = V(INV(Vh(x))) * With the above formulas, it is possible to compute Wp(x) from   V(x) and vice-versa, using program 3dNwarpCalc.  The requisite   commands are left as an exercise for the aspiring AFNI Jedi Master. * You can use the semi-secret '-pmBASE' option to get the V(x)   warp and the source dataset warped to base space, in addition to   the Wp(x) '_PLUS' and Wm(x) '_MINUS' warps.    * Alas: -plusminus does not work with -duplo or -allineate :-(   * However, you can use -iniwarp with -plusminus :-)   * The outputs have _PLUS (from the source dataset) and _MINUS     (from the base dataset) in their filenames, in addition to     the prefix.  The -iwarp option, if present, will be ignored.  
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -310,12 +304,10 @@ tests:
   # (if not specified, will try to choose a sensible value)
     in_file:
     # type=file|default=<undefined>: Source image (opposite phase encoding direction than base image).
-    base_file:
-    # type=file|default=<undefined>: Base image (opposite phase encoding direction than source image).
     resample: 'True'
     # type=bool|default=False: This option simply resamples the source dataset to match the base dataset grid.  You can use this if the two datasets overlap well (as seen in the AFNI GUI), but are not on the same 3D grid.  * If they don't overlap well, allineate them first * The reampling here is done with the   'wsinc5' method, which has very little blurring artifact. * If the base and source datasets ARE on the same 3D grid,   then the -resample option will be ignored. * You CAN use -resample with these 3dQwarp options:   -plusminus  -inilev  -iniwarp  -duplo  
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -334,22 +326,14 @@ tests:
   # (if not specified, will try to choose a sensible value)
     in_file:
     # type=file|default=<undefined>: Source image (opposite phase encoding direction than base image).
-    base_file:
-    # type=file|default=<undefined>: Base image (opposite phase encoding direction than source image).
     out_file: '"anatSSQ.nii.gz"'
     # type=file|default=<undefined>: Sets the prefix/suffix for the output datasets.  * The source dataset is warped to match the base   and gets prefix 'ppp'. (Except if '-plusminus' is used * The final interpolation to this output dataset is   done using the 'wsinc5' method.  See the output of   3dAllineate -HELP   (in the "Modifying '-final wsinc5'" section) for   the lengthy technical details. * The 3D warp used is saved in a dataset with   prefix 'ppp_WARP' -- this dataset can be used   with 3dNwarpApply and 3dNwarpCat, for example. * To be clear, this is the warp from source dataset   coordinates to base dataset coordinates, where the   values at each base grid point are the xyz displacements   needed to move that grid point's xyz values to the   corresponding xyz values in the source dataset:   base( (x,y,z) + WARP(x,y,z) ) matches source(x,y,z)   Another way to think of this warp is that it 'pulls'   values back from source space to base space. * 3dNwarpApply would use 'ppp_WARP' to transform datasets   aligned with the source dataset to be aligned with the   base dataset.  **If you do NOT want this warp saved, use the option '-nowarp'**. (However, this warp is usually the most valuable possible output!)  * If you want to calculate and save the inverse 3D warp,   use the option '-iwarp'.  This inverse warp will then be   saved in a dataset with prefix 'ppp_WARPINV'. * This inverse warp could be used to transform data from base   space to source space, if you need to do such an operation. * You can easily compute the inverse later, say by a command like   3dNwarpCat -prefix Z_WARPINV 'INV(Z_WARP+tlrc)'   or the inverse can be computed as needed in 3dNwarpApply, like   3dNwarpApply -nwarp 'INV(Z_WARP+tlrc)' -source Dataset.nii ...  
-    resample: 'True'
-    # type=bool|default=False: This option simply resamples the source dataset to match the base dataset grid.  You can use this if the two datasets overlap well (as seen in the AFNI GUI), but are not on the same 3D grid.  * If they don't overlap well, allineate them first * The reampling here is done with the   'wsinc5' method, which has very little blurring artifact. * If the base and source datasets ARE on the same 3D grid,   then the -resample option will be ignored. * You CAN use -resample with these 3dQwarp options:   -plusminus  -inilev  -iniwarp  -duplo  
     lpc: 'True'
     # type=bool|default=False: Local Pearson minimization (i.e., EPI-T1 registration)This option has not be extensively testedIf you use '-lpc', then '-maxlev 0' is automatically set.If you want to go to more refined levels, you can set '-maxlev'This should be set up to have lpc as the second to last argumentand maxlev as the second to last argument, as needed by AFNIUsing maxlev > 1 is not recommended for EPI-T1 alignment.
-    verb: 'True'
-    # type=bool|default=False: more detailed description of the process
     iwarp: 'True'
     # type=bool|default=False: Do compute and save the _WARPINV file.
-    blur: '[0,3]'
-    # type=list|default=[]: Gaussian blur the input images by 'bb' (FWHM) voxels before doing the alignment (the output dataset will not be blurred). The default is 2.345 (for no good reason).  * Optionally, you can provide 2 values for 'bb', and then   the first one is applied to the base volume, the second   to the source volume.   e.g., '-blur 0 3' to skip blurring the base image   (if the base is a blurry template, for example). * A negative blur radius means to use 3D median filtering,   rather than Gaussian blurring.  This type of filtering will   better preserve edges, which can be important in alignment. * If the base is a template volume that is already blurry,   you probably don't want to blur it again, but blurring   the source volume a little is probably a good idea, to   help the program avoid trying to match tiny features. * Note that -duplo will blur the volumes some extra   amount for the initial small-scale warping, to make   that phase of the program converge more rapidly.  
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -368,14 +352,34 @@ tests:
   # (if not specified, will try to choose a sensible value)
     in_file:
     # type=file|default=<undefined>: Source image (opposite phase encoding direction than base image).
-    base_file:
-    # type=file|default=<undefined>: Base image (opposite phase encoding direction than source image).
+    duplo: 'True'
+    # type=bool|default=False: Start off with 1/2 scale versions of the volumes," for getting a speedy coarse first alignment."  * Then scales back up to register the full volumes."   The goal is greater speed, and it seems to help this"   positively piggish program to be more expeditious." * However, accuracy is somewhat lower with '-duplo',"   for reasons that currently elude Zhark; for this reason,"   the Emperor does not usually use '-duplo'.  
+  imports:
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    in_file:
+    # type=file|default=<undefined>: Source image (opposite phase encoding direction than base image).
     duplo: 'True'
     # type=bool|default=False: Start off with 1/2 scale versions of the volumes," for getting a speedy coarse first alignment."  * Then scales back up to register the full volumes."   The goal is greater speed, and it seems to help this"   positively piggish program to be more expeditious." * However, accuracy is somewhat lower with '-duplo',"   for reasons that currently elude Zhark; for this reason,"   the Emperor does not usually use '-duplo'.  
     blur: '[0,3]'
     # type=list|default=[]: Gaussian blur the input images by 'bb' (FWHM) voxels before doing the alignment (the output dataset will not be blurred). The default is 2.345 (for no good reason).  * Optionally, you can provide 2 values for 'bb', and then   the first one is applied to the base volume, the second   to the source volume.   e.g., '-blur 0 3' to skip blurring the base image   (if the base is a blurry template, for example). * A negative blur radius means to use 3D median filtering,   rather than Gaussian blurring.  This type of filtering will   better preserve edges, which can be important in alignment. * If the base is a template volume that is already blurry,   you probably don't want to blur it again, but blurring   the source volume a little is probably a good idea, to   help the program avoid trying to match tiny features. * Note that -duplo will blur the volumes some extra   amount for the initial small-scale warping, to make   that phase of the program converge more rapidly.  
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -394,48 +398,12 @@ tests:
   # (if not specified, will try to choose a sensible value)
     in_file:
     # type=file|default=<undefined>: Source image (opposite phase encoding direction than base image).
-    base_file:
-    # type=file|default=<undefined>: Base image (opposite phase encoding direction than source image).
-    duplo: 'True'
-    # type=bool|default=False: Start off with 1/2 scale versions of the volumes," for getting a speedy coarse first alignment."  * Then scales back up to register the full volumes."   The goal is greater speed, and it seems to help this"   positively piggish program to be more expeditious." * However, accuracy is somewhat lower with '-duplo',"   for reasons that currently elude Zhark; for this reason,"   the Emperor does not usually use '-duplo'.  
-    minpatch: '25'
-    # type=int|default=0: The value of mm should be an odd integer.  * The default value of mm is 25. * For more accurate results than mm=25, try 19 or 13. * The smallest allowed patch size is 5. * You may want stop at a larger patch size (say 7 or 9) and use   the -Qfinal option to run that final level with quintic warps,   which might run faster and provide the same degree of warp detail. * Trying to make two different brain volumes match in fine detail   is usually a waste of time, especially in humans.  There is too   much variability in anatomy to match gyrus to gyrus accurately.   For this reason, the default minimum patch size is 25 voxels.   Using a smaller '-minpatch' might try to force the warp to   match features that do not match, and the result can be useless   image distortions -- another reason to LOOK AT THE RESULTS.  
-    blur: '[0,3]'
-    # type=list|default=[]: Gaussian blur the input images by 'bb' (FWHM) voxels before doing the alignment (the output dataset will not be blurred). The default is 2.345 (for no good reason).  * Optionally, you can provide 2 values for 'bb', and then   the first one is applied to the base volume, the second   to the source volume.   e.g., '-blur 0 3' to skip blurring the base image   (if the base is a blurry template, for example). * A negative blur radius means to use 3D median filtering,   rather than Gaussian blurring.  This type of filtering will   better preserve edges, which can be important in alignment. * If the base is a template volume that is already blurry,   you probably don't want to blur it again, but blurring   the source volume a little is probably a good idea, to   help the program avoid trying to match tiny features. * Note that -duplo will blur the volumes some extra   amount for the initial small-scale warping, to make   that phase of the program converge more rapidly.  
-    out_file: '"Q25"'
-    # type=file|default=<undefined>: Sets the prefix/suffix for the output datasets.  * The source dataset is warped to match the base   and gets prefix 'ppp'. (Except if '-plusminus' is used * The final interpolation to this output dataset is   done using the 'wsinc5' method.  See the output of   3dAllineate -HELP   (in the "Modifying '-final wsinc5'" section) for   the lengthy technical details. * The 3D warp used is saved in a dataset with   prefix 'ppp_WARP' -- this dataset can be used   with 3dNwarpApply and 3dNwarpCat, for example. * To be clear, this is the warp from source dataset   coordinates to base dataset coordinates, where the   values at each base grid point are the xyz displacements   needed to move that grid point's xyz values to the   corresponding xyz values in the source dataset:   base( (x,y,z) + WARP(x,y,z) ) matches source(x,y,z)   Another way to think of this warp is that it 'pulls'   values back from source space to base space. * 3dNwarpApply would use 'ppp_WARP' to transform datasets   aligned with the source dataset to be aligned with the   base dataset.  **If you do NOT want this warp saved, use the option '-nowarp'**. (However, this warp is usually the most valuable possible output!)  * If you want to calculate and save the inverse 3D warp,   use the option '-iwarp'.  This inverse warp will then be   saved in a dataset with prefix 'ppp_WARPINV'. * This inverse warp could be used to transform data from base   space to source space, if you need to do such an operation. * You can easily compute the inverse later, say by a command like   3dNwarpCat -prefix Z_WARPINV 'INV(Z_WARP+tlrc)'   or the inverse can be computed as needed in 3dNwarpApply, like   3dNwarpApply -nwarp 'INV(Z_WARP+tlrc)' -source Dataset.nii ...  
-  imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
-  # consisting of 'module', 'name', and optionally 'alias' keys
-  expected_outputs:
-  # dict[str, str] - expected values for selected outputs, noting that tests will typically
-  # be terminated before they complete for time-saving reasons, and therefore
-  # these values will be ignored, when running in CI
-  timeout: 10
-  # int - the value to set for the timeout in the generated test, 
-  # after which the test will be considered to have been initialised 
-  # successfully. Set to 0 to disable the timeout (warning, this could
-  # lead to the unittests taking a very long time to complete)
-  xfail: true
-  # bool - whether the unittest is expected to fail or not. Set to false
-  # when you are satisfied with the edits you have made to this file
-- inputs:
-  # dict[str, str] - values to provide to inputs fields in the task initialisation
-  # (if not specified, will try to choose a sensible value)
-    in_file:
-    # type=file|default=<undefined>: Source image (opposite phase encoding direction than base image).
-    base_file:
-    # type=file|default=<undefined>: Base image (opposite phase encoding direction than source image).
     blur: '[0,2]'
     # type=list|default=[]: Gaussian blur the input images by 'bb' (FWHM) voxels before doing the alignment (the output dataset will not be blurred). The default is 2.345 (for no good reason).  * Optionally, you can provide 2 values for 'bb', and then   the first one is applied to the base volume, the second   to the source volume.   e.g., '-blur 0 3' to skip blurring the base image   (if the base is a blurry template, for example). * A negative blur radius means to use 3D median filtering,   rather than Gaussian blurring.  This type of filtering will   better preserve edges, which can be important in alignment. * If the base is a template volume that is already blurry,   you probably don't want to blur it again, but blurring   the source volume a little is probably a good idea, to   help the program avoid trying to match tiny features. * Note that -duplo will blur the volumes some extra   amount for the initial small-scale warping, to make   that phase of the program converge more rapidly.  
-    out_file: '"Q11"'
-    # type=file|default=<undefined>: Sets the prefix/suffix for the output datasets.  * The source dataset is warped to match the base   and gets prefix 'ppp'. (Except if '-plusminus' is used * The final interpolation to this output dataset is   done using the 'wsinc5' method.  See the output of   3dAllineate -HELP   (in the "Modifying '-final wsinc5'" section) for   the lengthy technical details. * The 3D warp used is saved in a dataset with   prefix 'ppp_WARP' -- this dataset can be used   with 3dNwarpApply and 3dNwarpCat, for example. * To be clear, this is the warp from source dataset   coordinates to base dataset coordinates, where the   values at each base grid point are the xyz displacements   needed to move that grid point's xyz values to the   corresponding xyz values in the source dataset:   base( (x,y,z) + WARP(x,y,z) ) matches source(x,y,z)   Another way to think of this warp is that it 'pulls'   values back from source space to base space. * 3dNwarpApply would use 'ppp_WARP' to transform datasets   aligned with the source dataset to be aligned with the   base dataset.  **If you do NOT want this warp saved, use the option '-nowarp'**. (However, this warp is usually the most valuable possible output!)  * If you want to calculate and save the inverse 3D warp,   use the option '-iwarp'.  This inverse warp will then be   saved in a dataset with prefix 'ppp_WARPINV'. * This inverse warp could be used to transform data from base   space to source space, if you need to do such an operation. * You can easily compute the inverse later, say by a command like   3dNwarpCat -prefix Z_WARPINV 'INV(Z_WARP+tlrc)'   or the inverse can be computed as needed in 3dNwarpApply, like   3dNwarpApply -nwarp 'INV(Z_WARP+tlrc)' -source Dataset.nii ...  
     inilev: '7'
     # type=int|default=0: The initial refinement 'level' at which to start.  * Usually used with -iniwarp; CANNOT be used with -duplo. * The combination of -inilev and -iniwarp lets you take the   results of a previous 3dQwarp run and refine them further:   Note that the source dataset in the second run is the SAME as   in the first run.  If you don't see why this is necessary,   then you probably need to seek help from an AFNI guru.  
-    iniwarp:
-    # type=list|default=[]: A dataset with an initial nonlinear warp to use.  * If this option is not used, the initial warp is the identity. * You can specify a catenation of warps (in quotes) here, as in   program 3dNwarpApply. * As a special case, if you just input an affine matrix in a .1D   file, that will work also -- it is treated as giving the initial   warp via the string "IDENT(base_dataset) matrix_file.aff12.1D". * You CANNOT use this option with -duplo !! * -iniwarp is usually used with -inilev to re-start 3dQwarp from   a previous stopping point.  
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -454,14 +422,10 @@ tests:
   # (if not specified, will try to choose a sensible value)
     in_file:
     # type=file|default=<undefined>: Source image (opposite phase encoding direction than base image).
-    base_file:
-    # type=file|default=<undefined>: Base image (opposite phase encoding direction than source image).
     allineate: 'True'
     # type=bool|default=False: This option will make 3dQwarp run 3dAllineate first, to align the source dataset to the base with an affine transformation. It will then use that alignment as a starting point for the nonlinear warping.
-    allineate_opts: '"-cose lpa -verb"'
-    # type=str|default='': add extra options to the 3dAllineate command to be run by 3dQwarp.
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -476,7 +440,7 @@ tests:
   # bool - whether the unittest is expected to fail or not. Set to false
   # when you are satisfied with the edits you have made to this file
 doctests:
-- cmdline: 3dQwarp -base sub-01_dir-RL_epi.nii.gz -source sub-01_dir-LR_epi.nii.gz -nopadWARP -prefix ppp_sub-01_dir-LR_epi -plusminus
+- cmdline:
   # str - the expected cmdline output
   inputs:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
@@ -484,14 +448,10 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     in_file: '"sub-01_dir-LR_epi.nii.gz"'
     # type=file|default=<undefined>: Source image (opposite phase encoding direction than base image).
-    nopadWARP: 'True'
-    # type=bool|default=False: If for some reason you require the warp volume tomatch the base volume, then use this option to have the outputWARP dataset(s) truncated.
     base_file: '"sub-01_dir-RL_epi.nii.gz"'
     # type=file|default=<undefined>: Base image (opposite phase encoding direction than source image).
-    plusminus: 'True'
-    # type=bool|default=False: Normally, the warp displacements dis(x) are defined to match base(x) to source(x+dis(x)).  With this option, the match is between base(x-dis(x)) and source(x+dis(x)) -- the two images 'meet in the middle'.  * One goal is to mimic the warping done to MRI EPI data by   field inhomogeneities, when registering between a 'blip up'   and a 'blip down' down volume, which will have opposite   distortions. * Define Wp(x) = x+dis(x) and Wm(x) = x-dis(x).  Then since   base(Wm(x)) matches source(Wp(x)), by substituting INV(Wm(x))   wherever we see x, we have base(x) matches source(Wp(INV(Wm(x))));   that is, the warp V(x) that one would get from the 'usual' way   of running 3dQwarp is V(x) = Wp(INV(Wm(x))). * Conversely, we can calculate Wp(x) in terms of V(x) as follows:   If V(x) = x + dv(x), define Vh(x) = x + dv(x)/2;   then Wp(x) = V(INV(Vh(x))) * With the above formulas, it is possible to compute Wp(x) from   V(x) and vice-versa, using program 3dNwarpCalc.  The requisite   commands are left as an exercise for the aspiring AFNI Jedi Master. * You can use the semi-secret '-pmBASE' option to get the V(x)   warp and the source dataset warped to base space, in addition to   the Wp(x) '_PLUS' and Wm(x) '_MINUS' warps.    * Alas: -plusminus does not work with -duplo or -allineate :-(   * However, you can use -iniwarp with -plusminus :-)   * The outputs have _PLUS (from the source dataset) and _MINUS     (from the base dataset) in their filenames, in addition to     the prefix.  The -iwarp option, if present, will be ignored.  
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS
@@ -503,12 +463,10 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     in_file: '"structural.nii"'
     # type=file|default=<undefined>: Source image (opposite phase encoding direction than base image).
-    base_file: '"mni.nii"'
-    # type=file|default=<undefined>: Base image (opposite phase encoding direction than source image).
     resample: 'True'
     # type=bool|default=False: This option simply resamples the source dataset to match the base dataset grid.  You can use this if the two datasets overlap well (as seen in the AFNI GUI), but are not on the same 3D grid.  * If they don't overlap well, allineate them first * The reampling here is done with the   'wsinc5' method, which has very little blurring artifact. * If the base and source datasets ARE on the same 3D grid,   then the -resample option will be ignored. * You CAN use -resample with these 3dQwarp options:   -plusminus  -inilev  -iniwarp  -duplo  
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS
@@ -520,22 +478,14 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     in_file: '"structural.nii"'
     # type=file|default=<undefined>: Source image (opposite phase encoding direction than base image).
-    base_file: '"epi.nii"'
-    # type=file|default=<undefined>: Base image (opposite phase encoding direction than source image).
     out_file: '"anatSSQ.nii.gz"'
     # type=file|default=<undefined>: Sets the prefix/suffix for the output datasets.  * The source dataset is warped to match the base   and gets prefix 'ppp'. (Except if '-plusminus' is used * The final interpolation to this output dataset is   done using the 'wsinc5' method.  See the output of   3dAllineate -HELP   (in the "Modifying '-final wsinc5'" section) for   the lengthy technical details. * The 3D warp used is saved in a dataset with   prefix 'ppp_WARP' -- this dataset can be used   with 3dNwarpApply and 3dNwarpCat, for example. * To be clear, this is the warp from source dataset   coordinates to base dataset coordinates, where the   values at each base grid point are the xyz displacements   needed to move that grid point's xyz values to the   corresponding xyz values in the source dataset:   base( (x,y,z) + WARP(x,y,z) ) matches source(x,y,z)   Another way to think of this warp is that it 'pulls'   values back from source space to base space. * 3dNwarpApply would use 'ppp_WARP' to transform datasets   aligned with the source dataset to be aligned with the   base dataset.  **If you do NOT want this warp saved, use the option '-nowarp'**. (However, this warp is usually the most valuable possible output!)  * If you want to calculate and save the inverse 3D warp,   use the option '-iwarp'.  This inverse warp will then be   saved in a dataset with prefix 'ppp_WARPINV'. * This inverse warp could be used to transform data from base   space to source space, if you need to do such an operation. * You can easily compute the inverse later, say by a command like   3dNwarpCat -prefix Z_WARPINV 'INV(Z_WARP+tlrc)'   or the inverse can be computed as needed in 3dNwarpApply, like   3dNwarpApply -nwarp 'INV(Z_WARP+tlrc)' -source Dataset.nii ...  
-    resample: 'True'
-    # type=bool|default=False: This option simply resamples the source dataset to match the base dataset grid.  You can use this if the two datasets overlap well (as seen in the AFNI GUI), but are not on the same 3D grid.  * If they don't overlap well, allineate them first * The reampling here is done with the   'wsinc5' method, which has very little blurring artifact. * If the base and source datasets ARE on the same 3D grid,   then the -resample option will be ignored. * You CAN use -resample with these 3dQwarp options:   -plusminus  -inilev  -iniwarp  -duplo  
     lpc: 'True'
     # type=bool|default=False: Local Pearson minimization (i.e., EPI-T1 registration)This option has not be extensively testedIf you use '-lpc', then '-maxlev 0' is automatically set.If you want to go to more refined levels, you can set '-maxlev'This should be set up to have lpc as the second to last argumentand maxlev as the second to last argument, as needed by AFNIUsing maxlev > 1 is not recommended for EPI-T1 alignment.
-    verb: 'True'
-    # type=bool|default=False: more detailed description of the process
     iwarp: 'True'
     # type=bool|default=False: Do compute and save the _WARPINV file.
-    blur: '[0,3]'
-    # type=list|default=[]: Gaussian blur the input images by 'bb' (FWHM) voxels before doing the alignment (the output dataset will not be blurred). The default is 2.345 (for no good reason).  * Optionally, you can provide 2 values for 'bb', and then   the first one is applied to the base volume, the second   to the source volume.   e.g., '-blur 0 3' to skip blurring the base image   (if the base is a blurry template, for example). * A negative blur radius means to use 3D median filtering,   rather than Gaussian blurring.  This type of filtering will   better preserve edges, which can be important in alignment. * If the base is a template volume that is already blurry,   you probably don't want to blur it again, but blurring   the source volume a little is probably a good idea, to   help the program avoid trying to match tiny features. * Note that -duplo will blur the volumes some extra   amount for the initial small-scale warping, to make   that phase of the program converge more rapidly.  
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS
@@ -547,14 +497,10 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     in_file: '"structural.nii"'
     # type=file|default=<undefined>: Source image (opposite phase encoding direction than base image).
-    base_file: '"mni.nii"'
-    # type=file|default=<undefined>: Base image (opposite phase encoding direction than source image).
     duplo: 'True'
     # type=bool|default=False: Start off with 1/2 scale versions of the volumes," for getting a speedy coarse first alignment."  * Then scales back up to register the full volumes."   The goal is greater speed, and it seems to help this"   positively piggish program to be more expeditious." * However, accuracy is somewhat lower with '-duplo',"   for reasons that currently elude Zhark; for this reason,"   the Emperor does not usually use '-duplo'.  
-    blur: '[0,3]'
-    # type=list|default=[]: Gaussian blur the input images by 'bb' (FWHM) voxels before doing the alignment (the output dataset will not be blurred). The default is 2.345 (for no good reason).  * Optionally, you can provide 2 values for 'bb', and then   the first one is applied to the base volume, the second   to the source volume.   e.g., '-blur 0 3' to skip blurring the base image   (if the base is a blurry template, for example). * A negative blur radius means to use 3D median filtering,   rather than Gaussian blurring.  This type of filtering will   better preserve edges, which can be important in alignment. * If the base is a template volume that is already blurry,   you probably don't want to blur it again, but blurring   the source volume a little is probably a good idea, to   help the program avoid trying to match tiny features. * Note that -duplo will blur the volumes some extra   amount for the initial small-scale warping, to make   that phase of the program converge more rapidly.  
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS
@@ -566,18 +512,12 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     in_file: '"structural.nii"'
     # type=file|default=<undefined>: Source image (opposite phase encoding direction than base image).
-    base_file: '"mni.nii"'
-    # type=file|default=<undefined>: Base image (opposite phase encoding direction than source image).
     duplo: 'True'
     # type=bool|default=False: Start off with 1/2 scale versions of the volumes," for getting a speedy coarse first alignment."  * Then scales back up to register the full volumes."   The goal is greater speed, and it seems to help this"   positively piggish program to be more expeditious." * However, accuracy is somewhat lower with '-duplo',"   for reasons that currently elude Zhark; for this reason,"   the Emperor does not usually use '-duplo'.  
-    minpatch: '25'
-    # type=int|default=0: The value of mm should be an odd integer.  * The default value of mm is 25. * For more accurate results than mm=25, try 19 or 13. * The smallest allowed patch size is 5. * You may want stop at a larger patch size (say 7 or 9) and use   the -Qfinal option to run that final level with quintic warps,   which might run faster and provide the same degree of warp detail. * Trying to make two different brain volumes match in fine detail   is usually a waste of time, especially in humans.  There is too   much variability in anatomy to match gyrus to gyrus accurately.   For this reason, the default minimum patch size is 25 voxels.   Using a smaller '-minpatch' might try to force the warp to   match features that do not match, and the result can be useless   image distortions -- another reason to LOOK AT THE RESULTS.  
     blur: '[0,3]'
     # type=list|default=[]: Gaussian blur the input images by 'bb' (FWHM) voxels before doing the alignment (the output dataset will not be blurred). The default is 2.345 (for no good reason).  * Optionally, you can provide 2 values for 'bb', and then   the first one is applied to the base volume, the second   to the source volume.   e.g., '-blur 0 3' to skip blurring the base image   (if the base is a blurry template, for example). * A negative blur radius means to use 3D median filtering,   rather than Gaussian blurring.  This type of filtering will   better preserve edges, which can be important in alignment. * If the base is a template volume that is already blurry,   you probably don't want to blur it again, but blurring   the source volume a little is probably a good idea, to   help the program avoid trying to match tiny features. * Note that -duplo will blur the volumes some extra   amount for the initial small-scale warping, to make   that phase of the program converge more rapidly.  
-    out_file: '"Q25"'
-    # type=file|default=<undefined>: Sets the prefix/suffix for the output datasets.  * The source dataset is warped to match the base   and gets prefix 'ppp'. (Except if '-plusminus' is used * The final interpolation to this output dataset is   done using the 'wsinc5' method.  See the output of   3dAllineate -HELP   (in the "Modifying '-final wsinc5'" section) for   the lengthy technical details. * The 3D warp used is saved in a dataset with   prefix 'ppp_WARP' -- this dataset can be used   with 3dNwarpApply and 3dNwarpCat, for example. * To be clear, this is the warp from source dataset   coordinates to base dataset coordinates, where the   values at each base grid point are the xyz displacements   needed to move that grid point's xyz values to the   corresponding xyz values in the source dataset:   base( (x,y,z) + WARP(x,y,z) ) matches source(x,y,z)   Another way to think of this warp is that it 'pulls'   values back from source space to base space. * 3dNwarpApply would use 'ppp_WARP' to transform datasets   aligned with the source dataset to be aligned with the   base dataset.  **If you do NOT want this warp saved, use the option '-nowarp'**. (However, this warp is usually the most valuable possible output!)  * If you want to calculate and save the inverse 3D warp,   use the option '-iwarp'.  This inverse warp will then be   saved in a dataset with prefix 'ppp_WARPINV'. * This inverse warp could be used to transform data from base   space to source space, if you need to do such an operation. * You can easily compute the inverse later, say by a command like   3dNwarpCat -prefix Z_WARPINV 'INV(Z_WARP+tlrc)'   or the inverse can be computed as needed in 3dNwarpApply, like   3dNwarpApply -nwarp 'INV(Z_WARP+tlrc)' -source Dataset.nii ...  
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS
@@ -589,18 +529,12 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     in_file: '"structural.nii"'
     # type=file|default=<undefined>: Source image (opposite phase encoding direction than base image).
-    base_file: '"mni.nii"'
-    # type=file|default=<undefined>: Base image (opposite phase encoding direction than source image).
     blur: '[0,2]'
     # type=list|default=[]: Gaussian blur the input images by 'bb' (FWHM) voxels before doing the alignment (the output dataset will not be blurred). The default is 2.345 (for no good reason).  * Optionally, you can provide 2 values for 'bb', and then   the first one is applied to the base volume, the second   to the source volume.   e.g., '-blur 0 3' to skip blurring the base image   (if the base is a blurry template, for example). * A negative blur radius means to use 3D median filtering,   rather than Gaussian blurring.  This type of filtering will   better preserve edges, which can be important in alignment. * If the base is a template volume that is already blurry,   you probably don't want to blur it again, but blurring   the source volume a little is probably a good idea, to   help the program avoid trying to match tiny features. * Note that -duplo will blur the volumes some extra   amount for the initial small-scale warping, to make   that phase of the program converge more rapidly.  
-    out_file: '"Q11"'
-    # type=file|default=<undefined>: Sets the prefix/suffix for the output datasets.  * The source dataset is warped to match the base   and gets prefix 'ppp'. (Except if '-plusminus' is used * The final interpolation to this output dataset is   done using the 'wsinc5' method.  See the output of   3dAllineate -HELP   (in the "Modifying '-final wsinc5'" section) for   the lengthy technical details. * The 3D warp used is saved in a dataset with   prefix 'ppp_WARP' -- this dataset can be used   with 3dNwarpApply and 3dNwarpCat, for example. * To be clear, this is the warp from source dataset   coordinates to base dataset coordinates, where the   values at each base grid point are the xyz displacements   needed to move that grid point's xyz values to the   corresponding xyz values in the source dataset:   base( (x,y,z) + WARP(x,y,z) ) matches source(x,y,z)   Another way to think of this warp is that it 'pulls'   values back from source space to base space. * 3dNwarpApply would use 'ppp_WARP' to transform datasets   aligned with the source dataset to be aligned with the   base dataset.  **If you do NOT want this warp saved, use the option '-nowarp'**. (However, this warp is usually the most valuable possible output!)  * If you want to calculate and save the inverse 3D warp,   use the option '-iwarp'.  This inverse warp will then be   saved in a dataset with prefix 'ppp_WARPINV'. * This inverse warp could be used to transform data from base   space to source space, if you need to do such an operation. * You can easily compute the inverse later, say by a command like   3dNwarpCat -prefix Z_WARPINV 'INV(Z_WARP+tlrc)'   or the inverse can be computed as needed in 3dNwarpApply, like   3dNwarpApply -nwarp 'INV(Z_WARP+tlrc)' -source Dataset.nii ...  
     inilev: '7'
     # type=int|default=0: The initial refinement 'level' at which to start.  * Usually used with -iniwarp; CANNOT be used with -duplo. * The combination of -inilev and -iniwarp lets you take the   results of a previous 3dQwarp run and refine them further:   Note that the source dataset in the second run is the SAME as   in the first run.  If you don't see why this is necessary,   then you probably need to seek help from an AFNI guru.  
-    iniwarp: '["Q25_warp+tlrc.HEAD"]'
-    # type=list|default=[]: A dataset with an initial nonlinear warp to use.  * If this option is not used, the initial warp is the identity. * You can specify a catenation of warps (in quotes) here, as in   program 3dNwarpApply. * As a special case, if you just input an affine matrix in a .1D   file, that will work also -- it is treated as giving the initial   warp via the string "IDENT(base_dataset) matrix_file.aff12.1D". * You CANNOT use this option with -duplo !! * -iniwarp is usually used with -inilev to re-start 3dQwarp from   a previous stopping point.  
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS
@@ -612,14 +546,10 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     in_file: '"structural.nii"'
     # type=file|default=<undefined>: Source image (opposite phase encoding direction than base image).
-    base_file: '"mni.nii"'
-    # type=file|default=<undefined>: Base image (opposite phase encoding direction than source image).
     allineate: 'True'
     # type=bool|default=False: This option will make 3dQwarp run 3dAllineate first, to align the source dataset to the base with an affine transformation. It will then use that alignment as a starting point for the nonlinear warping.
-    allineate_opts: '"-cose lpa -verb"'
-    # type=str|default='': add extra options to the 3dAllineate command to be run by 3dQwarp.
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

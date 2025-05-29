@@ -7,15 +7,15 @@
 # ----
 # use fs mri_convert to convert dicom files
 # 
-#     Examples
-#     --------
+# Examples
+# --------
 # 
-#     >>> from nipype.interfaces.freesurfer import DICOMConvert
-#     >>> cvt = DICOMConvert()
-#     >>> cvt.inputs.dicom_dir = 'dicomdir'
-#     >>> cvt.inputs.file_mapping = [('nifti', '*.nii'), ('info', 'dicom*.txt'), ('dti', '*dti.bv*')]
+# >>> from nipype.interfaces.freesurfer import DICOMConvert
+# >>> cvt = DICOMConvert()
+# >>> cvt.inputs.dicom_dir = 'dicomdir'
+# >>> cvt.inputs.file_mapping = [('nifti', '*.nii'), ('info', 'dicom*.txt'), ('dti', '*dti.bv*')]
 # 
-#     
+# 
 task_name: DICOMConvert
 nipype_name: DICOMConvert
 nipype_module: nipype.interfaces.freesurfer.preprocess
@@ -58,7 +58,7 @@ outputs:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
@@ -90,7 +90,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically

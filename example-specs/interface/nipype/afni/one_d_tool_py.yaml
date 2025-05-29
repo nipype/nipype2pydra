@@ -6,17 +6,17 @@
 # Docs
 # ----
 # This program is meant to read/manipulate/write/diagnose 1D datasets.
-#     Input can be specified using AFNI sub-brick[]/time{} selectors.
+# Input can be specified using AFNI sub-brick[]/time{} selectors.
 # 
-#     >>> from nipype.interfaces import afni
-#     >>> odt = afni.OneDToolPy()
-#     >>> odt.inputs.in_file = 'f1.1D'
-#     >>> odt.inputs.set_nruns = 3
-#     >>> odt.inputs.demean = True
-#     >>> odt.inputs.out_file = 'motion_dmean.1D'
-#     >>> odt.cmdline # doctest: +ELLIPSIS
-#     'python2 ...1d_tool.py -demean -infile f1.1D -write motion_dmean.1D -set_nruns 3'
-#      >>> res = odt.run()  # doctest: +SKIP
+# >>> from nipype.interfaces import afni
+# >>> odt = afni.OneDToolPy()
+# >>> odt.inputs.in_file = 'f1.1D'
+# >>> odt.inputs.set_nruns = 3
+# >>> odt.inputs.demean = True
+# >>> odt.inputs.out_file = 'motion_dmean.1D'
+# >>> odt.cmdline # doctest: +ELLIPSIS
+# 'python2 ...1d_tool.py -demean -infile f1.1D -write motion_dmean.1D -set_nruns 3'
+#  >>> res = odt.run()  # doctest: +SKIP
 task_name: OneDToolPy
 nipype_name: OneDToolPy
 nipype_module: nipype.interfaces.afni.utils
@@ -31,11 +31,8 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    in_file: medimage-afni/one-d
+    in_file: fileformats.medimage_afni.OneD
     # type=file|default=<undefined>: input file to OneDTool
-    out_file: Path
-    # type=file: output of 1D_tool.py
-    # type=file|default=<undefined>: write the current 1D data to FILE
     show_cormat_warnings: generic/file
     # type=file|default=<undefined>: Write cormat warnings to a file
   callable_defaults:
@@ -54,14 +51,14 @@ outputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    out_file: medimage-afni/one-d
+    out_file: generic/file
     # type=file: output of 1D_tool.py
     # type=file|default=<undefined>: write the current 1D data to FILE
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
@@ -102,7 +99,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -121,15 +118,10 @@ tests:
   # (if not specified, will try to choose a sensible value)
     in_file:
     # type=file|default=<undefined>: input file to OneDTool
-    set_nruns: '3'
-    # type=int|default=0: treat the input data as if it has nruns
     demean: 'True'
     # type=bool|default=False: demean each run (new mean of each run = 0.0)
-    out_file: '"motion_dmean.1D"'
-    # type=file: output of 1D_tool.py
-    # type=file|default=<undefined>: write the current 1D data to FILE
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -152,15 +144,10 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     in_file: '"f1.1D"'
     # type=file|default=<undefined>: input file to OneDTool
-    set_nruns: '3'
-    # type=int|default=0: treat the input data as if it has nruns
     demean: 'True'
     # type=bool|default=False: demean each run (new mean of each run = 0.0)
-    out_file: '"motion_dmean.1D"'
-    # type=file: output of 1D_tool.py
-    # type=file|default=<undefined>: write the current 1D data to FILE
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

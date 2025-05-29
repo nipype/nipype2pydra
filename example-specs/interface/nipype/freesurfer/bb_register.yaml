@@ -7,19 +7,19 @@
 # ----
 # Use FreeSurfer bbregister to register a volume to the Freesurfer anatomical.
 # 
-#     This program performs within-subject, cross-modal registration using a
-#     boundary-based cost function. It is required that you have an anatomical
-#     scan of the subject that has already been recon-all-ed using freesurfer.
+# This program performs within-subject, cross-modal registration using a
+# boundary-based cost function. It is required that you have an anatomical
+# scan of the subject that has already been recon-all-ed using freesurfer.
 # 
-#     Examples
-#     --------
+# Examples
+# --------
 # 
-#     >>> from nipype.interfaces.freesurfer import BBRegister
-#     >>> bbreg = BBRegister(subject_id='me', source_file='structural.nii', init='header', contrast_type='t2')
-#     >>> bbreg.cmdline
-#     'bbregister --t2 --init-header --reg structural_bbreg_me.dat --mov structural.nii --s me'
+# >>> from nipype.interfaces.freesurfer import BBRegister
+# >>> bbreg = BBRegister(subject_id='me', source_file='structural.nii', init='header', contrast_type='t2')
+# >>> bbreg.cmdline
+# 'bbregister --t2 --init-header --reg structural_bbreg_me.dat --mov structural.nii --s me'
 # 
-#     
+# 
 task_name: BBRegister
 nipype_name: BBRegister
 nipype_module: nipype.interfaces.freesurfer.preprocess
@@ -38,9 +38,6 @@ inputs:
     # type=file|default=<undefined>: existing registration file
     intermediate_file: generic/file
     # type=file|default=<undefined>: Intermediate image, e.g. in case of partial FOV
-    out_reg_file: Path
-    # type=file: Output registration file
-    # type=file|default=<undefined>: output registration file
     source_file: medimage/nifti1
     # type=file|default=<undefined>: source file to be registered
     subjects_dir: generic/directory
@@ -82,7 +79,7 @@ outputs:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
     out_reg_file: out_reg_file
     # type=file: Output registration file
     # type=file|default=<undefined>: output registration file
@@ -138,7 +135,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -164,7 +161,7 @@ tests:
     contrast_type: '"t2"'
     # type=enum|default='t1'|allowed['bold','dti','t1','t2']: contrast type of image
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -194,7 +191,7 @@ doctests:
     contrast_type: '"t2"'
     # type=enum|default='t1'|allowed['bold','dti','t1','t2']: contrast type of image
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

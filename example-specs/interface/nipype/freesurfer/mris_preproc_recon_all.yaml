@@ -7,17 +7,17 @@
 # ----
 # Extends MRISPreproc to allow it to be used in a recon-all workflow
 # 
-#     Examples
-#     --------
-#     >>> preproc = MRISPreprocReconAll()
-#     >>> preproc.inputs.target = 'fsaverage'
-#     >>> preproc.inputs.hemi = 'lh'
-#     >>> preproc.inputs.vol_measure_file = [('cont1.nii', 'register.dat'),                                            ('cont1a.nii', 'register.dat')]
-#     >>> preproc.inputs.out_file = 'concatenated_file.mgz'
-#     >>> preproc.cmdline
-#     'mris_preproc --hemi lh --out concatenated_file.mgz --s subject_id --target fsaverage --iv cont1.nii register.dat --iv cont1a.nii register.dat'
+# Examples
+# --------
+# >>> preproc = MRISPreprocReconAll()
+# >>> preproc.inputs.target = 'fsaverage'
+# >>> preproc.inputs.hemi = 'lh'
+# >>> preproc.inputs.vol_measure_file = [('cont1.nii', 'register.dat'),                                            ('cont1a.nii', 'register.dat')]
+# >>> preproc.inputs.out_file = 'concatenated_file.mgz'
+# >>> preproc.cmdline
+# 'mris_preproc --hemi lh --out concatenated_file.mgz --s subject_id --target fsaverage --iv cont1.nii register.dat --iv cont1a.nii register.dat'
 # 
-#     
+# 
 task_name: MRISPreprocReconAll
 nipype_name: MRISPreprocReconAll
 nipype_module: nipype.interfaces.freesurfer.model
@@ -36,9 +36,6 @@ inputs:
     # type=file|default=<undefined>: specify subjects using fsgd file
     lh_surfreg_target: generic/file
     # type=file|default=<undefined>: Implicit target surface registration file
-    out_file: Path
-    # type=file: preprocessed output file
-    # type=file|default=<undefined>: output filename
     rh_surfreg_target: generic/file
     # type=file|default=<undefined>: Implicit target surface registration file
     subject_file: generic/file
@@ -65,15 +62,15 @@ outputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    out_file: medimage/mgh-gz
+    out_file: generic/file
     # type=file: preprocessed output file
     # type=file|default=<undefined>: output filename
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
-    out_file: '"concatenated_file.mgz"'
+  # dict[str, str] - `path_template` values to be provided to output fields
+    out_file: out_file
     # type=file: preprocessed output file
     # type=file|default=<undefined>: output filename
   requirements:
@@ -136,7 +133,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -155,15 +152,10 @@ tests:
   # (if not specified, will try to choose a sensible value)
     target: '"fsaverage"'
     # type=str|default='': target subject name
-    hemi: '"lh"'
-    # type=enum|default='lh'|allowed['lh','rh']: hemisphere for source and target
     vol_measure_file: '[("cont1.nii", "register.dat"),                                            ("cont1a.nii", "register.dat")]'
     # type=inputmultiobject|default=[]: list of volume measure and reg file tuples
-    out_file: '"concatenated_file.mgz"'
-    # type=file: preprocessed output file
-    # type=file|default=<undefined>: output filename
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -178,7 +170,7 @@ tests:
   # bool - whether the unittest is expected to fail or not. Set to false
   # when you are satisfied with the edits you have made to this file
 doctests:
-- cmdline: mris_preproc --hemi lh --out concatenated_file.mgz --s subject_id --target fsaverage --iv cont1.nii register.dat --iv cont1a.nii register.dat
+- cmdline:
   # str - the expected cmdline output
   inputs:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
@@ -186,15 +178,10 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     target: '"fsaverage"'
     # type=str|default='': target subject name
-    hemi: '"lh"'
-    # type=enum|default='lh'|allowed['lh','rh']: hemisphere for source and target
     vol_measure_file: '[("cont1.nii", "register.dat"),                                            ("cont1a.nii", "register.dat")]'
     # type=inputmultiobject|default=[]: list of volume measure and reg file tuples
-    out_file: '"concatenated_file.mgz"'
-    # type=file: preprocessed output file
-    # type=file|default=<undefined>: output filename
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

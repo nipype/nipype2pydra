@@ -6,34 +6,34 @@
 # Docs
 # ----
 # 
-#     This program projects (detrends) out various 'nuisance' time series from
-#     each voxel in the input dataset.  Note that all the projections are done
-#     via linear regression, including the frequency-based options such
-#     as ``-passband``.  In this way, you can bandpass time-censored data, and at
-#     the same time, remove other time series of no interest
-#     (e.g., physiological estimates, motion parameters).
-#     Shifts voxel time series from input so that separate slices are aligned to
-#     the same temporal origin.
+# This program projects (detrends) out various 'nuisance' time series from
+# each voxel in the input dataset.  Note that all the projections are done
+# via linear regression, including the frequency-based options such
+# as ``-passband``.  In this way, you can bandpass time-censored data, and at
+# the same time, remove other time series of no interest
+# (e.g., physiological estimates, motion parameters).
+# Shifts voxel time series from input so that separate slices are aligned to
+# the same temporal origin.
 # 
-#     Examples
-#     --------
-#     >>> from nipype.interfaces import afni
-#     >>> tproject = afni.TProject()
-#     >>> tproject.inputs.in_file = 'functional.nii'
-#     >>> tproject.inputs.bandpass = (0.00667, 99999)
-#     >>> tproject.inputs.polort = 3
-#     >>> tproject.inputs.automask = True
-#     >>> tproject.inputs.out_file = 'projected.nii.gz'
-#     >>> tproject.cmdline
-#     '3dTproject -input functional.nii -automask -bandpass 0.00667 99999 -polort 3 -prefix projected.nii.gz'
-#     >>> res = tproject.run()  # doctest: +SKIP
+# Examples
+# --------
+# >>> from nipype.interfaces import afni
+# >>> tproject = afni.TProject()
+# >>> tproject.inputs.in_file = 'functional.nii'
+# >>> tproject.inputs.bandpass = (0.00667, 99999)
+# >>> tproject.inputs.polort = 3
+# >>> tproject.inputs.automask = True
+# >>> tproject.inputs.out_file = 'projected.nii.gz'
+# >>> tproject.cmdline
+# '3dTproject -input functional.nii -automask -bandpass 0.00667 99999 -polort 3 -prefix projected.nii.gz'
+# >>> res = tproject.run()  # doctest: +SKIP
 # 
-#     See Also
-#     --------
-#     For complete details, see the `3dTproject Documentation.
-#     <https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dTproject.html>`__
+# See Also
+# --------
+# For complete details, see the `3dTproject Documentation.
+# <https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dTproject.html>`__
 # 
-#     
+# 
 task_name: TProject
 nipype_name: TProject
 nipype_module: nipype.interfaces.afni.preprocess
@@ -60,9 +60,6 @@ inputs:
     # type=file|default=<undefined>: Only operate on voxels nonzero in the mset dataset.  * Voxels outside the mask will be filled with zeros. * If no masking option is given, then all voxels   will be processed.  
     ort: generic/file
     # type=file|default=<undefined>: Remove each column in file. Each column will have its mean removed.
-    out_file: Path
-    # type=file: output file
-    # type=file|default=<undefined>: output image file name
   callable_defaults:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set as the `default` method of input fields
@@ -86,7 +83,7 @@ outputs:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
@@ -137,7 +134,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -156,17 +153,13 @@ tests:
   # (if not specified, will try to choose a sensible value)
     in_file:
     # type=file|default=<undefined>: input file to 3dTproject
-    bandpass: (0.00667, 99999)
-    # type=tuple|default=(0.0, 0.0): Remove all frequencies EXCEPT those in the range
     polort: '3'
     # type=int|default=0: Remove polynomials up to and including degree pp.  * Default value is 2. * It makes no sense to use a value of pp greater than   2, if you are bandpassing out the lower frequencies! * For catenated datasets, each run gets a separate set   set of pp+1 Legendre polynomial regressors. * Use of -polort -1 is not advised (if data mean != 0),   even if -ort contains constant terms, as all means are   removed.  
-    automask: 'True'
-    # type=bool|default=False: Generate a mask automatically
     out_file: '"projected.nii.gz"'
     # type=file: output file
     # type=file|default=<undefined>: output image file name
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -181,7 +174,7 @@ tests:
   # bool - whether the unittest is expected to fail or not. Set to false
   # when you are satisfied with the edits you have made to this file
 doctests:
-- cmdline: 3dTproject -input functional.nii -automask -bandpass 0.00667 99999 -polort 3 -prefix projected.nii.gz
+- cmdline:
   # str - the expected cmdline output
   inputs:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
@@ -189,17 +182,13 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     in_file: '"functional.nii"'
     # type=file|default=<undefined>: input file to 3dTproject
-    bandpass: (0.00667, 99999)
-    # type=tuple|default=(0.0, 0.0): Remove all frequencies EXCEPT those in the range
     polort: '3'
     # type=int|default=0: Remove polynomials up to and including degree pp.  * Default value is 2. * It makes no sense to use a value of pp greater than   2, if you are bandpassing out the lower frequencies! * For catenated datasets, each run gets a separate set   set of pp+1 Legendre polynomial regressors. * Use of -polort -1 is not advised (if data mean != 0),   even if -ort contains constant terms, as all means are   removed.  
-    automask: 'True'
-    # type=bool|default=False: Generate a mask automatically
     out_file: '"projected.nii.gz"'
     # type=file: output file
     # type=file|default=<undefined>: output image file name
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

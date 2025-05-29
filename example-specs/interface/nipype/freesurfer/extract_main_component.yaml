@@ -7,15 +7,15 @@
 # ----
 # Extract the main component of a tessellated surface
 # 
-#     Examples
-#     --------
+# Examples
+# --------
 # 
-#     >>> from nipype.interfaces.freesurfer import ExtractMainComponent
-#     >>> mcmp = ExtractMainComponent(in_file='lh.pial')
-#     >>> mcmp.cmdline
-#     'mris_extract_main_component lh.pial lh.maincmp'
+# >>> from nipype.interfaces.freesurfer import ExtractMainComponent
+# >>> mcmp = ExtractMainComponent(in_file='lh.pial')
+# >>> mcmp.cmdline
+# 'mris_extract_main_component lh.pial lh.maincmp'
 # 
-#     
+# 
 task_name: ExtractMainComponent
 nipype_name: ExtractMainComponent
 nipype_module: nipype.interfaces.freesurfer.utils
@@ -30,11 +30,8 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    in_file: medimage-freesurfer/pial
+    in_file: fileformats.medimage_freesurfer.Pial
     # type=file|default=<undefined>: input surface file
-    out_file: Path
-    # type=file: surface containing main component
-    # type=file|default=<undefined>: surface containing main component
   callable_defaults:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set as the `default` method of input fields
@@ -58,7 +55,7 @@ outputs:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
@@ -75,7 +72,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -95,7 +92,7 @@ tests:
     in_file:
     # type=file|default=<undefined>: input surface file
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -119,7 +116,7 @@ doctests:
     in_file: '"lh.pial"'
     # type=file|default=<undefined>: input surface file
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

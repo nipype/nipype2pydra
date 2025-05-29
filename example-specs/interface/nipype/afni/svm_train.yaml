@@ -6,24 +6,24 @@
 # Docs
 # ----
 # Temporally predictive modeling with the support vector machine
-#     SVM Train Only
-#     For complete details, see the `3dsvm Documentation.
-#     <https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dsvm.html>`_
+# SVM Train Only
+# For complete details, see the `3dsvm Documentation.
+# <https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dsvm.html>`_
 # 
-#     Examples
-#     ========
+# Examples
+# ========
 # 
-#     >>> from nipype.interfaces import afni as afni
-#     >>> svmTrain = afni.SVMTrain()
-#     >>> svmTrain.inputs.in_file = 'run1+orig'
-#     >>> svmTrain.inputs.trainlabels = 'run1_categories.1D'
-#     >>> svmTrain.inputs.ttype = 'regression'
-#     >>> svmTrain.inputs.mask = 'mask.nii'
-#     >>> svmTrain.inputs.model = 'model_run1'
-#     >>> svmTrain.inputs.alphas = 'alphas_run1'
-#     >>> res = svmTrain.run() # doctest: +SKIP
+# >>> from nipype.interfaces import afni as afni
+# >>> svmTrain = afni.SVMTrain()
+# >>> svmTrain.inputs.in_file = 'run1+orig'
+# >>> svmTrain.inputs.trainlabels = 'run1_categories.1D'
+# >>> svmTrain.inputs.ttype = 'regression'
+# >>> svmTrain.inputs.mask = 'mask.nii'
+# >>> svmTrain.inputs.model = 'model_run1'
+# >>> svmTrain.inputs.alphas = 'alphas_run1'
+# >>> res = svmTrain.run() # doctest: +SKIP
 # 
-#     
+# 
 task_name: SVMTrain
 nipype_name: SVMTrain
 nipype_module: nipype.interfaces.afni.svm
@@ -38,21 +38,12 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    alphas: Path
-    # type=file: output alphas file name
-    # type=file|default=<undefined>: output alphas file name
     censor: generic/file
     # type=file|default=<undefined>: .1D censor file that allows the user to ignore certain samples in the training data.
     in_file: generic/file
     # type=file|default=<undefined>: A 3D+t AFNI brik dataset to be used for training.
     mask: generic/file
     # type=file|default=<undefined>: byte-format brik file used to mask voxels in the analysis
-    model: Path
-    # type=file: brik containing the SVM model file name
-    # type=file|default=<undefined>: basename for the brik containing the SVM model
-    out_file: Path
-    # type=file: sum of weighted linear support vectors file name
-    # type=file|default=<undefined>: output sum of weighted linear support vectors file name
     trainlabels: generic/file
     # type=file|default=<undefined>: .1D labels corresponding to the stimulus paradigm for the training data.
   callable_defaults:
@@ -84,7 +75,7 @@ outputs:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
@@ -129,7 +120,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically

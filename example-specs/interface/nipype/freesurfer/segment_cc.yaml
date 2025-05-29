@@ -6,26 +6,26 @@
 # Docs
 # ----
 # 
-#     This program segments the corpus callosum into five separate labels in
-#     the subcortical segmentation volume 'aseg.mgz'. The divisions of the
-#     cc are equally spaced in terms of distance along the primary
-#     eigendirection (pretty much the long axis) of the cc. The lateral
-#     extent can be changed with the -T <thickness> parameter, where
-#     <thickness> is the distance off the midline (so -T 1 would result in
-#     the who CC being 3mm thick). The default is 2 so it's 5mm thick. The
-#     aseg.stats values should be volume.
+# This program segments the corpus callosum into five separate labels in
+# the subcortical segmentation volume 'aseg.mgz'. The divisions of the
+# cc are equally spaced in terms of distance along the primary
+# eigendirection (pretty much the long axis) of the cc. The lateral
+# extent can be changed with the -T <thickness> parameter, where
+# <thickness> is the distance off the midline (so -T 1 would result in
+# the who CC being 3mm thick). The default is 2 so it's 5mm thick. The
+# aseg.stats values should be volume.
 # 
-#     Examples
-#     ========
-#     >>> from nipype.interfaces import freesurfer
-#     >>> SegmentCC_node = freesurfer.SegmentCC()
-#     >>> SegmentCC_node.inputs.in_file = "aseg.mgz"
-#     >>> SegmentCC_node.inputs.in_norm = "norm.mgz"
-#     >>> SegmentCC_node.inputs.out_rotation = "cc.lta"
-#     >>> SegmentCC_node.inputs.subject_id = "test"
-#     >>> SegmentCC_node.cmdline
-#     'mri_cc -aseg aseg.mgz -o aseg.auto.mgz -lta cc.lta test'
-#     
+# Examples
+# ========
+# >>> from nipype.interfaces import freesurfer
+# >>> SegmentCC_node = freesurfer.SegmentCC()
+# >>> SegmentCC_node.inputs.in_file = "aseg.mgz"
+# >>> SegmentCC_node.inputs.in_norm = "norm.mgz"
+# >>> SegmentCC_node.inputs.out_rotation = "cc.lta"
+# >>> SegmentCC_node.inputs.subject_id = "test"
+# >>> SegmentCC_node.cmdline
+# 'mri_cc -aseg aseg.mgz -o aseg.auto.mgz -lta cc.lta test'
+# 
 task_name: SegmentCC
 nipype_name: SegmentCC
 nipype_module: nipype.interfaces.freesurfer.preprocess
@@ -42,14 +42,8 @@ inputs:
   # passed to the field in the automatically generated unittests.
     in_file: medimage/mgh-gz
     # type=file|default=<undefined>: Input aseg file to read from subjects directory
-    in_norm: medimage/mgh-gz
+    in_norm: generic/file
     # type=file|default=<undefined>: Required undocumented input {subject}/mri/norm.mgz
-    out_file: Path
-    # type=file: Output segmentation uncluding corpus collosum
-    # type=file|default=<undefined>: Filename to write aseg including CC
-    out_rotation: Path
-    # type=file: Output lta rotation file
-    # type=file|default=<undefined>: Global filepath for writing rotation lta
     subjects_dir: generic/directory
     # type=directory|default=<undefined>: subjects directory
   callable_defaults:
@@ -69,16 +63,16 @@ outputs:
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
     out_file: generic/file
-    # type=file: Output segmentation uncluding corpus collosum
+    # type=file: Output segmentation including corpus collosum
     # type=file|default=<undefined>: Filename to write aseg including CC
-    out_rotation: medimage-freesurfer/lta
+    out_rotation: fileformats.medimage_freesurfer.Lta
     # type=file: Output lta rotation file
     # type=file|default=<undefined>: Global filepath for writing rotation lta
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
@@ -90,7 +84,7 @@ tests:
     in_norm:
     # type=file|default=<undefined>: Required undocumented input {subject}/mri/norm.mgz
     out_file:
-    # type=file: Output segmentation uncluding corpus collosum
+    # type=file: Output segmentation including corpus collosum
     # type=file|default=<undefined>: Filename to write aseg including CC
     out_rotation:
     # type=file: Output lta rotation file
@@ -98,7 +92,7 @@ tests:
     subject_id:
     # type=string|default='subject_id': Subject name
     copy_inputs:
-    # type=bool|default=False: If running as a node, set this to True.This will copy the input files to the node directory.
+    # type=bool|default=False: If running as a node, set this to True. This will copy the input files to the node directory.
     subjects_dir:
     # type=directory|default=<undefined>: subjects directory
     args:
@@ -106,7 +100,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -125,15 +119,11 @@ tests:
   # (if not specified, will try to choose a sensible value)
     in_file:
     # type=file|default=<undefined>: Input aseg file to read from subjects directory
-    in_norm:
-    # type=file|default=<undefined>: Required undocumented input {subject}/mri/norm.mgz
     out_rotation: '"cc.lta"'
     # type=file: Output lta rotation file
     # type=file|default=<undefined>: Global filepath for writing rotation lta
-    subject_id: '"test"'
-    # type=string|default='subject_id': Subject name
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -148,7 +138,7 @@ tests:
   # bool - whether the unittest is expected to fail or not. Set to false
   # when you are satisfied with the edits you have made to this file
 doctests:
-- cmdline: mri_cc -aseg aseg.mgz -o aseg.auto.mgz -lta cc.lta test
+- cmdline:
   # str - the expected cmdline output
   inputs:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
@@ -156,15 +146,11 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     in_file: '"aseg.mgz"'
     # type=file|default=<undefined>: Input aseg file to read from subjects directory
-    in_norm: '"norm.mgz"'
-    # type=file|default=<undefined>: Required undocumented input {subject}/mri/norm.mgz
     out_rotation: '"cc.lta"'
     # type=file: Output lta rotation file
     # type=file|default=<undefined>: Global filepath for writing rotation lta
-    subject_id: '"test"'
-    # type=string|default='subject_id': Subject name
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

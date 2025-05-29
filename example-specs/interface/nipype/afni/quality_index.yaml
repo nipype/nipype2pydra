@@ -6,24 +6,24 @@
 # Docs
 # ----
 # Computes a quality index for each sub-brick in a 3D+time dataset.
-#     The output is a 1D time series with the index for each sub-brick.
-#     The results are written to stdout.
+# The output is a 1D time series with the index for each sub-brick.
+# The results are written to stdout.
 # 
-#     Examples
-#     --------
-#     >>> from nipype.interfaces import afni
-#     >>> tqual = afni.QualityIndex()
-#     >>> tqual.inputs.in_file = 'functional.nii'
-#     >>> tqual.cmdline  # doctest: +ELLIPSIS
-#     '3dTqual functional.nii > functional_tqual'
-#     >>> res = tqual.run()  # doctest: +SKIP
+# Examples
+# --------
+# >>> from nipype.interfaces import afni
+# >>> tqual = afni.QualityIndex()
+# >>> tqual.inputs.in_file = 'functional.nii'
+# >>> tqual.cmdline  # doctest: +ELLIPSIS
+# '3dTqual functional.nii > functional_tqual'
+# >>> res = tqual.run()  # doctest: +SKIP
 # 
-#     See Also
-#     --------
-#     For complete details, see the `3dTqual Documentation
-#     <https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dTqual.html>`_
+# See Also
+# --------
+# For complete details, see the `3dTqual Documentation
+# <https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dTqual.html>`_
 # 
-#     
+# 
 task_name: QualityIndex
 nipype_name: QualityIndex
 nipype_module: nipype.interfaces.afni.preprocess
@@ -42,9 +42,6 @@ inputs:
     # type=file|default=<undefined>: input dataset
     mask: generic/file
     # type=file|default=<undefined>: compute correlation only across masked voxels
-    out_file: Path
-    # type=file: file containing the captured standard output
-    # type=file|default=<undefined>: capture standard output
   callable_defaults:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set as the `default` method of input fields
@@ -68,7 +65,7 @@ outputs:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
@@ -99,7 +96,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -119,7 +116,7 @@ tests:
     in_file:
     # type=file|default=<undefined>: input dataset
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -134,7 +131,7 @@ tests:
   # bool - whether the unittest is expected to fail or not. Set to false
   # when you are satisfied with the edits you have made to this file
 doctests:
-- cmdline: 3dTqual functional.nii > functional_tqual
+- cmdline:
   # str - the expected cmdline output
   inputs:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
@@ -143,7 +140,7 @@ doctests:
     in_file: '"functional.nii"'
     # type=file|default=<undefined>: input dataset
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

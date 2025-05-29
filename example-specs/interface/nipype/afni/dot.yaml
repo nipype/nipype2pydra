@@ -6,26 +6,26 @@
 # Docs
 # ----
 # Correlation coefficient between sub-brick pairs.
-#     All datasets in in_files list will be concatenated.
-#     You can use sub-brick selectors in the file specification.
+# All datasets in in_files list will be concatenated.
+# You can use sub-brick selectors in the file specification.
 # 
-#     .. warning::
+# .. warning::
 # 
-#         This program is not efficient when more than two subbricks are input.
+#     This program is not efficient when more than two subbricks are input.
 # 
-#     For complete details, see the `3ddot Documentation.
-#     <https://afni.nimh.nih.gov/pub/dist/doc/program_help/3ddot.html>`_
+# For complete details, see the `3ddot Documentation.
+# <https://afni.nimh.nih.gov/pub/dist/doc/program_help/3ddot.html>`_
 # 
-#     >>> from nipype.interfaces import afni
-#     >>> dot = afni.Dot()
-#     >>> dot.inputs.in_files = ['functional.nii[0]', 'structural.nii']
-#     >>> dot.inputs.dodice = True
-#     >>> dot.inputs.out_file = 'out.mask_ae_dice.txt'
-#     >>> dot.cmdline
-#     '3dDot -dodice functional.nii[0]  structural.nii   |& tee out.mask_ae_dice.txt'
-#     >>> res = copy3d.run()  # doctest: +SKIP
+# >>> from nipype.interfaces import afni
+# >>> dot = afni.Dot()
+# >>> dot.inputs.in_files = ['functional.nii[0]', 'structural.nii']
+# >>> dot.inputs.dodice = True
+# >>> dot.inputs.out_file = 'out.mask_ae_dice.txt'
+# >>> dot.cmdline
+# '3dDot -dodice functional.nii[0]  structural.nii   |& tee out.mask_ae_dice.txt'
+# >>> res = copy3d.run()  # doctest: +SKIP
 # 
-#     
+# 
 task_name: Dot
 nipype_name: Dot
 nipype_module: nipype.interfaces.afni.utils
@@ -44,9 +44,6 @@ inputs:
     # type=list|default=[]: list of input files, possibly with subbrick selectors
     mask: generic/file
     # type=file|default=<undefined>: Use this dataset as a mask
-    out_file: Path
-    # type=file: output file
-    # type=file|default=<undefined>: collect output to a file
   callable_defaults:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set as the `default` method of input fields
@@ -70,7 +67,7 @@ outputs:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
@@ -115,7 +112,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -134,13 +131,11 @@ tests:
   # (if not specified, will try to choose a sensible value)
     in_files:
     # type=list|default=[]: list of input files, possibly with subbrick selectors
-    dodice: 'True'
-    # type=bool|default=False: Return the Dice coefficient (the Sorensen-Dice index).
     out_file: '"out.mask_ae_dice.txt"'
     # type=file: output file
     # type=file|default=<undefined>: collect output to a file
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -163,13 +158,11 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     in_files: '["functional.nii[0]", "structural.nii"]'
     # type=list|default=[]: list of input files, possibly with subbrick selectors
-    dodice: 'True'
-    # type=bool|default=False: Return the Dice coefficient (the Sorensen-Dice index).
     out_file: '"out.mask_ae_dice.txt"'
     # type=file: output file
     # type=file|default=<undefined>: collect output to a file
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS
