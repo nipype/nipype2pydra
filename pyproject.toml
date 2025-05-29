@@ -51,7 +51,7 @@ test = [
     "fileformats-medimage-extras",
     "fileformats-medimage-afni",
     "niworkflows",
-    "mriqc",
+#    "mriqc",
     "nipy",
     "nireports",
     "nitime",
