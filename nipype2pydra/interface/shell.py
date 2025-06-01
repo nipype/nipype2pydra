@@ -26,7 +26,7 @@ CALLABLES_ARGS = ["inputs", "stdout", "stderr", "output_dir"]
 
 
 @attrs.define(slots=False)
-class ShellCommandInterfaceConverter(BaseInterfaceConverter):
+class ShellInterfaceConverter(BaseInterfaceConverter):
 
     converter_type = "shell_command"
     _format_argstrs: ty.Dict[str, str] = attrs.field(factory=dict)

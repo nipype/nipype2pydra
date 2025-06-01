@@ -13,7 +13,7 @@ logger = logging.getLogger("nipype2pydra")
 
 
 @attrs.define(slots=False)
-class FunctionInterfaceConverter(BaseInterfaceConverter):
+class PythonInterfaceConverter(BaseInterfaceConverter):
 
     converter_type = "function"
 
@@ -153,7 +153,11 @@ class FunctionInterfaceConverter(BaseInterfaceConverter):
                 spec_str += f"    {name}: {type_}\n"
 
         spec_str += "    @staticmethod\n"
-        spec_str += "    def function(" + ", ".join(f"{n}: {t}" for n, t, _ in input_fields) + ")"
+        spec_str += (
+            "    def function("
+            + ", ".join(f"{n}: {t}" for n, t, _ in input_fields)
+            + ")"
+        )
         output_types = [o[1] for o in output_fields]
         if any(t is not ty.Any for t in output_types):
             spec_str += "-> "

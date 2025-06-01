@@ -1,6 +1,6 @@
 from .base import BaseInterfaceConverter
-from .function import FunctionInterfaceConverter
-from .shell_command import ShellCommandInterfaceConverter
+from .python import PythonInterfaceConverter
+from .shell import ShellInterfaceConverter
 from .base import (
     InputsConverter,
     OutputsConverter,
@@ -11,8 +11,8 @@ from .loaders import get_converter
 
 __all__ = [
     "BaseInterfaceConverter",
-    "FunctionInterfaceConverter",
-    "ShellCommandInterfaceConverter",
+    "PythonInterfaceConverter",
+    "ShellInterfaceConverter",
     "InputsConverter",
     "OutputsConverter",
     "TestGenerator",
