@@ -502,6 +502,7 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
             converted_code=self.converted_code,
             used=self.used,
             find_replace=self.find_replace + self.package.find_replace,
+            interface_module=True,
         )
 
         self.package.write_pkg_inits(

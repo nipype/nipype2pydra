@@ -841,6 +841,7 @@ post_release = "{post_release}"
         find_replace: ty.Optional[ty.List[ty.Tuple[str, str]]] = None,
         inline_intra_pkg: bool = False,
         additional_imports: ty.Optional[ty.List[ImportStatement]] = None,
+        interface_module: bool = False,
     ):
         """Writes the given imports, constants, classes, and functions to the file at the given path,
         merging with existing code if it exists"""
@@ -875,9 +876,13 @@ post_release = "{post_release}"
         existing_imports = parse_imports(existing_import_strs, relative_to=module_name)
         converter_imports = []
 
+        src_module_name = self.untranslate_submodule(module_name)
+        if interface_module:
+            src_module_name = ".".join(src_module_name.split(".")[:-1])
+
         for klass in used.classes:
             if (
-                klass.__module__ == module_name
+                klass.__module__ == src_module_name
                 and f"\nclass {klass.__name__}(" not in code_str
             ):
                 try:
@@ -912,7 +917,7 @@ post_release = "{post_release}"
 
         for func in sorted(used.functions, key=attrgetter("__name__")):
             if (
-                func.__module__ == module_name
+                func.__module__ == src_module_name
                 and f"\ndef {func.__name__}(" not in code_str
             ):
                 if func.__name__ in self.functions:
