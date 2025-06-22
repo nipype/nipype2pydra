@@ -660,7 +660,9 @@ class PackageConverter:
 
     def write_post_release_file(self, fspath: Path):
 
-        if ".dev" in self.nipype_package.__version__:
+        pkg_version = getattr(self.nipype_package, "__version__", "0.1.0")
+
+        if ".dev" in pkg_version:
             logger.warning(
                 (
                     "using development version of nipype2pydra (%s), "
@@ -680,7 +682,7 @@ class PackageConverter:
                 self.name,
             )
 
-        src_pkg_version = self.nipype_package.__version__.split(".dev")[0]
+        src_pkg_version = pkg_version.split(".dev")[0]
         nipype2pydra_version = nipype2pydra.__version__.split(".dev")[0]
         post_release = (src_pkg_version + nipype2pydra_version).replace(".", "")
 
@@ -874,7 +876,10 @@ post_release = "{post_release}"
         converter_imports = []
 
         for klass in used.classes:
-            if f"\nclass {klass.__name__}(" not in code_str:
+            if (
+                klass.__module__ == module_name
+                and f"\nclass {klass.__name__}(" not in code_str
+            ):
                 try:
                     class_converter = self.classes[full_address(klass)]
                     converter_imports.extend(class_converter.used.import_stmts)
@@ -906,7 +911,10 @@ post_release = "{post_release}"
                 code_str += "\n" + converted_code + "\n"
 
         for func in sorted(used.functions, key=attrgetter("__name__")):
-            if f"\ndef {func.__name__}(" not in code_str:
+            if (
+                func.__module__ == module_name
+                and f"\ndef {func.__name__}(" not in code_str
+            ):
                 if func.__name__ in self.functions:
                     function_converter = self.functions[full_address(func)]
                     converter_imports.extend(function_converter.used.import_stmts)

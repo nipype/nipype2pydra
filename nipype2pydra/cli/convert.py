@@ -74,6 +74,7 @@ def convert(
             if fspath.parent == package_dir and fspath.name in (
                 "_version.py",
                 "__init__.py",
+                "ported",
             ):
                 continue
             if fspath.is_dir():

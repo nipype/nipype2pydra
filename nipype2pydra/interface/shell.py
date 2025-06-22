@@ -86,14 +86,6 @@ class ShellInterfaceConverter(BaseInterfaceConverter):
                     "try the FunctionInterfaceConverter class instead"
                 )
 
-        def unwrap_field_type(t):
-            if issubclass(t, WithClassifiers) and t.is_classified:
-                unwraped_classifiers = ", ".join(
-                    unwrap_field_type(c) for c in t.classifiers
-                )
-                return f"{t.unclassified.__name__}[{unwraped_classifiers}]"
-            return t.__name__
-
         nonstd_types = copy(nonstd_types)
 
         input_names = [i[0] for i in input_fields]
@@ -485,7 +477,7 @@ class ShellInterfaceConverter(BaseInterfaceConverter):
                 )
                 lo_body = self._process_inputs(lo_body)
                 lo_body = re.sub(
-                    r"(\w+) = self\.output_spec\(\).get\(\)", r"\1 = {}", lo_body
+                    r"(\w+) = self\.output_spec\(\).(?:trait_)get\(\)", r"\1 = {}", lo_body
                 )
 
                 if not lo_body.strip():

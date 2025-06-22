@@ -12,6 +12,20 @@ from ..symbols import UsedSymbols, get_return_line, find_super_method
 logger = logging.getLogger("nipype2pydra")
 
 
+def type2str(type_):
+    """Convert a type to a string representation."""
+    if isinstance(type_, str):
+        return type_
+    if type_ is ty.Any:
+        return "ty.Any"
+    elif hasattr(type_, "__name__"):
+        return type_.__name__
+    elif hasattr(type_, "__qualname__"):
+        return type_.__qualname__
+    else:
+        return str(type_).replace("typing.", "ty.")
+
+
 @attrs.define(slots=False)
 class PythonInterfaceConverter(BaseInterfaceConverter):
 
@@ -136,8 +150,8 @@ class PythonInterfaceConverter(BaseInterfaceConverter):
 
         assert method_body, "Neither `run_interface` and `list_outputs` are defined"
 
-        spec_str = "@python.define"
-        spec_str += f"class {self.task_name}(python.Task['{self.task_name}.Outputs']):"
+        spec_str = "@python.define\n"
+        spec_str += f"class {self.task_name}(python.Task['{self.task_name}.Outputs']):\n"
         spec_str += '    """\n'
         spec_str += self.create_doctests(
             input_fields=input_fields, nonstd_types=nonstd_types
@@ -147,32 +161,33 @@ class PythonInterfaceConverter(BaseInterfaceConverter):
         for inpt in input_fields:
             if len(inpt) == 4:
                 name, type_, default, _ = inpt
-                spec_str += f"    {name}: {type_} = {default}\n"
+                spec_str += f"    {name}: {type2str(type_)} = {default}\n"
             else:
                 name, type_, _ = inpt
-                spec_str += f"    {name}: {type_}\n"
+                spec_str += f"    {name}: {type2str(type_)}\n"
 
-        spec_str += "    @staticmethod\n"
+        spec_str += "\n\n    class Outputs(python.Outputs):\n"
+        for outpt in output_fields:
+            name, type_, _ = outpt
+            spec_str += f"        {name}: {type2str(type_)}\n"
+
+        spec_str += "\n    @staticmethod\n"
         spec_str += (
             "    def function("
-            + ", ".join(f"{n}: {t}" for n, t, _ in input_fields)
+            + ", ".join(f"{i[0]}: {type2str(i[1])}" for i in input_fields)
             + ")"
         )
-        output_types = [o[1] for o in output_fields]
+        output_types = [type2str(o[1]) for o in output_fields]
         if any(t is not ty.Any for t in output_types):
-            spec_str += "-> "
+            spec_str += " -> "
             if len(output_types) > 1:
                 spec_str += "tuples[" + ", ".join(output_types) + "]"
             else:
                 spec_str += output_types[0]
         spec_str += ":\n"
-        spec_str += method_body + "\n"
-        spec_str += "\n    return {}".format(", ".join(output_names))
+        spec_str += "    " + method_body.replace("\n", "\n    ") + "\n"
+        spec_str += "\n        return {}".format(", ".join(output_names))
 
-        spec_str += "    class Outputs(python.Outputs):"
-        for outpt in output_fields:
-            name, type_, _ = outpt
-            spec_str += f"        {name}: {type_}\n"
 
         for m in sorted(self.used.methods, key=attrgetter("__name__")):
             if m.__name__ not in self.included_methods:
