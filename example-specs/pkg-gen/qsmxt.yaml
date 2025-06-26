@@ -46,3 +46,4 @@ qsmxt:
   - qsmxt.workflows.qsm.init_qsm_workflow
   - qsmxt.workflows.qsm.qsm_workflow
   - qsmxt.workflows.template.init_template_workflow
+  - qsmxt.scripts.antsBuildTemplate.ANTSTemplateBuildSingleIterationWF

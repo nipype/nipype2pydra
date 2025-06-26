@@ -735,7 +735,9 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
                 pydra_type = MultiOutputObj
         elif isinstance(trait_tp, (traits.trait_types.List, traits.trait_types.Tuple)):
             seq_type = list if isinstance(trait_tp, traits.trait_types.List) else tuple
-            if isinstance(field.inner_traits[0].trait_type, traits_extension.File):
+            if not field.inner_traits:
+                pydra_type = seq_type[ty.Any]
+            elif isinstance(field.inner_traits[0].trait_type, traits_extension.File):
                 if spec_type == "input":
                     pydra_type = seq_type[File]
                 else:
