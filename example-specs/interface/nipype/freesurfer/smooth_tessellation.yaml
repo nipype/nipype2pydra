@@ -6,21 +6,21 @@
 # Docs
 # ----
 # 
-#     Smooth a tessellated surface.
+# Smooth a tessellated surface.
 # 
-#     See Also
-#     --------
-#     `nipype.interfaces.freesurfer.utils.SurfaceSmooth`_ interface for smoothing a scalar field
-#     along a surface manifold
+# See Also
+# --------
+# `nipype.interfaces.freesurfer.utils.SurfaceSmooth`_ interface for smoothing a scalar field
+# along a surface manifold
 # 
-#     Example
-#     -------
-#     >>> import nipype.interfaces.freesurfer as fs
-#     >>> smooth = fs.SmoothTessellation()
-#     >>> smooth.inputs.in_file = 'lh.hippocampus.stl'
-#     >>> smooth.run() # doctest: +SKIP
+# Example
+# -------
+# >>> import nipype.interfaces.freesurfer as fs
+# >>> smooth = fs.SmoothTessellation()
+# >>> smooth.inputs.in_file = 'lh.hippocampus.stl'
+# >>> smooth.run() # doctest: +SKIP
 # 
-#     
+# 
 task_name: SmoothTessellation
 nipype_name: SmoothTessellation
 nipype_module: nipype.interfaces.freesurfer.utils
@@ -37,12 +37,6 @@ inputs:
   # passed to the field in the automatically generated unittests.
     in_file: generic/file
     # type=file|default=<undefined>: Input volume to tessellate voxels from.
-    out_area_file: Path
-    # type=file|default=<undefined>: Write area to ``?h.areaname`` (default "area")
-    out_curvature_file: Path
-    # type=file|default=<undefined>: Write curvature to ``?h.curvname`` (default "curv")
-    out_file: Path
-    # type=file|default=<undefined>: output filename or True to generate one
     subjects_dir: generic/directory
     # type=directory|default=<undefined>: subjects directory
   callable_defaults:
@@ -69,7 +63,7 @@ outputs:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
@@ -111,7 +105,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically

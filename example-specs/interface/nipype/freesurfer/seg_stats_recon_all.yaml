@@ -6,42 +6,42 @@
 # Docs
 # ----
 # 
-#     This class inherits SegStats and modifies it for use in a recon-all workflow.
-#     This implementation mandates implicit inputs that SegStats.
-#     To ensure backwards compatibility of SegStats, this class was created.
+# This class inherits SegStats and modifies it for use in a recon-all workflow.
+# This implementation mandates implicit inputs that SegStats.
+# To ensure backwards compatibility of SegStats, this class was created.
 # 
-#     Examples
-#     --------
-#     >>> from nipype.interfaces.freesurfer import SegStatsReconAll
-#     >>> segstatsreconall = SegStatsReconAll()
-#     >>> segstatsreconall.inputs.annot = ('PWS04', 'lh', 'aparc')
-#     >>> segstatsreconall.inputs.avgwf_txt_file = 'avgwf.txt'
-#     >>> segstatsreconall.inputs.summary_file = 'summary.stats'
-#     >>> segstatsreconall.inputs.subject_id = '10335'
-#     >>> segstatsreconall.inputs.ribbon = 'wm.mgz'
-#     >>> segstatsreconall.inputs.transform = 'trans.mat'
-#     >>> segstatsreconall.inputs.presurf_seg = 'wm.mgz'
-#     >>> segstatsreconall.inputs.lh_orig_nofix = 'lh.pial'
-#     >>> segstatsreconall.inputs.rh_orig_nofix = 'lh.pial'
-#     >>> segstatsreconall.inputs.lh_pial = 'lh.pial'
-#     >>> segstatsreconall.inputs.rh_pial = 'lh.pial'
-#     >>> segstatsreconall.inputs.lh_white = 'lh.pial'
-#     >>> segstatsreconall.inputs.rh_white = 'lh.pial'
-#     >>> segstatsreconall.inputs.empty = True
-#     >>> segstatsreconall.inputs.brain_vol = 'brain-vol-from-seg'
-#     >>> segstatsreconall.inputs.exclude_ctx_gm_wm = True
-#     >>> segstatsreconall.inputs.supratent = True
-#     >>> segstatsreconall.inputs.subcort_gm = True
-#     >>> segstatsreconall.inputs.etiv = True
-#     >>> segstatsreconall.inputs.wm_vol_from_surf = True
-#     >>> segstatsreconall.inputs.cortex_vol_from_surf = True
-#     >>> segstatsreconall.inputs.total_gray = True
-#     >>> segstatsreconall.inputs.euler = True
-#     >>> segstatsreconall.inputs.exclude_id = 0
-#     >>> segstatsreconall.cmdline
-#     'mri_segstats --annot PWS04 lh aparc --avgwf ./avgwf.txt --brain-vol-from-seg --surf-ctx-vol --empty --etiv --euler --excl-ctxgmwm --excludeid 0 --subcortgray --subject 10335 --supratent --totalgray --surf-wm-vol --sum ./summary.stats'
+# Examples
+# --------
+# >>> from nipype.interfaces.freesurfer import SegStatsReconAll
+# >>> segstatsreconall = SegStatsReconAll()
+# >>> segstatsreconall.inputs.annot = ('PWS04', 'lh', 'aparc')
+# >>> segstatsreconall.inputs.avgwf_txt_file = 'avgwf.txt'
+# >>> segstatsreconall.inputs.summary_file = 'summary.stats'
+# >>> segstatsreconall.inputs.subject_id = '10335'
+# >>> segstatsreconall.inputs.ribbon = 'wm.mgz'
+# >>> segstatsreconall.inputs.transform = 'trans.mat'
+# >>> segstatsreconall.inputs.presurf_seg = 'wm.mgz'
+# >>> segstatsreconall.inputs.lh_orig_nofix = 'lh.pial'
+# >>> segstatsreconall.inputs.rh_orig_nofix = 'lh.pial'
+# >>> segstatsreconall.inputs.lh_pial = 'lh.pial'
+# >>> segstatsreconall.inputs.rh_pial = 'lh.pial'
+# >>> segstatsreconall.inputs.lh_white = 'lh.pial'
+# >>> segstatsreconall.inputs.rh_white = 'lh.pial'
+# >>> segstatsreconall.inputs.empty = True
+# >>> segstatsreconall.inputs.brain_vol = 'brain-vol-from-seg'
+# >>> segstatsreconall.inputs.exclude_ctx_gm_wm = True
+# >>> segstatsreconall.inputs.supratent = True
+# >>> segstatsreconall.inputs.subcort_gm = True
+# >>> segstatsreconall.inputs.etiv = True
+# >>> segstatsreconall.inputs.wm_vol_from_surf = True
+# >>> segstatsreconall.inputs.cortex_vol_from_surf = True
+# >>> segstatsreconall.inputs.total_gray = True
+# >>> segstatsreconall.inputs.euler = True
+# >>> segstatsreconall.inputs.exclude_id = 0
+# >>> segstatsreconall.cmdline
+# 'mri_segstats --annot PWS04 lh aparc --avgwf ./avgwf.txt --brain-vol-from-seg --surf-ctx-vol --empty --etiv --euler --excl-ctxgmwm --excludeid 0 --subcortgray --subject 10335 --supratent --totalgray --surf-wm-vol --sum ./summary.stats'
 # 
-#     
+# 
 task_name: SegStatsReconAll
 nipype_name: SegStatsReconAll
 nipype_module: nipype.interfaces.freesurfer.model
@@ -68,11 +68,11 @@ inputs:
     # type=file|default=<undefined>: Use the segmentation to report stats on this volume
     in_intensity: generic/file
     # type=file|default=<undefined>: Undocumented input norm.mgz file
-    lh_orig_nofix: medimage-freesurfer/pial
+    lh_orig_nofix: generic/file
     # type=file|default=<undefined>: Input lh.orig.nofix
-    lh_pial: medimage-freesurfer/pial
+    lh_pial: generic/file
     # type=file|default=<undefined>: Input file must be <subject_id>/surf/lh.pial
-    lh_white: medimage-freesurfer/pial
+    lh_white: generic/file
     # type=file|default=<undefined>: Input file must be <subject_id>/surf/lh.white
     mask_file: generic/file
     # type=file|default=<undefined>: Mask volume (same size as seg
@@ -80,11 +80,11 @@ inputs:
     # type=file|default=<undefined>: Compensate for partial voluming
     presurf_seg: medimage/mgh-gz
     # type=file|default=<undefined>: Input segmentation volume
-    rh_orig_nofix: medimage-freesurfer/pial
+    rh_orig_nofix: fileformats.medimage_freesurfer.Pial
     # type=file|default=<undefined>: Input rh.orig.nofix
-    rh_pial: medimage-freesurfer/pial
+    rh_pial: fileformats.medimage_freesurfer.Pial
     # type=file|default=<undefined>: Input file must be <subject_id>/surf/rh.pial
-    rh_white: medimage-freesurfer/pial
+    rh_white: fileformats.medimage_freesurfer.Pial
     # type=file|default=<undefined>: Input file must be <subject_id>/surf/rh.white
     ribbon: medimage/mgh-gz
     # type=file|default=<undefined>: Input file mri/ribbon.mgz
@@ -92,10 +92,7 @@ inputs:
     # type=file|default=<undefined>: segmentation volume path
     subjects_dir: generic/directory
     # type=directory|default=<undefined>: subjects directory
-    summary_file: Path
-    # type=file: Segmentation summary statistics table
-    # type=file|default=<undefined>: Segmentation stats summary table file
-    transform: datascience/text-matrix
+    transform: generic/file
     # type=file|default=<undefined>: Input transform file
   callable_defaults:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
@@ -116,20 +113,20 @@ outputs:
     avgwf_file: generic/file
     # type=file: Volume with functional statistics averaged over segs
     # type=traitcompound|default=None: Save as binary volume (bool or filename)
-    avgwf_txt_file: text/text-file
+    avgwf_txt_file: generic/file
     # type=file: Text file with functional statistics averaged over segs
     # type=traitcompound|default=None: Save average waveform into file (bool or filename)
     sf_avg_file: generic/file
     # type=file: Text file with func statistics averaged over segs and framss
     # type=traitcompound|default=None: Save mean across space and time
-    summary_file: medimage-freesurfer/stats
+    summary_file: fileformats.medimage_freesurfer.Stats
     # type=file: Segmentation summary statistics table
     # type=file|default=<undefined>: Segmentation stats summary table file
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
     summary_file: '"summary.stats"'
     # type=file: Segmentation summary statistics table
     # type=file|default=<undefined>: Segmentation stats summary table file
@@ -254,7 +251,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -273,56 +270,31 @@ tests:
   # (if not specified, will try to choose a sensible value)
     annot: ("PWS04", "lh", "aparc")
     # type=tuple|default=('', 'lh', ''): subject hemi parc : use surface parcellation
-    avgwf_txt_file: '"avgwf.txt"'
-    # type=file: Text file with functional statistics averaged over segs
-    # type=traitcompound|default=None: Save average waveform into file (bool or filename)
     summary_file: '"summary.stats"'
     # type=file: Segmentation summary statistics table
     # type=file|default=<undefined>: Segmentation stats summary table file
-    subject_id: '"10335"'
-    # type=string|default='subject_id': Subject id being processed
     ribbon:
     # type=file|default=<undefined>: Input file mri/ribbon.mgz
-    transform:
-    # type=file|default=<undefined>: Input transform file
     presurf_seg:
     # type=file|default=<undefined>: Input segmentation volume
-    lh_orig_nofix:
-    # type=file|default=<undefined>: Input lh.orig.nofix
     rh_orig_nofix:
     # type=file|default=<undefined>: Input rh.orig.nofix
-    lh_pial:
-    # type=file|default=<undefined>: Input file must be <subject_id>/surf/lh.pial
     rh_pial:
     # type=file|default=<undefined>: Input file must be <subject_id>/surf/rh.pial
-    lh_white:
-    # type=file|default=<undefined>: Input file must be <subject_id>/surf/lh.white
     rh_white:
     # type=file|default=<undefined>: Input file must be <subject_id>/surf/rh.white
-    empty: 'True'
-    # type=bool|default=False: Report on segmentations listed in the color table
     brain_vol: '"brain-vol-from-seg"'
     # type=enum|default='brain-vol-from-seg'|allowed['brain-vol-from-seg','brainmask']: Compute brain volume either with ``brainmask`` or ``brain-vol-from-seg``
-    exclude_ctx_gm_wm: 'True'
-    # type=bool|default=False: exclude cortical gray and white matter
     supratent: 'True'
     # type=bool|default=False: Undocumented input flag
-    subcort_gm: 'True'
-    # type=bool|default=False: Compute volume of subcortical gray matter
     etiv: 'True'
     # type=bool|default=False: Compute ICV from talairach transform
-    wm_vol_from_surf: 'True'
-    # type=bool|default=False: Compute wm volume from surf
     cortex_vol_from_surf: 'True'
     # type=bool|default=False: Compute cortex volume from surf
-    total_gray: 'True'
-    # type=bool|default=False: Compute volume of total gray matter
     euler: 'True'
     # type=bool|default=False: Write out number of defect holes in orig.nofix based on the euler number
-    exclude_id: '0'
-    # type=int|default=0: Exclude seg id from report
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -337,7 +309,7 @@ tests:
   # bool - whether the unittest is expected to fail or not. Set to false
   # when you are satisfied with the edits you have made to this file
 doctests:
-- cmdline: mri_segstats --annot PWS04 lh aparc --avgwf ./avgwf.txt --brain-vol-from-seg --surf-ctx-vol --empty --etiv --euler --excl-ctxgmwm --excludeid 0 --subcortgray --subject 10335 --supratent --totalgray --surf-wm-vol --sum ./summary.stats
+- cmdline:
   # str - the expected cmdline output
   inputs:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
@@ -345,56 +317,31 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     annot: ("PWS04", "lh", "aparc")
     # type=tuple|default=('', 'lh', ''): subject hemi parc : use surface parcellation
-    avgwf_txt_file: '"avgwf.txt"'
-    # type=file: Text file with functional statistics averaged over segs
-    # type=traitcompound|default=None: Save average waveform into file (bool or filename)
     summary_file: '"summary.stats"'
     # type=file: Segmentation summary statistics table
     # type=file|default=<undefined>: Segmentation stats summary table file
-    subject_id: '"10335"'
-    # type=string|default='subject_id': Subject id being processed
     ribbon: '"wm.mgz"'
     # type=file|default=<undefined>: Input file mri/ribbon.mgz
-    transform: '"trans.mat"'
-    # type=file|default=<undefined>: Input transform file
     presurf_seg: '"wm.mgz"'
     # type=file|default=<undefined>: Input segmentation volume
-    lh_orig_nofix: '"lh.pial"'
-    # type=file|default=<undefined>: Input lh.orig.nofix
     rh_orig_nofix: '"lh.pial"'
     # type=file|default=<undefined>: Input rh.orig.nofix
-    lh_pial: '"lh.pial"'
-    # type=file|default=<undefined>: Input file must be <subject_id>/surf/lh.pial
     rh_pial: '"lh.pial"'
     # type=file|default=<undefined>: Input file must be <subject_id>/surf/rh.pial
-    lh_white: '"lh.pial"'
-    # type=file|default=<undefined>: Input file must be <subject_id>/surf/lh.white
     rh_white: '"lh.pial"'
     # type=file|default=<undefined>: Input file must be <subject_id>/surf/rh.white
-    empty: 'True'
-    # type=bool|default=False: Report on segmentations listed in the color table
     brain_vol: '"brain-vol-from-seg"'
     # type=enum|default='brain-vol-from-seg'|allowed['brain-vol-from-seg','brainmask']: Compute brain volume either with ``brainmask`` or ``brain-vol-from-seg``
-    exclude_ctx_gm_wm: 'True'
-    # type=bool|default=False: exclude cortical gray and white matter
     supratent: 'True'
     # type=bool|default=False: Undocumented input flag
-    subcort_gm: 'True'
-    # type=bool|default=False: Compute volume of subcortical gray matter
     etiv: 'True'
     # type=bool|default=False: Compute ICV from talairach transform
-    wm_vol_from_surf: 'True'
-    # type=bool|default=False: Compute wm volume from surf
     cortex_vol_from_surf: 'True'
     # type=bool|default=False: Compute cortex volume from surf
-    total_gray: 'True'
-    # type=bool|default=False: Compute volume of total gray matter
     euler: 'True'
     # type=bool|default=False: Write out number of defect holes in orig.nofix based on the euler number
-    exclude_id: '0'
-    # type=int|default=0: Exclude seg id from report
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

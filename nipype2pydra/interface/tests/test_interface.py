@@ -1,11 +1,15 @@
 from importlib import import_module
 import yaml
 import pytest
+from collections import defaultdict
 import logging
 from traceback import format_exc
+from tqdm import tqdm
+from pydra.utils import get_fields
 from nipype2pydra.utils import (
     add_to_sys_path,
     add_exc_note,
+    full_address,
     INBUILT_NIPYPE_TRAIT_NAMES,
 )
 from nipype2pydra.package import PackageConverter
@@ -64,7 +68,7 @@ def test_interface_convert(
                 interface_spec["nipype_module"].split(".")
                 + [interface_spec["task_name"]]
             ),
-            nipype_name=interface_spec["nipype_module"].split(".")[0],
+            nipype_name=interface_spec["nipype_module"],
             interface_only=True,
         )
 
@@ -75,6 +79,29 @@ def test_interface_convert(
         )
 
         converter.write(pkg_root)
+
+        nipype_ports = []
+        intra_pkg_modules = defaultdict(set)
+
+        for _, klass in converter.used.imported_classes:
+            address = full_address(klass)
+            if address in pkg_converter.nipype_port_converters:
+                nipype_ports.append(pkg_converter.nipype_port_converters[address])
+        for _, func in converter.used.imported_funcs:
+            if full_address(func) not in list(pkg_converter.workflows):
+                intra_pkg_modules[func.__module__].add(func)               
+
+        already_converted = set()
+        for converter in tqdm(
+            nipype_ports, "Porting interfaces from the core nipype package"
+        ):
+            converter.write(
+                pkg_root,
+                already_converted=already_converted,
+            )
+
+        # Write any additional functions in other modules in the package
+        pkg_converter.write_intra_pkg_modules(pkg_root, intra_pkg_modules)
 
         with add_to_sys_path(pkg_root):
             try:
@@ -100,7 +127,9 @@ def test_interface_convert(
         )
 
         assert sorted(
-            f[0] for f in pydra_task().input_spec.fields if not f[0].startswith("_")
+            f.name
+            for f in get_fields(pydra_task)
+            if f.name not in ["append_args", "executable", "function", "constructor"]
         ) == sorted(
             n
             for n in nipype_input_names
@@ -120,9 +149,9 @@ def test_interface_convert(
             )
 
             assert sorted(
-                f[0]
-                for f in pydra_task().output_spec.fields
-                if not f[0].startswith("_")
+                f.name
+                for f in get_fields(pydra_task.Outputs)
+                if f.name not in ["stdout", "stderr", "return_code"]
             ) == sorted(
                 n
                 for n in nipype_output_names

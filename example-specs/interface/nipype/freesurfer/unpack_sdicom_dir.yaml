@@ -7,21 +7,21 @@
 # ----
 # Use unpacksdcmdir to convert dicom files
 # 
-#     Call unpacksdcmdir -help from the command line to see more information on
-#     using this command.
+# Call unpacksdcmdir -help from the command line to see more information on
+# using this command.
 # 
-#     Examples
-#     --------
+# Examples
+# --------
 # 
-#     >>> from nipype.interfaces.freesurfer import UnpackSDICOMDir
-#     >>> unpack = UnpackSDICOMDir()
-#     >>> unpack.inputs.source_dir = '.'
-#     >>> unpack.inputs.output_dir = '.'
-#     >>> unpack.inputs.run_info = (5, 'mprage', 'nii', 'struct')
-#     >>> unpack.inputs.dir_structure = 'generic'
-#     >>> unpack.cmdline
-#     'unpacksdcmdir -generic -targ . -run 5 mprage nii struct -src .'
-#     
+# >>> from nipype.interfaces.freesurfer import UnpackSDICOMDir
+# >>> unpack = UnpackSDICOMDir()
+# >>> unpack.inputs.source_dir = '.'
+# >>> unpack.inputs.output_dir = '.'
+# >>> unpack.inputs.run_info = (5, 'mprage', 'nii', 'struct')
+# >>> unpack.inputs.dir_structure = 'generic'
+# >>> unpack.cmdline
+# 'unpacksdcmdir -generic -targ . -run 5 mprage nii struct -src .'
+# 
 task_name: UnpackSDICOMDir
 nipype_name: UnpackSDICOMDir
 nipype_module: nipype.interfaces.freesurfer.preprocess
@@ -70,7 +70,7 @@ outputs:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
@@ -106,7 +106,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -125,14 +125,10 @@ tests:
   # (if not specified, will try to choose a sensible value)
     source_dir: '"."'
     # type=directory|default=<undefined>: directory with the DICOM files
-    output_dir: '"."'
-    # type=directory|default=<undefined>: top directory into which the files will be unpacked
     run_info: (5, "mprage", "nii", "struct")
     # type=tuple|default=(0, '', '', ''): runno subdir format name : spec unpacking rules on cmdline
-    dir_structure: '"generic"'
-    # type=enum|default='fsfast'|allowed['fsfast','generic']: unpack to specified directory structures
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -155,14 +151,10 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     source_dir: '"."'
     # type=directory|default=<undefined>: directory with the DICOM files
-    output_dir: '"."'
-    # type=directory|default=<undefined>: top directory into which the files will be unpacked
     run_info: (5, "mprage", "nii", "struct")
     # type=tuple|default=(0, '', '', ''): runno subdir format name : spec unpacking rules on cmdline
-    dir_structure: '"generic"'
-    # type=enum|default='fsfast'|allowed['fsfast','generic']: unpack to specified directory structures
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

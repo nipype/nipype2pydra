@@ -7,17 +7,17 @@
 # ----
 # Synthesize a FLASH acquisition from T1 and proton density maps.
 # 
-#     Examples
-#     --------
-#     >>> from nipype.interfaces.freesurfer import SynthesizeFLASH
-#     >>> syn = SynthesizeFLASH(tr=20, te=3, flip_angle=30)
-#     >>> syn.inputs.t1_image = 'T1.mgz'
-#     >>> syn.inputs.pd_image = 'PD.mgz'
-#     >>> syn.inputs.out_file = 'flash_30syn.mgz'
-#     >>> syn.cmdline
-#     'mri_synthesize 20.00 30.00 3.000 T1.mgz PD.mgz flash_30syn.mgz'
+# Examples
+# --------
+# >>> from nipype.interfaces.freesurfer import SynthesizeFLASH
+# >>> syn = SynthesizeFLASH(tr=20, te=3, flip_angle=30)
+# >>> syn.inputs.t1_image = 'T1.mgz'
+# >>> syn.inputs.pd_image = 'PD.mgz'
+# >>> syn.inputs.out_file = 'flash_30syn.mgz'
+# >>> syn.cmdline
+# 'mri_synthesize 20.00 30.00 3.000 T1.mgz PD.mgz flash_30syn.mgz'
 # 
-#     
+# 
 task_name: SynthesizeFLASH
 nipype_name: SynthesizeFLASH
 nipype_module: nipype.interfaces.freesurfer.preprocess
@@ -32,10 +32,7 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    out_file: Path
-    # type=file: synthesized FLASH acquisition
-    # type=file|default=<undefined>: image to write
-    pd_image: medimage/mgh-gz
+    pd_image: generic/file
     # type=file|default=<undefined>: image of proton density values
     subjects_dir: generic/directory
     # type=directory|default=<undefined>: subjects directory
@@ -64,7 +61,7 @@ outputs:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
     out_file: '"flash_30syn.mgz"'
     # type=file: synthesized FLASH acquisition
     # type=file|default=<undefined>: image to write
@@ -96,7 +93,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -115,8 +112,6 @@ tests:
   # (if not specified, will try to choose a sensible value)
     t1_image:
     # type=file|default=<undefined>: image of T1 values
-    pd_image:
-    # type=file|default=<undefined>: image of proton density values
     out_file: '"flash_30syn.mgz"'
     # type=file: synthesized FLASH acquisition
     # type=file|default=<undefined>: image to write
@@ -127,7 +122,7 @@ tests:
     flip_angle: '30'
     # type=float|default=0.0: flip angle (in degrees)
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -142,7 +137,7 @@ tests:
   # bool - whether the unittest is expected to fail or not. Set to false
   # when you are satisfied with the edits you have made to this file
 doctests:
-- cmdline: mri_synthesize 20.00 30.00 3.000 T1.mgz PD.mgz flash_30syn.mgz
+- cmdline:
   # str - the expected cmdline output
   inputs:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
@@ -150,8 +145,6 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     t1_image: '"T1.mgz"'
     # type=file|default=<undefined>: image of T1 values
-    pd_image: '"PD.mgz"'
-    # type=file|default=<undefined>: image of proton density values
     out_file: '"flash_30syn.mgz"'
     # type=file: synthesized FLASH acquisition
     # type=file|default=<undefined>: image to write
@@ -162,7 +155,7 @@ doctests:
     flip_angle: '30'
     # type=float|default=0.0: flip angle (in degrees)
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

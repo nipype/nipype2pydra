@@ -7,22 +7,22 @@
 # ----
 # Transform a surface file from one subject to another via a spherical registration.
 # 
-#     Both the source and target subject must reside in your Subjects Directory,
-#     and they must have been processed with recon-all, unless you are transforming
-#     to one of the icosahedron meshes.
+# Both the source and target subject must reside in your Subjects Directory,
+# and they must have been processed with recon-all, unless you are transforming
+# to one of the icosahedron meshes.
 # 
-#     Examples
-#     --------
+# Examples
+# --------
 # 
-#     >>> from nipype.interfaces.freesurfer import SurfaceTransform
-#     >>> sxfm = SurfaceTransform()
-#     >>> sxfm.inputs.source_file = "lh.cope1.nii.gz"
-#     >>> sxfm.inputs.source_subject = "my_subject"
-#     >>> sxfm.inputs.target_subject = "fsaverage"
-#     >>> sxfm.inputs.hemi = "lh"
-#     >>> sxfm.run() # doctest: +SKIP
+# >>> from nipype.interfaces.freesurfer import SurfaceTransform
+# >>> sxfm = SurfaceTransform()
+# >>> sxfm.inputs.source_file = "lh.cope1.nii.gz"
+# >>> sxfm.inputs.source_subject = "my_subject"
+# >>> sxfm.inputs.target_subject = "fsaverage"
+# >>> sxfm.inputs.hemi = "lh"
+# >>> sxfm.run() # doctest: +SKIP
 # 
-#     
+# 
 task_name: SurfaceTransform
 nipype_name: SurfaceTransform
 nipype_module: nipype.interfaces.freesurfer.utils
@@ -37,9 +37,6 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    out_file: Path
-    # type=file: transformed surface file
-    # type=file|default=<undefined>: surface file to write
     source_annot_file: generic/file
     # type=file|default=<undefined>: surface annotation file
     source_file: generic/file
@@ -69,7 +66,7 @@ outputs:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
     out_file: out_file
     # type=file: transformed surface file
     # type=file|default=<undefined>: surface file to write
@@ -109,7 +106,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically

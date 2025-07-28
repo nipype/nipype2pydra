@@ -7,22 +7,22 @@
 # ----
 # Display statistics over masked regions
 # 
-#     For complete details, see the `3dROIstats Documentation
-#     <https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dROIstats.html>`_
+# For complete details, see the `3dROIstats Documentation
+# <https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dROIstats.html>`_
 # 
-#     Examples
-#     --------
-#     >>> from nipype.interfaces import afni
-#     >>> roistats = afni.ROIStats()
-#     >>> roistats.inputs.in_file = 'functional.nii'
-#     >>> roistats.inputs.mask_file = 'skeleton_mask.nii.gz'
-#     >>> roistats.inputs.stat = ['mean', 'median', 'voxels']
-#     >>> roistats.inputs.nomeanout = True
-#     >>> roistats.cmdline
-#     '3dROIstats -mask skeleton_mask.nii.gz -nomeanout -nzmean -nzmedian -nzvoxels functional.nii > functional_roistat.1D'
-#     >>> res = roistats.run()  # doctest: +SKIP
+# Examples
+# --------
+# >>> from nipype.interfaces import afni
+# >>> roistats = afni.ROIStats()
+# >>> roistats.inputs.in_file = 'functional.nii'
+# >>> roistats.inputs.mask_file = 'skeleton_mask.nii.gz'
+# >>> roistats.inputs.stat = ['mean', 'median', 'voxels']
+# >>> roistats.inputs.nomeanout = True
+# >>> roistats.cmdline
+# '3dROIstats -mask skeleton_mask.nii.gz -nomeanout -nzmean -nzmedian -nzvoxels functional.nii > functional_roistat.1D'
+# >>> res = roistats.run()  # doctest: +SKIP
 # 
-#     
+# 
 task_name: ROIStats
 nipype_name: ROIStats
 nipype_module: nipype.interfaces.afni.preprocess
@@ -41,11 +41,8 @@ inputs:
     # type=file|default=<undefined>: input dataset
     mask: generic/file
     # type=file|default=<undefined>: input mask
-    mask_file: medimage/nifti-gz
+    mask_file: generic/file
     # type=file|default=<undefined>: input mask
-    out_file: Path
-    # type=file: output tab-separated values file
-    # type=file|default=<undefined>: output file
     roisel: generic/file
     # type=file|default=<undefined>: Only considers ROIs denoted by values found in the specified file. Note that the order of the ROIs as specified in the file is not preserved. So an SEL.1D of '2 8 20' produces the same output as '8 20 2'
   callable_defaults:
@@ -71,7 +68,7 @@ outputs:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
@@ -114,7 +111,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -133,14 +130,10 @@ tests:
   # (if not specified, will try to choose a sensible value)
     in_file:
     # type=file|default=<undefined>: input dataset
-    mask_file:
-    # type=file|default=<undefined>: input mask
     stat: '["mean", "median", "voxels"]'
     # type=inputmultiobject|default=[]: Statistics to compute. Options include:   * mean       =   Compute the mean using only non_zero voxels.                   Implies the opposite for the mean computed                   by default.  * median     =   Compute the median of nonzero voxels  * mode       =   Compute the mode of nonzero voxels.                   (integral valued sets only)  * minmax     =   Compute the min/max of nonzero voxels  * sum        =   Compute the sum using only nonzero voxels.  * voxels     =   Compute the number of nonzero voxels  * sigma      =   Compute the standard deviation of nonzero                   voxels  Statistics that include zero-valued voxels:   * zerominmax =   Compute the min/max of all voxels.  * zerosigma  =   Compute the standard deviation of all                   voxels.  * zeromedian =   Compute the median of all voxels.  * zeromode   =   Compute the mode of all voxels.  * summary    =   Only output a summary line with the grand                   mean across all briks in the input dataset.                   This option cannot be used with nomeanout.  More that one option can be specified.
-    nomeanout: 'True'
-    # type=bool|default=False: Do not include the (zero-inclusive) mean among computed stats
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -155,7 +148,7 @@ tests:
   # bool - whether the unittest is expected to fail or not. Set to false
   # when you are satisfied with the edits you have made to this file
 doctests:
-- cmdline: 3dROIstats -mask skeleton_mask.nii.gz -nomeanout -nzmean -nzmedian -nzvoxels functional.nii > functional_roistat.1D
+- cmdline:
   # str - the expected cmdline output
   inputs:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
@@ -163,14 +156,10 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     in_file: '"functional.nii"'
     # type=file|default=<undefined>: input dataset
-    mask_file: '"skeleton_mask.nii.gz"'
-    # type=file|default=<undefined>: input mask
     stat: '["mean", "median", "voxels"]'
     # type=inputmultiobject|default=[]: Statistics to compute. Options include:   * mean       =   Compute the mean using only non_zero voxels.                   Implies the opposite for the mean computed                   by default.  * median     =   Compute the median of nonzero voxels  * mode       =   Compute the mode of nonzero voxels.                   (integral valued sets only)  * minmax     =   Compute the min/max of nonzero voxels  * sum        =   Compute the sum using only nonzero voxels.  * voxels     =   Compute the number of nonzero voxels  * sigma      =   Compute the standard deviation of nonzero                   voxels  Statistics that include zero-valued voxels:   * zerominmax =   Compute the min/max of all voxels.  * zerosigma  =   Compute the standard deviation of all                   voxels.  * zeromedian =   Compute the median of all voxels.  * zeromode   =   Compute the mode of all voxels.  * summary    =   Only output a summary line with the grand                   mean across all briks in the input dataset.                   This option cannot be used with nomeanout.  More that one option can be specified.
-    nomeanout: 'True'
-    # type=bool|default=False: Do not include the (zero-inclusive) mean among computed stats
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

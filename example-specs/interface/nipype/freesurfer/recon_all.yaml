@@ -6,58 +6,76 @@
 # Docs
 # ----
 # Uses recon-all to generate surfaces and parcellations of structural data
-#     from anatomical images of a subject.
+# from anatomical images of a subject.
 # 
-#     Examples
-#     --------
+# Examples
+# --------
 # 
-#     >>> from nipype.interfaces.freesurfer import ReconAll
-#     >>> reconall = ReconAll()
-#     >>> reconall.inputs.subject_id = 'foo'
-#     >>> reconall.inputs.directive = 'all'
-#     >>> reconall.inputs.subjects_dir = '.'
-#     >>> reconall.inputs.T1_files = 'structural.nii'
-#     >>> reconall.cmdline
-#     'recon-all -all -i structural.nii -subjid foo -sd .'
-#     >>> reconall.inputs.flags = "-qcache"
-#     >>> reconall.cmdline
-#     'recon-all -all -i structural.nii -qcache -subjid foo -sd .'
-#     >>> reconall.inputs.flags = ["-cw256", "-qcache"]
-#     >>> reconall.cmdline
-#     'recon-all -all -i structural.nii -cw256 -qcache -subjid foo -sd .'
+# >>> from nipype.interfaces.freesurfer import ReconAll
+# >>> reconall = ReconAll()
+# >>> reconall.inputs.subject_id = 'foo'
+# >>> reconall.inputs.directive = 'all'
+# >>> reconall.inputs.subjects_dir = '.'
+# >>> reconall.inputs.T1_files = ['structural.nii']
+# >>> reconall.cmdline
+# 'recon-all -all -i structural.nii -subjid foo -sd .'
+# >>> reconall.inputs.flags = "-qcache"
+# >>> reconall.cmdline
+# 'recon-all -all -i structural.nii -qcache -subjid foo -sd .'
+# >>> reconall.inputs.flags = ["-cw256", "-qcache"]
+# >>> reconall.cmdline
+# 'recon-all -all -i structural.nii -cw256 -qcache -subjid foo -sd .'
 # 
-#     Hemisphere may be specified regardless of directive:
+# Hemisphere may be specified regardless of directive:
 # 
-#     >>> reconall.inputs.flags = []
-#     >>> reconall.inputs.hemi = 'lh'
-#     >>> reconall.cmdline
-#     'recon-all -all -i structural.nii -hemi lh -subjid foo -sd .'
+# >>> reconall.inputs.flags = []
+# >>> reconall.inputs.hemi = 'lh'
+# >>> reconall.cmdline
+# 'recon-all -all -i structural.nii -hemi lh -subjid foo -sd .'
 # 
-#     ``-autorecon-hemi`` uses the ``-hemi`` input to specify the hemisphere
-#     to operate upon:
+# ``-autorecon-hemi`` uses the ``-hemi`` input to specify the hemisphere
+# to operate upon:
 # 
-#     >>> reconall.inputs.directive = 'autorecon-hemi'
-#     >>> reconall.cmdline
-#     'recon-all -autorecon-hemi lh -i structural.nii -subjid foo -sd .'
+# >>> reconall.inputs.directive = 'autorecon-hemi'
+# >>> reconall.cmdline
+# 'recon-all -autorecon-hemi lh -i structural.nii -subjid foo -sd .'
 # 
-#     Hippocampal subfields can accept T1 and T2 images:
+# Hippocampal subfields can accept T1 and T2 images:
 # 
-#     >>> reconall_subfields = ReconAll()
-#     >>> reconall_subfields.inputs.subject_id = 'foo'
-#     >>> reconall_subfields.inputs.directive = 'all'
-#     >>> reconall_subfields.inputs.subjects_dir = '.'
-#     >>> reconall_subfields.inputs.T1_files = 'structural.nii'
-#     >>> reconall_subfields.inputs.hippocampal_subfields_T1 = True
-#     >>> reconall_subfields.cmdline
-#     'recon-all -all -i structural.nii -hippocampal-subfields-T1 -subjid foo -sd .'
-#     >>> reconall_subfields.inputs.hippocampal_subfields_T2 = (
-#     ... 'structural.nii', 'test')
-#     >>> reconall_subfields.cmdline
-#     'recon-all -all -i structural.nii -hippocampal-subfields-T1T2 structural.nii test -subjid foo -sd .'
-#     >>> reconall_subfields.inputs.hippocampal_subfields_T1 = False
-#     >>> reconall_subfields.cmdline
-#     'recon-all -all -i structural.nii -hippocampal-subfields-T2 structural.nii test -subjid foo -sd .'
-#     
+# >>> reconall_subfields = ReconAll()
+# >>> reconall_subfields.inputs.subject_id = 'foo'
+# >>> reconall_subfields.inputs.directive = 'all'
+# >>> reconall_subfields.inputs.subjects_dir = '.'
+# >>> reconall_subfields.inputs.T1_files = ['structural.nii']
+# >>> reconall_subfields.inputs.hippocampal_subfields_T1 = True
+# >>> reconall_subfields.cmdline
+# 'recon-all -all -i structural.nii -hippocampal-subfields-T1 -subjid foo -sd .'
+# >>> reconall_subfields.inputs.hippocampal_subfields_T2 = (
+# ... 'structural.nii', 'test')
+# >>> reconall_subfields.cmdline
+# 'recon-all -all -i structural.nii -hippocampal-subfields-T1T2 structural.nii test -subjid foo -sd .'
+# >>> reconall_subfields.inputs.hippocampal_subfields_T1 = False
+# >>> reconall_subfields.cmdline
+# 'recon-all -all -i structural.nii -hippocampal-subfields-T2 structural.nii test -subjid foo -sd .'
+# 
+# Base template creation for longitudinal pipeline:
+# >>> baserecon = ReconAll()
+# >>> baserecon.inputs.base_template_id = 'sub-template'
+# >>> baserecon.inputs.base_timepoint_ids = ['ses-1','ses-2']
+# >>> baserecon.inputs.directive = 'all'
+# >>> baserecon.inputs.subjects_dir = '.'
+# >>> baserecon.cmdline
+# 'recon-all -all -base sub-template -base-tp ses-1 -base-tp ses-2 -sd .'
+# 
+# Longitudinal timepoint run:
+# >>> longrecon = ReconAll()
+# >>> longrecon.inputs.longitudinal_timepoint_id = 'ses-1'
+# >>> longrecon.inputs.longitudinal_template_id = 'sub-template'
+# >>> longrecon.inputs.directive = 'all'
+# >>> longrecon.inputs.subjects_dir = '.'
+# >>> longrecon.cmdline
+# 'recon-all -all -long ses-1 sub-template -sd .'
+# 
 task_name: ReconAll
 nipype_name: ReconAll
 nipype_module: nipype.interfaces.freesurfer.preprocess
@@ -74,15 +92,12 @@ inputs:
   # passed to the field in the automatically generated unittests.
     FLAIR_file: generic/file
     # type=file|default=<undefined>: Convert FLAIR image to orig directory
-    T1_files: medimage/nifti1+list-of
+    T1_files: generic/file+list-of
     # type=inputmultiobject|default=[]: name of T1 file to process
     T2_file: generic/file
     # type=file|default=<undefined>: Convert T2 image to orig directory
     expert: generic/file
     # type=file|default=<undefined>: Set parameters using expert file
-    subjects_dir: Path
-    # type=directory: Freesurfer subjects directory.
-    # type=directory|default=<undefined>: path to subjects directory
   callable_defaults:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set as the `default` method of input fields
@@ -148,7 +163,7 @@ outputs:
     orig: generic/file
     # type=file: Base image conformed to Freesurfer space
     pial: generic/file+list-of
-    # type=outputmultiobject: Gray matter/pia mater surface meshes
+    # type=outputmultiobject: Gray matter/pia matter surface meshes
     rawavg: generic/file
     # type=file: Volume formed by averaging input images
     ribbon: generic/file+list-of
@@ -183,7 +198,7 @@ outputs:
     # type=str: Subject name for whom to retrieve data
     # type=str|default='recon_all': subject name
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
     subjects_dir: '"."'
     # type=directory: Freesurfer subjects directory.
     # type=directory|default=<undefined>: path to subjects directory
@@ -235,6 +250,14 @@ tests:
     # type=directory|default=<undefined>: path to subjects directory
     flags:
     # type=inputmultiobject|default=[]: additional parameters
+    base_template_id:
+    # type=str|default='': base template id
+    base_timepoint_ids:
+    # type=inputmultiobject|default=[]: processed timepoint to use in template
+    longitudinal_timepoint_id:
+    # type=str|default='': longitudinal session/timepoint id
+    longitudinal_template_id:
+    # type=str|default='': longitudinal base template id
     talairach:
     # type=str|default='': Flags to pass to talairach commands
     mri_normalize:
@@ -292,7 +315,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -312,17 +335,13 @@ tests:
     subject_id: '"foo"'
     # type=str: Subject name for whom to retrieve data
     # type=str|default='recon_all': subject name
-    directive: '"all"'
-    # type=enum|default='all'|allowed['all','autorecon-hemi','autorecon-pial','autorecon1','autorecon2','autorecon2-cp','autorecon2-inflate1','autorecon2-perhemi','autorecon2-volonly','autorecon2-wm','autorecon3','autorecon3-T2pial','localGI','qcache']: process directive
     subjects_dir: '"."'
     # type=directory: Freesurfer subjects directory.
     # type=directory|default=<undefined>: path to subjects directory
-    T1_files:
-    # type=inputmultiobject|default=[]: name of T1 file to process
     flags: '["-cw256", "-qcache"]'
     # type=inputmultiobject|default=[]: additional parameters
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -341,10 +360,8 @@ tests:
   # (if not specified, will try to choose a sensible value)
     flags: '[]'
     # type=inputmultiobject|default=[]: additional parameters
-    hemi: '"lh"'
-    # type=enum|default='lh'|allowed['lh','rh']: hemisphere to process
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -364,7 +381,7 @@ tests:
     directive: '"autorecon-hemi"'
     # type=enum|default='all'|allowed['all','autorecon-hemi','autorecon-pial','autorecon1','autorecon2','autorecon2-cp','autorecon2-inflate1','autorecon2-perhemi','autorecon2-volonly','autorecon2-wm','autorecon3','autorecon3-T2pial','localGI','qcache']: process directive
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -384,19 +401,59 @@ tests:
     subject_id: '"foo"'
     # type=str: Subject name for whom to retrieve data
     # type=str|default='recon_all': subject name
-    directive: '"all"'
-    # type=enum|default='all'|allowed['all','autorecon-hemi','autorecon-pial','autorecon1','autorecon2','autorecon2-cp','autorecon2-inflate1','autorecon2-perhemi','autorecon2-volonly','autorecon2-wm','autorecon3','autorecon3-T2pial','localGI','qcache']: process directive
     subjects_dir: '"."'
     # type=directory: Freesurfer subjects directory.
     # type=directory|default=<undefined>: path to subjects directory
-    T1_files:
-    # type=inputmultiobject|default=[]: name of T1 file to process
     hippocampal_subfields_T1: 'False'
     # type=bool|default=False: segment hippocampal subfields using input T1 scan
-    hippocampal_subfields_T2: ("structural.nii", "test")
+    hippocampal_subfields_T2: (
     # type=tuple|default=(<undefined>, ''): segment hippocampal subfields using T2 scan, identified by ID (may be combined with hippocampal_subfields_T1)
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    base_template_id: '"sub-template"'
+    # type=str|default='': base template id
+    directive: '"all"'
+    # type=enum|default='all'|allowed['all','autorecon-hemi','autorecon-pial','autorecon1','autorecon2','autorecon2-cp','autorecon2-inflate1','autorecon2-perhemi','autorecon2-volonly','autorecon2-wm','autorecon3','autorecon3-T2pial','localGI','qcache']: process directive
+  imports:
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  expected_outputs:
+  # dict[str, str] - expected values for selected outputs, noting that tests will typically
+  # be terminated before they complete for time-saving reasons, and therefore
+  # these values will be ignored, when running in CI
+  timeout: 10
+  # int - the value to set for the timeout in the generated test, 
+  # after which the test will be considered to have been initialised 
+  # successfully. Set to 0 to disable the timeout (warning, this could
+  # lead to the unittests taking a very long time to complete)
+  xfail: true
+  # bool - whether the unittest is expected to fail or not. Set to false
+  # when you are satisfied with the edits you have made to this file
+- inputs:
+  # dict[str, str] - values to provide to inputs fields in the task initialisation
+  # (if not specified, will try to choose a sensible value)
+    longitudinal_timepoint_id: '"ses-1"'
+    # type=str|default='': longitudinal session/timepoint id
+    directive: '"all"'
+    # type=enum|default='all'|allowed['all','autorecon-hemi','autorecon-pial','autorecon1','autorecon2','autorecon2-cp','autorecon2-inflate1','autorecon2-perhemi','autorecon2-volonly','autorecon2-wm','autorecon3','autorecon3-T2pial','localGI','qcache']: process directive
+  imports:
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -420,17 +477,13 @@ doctests:
     subject_id: '"foo"'
     # type=str: Subject name for whom to retrieve data
     # type=str|default='recon_all': subject name
-    directive: '"all"'
-    # type=enum|default='all'|allowed['all','autorecon-hemi','autorecon-pial','autorecon1','autorecon2','autorecon2-cp','autorecon2-inflate1','autorecon2-perhemi','autorecon2-volonly','autorecon2-wm','autorecon3','autorecon3-T2pial','localGI','qcache']: process directive
     subjects_dir: '"."'
     # type=directory: Freesurfer subjects directory.
     # type=directory|default=<undefined>: path to subjects directory
-    T1_files: '"structural.nii"'
-    # type=inputmultiobject|default=[]: name of T1 file to process
     flags: '["-cw256", "-qcache"]'
     # type=inputmultiobject|default=[]: additional parameters
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS
@@ -442,10 +495,8 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     flags: '[]'
     # type=inputmultiobject|default=[]: additional parameters
-    hemi: '"lh"'
-    # type=enum|default='lh'|allowed['lh','rh']: hemisphere to process
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS
@@ -458,7 +509,7 @@ doctests:
     directive: '"autorecon-hemi"'
     # type=enum|default='all'|allowed['all','autorecon-hemi','autorecon-pial','autorecon1','autorecon2','autorecon2-cp','autorecon2-inflate1','autorecon2-perhemi','autorecon2-volonly','autorecon2-wm','autorecon3','autorecon3-T2pial','localGI','qcache']: process directive
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS
@@ -471,19 +522,45 @@ doctests:
     subject_id: '"foo"'
     # type=str: Subject name for whom to retrieve data
     # type=str|default='recon_all': subject name
-    directive: '"all"'
-    # type=enum|default='all'|allowed['all','autorecon-hemi','autorecon-pial','autorecon1','autorecon2','autorecon2-cp','autorecon2-inflate1','autorecon2-perhemi','autorecon2-volonly','autorecon2-wm','autorecon3','autorecon3-T2pial','localGI','qcache']: process directive
     subjects_dir: '"."'
     # type=directory: Freesurfer subjects directory.
     # type=directory|default=<undefined>: path to subjects directory
-    T1_files: '"structural.nii"'
-    # type=inputmultiobject|default=[]: name of T1 file to process
     hippocampal_subfields_T1: 'False'
     # type=bool|default=False: segment hippocampal subfields using input T1 scan
-    hippocampal_subfields_T2: ("structural.nii", "test")
+    hippocampal_subfields_T2: (
     # type=tuple|default=(<undefined>, ''): segment hippocampal subfields using T2 scan, identified by ID (may be combined with hippocampal_subfields_T1)
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  directive:
+  # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS
+- cmdline:
+  # str - the expected cmdline output
+  inputs:
+  # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
+  # If the field is of file-format type and the value is None, then the
+  # '.mock()' method of the corresponding class is used instead.
+    base_template_id: '"sub-template"'
+    # type=str|default='': base template id
+    directive: '"all"'
+    # type=enum|default='all'|allowed['all','autorecon-hemi','autorecon-pial','autorecon1','autorecon2','autorecon2-cp','autorecon2-inflate1','autorecon2-perhemi','autorecon2-volonly','autorecon2-wm','autorecon3','autorecon3-T2pial','localGI','qcache']: process directive
+  imports:
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
+  # consisting of 'module', 'name', and optionally 'alias' keys
+  directive:
+  # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS
+- cmdline:
+  # str - the expected cmdline output
+  inputs:
+  # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
+  # If the field is of file-format type and the value is None, then the
+  # '.mock()' method of the corresponding class is used instead.
+    longitudinal_timepoint_id: '"ses-1"'
+    # type=str|default='': longitudinal session/timepoint id
+    directive: '"all"'
+    # type=enum|default='all'|allowed['all','autorecon-hemi','autorecon-pial','autorecon1','autorecon2','autorecon2-cp','autorecon2-inflate1','autorecon2-perhemi','autorecon2-volonly','autorecon2-wm','autorecon3','autorecon3-T2pial','localGI','qcache']: process directive
+  imports:
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

@@ -7,18 +7,18 @@
 # ----
 # Uses mri_parse_sdcmdir to get information from dicom directories
 # 
-#     Examples
-#     --------
+# Examples
+# --------
 # 
-#     >>> from nipype.interfaces.freesurfer import ParseDICOMDir
-#     >>> dcminfo = ParseDICOMDir()
-#     >>> dcminfo.inputs.dicom_dir = '.'
-#     >>> dcminfo.inputs.sortbyrun = True
-#     >>> dcminfo.inputs.summarize = True
-#     >>> dcminfo.cmdline
-#     'mri_parse_sdcmdir --d . --o dicominfo.txt --sortbyrun --summarize'
+# >>> from nipype.interfaces.freesurfer import ParseDICOMDir
+# >>> dcminfo = ParseDICOMDir()
+# >>> dcminfo.inputs.dicom_dir = '.'
+# >>> dcminfo.inputs.sortbyrun = True
+# >>> dcminfo.inputs.summarize = True
+# >>> dcminfo.cmdline
+# 'mri_parse_sdcmdir --d . --o dicominfo.txt --sortbyrun --summarize'
 # 
-#     
+# 
 task_name: ParseDICOMDir
 nipype_name: ParseDICOMDir
 nipype_module: nipype.interfaces.freesurfer.preprocess
@@ -35,9 +35,6 @@ inputs:
   # passed to the field in the automatically generated unittests.
     dicom_dir: generic/directory
     # type=directory|default=<undefined>: path to siemens dicom directory
-    dicom_info_file: Path
-    # type=file: text file containing dicom information
-    # type=file|default='dicominfo.txt': file to which results are written
     subjects_dir: generic/directory
     # type=directory|default=<undefined>: subjects directory
   callable_defaults:
@@ -63,7 +60,7 @@ outputs:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
@@ -86,7 +83,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -105,12 +102,10 @@ tests:
   # (if not specified, will try to choose a sensible value)
     dicom_dir: '"."'
     # type=directory|default=<undefined>: path to siemens dicom directory
-    sortbyrun: 'True'
-    # type=bool|default=False: assign run numbers
     summarize: 'True'
     # type=bool|default=False: only print out info for run leaders
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -133,12 +128,10 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     dicom_dir: '"."'
     # type=directory|default=<undefined>: path to siemens dicom directory
-    sortbyrun: 'True'
-    # type=bool|default=False: assign run numbers
     summarize: 'True'
     # type=bool|default=False: only print out info for run leaders
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

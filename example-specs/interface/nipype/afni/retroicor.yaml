@@ -6,38 +6,38 @@
 # Docs
 # ----
 # Performs Retrospective Image Correction for physiological
-#     motion effects, using a slightly modified version of the
-#     RETROICOR algorithm
+# motion effects, using a slightly modified version of the
+# RETROICOR algorithm
 # 
-#     The durations of the physiological inputs are assumed to equal
-#     the duration of the dataset. Any constant sampling rate may be
-#     used, but 40 Hz seems to be acceptable. This program's cardiac
-#     peak detection algorithm is rather simplistic, so you might try
-#     using the scanner's cardiac gating output (transform it to a
-#     spike wave if necessary).
+# The durations of the physiological inputs are assumed to equal
+# the duration of the dataset. Any constant sampling rate may be
+# used, but 40 Hz seems to be acceptable. This program's cardiac
+# peak detection algorithm is rather simplistic, so you might try
+# using the scanner's cardiac gating output (transform it to a
+# spike wave if necessary).
 # 
-#     This program uses slice timing information embedded in the
-#     dataset to estimate the proper cardiac/respiratory phase for
-#     each slice. It makes sense to run this program before any
-#     program that may destroy the slice timings (e.g. 3dvolreg for
-#     motion correction).
+# This program uses slice timing information embedded in the
+# dataset to estimate the proper cardiac/respiratory phase for
+# each slice. It makes sense to run this program before any
+# program that may destroy the slice timings (e.g. 3dvolreg for
+# motion correction).
 # 
-#     For complete details, see the `3dretroicor Documentation.
-#     <https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dretroicor.html>`_
+# For complete details, see the `3dretroicor Documentation.
+# <https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dretroicor.html>`_
 # 
-#     Examples
-#     --------
-#     >>> from nipype.interfaces import afni
-#     >>> ret = afni.Retroicor()
-#     >>> ret.inputs.in_file = 'functional.nii'
-#     >>> ret.inputs.card = 'mask.1D'
-#     >>> ret.inputs.resp = 'resp.1D'
-#     >>> ret.inputs.outputtype = 'NIFTI'
-#     >>> ret.cmdline
-#     '3dretroicor -prefix functional_retroicor.nii -resp resp.1D -card mask.1D functional.nii'
-#     >>> res = ret.run()  # doctest: +SKIP
+# Examples
+# --------
+# >>> from nipype.interfaces import afni
+# >>> ret = afni.Retroicor()
+# >>> ret.inputs.in_file = 'functional.nii'
+# >>> ret.inputs.card = 'mask.1D'
+# >>> ret.inputs.resp = 'resp.1D'
+# >>> ret.inputs.outputtype = 'NIFTI'
+# >>> ret.cmdline
+# '3dretroicor -prefix functional_retroicor.nii -resp resp.1D -card mask.1D functional.nii'
+# >>> res = ret.run()  # doctest: +SKIP
 # 
-#     
+# 
 task_name: Retroicor
 nipype_name: Retroicor
 nipype_module: nipype.interfaces.afni.preprocess
@@ -52,16 +52,13 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    card: medimage-afni/one-d
+    card: generic/file
     # type=file|default=<undefined>: 1D cardiac data file for cardiac correction
     cardphase: generic/file
     # type=file|default=<undefined>: Filename for 1D cardiac phase output
     in_file: medimage/nifti1
     # type=file|default=<undefined>: input file to 3dretroicor
-    out_file: Path
-    # type=file: output file
-    # type=file|default=<undefined>: output image file name
-    resp: medimage-afni/one-d
+    resp: fileformats.medimage_afni.OneD
     # type=file|default=<undefined>: 1D respiratory waveform data for correction
     respphase: generic/file
     # type=file|default=<undefined>: Filename for 1D resp phase output
@@ -88,7 +85,7 @@ outputs:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
@@ -121,7 +118,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -140,14 +137,10 @@ tests:
   # (if not specified, will try to choose a sensible value)
     in_file:
     # type=file|default=<undefined>: input file to 3dretroicor
-    card:
-    # type=file|default=<undefined>: 1D cardiac data file for cardiac correction
     resp:
     # type=file|default=<undefined>: 1D respiratory waveform data for correction
-    outputtype: '"NIFTI"'
-    # type=enum|default='AFNI'|allowed['AFNI','NIFTI','NIFTI_GZ']: AFNI output filetype
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -162,7 +155,7 @@ tests:
   # bool - whether the unittest is expected to fail or not. Set to false
   # when you are satisfied with the edits you have made to this file
 doctests:
-- cmdline: 3dretroicor -prefix functional_retroicor.nii -resp resp.1D -card mask.1D functional.nii
+- cmdline:
   # str - the expected cmdline output
   inputs:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
@@ -170,14 +163,10 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     in_file: '"functional.nii"'
     # type=file|default=<undefined>: input file to 3dretroicor
-    card: '"mask.1D"'
-    # type=file|default=<undefined>: 1D cardiac data file for cardiac correction
     resp: '"resp.1D"'
     # type=file|default=<undefined>: 1D respiratory waveform data for correction
-    outputtype: '"NIFTI"'
-    # type=enum|default='AFNI'|allowed['AFNI','NIFTI','NIFTI_GZ']: AFNI output filetype
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

@@ -6,25 +6,25 @@
 # Docs
 # ----
 # Performs Generalized least squares time series fit with Restricted
-#     Maximum Likelihood (REML) estimation of the temporal auto-correlation
-#     structure.
+# Maximum Likelihood (REML) estimation of the temporal auto-correlation
+# structure.
 # 
-#     For complete details, see the `3dREMLfit Documentation.
-#     <https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dREMLfit.html>`_
+# For complete details, see the `3dREMLfit Documentation.
+# <https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dREMLfit.html>`_
 # 
-#     Examples
-#     ========
+# Examples
+# ========
 # 
-#     >>> from nipype.interfaces import afni
-#     >>> remlfit = afni.Remlfit()
-#     >>> remlfit.inputs.in_files = ['functional.nii', 'functional2.nii']
-#     >>> remlfit.inputs.out_file = 'output.nii'
-#     >>> remlfit.inputs.matrix = 'output.1D'
-#     >>> remlfit.inputs.gltsym = [('SYM: +Lab1 -Lab2', 'TestSYM'), ('timeseries.txt', 'TestFile')]
-#     >>> remlfit.cmdline
-#     '3dREMLfit -gltsym "SYM: +Lab1 -Lab2" TestSYM -gltsym "timeseries.txt" TestFile -input "functional.nii functional2.nii" -matrix output.1D -Rbuck output.nii'
-#     >>> res = remlfit.run()  # doctest: +SKIP
-#     
+# >>> from nipype.interfaces import afni
+# >>> remlfit = afni.Remlfit()
+# >>> remlfit.inputs.in_files = ['functional.nii', 'functional2.nii']
+# >>> remlfit.inputs.out_file = 'output.nii'
+# >>> remlfit.inputs.matrix = 'output.1D'
+# >>> remlfit.inputs.gltsym = [('SYM: +Lab1 -Lab2', 'TestSYM'), ('timeseries.txt', 'TestFile')]
+# >>> remlfit.cmdline
+# '3dREMLfit -gltsym "SYM: +Lab1 -Lab2" TestSYM -gltsym "timeseries.txt" TestFile -input "functional.nii functional2.nii" -matrix output.1D -Rbuck output.nii'
+# >>> res = remlfit.run()  # doctest: +SKIP
+# 
 task_name: Remlfit
 nipype_name: Remlfit
 nipype_module: nipype.interfaces.afni.model
@@ -45,57 +45,18 @@ inputs:
     # type=inputmultiobject|default=[]: file(s) to add baseline model columns to the matrix with this option. Each column in the specified file(s) will be appended to the matrix. File(s) must have at least as many rows as the matrix does.
     dsort: generic/file
     # type=file|default=<undefined>: 4D dataset to be used as voxelwise baseline regressor
-    errts_file: Path
-    # type=file: output dataset for REML residuals = data - fitted model (if generated
-    # type=file|default=<undefined>: output dataset for REML residuals = data - fitted model
-    fitts_file: Path
-    # type=file: output dataset for REML fitted model (if generated)
-    # type=file|default=<undefined>: output dataset for REML fitted model
-    glt_file: Path
-    # type=file: output dataset for beta + statistics from the REML estimation, but ONLY for the GLTs added on the REMLfit command line itself via 'gltsym' (if generated)
-    # type=file|default=<undefined>: output dataset for beta + statistics from the REML estimation, but ONLY for the GLTs added on the REMLfit command line itself via 'gltsym'; GLTs from Deconvolve's command line will NOT be included.
     in_files: medimage/nifti1+list-of
     # type=inputmultiobject|default=[]: Read time series dataset
     mask: generic/file
     # type=file|default=<undefined>: filename of 3D mask dataset; only data time series from within the mask will be analyzed; results for voxels outside the mask will be set to zero.
     matim: generic/file
     # type=file|default=<undefined>: read a standard file as the matrix. You can use only Col as a name in GLTs with these nonstandard matrix input methods, since the other names come from the 'matrix' file. These mutually exclusive options are ignored if 'matrix' is used.
-    matrix: medimage-afni/one-d
+    matrix: fileformats.medimage_afni.OneD
     # type=file|default=<undefined>: the design matrix file, which should have been output from Deconvolve via the 'x1D' option
-    obeta: Path
-    # type=file: dataset for beta weights from the OLSQ estimation (if generated)
-    # type=file|default=<undefined>: dataset for beta weights from the OLSQ estimation
-    obuck: Path
-    # type=file: dataset for beta + statistics from the OLSQ estimation (if generated)
-    # type=file|default=<undefined>: dataset for beta + statistics from the OLSQ estimation
-    oerrts: Path
-    # type=file: dataset for OLSQ residuals = data - fitted model (if generated
-    # type=file|default=<undefined>: dataset for OLSQ residuals (data - fitted model)
-    ofitts: Path
-    # type=file: dataset for OLSQ fitted model (if generated)
-    # type=file|default=<undefined>: dataset for OLSQ fitted model
-    oglt: Path
-    # type=file: dataset for beta + statistics from 'gltsym' options (if generated
-    # type=file|default=<undefined>: dataset for beta + statistics from 'gltsym' options
-    out_file: Path
-    # type=file: dataset for beta + statistics from the REML estimation (if generated
-    # type=file|default=<undefined>: output dataset for beta + statistics from the REML estimation; also contains the results of any GLT analysis requested in the Deconvolve setup, similar to the 'bucket' output from Deconvolve. This dataset does NOT get the betas (or statistics) of those regressors marked as 'baseline' in the matrix file.
-    ovar: Path
-    # type=file: dataset for OLSQ st.dev. parameter (if generated)
-    # type=file|default=<undefined>: dataset for OLSQ st.dev. parameter (kind of boring)
-    rbeta_file: Path
-    # type=file: output dataset for beta weights from the REML estimation (if generated
-    # type=file|default=<undefined>: output dataset for beta weights from the REML estimation, similar to the 'cbucket' output from Deconvolve. This dataset will contain all the beta weights, for baseline and stimulus regressors alike, unless the '-nobout' option is given -- in that case, this dataset will only get the betas for the stimulus regressors.
     slibase: generic/file+list-of
     # type=inputmultiobject|default=[]: similar to 'addbase' in concept, BUT each specified file must have an integer multiple of the number of slices in the input dataset(s); then, separate regression matrices are generated for each slice, with the first column of the file appended to the matrix for the first slice of the dataset, the second column of the file appended to the matrix for the first slice of the dataset, and so on. Intended to help model physiological noise in FMRI, or other effects you want to regress out that might change significantly in the inter-slice time intervals. This will slow the program down, and make it use a lot more memory (to hold all the matrix stuff).
     slibase_sm: generic/file+list-of
     # type=inputmultiobject|default=[]: similar to 'slibase', BUT each file much be in slice major order (i.e. all slice0 columns come first, then all slice1 columns, etc).
-    var_file: Path
-    # type=file: dataset for REML variance parameters (if generated)
-    # type=file|default=<undefined>: output dataset for REML variance parameters
-    wherr_file: Path
-    # type=file: dataset for REML residual, whitened using the estimated ARMA(1,1) correlation matrix of the noise (if generated)
-    # type=file|default=<undefined>: dataset for REML residual, whitened using the estimated ARMA(1,1) correlation matrix of the noise
   callable_defaults:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set as the `default` method of input fields
@@ -113,7 +74,7 @@ outputs:
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
     errts_file: generic/file
-    # type=file: output dataset for REML residuals = data - fitted model (if generated
+    # type=file: output dataset for REML residuals = data - fitted model (if generated)
     # type=file|default=<undefined>: output dataset for REML residuals = data - fitted model
     fitts_file: generic/file
     # type=file: output dataset for REML fitted model (if generated)
@@ -128,22 +89,22 @@ outputs:
     # type=file: dataset for beta + statistics from the OLSQ estimation (if generated)
     # type=file|default=<undefined>: dataset for beta + statistics from the OLSQ estimation
     oerrts: generic/file
-    # type=file: dataset for OLSQ residuals = data - fitted model (if generated
+    # type=file: dataset for OLSQ residuals = data - fitted model (if generated)
     # type=file|default=<undefined>: dataset for OLSQ residuals (data - fitted model)
     ofitts: generic/file
     # type=file: dataset for OLSQ fitted model (if generated)
     # type=file|default=<undefined>: dataset for OLSQ fitted model
     oglt: generic/file
-    # type=file: dataset for beta + statistics from 'gltsym' options (if generated
+    # type=file: dataset for beta + statistics from 'gltsym' options (if generated)
     # type=file|default=<undefined>: dataset for beta + statistics from 'gltsym' options
-    out_file: medimage/nifti1
-    # type=file: dataset for beta + statistics from the REML estimation (if generated
+    out_file: generic/file
+    # type=file: dataset for beta + statistics from the REML estimation (if generated)
     # type=file|default=<undefined>: output dataset for beta + statistics from the REML estimation; also contains the results of any GLT analysis requested in the Deconvolve setup, similar to the 'bucket' output from Deconvolve. This dataset does NOT get the betas (or statistics) of those regressors marked as 'baseline' in the matrix file.
     ovar: generic/file
     # type=file: dataset for OLSQ st.dev. parameter (if generated)
     # type=file|default=<undefined>: dataset for OLSQ st.dev. parameter (kind of boring)
     rbeta_file: generic/file
-    # type=file: output dataset for beta weights from the REML estimation (if generated
+    # type=file: output dataset for beta weights from the REML estimation (if generated)
     # type=file|default=<undefined>: output dataset for beta weights from the REML estimation, similar to the 'cbucket' output from Deconvolve. This dataset will contain all the beta weights, for baseline and stimulus regressors alike, unless the '-nobout' option is given -- in that case, this dataset will only get the betas for the stimulus regressors.
     var_file: generic/file
     # type=file: dataset for REML variance parameters (if generated)
@@ -155,7 +116,7 @@ outputs:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
@@ -203,13 +164,13 @@ tests:
     gltsym:
     # type=list|default=[]: read a symbolic GLT from input file and associate it with a label. As in Deconvolve, you can also use the 'SYM:' method to provide the definition of the GLT directly as a string (e.g., with 'SYM: +Label1 -Label2'). Unlike Deconvolve, you MUST specify 'SYM: ' if providing the GLT directly as a string instead of from a file
     out_file:
-    # type=file: dataset for beta + statistics from the REML estimation (if generated
+    # type=file: dataset for beta + statistics from the REML estimation (if generated)
     # type=file|default=<undefined>: output dataset for beta + statistics from the REML estimation; also contains the results of any GLT analysis requested in the Deconvolve setup, similar to the 'bucket' output from Deconvolve. This dataset does NOT get the betas (or statistics) of those regressors marked as 'baseline' in the matrix file.
     var_file:
     # type=file: dataset for REML variance parameters (if generated)
     # type=file|default=<undefined>: output dataset for REML variance parameters
     rbeta_file:
-    # type=file: output dataset for beta weights from the REML estimation (if generated
+    # type=file: output dataset for beta weights from the REML estimation (if generated)
     # type=file|default=<undefined>: output dataset for beta weights from the REML estimation, similar to the 'cbucket' output from Deconvolve. This dataset will contain all the beta weights, for baseline and stimulus regressors alike, unless the '-nobout' option is given -- in that case, this dataset will only get the betas for the stimulus regressors.
     glt_file:
     # type=file: output dataset for beta + statistics from the REML estimation, but ONLY for the GLTs added on the REMLfit command line itself via 'gltsym' (if generated)
@@ -218,7 +179,7 @@ tests:
     # type=file: output dataset for REML fitted model (if generated)
     # type=file|default=<undefined>: output dataset for REML fitted model
     errts_file:
-    # type=file: output dataset for REML residuals = data - fitted model (if generated
+    # type=file: output dataset for REML residuals = data - fitted model (if generated)
     # type=file|default=<undefined>: output dataset for REML residuals = data - fitted model
     wherr_file:
     # type=file: dataset for REML residual, whitened using the estimated ARMA(1,1) correlation matrix of the noise (if generated)
@@ -239,13 +200,13 @@ tests:
     # type=file: dataset for beta + statistics from the OLSQ estimation (if generated)
     # type=file|default=<undefined>: dataset for beta + statistics from the OLSQ estimation
     oglt:
-    # type=file: dataset for beta + statistics from 'gltsym' options (if generated
+    # type=file: dataset for beta + statistics from 'gltsym' options (if generated)
     # type=file|default=<undefined>: dataset for beta + statistics from 'gltsym' options
     ofitts:
     # type=file: dataset for OLSQ fitted model (if generated)
     # type=file|default=<undefined>: dataset for OLSQ fitted model
     oerrts:
-    # type=file: dataset for OLSQ residuals = data - fitted model (if generated
+    # type=file: dataset for OLSQ residuals = data - fitted model (if generated)
     # type=file|default=<undefined>: dataset for OLSQ residuals (data - fitted model)
     num_threads:
     # type=int|default=1: set number of threads
@@ -256,7 +217,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -275,15 +236,10 @@ tests:
   # (if not specified, will try to choose a sensible value)
     in_files:
     # type=inputmultiobject|default=[]: Read time series dataset
-    out_file: '"output.nii"'
-    # type=file: dataset for beta + statistics from the REML estimation (if generated
-    # type=file|default=<undefined>: output dataset for beta + statistics from the REML estimation; also contains the results of any GLT analysis requested in the Deconvolve setup, similar to the 'bucket' output from Deconvolve. This dataset does NOT get the betas (or statistics) of those regressors marked as 'baseline' in the matrix file.
     matrix:
     # type=file|default=<undefined>: the design matrix file, which should have been output from Deconvolve via the 'x1D' option
-    gltsym: '[("SYM: +Lab1 -Lab2", "TestSYM"), ("timeseries.txt", "TestFile")]'
-    # type=list|default=[]: read a symbolic GLT from input file and associate it with a label. As in Deconvolve, you can also use the 'SYM:' method to provide the definition of the GLT directly as a string (e.g., with 'SYM: +Label1 -Label2'). Unlike Deconvolve, you MUST specify 'SYM: ' if providing the GLT directly as a string instead of from a file
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -306,15 +262,10 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     in_files: '["functional.nii", "functional2.nii"]'
     # type=inputmultiobject|default=[]: Read time series dataset
-    out_file: '"output.nii"'
-    # type=file: dataset for beta + statistics from the REML estimation (if generated
-    # type=file|default=<undefined>: output dataset for beta + statistics from the REML estimation; also contains the results of any GLT analysis requested in the Deconvolve setup, similar to the 'bucket' output from Deconvolve. This dataset does NOT get the betas (or statistics) of those regressors marked as 'baseline' in the matrix file.
     matrix: '"output.1D"'
     # type=file|default=<undefined>: the design matrix file, which should have been output from Deconvolve via the 'x1D' option
-    gltsym: '[("SYM: +Lab1 -Lab2", "TestSYM"), ("timeseries.txt", "TestFile")]'
-    # type=list|default=[]: read a symbolic GLT from input file and associate it with a label. As in Deconvolve, you can also use the 'SYM:' method to provide the definition of the GLT directly as a string (e.g., with 'SYM: +Label1 -Label2'). Unlike Deconvolve, you MUST specify 'SYM: ' if providing the GLT directly as a string instead of from a file
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

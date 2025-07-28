@@ -6,24 +6,24 @@
 # Docs
 # ----
 # Reads a '-cbucket' dataset and a '.xmat.1D' matrix from 3dDeconvolve,
-#        and synthesizes a fit dataset using user-selected sub-bricks and
-#        matrix columns.
+#    and synthesizes a fit dataset using user-selected sub-bricks and
+#    matrix columns.
 # 
-#     For complete details, see the `3dSynthesize Documentation.
-#     <https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dSynthesize.html>`_
+# For complete details, see the `3dSynthesize Documentation.
+# <https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dSynthesize.html>`_
 # 
-#     Examples
-#     ========
+# Examples
+# ========
 # 
-#     >>> from nipype.interfaces import afni
-#     >>> synthesize = afni.Synthesize()
-#     >>> synthesize.inputs.cbucket = 'functional.nii'
-#     >>> synthesize.inputs.matrix = 'output.1D'
-#     >>> synthesize.inputs.select = ['baseline']
-#     >>> synthesize.cmdline
-#     '3dSynthesize -cbucket functional.nii -matrix output.1D -select baseline'
-#     >>> syn = synthesize.run()  # doctest: +SKIP
-#     
+# >>> from nipype.interfaces import afni
+# >>> synthesize = afni.Synthesize()
+# >>> synthesize.inputs.cbucket = 'functional.nii'
+# >>> synthesize.inputs.matrix = 'output.1D'
+# >>> synthesize.inputs.select = ['baseline']
+# >>> synthesize.cmdline
+# '3dSynthesize -cbucket functional.nii -matrix output.1D -select baseline'
+# >>> syn = synthesize.run()  # doctest: +SKIP
+# 
 task_name: Synthesize
 nipype_name: Synthesize
 nipype_module: nipype.interfaces.afni.model
@@ -40,11 +40,8 @@ inputs:
   # passed to the field in the automatically generated unittests.
     cbucket: medimage/nifti1
     # type=file|default=<undefined>: Read the dataset output from 3dDeconvolve via the '-cbucket' option.
-    matrix: medimage-afni/one-d
+    matrix: generic/file
     # type=file|default=<undefined>: Read the matrix output from 3dDeconvolve via the '-x1D' option.
-    out_file: Path
-    # type=file: output file
-    # type=file|default=<undefined>: output dataset prefix name (default 'syn')
   callable_defaults:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set as the `default` method of input fields
@@ -68,7 +65,7 @@ outputs:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
@@ -99,7 +96,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -118,12 +115,10 @@ tests:
   # (if not specified, will try to choose a sensible value)
     cbucket:
     # type=file|default=<undefined>: Read the dataset output from 3dDeconvolve via the '-cbucket' option.
-    matrix:
-    # type=file|default=<undefined>: Read the matrix output from 3dDeconvolve via the '-x1D' option.
     select: '["baseline"]'
     # type=list|default=[]: A list of selected columns from the matrix (and the corresponding coefficient sub-bricks from the cbucket). Valid types include 'baseline',  'polort', 'allfunc', 'allstim', 'all', Can also provide 'something' where something matches a stim_label from 3dDeconvolve, and 'digits' where digits are the numbers of the select matrix columns by numbers (starting at 0), or number ranges of the form '3..7' and '3-7'.
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -146,12 +141,10 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     cbucket: '"functional.nii"'
     # type=file|default=<undefined>: Read the dataset output from 3dDeconvolve via the '-cbucket' option.
-    matrix: '"output.1D"'
-    # type=file|default=<undefined>: Read the matrix output from 3dDeconvolve via the '-x1D' option.
     select: '["baseline"]'
     # type=list|default=[]: A list of selected columns from the matrix (and the corresponding coefficient sub-bricks from the cbucket). Valid types include 'baseline',  'polort', 'allfunc', 'allstim', 'all', Can also provide 'something' where something matches a stim_label from 3dDeconvolve, and 'digits' where digits are the numbers of the select matrix columns by numbers (starting at 0), or number ranges of the form '3..7' and '3-7'.
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

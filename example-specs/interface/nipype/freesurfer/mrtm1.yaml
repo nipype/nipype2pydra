@@ -1,22 +1,23 @@
 # This file is used to manually specify the semi-automatic conversion of
-# 'nipype.interfaces.freesurfer.petsurfer.MRTM2' from Nipype to Pydra.
+# 'nipype.interfaces.freesurfer.petsurfer.MRTM1' from Nipype to Pydra.
 #
 # Please fill-in/edit the fields below where appropriate
 #
 # Docs
 # ----
-# Perform MRTM2 kinetic modeling.
+# Perform MRTM1 kinetic modeling.
+# 
 # Examples
 # --------
-# >>> mrtm2 = MRTM2()
-# >>> mrtm2.inputs.in_file = 'tac.nii'
-# >>> mrtm2.inputs.mrtm2 = ('ref_tac.dat', 'timing.dat', 0.07872)
-# >>> mrtm2.inputs.glm_dir = 'mrtm2'
-# >>> mrtm2.cmdline
-# 'mri_glmfit --glmdir mrtm2 --y tac.nii --mrtm2 ref_tac.dat timing.dat 0.078720'
+# >>> mrtm = MRTM1()
+# >>> mrtm.inputs.in_file = 'tac.nii'
+# >>> mrtm.inputs.mrtm1 = ('ref_tac.dat', 'timing.dat')
+# >>> mrtm.inputs.glm_dir = 'mrtm'
+# >>> mrtm.cmdline
+# 'mri_glmfit --glmdir mrtm --y tac.nii --mrtm1 ref_tac.dat timing.dat'
 # 
-task_name: MRTM2
-nipype_name: MRTM2
+task_name: MRTM1
+nipype_name: MRTM1
 nipype_module: nipype.interfaces.freesurfer.petsurfer
 inputs:
   omit:
@@ -104,7 +105,7 @@ outputs:
   # to set to the `callable` attribute of output fields
   templates:
   # dict[str, str] - `path_template` values to be provided to output fields
-    glm_dir: '"mrtm2"'
+    glm_dir: '"mrtm"'
     # type=directory: output directory
     # type=str|default='': save outputs to dir
   requirements:
@@ -113,8 +114,8 @@ tests:
 - inputs:
   # dict[str, str] - values to provide to inputs fields in the task initialisation
   # (if not specified, will try to choose a sensible value)
-    mrtm2:
-    # type=tuple|default=(<undefined>, <undefined>, 0.0): RefTac TimeSec k2prime : perform MRTM2 kinetic modeling
+    mrtm1:
+    # type=tuple|default=(<undefined>, <undefined>): RefTac TimeSec : perform MRTM1 kinetic modeling
     glm_dir:
     # type=directory: output directory
     # type=str|default='': save outputs to dir
@@ -209,8 +210,8 @@ tests:
     # type=int|default=0: test GLM by resynthsis
     profile:
     # type=int|default=0: niters : test speed
-    mrtm1:
-    # type=tuple|default=(<undefined>, <undefined>): RefTac TimeSec : perform MRTM1 kinetic modeling
+    mrtm2:
+    # type=tuple|default=(<undefined>, <undefined>, 0.0): RefTac TimeSec k2prime : perform MRTM2 kinetic modeling
     logan:
     # type=tuple|default=(<undefined>, <undefined>, 0.0): RefTac TimeSec tstar   : perform Logan kinetic modeling
     bp_clip_neg:
@@ -263,7 +264,7 @@ tests:
   # (if not specified, will try to choose a sensible value)
     in_file:
     # type=file|default=<undefined>: input 4D file
-    glm_dir: '"mrtm2"'
+    glm_dir: '"mrtm"'
     # type=directory: output directory
     # type=str|default='': save outputs to dir
   imports:
@@ -290,7 +291,7 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     in_file: '"tac.nii"'
     # type=file|default=<undefined>: input 4D file
-    glm_dir: '"mrtm2"'
+    glm_dir: '"mrtm"'
     # type=directory: output directory
     # type=str|default='': save outputs to dir
   imports:

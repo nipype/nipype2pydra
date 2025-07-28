@@ -5,8 +5,8 @@ def for_testing_line_number_of_function():
 
 import logging  # noqa: E402
 import asyncio  # noqa: E402
-from pydra.engine.core import Result, TaskBase  # noqa: E402
-from pydra.engine.workers import ConcurrentFuturesWorker  # noqa: E402
+from pydra.workers.cf import ConcurrentFuturesWorker  # noqa: E402
+from pydra.engine.result import Result  # noqa: E402
 
 
 logger = logging.getLogger("pydra")
@@ -30,7 +30,7 @@ class PassAfterTimeoutWorker(ConcurrentFuturesWorker):
         """Run a task."""
         return self.exec_with_timeout(runnable, rerun=rerun)
 
-    async def exec_with_timeout(self, runnable: TaskBase, rerun=False):
+    async def exec_with_timeout(self, runnable, rerun=False):
         try:
             result = await asyncio.wait_for(
                 self.exec_as_coro(runnable, rerun=rerun), timeout=self.timeout

@@ -6,20 +6,20 @@
 # Docs
 # ----
 # 
-#     Expands a surface (typically ?h.white) outwards while maintaining
-#     smoothness and self-intersection constraints.
+# Expands a surface (typically ?h.white) outwards while maintaining
+# smoothness and self-intersection constraints.
 # 
-#     Examples
-#     ========
-#     >>> from nipype.interfaces.freesurfer import MRIsExpand
-#     >>> mris_expand = MRIsExpand(thickness=True, distance=0.5)
-#     >>> mris_expand.inputs.in_file = 'lh.white'
-#     >>> mris_expand.cmdline
-#     'mris_expand -thickness lh.white 0.5 expanded'
-#     >>> mris_expand.inputs.out_name = 'graymid'
-#     >>> mris_expand.cmdline
-#     'mris_expand -thickness lh.white 0.5 graymid'
-#     
+# Examples
+# ========
+# >>> from nipype.interfaces.freesurfer import MRIsExpand
+# >>> mris_expand = MRIsExpand(thickness=True, distance=0.5)
+# >>> mris_expand.inputs.in_file = 'lh.white'
+# >>> mris_expand.cmdline
+# 'mris_expand -thickness lh.white 0.5 expanded'
+# >>> mris_expand.inputs.out_name = 'graymid'
+# >>> mris_expand.cmdline
+# 'mris_expand -thickness lh.white 0.5 graymid'
+# 
 task_name: MRIsExpand
 nipype_name: MRIsExpand
 nipype_module: nipype.interfaces.freesurfer.utils
@@ -34,7 +34,7 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    in_file: medimage-freesurfer/white
+    in_file: fileformats.medimage_freesurfer.White
     # type=file|default=<undefined>: Surface to expand
     subjects_dir: generic/directory
     # type=directory|default=<undefined>: subjects directory
@@ -60,7 +60,7 @@ outputs:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
@@ -98,7 +98,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -124,7 +124,7 @@ tests:
     distance: '0.5'
     # type=float|default=0.0: Distance in mm or fraction of cortical thickness
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -139,7 +139,7 @@ tests:
   # bool - whether the unittest is expected to fail or not. Set to false
   # when you are satisfied with the edits you have made to this file
 doctests:
-- cmdline: mris_expand -thickness lh.white 0.5 graymid
+- cmdline:
   # str - the expected cmdline output
   inputs:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
@@ -154,7 +154,7 @@ doctests:
     distance: '0.5'
     # type=float|default=0.0: Distance in mm or fraction of cortical thickness
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

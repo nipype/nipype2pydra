@@ -6,12 +6,12 @@
 # Docs
 # ----
 # Convert different transformation formats.
-#     Some formats may require you to pass an image if the geometry information
-#     is missing form the transform file format.
+# Some formats may require you to pass an image if the geometry information
+# is missing form the transform file format.
 # 
-#     For complete details, see the `lta_convert documentation.
-#     <https://ftp.nmr.mgh.harvard.edu/pub/docs/html/lta_convert.help.xml.html>`_
-#     
+# For complete details, see the `lta_convert documentation.
+# <https://ftp.nmr.mgh.harvard.edu/pub/docs/html/lta_convert.help.xml.html>`_
+# 
 task_name: LTAConvert
 nipype_name: LTAConvert
 nipype_module: nipype.interfaces.freesurfer.utils
@@ -75,7 +75,7 @@ outputs:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
@@ -124,7 +124,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically

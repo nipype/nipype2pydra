@@ -19,8 +19,9 @@ from nipype.interfaces.base import (
     BaseInterface,
 )
 from nipype.interfaces.base.core import SimpleInterface
-from pydra.engine import specs
-from pydra.engine.helpers import ensure_list
+from pydra.utils.typing import MultiInputObj, MultiOutputObj, MultiOutputFile
+from fileformats.generic import File, Directory
+from pydra.utils.general import ensure_list
 from .. import symbols
 from ..utils import (
     import_module_from_path,
@@ -44,7 +45,6 @@ from ..statements import (
     from_list_to_imports,
     make_imports_absolute,
 )
-from fileformats.generic import File
 import nipype2pydra.package
 from nipype2pydra.exceptions import UnmatchedParensException
 
@@ -131,7 +131,7 @@ class OutputsConverter(SpecConverter):
         names of methods/callable classes defined in the adjacent `*_callables.py`
         to set to the `callable` attribute of output fields
     templates : dict[str, str], optional
-        `output_file_template` values to be provided to output fields
+        `path_template` values to be provided to output fields
     requirements : dict[str, list[str]]
         input fields that are required to be provided for the output field to be present
     """
@@ -147,9 +147,7 @@ class OutputsConverter(SpecConverter):
     templates: ty.Dict[str, str] = attrs.field(
         factory=dict,
         converter=default_if_none(factory=dict),  # type: ignore
-        metadata={
-            "help": "`output_file_template` values to be provided to output fields"
-        },
+        metadata={"help": "`path_template` values to be provided to output fields"},
     )
     requirements: ty.Dict[str, ty.List[str]] = attrs.field(
         factory=dict,
@@ -284,7 +282,7 @@ def from_dict_to_outputs(obj: ty.Union[OutputsConverter, dict]) -> OutputsConver
 
 
 def from_list_to_tests(
-    obj: ty.Union[ty.List[TestGenerator], list]
+    obj: ty.Union[ty.List[TestGenerator], list],
 ) -> ty.List[TestGenerator]:
     if obj is None:
         return []
@@ -292,7 +290,7 @@ def from_list_to_tests(
 
 
 def from_list_to_doctests(
-    obj: ty.Union[ty.List[DocTestGenerator], list]
+    obj: ty.Union[ty.List[DocTestGenerator], list],
 ) -> ty.List[DocTestGenerator]:
     if obj is None:
         return []
@@ -504,6 +502,7 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
             converted_code=self.converted_code,
             used=self.used,
             find_replace=self.find_replace + self.package.find_replace,
+            interface_module=True,
         )
 
         self.package.write_pkg_inits(
@@ -544,7 +543,7 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
                 continue
             pydra_fld, pos = self.pydra_fld_input(fld, name)
             pydra_meta = pydra_fld[-1]
-            if "output_file_template" in pydra_meta:
+            if "path_template" in pydra_meta:
                 has_template.append(name)
             pydra_fields_dict[name] = (name,) + pydra_fld
             if pos is not None:
@@ -571,7 +570,7 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
         else:
             pydra_default = None
 
-        pydra_metadata = {"help_string": ""}
+        pydra_metadata = {"help": ""}
         for key in self.INPUT_KEYS:
             pydra_key_nm = self.NAME_MAPPING.get(key, key)
             val = getattr(field, key)
@@ -594,20 +593,20 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
             else:
                 tmpl = template
             if nm in self.nipype_interface.output_spec().class_trait_names():
-                pydra_metadata["output_file_template"] = tmpl
-            if pydra_type in [specs.File, specs.Directory]:
+                pydra_metadata["path_template"] = tmpl
+            if pydra_type in [File, Directory]:
                 pydra_type = Path
         elif getattr(field, "genfile"):
             if nm in self.outputs.templates:
                 try:
-                    pydra_metadata["output_file_template"] = self.outputs.templates[nm]
+                    pydra_metadata["path_template"] = self.outputs.templates[nm]
                 except KeyError:
                     raise Exception(
-                        f"{nm} is has genfile=True and therefore needs an 'output_file_template' value"
+                        f"{nm} is has genfile=True and therefore needs an 'path_template' value"
                     )
                 if pydra_type in [
-                    specs.File,
-                    specs.Directory,
+                    File,
+                    Directory,
                 ]:  # since this is a template, the file doesn't exist
                     pydra_type = Path
             elif nm not in self.inputs.callable_defaults:
@@ -677,9 +676,9 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
                 pydra_metadata["requires"] = pydra_metadata["requires"][0]
 
         if name in self.outputs.templates:
-            pydra_metadata["output_file_template"] = self.interface_spec[
-                "output_templates"
-            ][name]
+            pydra_metadata["path_template"] = self.interface_spec["output_templates"][
+                name
+            ]
         elif name in self.outputs.callables:
             pydra_metadata["callable"] = self.outputs.callables[name]
         return (pydra_type, pydra_metadata)
@@ -728,25 +727,30 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
             if isinstance(field.inner_traits[0].trait_type, traits_extension.File):
                 pydra_type = ty.List[File]
             else:
-                pydra_type = specs.MultiInputObj
+                pydra_type = MultiInputObj
         elif isinstance(trait_tp, traits_extension.OutputMultiObject):
             if isinstance(field.inner_traits[0].trait_type, traits_extension.File):
-                pydra_type = specs.MultiOutputFile
+                pydra_type = MultiOutputFile
             else:
-                pydra_type = specs.MultiOutputObj
-        elif isinstance(trait_tp, traits.trait_types.List):
-            if isinstance(field.inner_traits[0].trait_type, traits_extension.File):
+                pydra_type = MultiOutputObj
+        elif isinstance(trait_tp, (traits.trait_types.List, traits.trait_types.Tuple)):
+            seq_type = list if isinstance(trait_tp, traits.trait_types.List) else tuple
+            if not field.inner_traits:
+                pydra_type = seq_type[ty.Any]
+            elif isinstance(field.inner_traits[0].trait_type, traits_extension.File):
                 if spec_type == "input":
-                    pydra_type = ty.List[File]
+                    pydra_type = seq_type[File]
                 else:
-                    pydra_type = specs.MultiOutputFile
+                    pydra_type = MultiOutputFile
             else:
-                pydra_type = list
+                pydra_type = seq_type[
+                    self.pydra_type_converter(field.inner_traits[0], spec_type, name)
+                ]
         elif isinstance(trait_tp, traits_extension.File):
             if (
                 spec_type == "output" or trait_tp.exists is True
             ):  # TODO check the hash_file metadata in nipype
-                pydra_type = specs.File
+                pydra_type = File
             else:
                 pydra_type = Path
         else:
@@ -883,7 +887,7 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
                         spec_str += f"    task.inputs.{nm} = {value}\n"
             if hasattr(self.nipype_interface, "_cmd"):
                 spec_str += r'    print(f"CMDLINE: {task.cmdline}\n\n")' + "\n"
-            spec_str += "    res = task(plugin=PassAfterTimeoutWorker)\n"
+            spec_str += "    res = task(worker=PassAfterTimeoutWorker)\n"
             spec_str += "    print('RESULT: ', res)\n"
             for name, value in test.expected_outputs.items():
                 spec_str += f"    assert res.output.{name} == {value}\n"
@@ -1391,7 +1395,7 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
         "xor",
     ]
     OUTPUT_KEYS = ["desc"]
-    NAME_MAPPING = {"desc": "help_string"}
+    NAME_MAPPING = {"desc": "help"}
 
     TRAITS_IRREL = [
         "output_type",

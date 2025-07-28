@@ -7,21 +7,21 @@
 # ----
 # Converts a surface dataset from one format to another.
 # 
-#     For complete details, see the `ConvertDset Documentation.
-#     <https://afni.nimh.nih.gov/pub/dist/doc/program_help/ConvertDset.html>`_
+# For complete details, see the `ConvertDset Documentation.
+# <https://afni.nimh.nih.gov/pub/dist/doc/program_help/ConvertDset.html>`_
 # 
-#     Examples
-#     --------
-#     >>> from nipype.interfaces import afni
-#     >>> convertdset = afni.ConvertDset()
-#     >>> convertdset.inputs.in_file = 'lh.pial_converted.gii'
-#     >>> convertdset.inputs.out_type = 'niml_asc'
-#     >>> convertdset.inputs.out_file = 'lh.pial_converted.niml.dset'
-#     >>> convertdset.cmdline
-#     'ConvertDset -o_niml_asc -input lh.pial_converted.gii -prefix lh.pial_converted.niml.dset'
-#     >>> res = convertdset.run()  # doctest: +SKIP
+# Examples
+# --------
+# >>> from nipype.interfaces import afni
+# >>> convertdset = afni.ConvertDset()
+# >>> convertdset.inputs.in_file = 'lh.pial_converted.gii'
+# >>> convertdset.inputs.out_type = 'niml_asc'
+# >>> convertdset.inputs.out_file = 'lh.pial_converted.niml.dset'
+# >>> convertdset.cmdline
+# 'ConvertDset -o_niml_asc -input lh.pial_converted.gii -prefix lh.pial_converted.niml.dset'
+# >>> res = convertdset.run()  # doctest: +SKIP
 # 
-#     
+# 
 task_name: ConvertDset
 nipype_name: ConvertDset
 nipype_module: nipype.interfaces.afni.utils
@@ -38,9 +38,6 @@ inputs:
   # passed to the field in the automatically generated unittests.
     in_file: medimage/gifti
     # type=file|default=<undefined>: input file to ConvertDset
-    out_file: Path
-    # type=file: output file
-    # type=file|default=<undefined>: output file for ConvertDset
   callable_defaults:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set as the `default` method of input fields
@@ -57,14 +54,14 @@ outputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    out_file: medimage-afni/dset
+    out_file: fileformats.medimage_afni.Dset
     # type=file: output file
     # type=file|default=<undefined>: output file for ConvertDset
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
@@ -87,7 +84,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -106,13 +103,11 @@ tests:
   # (if not specified, will try to choose a sensible value)
     in_file:
     # type=file|default=<undefined>: input file to ConvertDset
-    out_type: '"niml_asc"'
-    # type=enum|default='niml'|allowed['1D','1Dp','1Dpt','gii','gii_asc','gii_b64','gii_b64gz','niml','niml_asc','niml_bi']: output type
     out_file: '"lh.pial_converted.niml.dset"'
     # type=file: output file
     # type=file|default=<undefined>: output file for ConvertDset
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -127,7 +122,7 @@ tests:
   # bool - whether the unittest is expected to fail or not. Set to false
   # when you are satisfied with the edits you have made to this file
 doctests:
-- cmdline: ConvertDset -o_niml_asc -input lh.pial_converted.gii -prefix lh.pial_converted.niml.dset
+- cmdline:
   # str - the expected cmdline output
   inputs:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
@@ -135,13 +130,11 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     in_file: '"lh.pial_converted.gii"'
     # type=file|default=<undefined>: input file to ConvertDset
-    out_type: '"niml_asc"'
-    # type=enum|default='niml'|allowed['1D','1Dp','1Dpt','gii','gii_asc','gii_b64','gii_b64gz','niml','niml_asc','niml_bi']: output type
     out_file: '"lh.pial_converted.niml.dset"'
     # type=file: output file
     # type=file|default=<undefined>: output file for ConvertDset
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

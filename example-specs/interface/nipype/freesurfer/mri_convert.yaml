@@ -7,20 +7,20 @@
 # ----
 # use fs mri_convert to manipulate files
 # 
-#     .. note::
-#        Adds niigz as an output type option
+# .. note::
+#    Adds niigz as an output type option
 # 
-#     Examples
-#     --------
+# Examples
+# --------
 # 
-#     >>> mc = MRIConvert()
-#     >>> mc.inputs.in_file = 'structural.nii'
-#     >>> mc.inputs.out_file = 'outfile.mgz'
-#     >>> mc.inputs.out_type = 'mgz'
-#     >>> mc.cmdline
-#     'mri_convert --out_type mgz --input_volume structural.nii --output_volume outfile.mgz'
+# >>> mc = MRIConvert()
+# >>> mc.inputs.in_file = 'structural.nii'
+# >>> mc.inputs.out_file = 'outfile.mgz'
+# >>> mc.inputs.out_type = 'mgz'
+# >>> mc.cmdline
+# 'mri_convert --out_type mgz --input_volume structural.nii --output_volume outfile.mgz'
 # 
-#     
+# 
 task_name: MRIConvert
 nipype_name: MRIConvert
 nipype_module: nipype.interfaces.freesurfer.preprocess
@@ -47,9 +47,6 @@ inputs:
     # type=file|default=<undefined>: File to read/convert
     in_like: generic/file
     # type=file|default=<undefined>: input looks like
-    out_file: Path
-    # type=outputmultiobject: converted output file
-    # type=file|default=<undefined>: output filename or True to generate one
     reslice_like: generic/file
     # type=file|default=<undefined>: reslice output to match file
     sdcm_list: generic/file
@@ -74,15 +71,15 @@ outputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    out_file: medimage/mgh-gz+list-of
+    out_file: generic/file+list-of
     # type=outputmultiobject: converted output file
     # type=file|default=<undefined>: output filename or True to generate one
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
-    out_file: '"outfile.mgz"'
+  # dict[str, str] - `path_template` values to be provided to output fields
+    out_file: out_file
     # type=outputmultiobject: converted output file
     # type=file|default=<undefined>: output filename or True to generate one
   requirements:
@@ -265,7 +262,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -284,13 +281,10 @@ tests:
   # (if not specified, will try to choose a sensible value)
     in_file:
     # type=file|default=<undefined>: File to read/convert
-    out_file: '"outfile.mgz"'
-    # type=outputmultiobject: converted output file
-    # type=file|default=<undefined>: output filename or True to generate one
     out_type: '"mgz"'
     # type=enum|default='cor'|allowed['afni','analyze','analyze4d','bfloat','brik','bshort','cor','gdf','mgh','mgz','minc','nifti1','nii','niigz','otl','outline','sdt','spm']: output file type
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -313,13 +307,10 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     in_file: '"structural.nii"'
     # type=file|default=<undefined>: File to read/convert
-    out_file: '"outfile.mgz"'
-    # type=outputmultiobject: converted output file
-    # type=file|default=<undefined>: output filename or True to generate one
     out_type: '"mgz"'
     # type=enum|default='cor'|allowed['afni','analyze','analyze4d','bfloat','brik','bshort','cor','gdf','mgh','mgz','minc','nifti1','nii','niigz','otl','outline','sdt','spm']: output file type
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

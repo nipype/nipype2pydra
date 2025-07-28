@@ -6,25 +6,25 @@
 # Docs
 # ----
 # This program takes as input a bunch of 3D warps, averages them,
-#     and computes the inverse of this average warp.  It then composes
-#     each input warp with this inverse average to 'adjust' the set of
-#     warps.  Optionally, it can also read in a set of 1-brick datasets
-#     corresponding to the input warps, and warp each of them, and average
-#     those.
+# and computes the inverse of this average warp.  It then composes
+# each input warp with this inverse average to 'adjust' the set of
+# warps.  Optionally, it can also read in a set of 1-brick datasets
+# corresponding to the input warps, and warp each of them, and average
+# those.
 # 
-#     For complete details, see the `3dNwarpAdjust Documentation.
-#     <https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dNwarpAdjust.html>`_
+# For complete details, see the `3dNwarpAdjust Documentation.
+# <https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dNwarpAdjust.html>`_
 # 
-#     Examples
-#     --------
-#     >>> from nipype.interfaces import afni
-#     >>> adjust = afni.NwarpAdjust()
-#     >>> adjust.inputs.warps = ['func2anat_InverseWarp.nii.gz', 'func2anat_InverseWarp.nii.gz', 'func2anat_InverseWarp.nii.gz', 'func2anat_InverseWarp.nii.gz', 'func2anat_InverseWarp.nii.gz']
-#     >>> adjust.cmdline
-#     '3dNwarpAdjust -nwarp func2anat_InverseWarp.nii.gz func2anat_InverseWarp.nii.gz func2anat_InverseWarp.nii.gz func2anat_InverseWarp.nii.gz func2anat_InverseWarp.nii.gz'
-#     >>> res = adjust.run()  # doctest: +SKIP
+# Examples
+# --------
+# >>> from nipype.interfaces import afni
+# >>> adjust = afni.NwarpAdjust()
+# >>> adjust.inputs.warps = ['func2anat_InverseWarp.nii.gz', 'func2anat_InverseWarp.nii.gz', 'func2anat_InverseWarp.nii.gz', 'func2anat_InverseWarp.nii.gz', 'func2anat_InverseWarp.nii.gz']
+# >>> adjust.cmdline
+# '3dNwarpAdjust -nwarp func2anat_InverseWarp.nii.gz func2anat_InverseWarp.nii.gz func2anat_InverseWarp.nii.gz func2anat_InverseWarp.nii.gz func2anat_InverseWarp.nii.gz'
+# >>> res = adjust.run()  # doctest: +SKIP
 # 
-#     
+# 
 task_name: NwarpAdjust
 nipype_name: NwarpAdjust
 nipype_module: nipype.interfaces.afni.utils
@@ -41,9 +41,6 @@ inputs:
   # passed to the field in the automatically generated unittests.
     in_files: generic/file+list-of
     # type=inputmultiobject|default=[]: List of input 3D datasets to be warped by the adjusted warp datasets.  There must be exactly as many of these datasets as there are input warps.
-    out_file: Path
-    # type=file: output file
-    # type=file|default=<undefined>: Output mean dataset, only needed if in_files are also given. The output dataset will be on the common grid shared by the source datasets.
     warps: medimage/nifti-gz+list-of
     # type=inputmultiobject|default=[]: List of input 3D warp datasets
   callable_defaults:
@@ -69,7 +66,7 @@ outputs:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
@@ -92,7 +89,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -112,7 +109,7 @@ tests:
     warps:
     # type=inputmultiobject|default=[]: List of input 3D warp datasets
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -127,7 +124,7 @@ tests:
   # bool - whether the unittest is expected to fail or not. Set to false
   # when you are satisfied with the edits you have made to this file
 doctests:
-- cmdline: 3dNwarpAdjust -nwarp func2anat_InverseWarp.nii.gz func2anat_InverseWarp.nii.gz func2anat_InverseWarp.nii.gz func2anat_InverseWarp.nii.gz func2anat_InverseWarp.nii.gz
+- cmdline:
   # str - the expected cmdline output
   inputs:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
@@ -136,7 +133,7 @@ doctests:
     warps: '["func2anat_InverseWarp.nii.gz", "func2anat_InverseWarp.nii.gz", "func2anat_InverseWarp.nii.gz", "func2anat_InverseWarp.nii.gz", "func2anat_InverseWarp.nii.gz"]'
     # type=inputmultiobject|default=[]: List of input 3D warp datasets
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

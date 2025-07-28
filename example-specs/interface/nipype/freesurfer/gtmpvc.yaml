@@ -5,34 +5,34 @@
 #
 # Docs
 # ----
-# create an anatomical segmentation for the geometric transfer matrix (GTM).
+# Perform Partial Volume Correction (PVC) to PET Data.
 # 
-#     Examples
-#     --------
-#     >>> gtmpvc = GTMPVC()
-#     >>> gtmpvc.inputs.in_file = 'sub-01_ses-baseline_pet.nii.gz'
-#     >>> gtmpvc.inputs.segmentation = 'gtmseg.mgz'
-#     >>> gtmpvc.inputs.reg_file = 'sub-01_ses-baseline_pet_mean_reg.lta'
-#     >>> gtmpvc.inputs.pvc_dir = 'pvc'
-#     >>> gtmpvc.inputs.psf = 4
-#     >>> gtmpvc.inputs.default_seg_merge = True
-#     >>> gtmpvc.inputs.auto_mask = (1, 0.1)
-#     >>> gtmpvc.inputs.km_ref = ['8 47']
-#     >>> gtmpvc.inputs.km_hb = ['11 12 50 51']
-#     >>> gtmpvc.inputs.no_rescale = True
-#     >>> gtmpvc.inputs.save_input = True
-#     >>> gtmpvc.cmdline  # doctest: +NORMALIZE_WHITESPACE
-#     'mri_gtmpvc --auto-mask 1.000000 0.100000 --default-seg-merge     --i sub-01_ses-baseline_pet.nii.gz --km-hb 11 12 50 51 --km-ref 8 47 --no-rescale     --psf 4.000000 --o pvc --reg sub-01_ses-baseline_pet_mean_reg.lta --save-input     --seg gtmseg.mgz'
+# Examples
+# --------
+# >>> gtmpvc = GTMPVC()
+# >>> gtmpvc.inputs.in_file = 'sub-01_ses-baseline_pet.nii.gz'
+# >>> gtmpvc.inputs.segmentation = 'gtmseg.mgz'
+# >>> gtmpvc.inputs.reg_file = 'sub-01_ses-baseline_pet_mean_reg.lta'
+# >>> gtmpvc.inputs.pvc_dir = 'pvc'
+# >>> gtmpvc.inputs.psf = 4
+# >>> gtmpvc.inputs.default_seg_merge = True
+# >>> gtmpvc.inputs.auto_mask = (1, 0.1)
+# >>> gtmpvc.inputs.km_ref = ['8 47']
+# >>> gtmpvc.inputs.km_hb = ['11 12 50 51']
+# >>> gtmpvc.inputs.no_rescale = True
+# >>> gtmpvc.inputs.save_input = True
+# >>> gtmpvc.cmdline  # doctest: +NORMALIZE_WHITESPACE
+# 'mri_gtmpvc --auto-mask 1.000000 0.100000 --default-seg-merge     --i sub-01_ses-baseline_pet.nii.gz --km-hb 11 12 50 51 --km-ref 8 47 --no-rescale     --psf 4.000000 --o pvc --reg sub-01_ses-baseline_pet_mean_reg.lta --save-input     --seg gtmseg.mgz'
 # 
-#     >>> gtmpvc = GTMPVC()
-#     >>> gtmpvc.inputs.in_file = 'sub-01_ses-baseline_pet.nii.gz'
-#     >>> gtmpvc.inputs.segmentation = 'gtmseg.mgz'
-#     >>> gtmpvc.inputs.regheader = True
-#     >>> gtmpvc.inputs.pvc_dir = 'pvc'
-#     >>> gtmpvc.inputs.mg = (0.5, ["ROI1", "ROI2"])
-#     >>> gtmpvc.cmdline  # doctest: +NORMALIZE_WHITESPACE
-#     'mri_gtmpvc --i sub-01_ses-baseline_pet.nii.gz --mg 0.5 ROI1 ROI2 --o pvc --regheader --seg gtmseg.mgz'
-#     
+# >>> gtmpvc = GTMPVC()
+# >>> gtmpvc.inputs.in_file = 'sub-01_ses-baseline_pet.nii.gz'
+# >>> gtmpvc.inputs.segmentation = 'gtmseg.mgz'
+# >>> gtmpvc.inputs.regheader = True
+# >>> gtmpvc.inputs.pvc_dir = 'pvc'
+# >>> gtmpvc.inputs.mg = (0.5, ["ROI1", "ROI2"])
+# >>> gtmpvc.cmdline  # doctest: +NORMALIZE_WHITESPACE
+# 'mri_gtmpvc --i sub-01_ses-baseline_pet.nii.gz --mg 0.5 ROI1 ROI2 --o pvc --regheader --seg gtmseg.mgz'
+# 
 task_name: GTMPVC
 nipype_name: GTMPVC
 nipype_module: nipype.interfaces.freesurfer.petsurfer
@@ -55,9 +55,9 @@ inputs:
     # type=file|default=<undefined>: input volume - source data to pvc
     mask_file: generic/file
     # type=file|default=<undefined>: ignore areas outside of the mask (in input vol space)
-    reg_file: medimage-freesurfer/lta
+    reg_file: fileformats.medimage_freesurfer.Lta
     # type=file|default=<undefined>: LTA registration file that maps PET to anatomical
-    segmentation: medimage/mgh-gz
+    segmentation: generic/file
     # type=file|default=<undefined>: segfile : anatomical segmentation to define regions for GTM
     subjects_dir: generic/directory
     # type=directory|default=<undefined>: subjects directory
@@ -77,6 +77,8 @@ outputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
+    eres: generic/file
+    # type=file: 4D PET file of residual error after PVC (smoothed with PSF)
     gtm_file: generic/file
     # type=file: TACs for all regions with GTM PVC
     gtm_stats: generic/file
@@ -113,6 +115,14 @@ outputs:
     # type=file: Registration file to go from PET to anat
     reg_rbvpet2anat: generic/file
     # type=file: Registration file to go from RBV corrected PET to anat
+    seg: generic/file
+    # type=file: Segmentation file of regions used for PVC
+    seg_ctab: generic/file
+    # type=file: Color table file for segmentation file
+    tissue_fraction: generic/file
+    # type=file: 4D PET file of tissue fraction before PVC
+    tissue_fraction_psf: generic/file
+    # type=file: 4D PET file of tissue fraction after PVC (smoothed with PSF)
     yhat: generic/file
     # type=file: 4D PET file of signal estimate (yhat) after PVC (smoothed with PSF)
     yhat0: generic/file
@@ -125,8 +135,8 @@ outputs:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
-    pvc_dir: '"pvc"'
+  # dict[str, str] - `path_template` values to be provided to output fields
+    pvc_dir: pvc_dir
     # type=directory: output directory
     # type=str|default='': save outputs to dir
   requirements:
@@ -254,7 +264,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -273,29 +283,18 @@ tests:
   # (if not specified, will try to choose a sensible value)
     in_file:
     # type=file|default=<undefined>: input volume - source data to pvc
-    segmentation:
-    # type=file|default=<undefined>: segfile : anatomical segmentation to define regions for GTM
     reg_file:
     # type=file|default=<undefined>: LTA registration file that maps PET to anatomical
-    pvc_dir: '"pvc"'
-    # type=directory: output directory
-    # type=str|default='': save outputs to dir
     psf: '4'
     # type=float|default=0.0: scanner PSF FWHM in mm
-    default_seg_merge: 'True'
-    # type=bool|default=False: default schema for merging ROIs
     auto_mask: (1, 0.1)
     # type=tuple|default=(0.0, 0.0): FWHM thresh : automatically compute mask
-    km_ref: '["8 47"]'
-    # type=list|default=[]: RefId1 RefId2 ... : compute reference TAC for KM as mean of given RefIds
     km_hb: '["11 12 50 51"]'
     # type=list|default=[]: RefId1 RefId2 ... : compute HiBinding TAC for KM as mean of given RefIds
-    no_rescale: 'True'
-    # type=bool|default=False: do not global rescale such that mean of reference region is scaleref
     save_input: 'True'
     # type=bool|default=False: saves rescaled input as input.rescaled.nii.gz
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -314,17 +313,12 @@ tests:
   # (if not specified, will try to choose a sensible value)
     in_file:
     # type=file|default=<undefined>: input volume - source data to pvc
-    segmentation:
-    # type=file|default=<undefined>: segfile : anatomical segmentation to define regions for GTM
     regheader: 'True'
     # type=bool|default=False: assume input and seg share scanner space
-    pvc_dir: '"pvc"'
-    # type=directory: output directory
-    # type=str|default='': save outputs to dir
     mg: (0.5, ["ROI1", "ROI2"])
     # type=tuple|default=<undefined>: gmthresh RefId1 RefId2 ...: perform Mueller-Gaertner PVC, gmthresh is min gm pvf bet 0 and 1
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -339,7 +333,7 @@ tests:
   # bool - whether the unittest is expected to fail or not. Set to false
   # when you are satisfied with the edits you have made to this file
 doctests:
-- cmdline: mri_gtmpvc --auto-mask 1.000000 0.100000 --default-seg-merge --i sub-01_ses-baseline_pet.nii.gz --km-hb 11 12 50 51 --km-ref 8 47 --no-rescale --psf 4.000000 --o pvc --reg sub-01_ses-baseline_pet_mean_reg.lta --save-input --seg gtmseg.mgz
+- cmdline:
   # str - the expected cmdline output
   inputs:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
@@ -347,29 +341,18 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     in_file: '"sub-01_ses-baseline_pet.nii.gz"'
     # type=file|default=<undefined>: input volume - source data to pvc
-    segmentation: '"gtmseg.mgz"'
-    # type=file|default=<undefined>: segfile : anatomical segmentation to define regions for GTM
     reg_file: '"sub-01_ses-baseline_pet_mean_reg.lta"'
     # type=file|default=<undefined>: LTA registration file that maps PET to anatomical
-    pvc_dir: '"pvc"'
-    # type=directory: output directory
-    # type=str|default='': save outputs to dir
     psf: '4'
     # type=float|default=0.0: scanner PSF FWHM in mm
-    default_seg_merge: 'True'
-    # type=bool|default=False: default schema for merging ROIs
     auto_mask: (1, 0.1)
     # type=tuple|default=(0.0, 0.0): FWHM thresh : automatically compute mask
-    km_ref: '["8 47"]'
-    # type=list|default=[]: RefId1 RefId2 ... : compute reference TAC for KM as mean of given RefIds
     km_hb: '["11 12 50 51"]'
     # type=list|default=[]: RefId1 RefId2 ... : compute HiBinding TAC for KM as mean of given RefIds
-    no_rescale: 'True'
-    # type=bool|default=False: do not global rescale such that mean of reference region is scaleref
     save_input: 'True'
     # type=bool|default=False: saves rescaled input as input.rescaled.nii.gz
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS
@@ -381,17 +364,12 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     in_file: '"sub-01_ses-baseline_pet.nii.gz"'
     # type=file|default=<undefined>: input volume - source data to pvc
-    segmentation: '"gtmseg.mgz"'
-    # type=file|default=<undefined>: segfile : anatomical segmentation to define regions for GTM
     regheader: 'True'
     # type=bool|default=False: assume input and seg share scanner space
-    pvc_dir: '"pvc"'
-    # type=directory: output directory
-    # type=str|default='': save outputs to dir
     mg: (0.5, ["ROI1", "ROI2"])
     # type=tuple|default=<undefined>: gmthresh RefId1 RefId2 ...: perform Mueller-Gaertner PVC, gmthresh is min gm pvf bet 0 and 1
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

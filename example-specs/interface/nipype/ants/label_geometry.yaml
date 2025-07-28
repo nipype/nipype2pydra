@@ -6,22 +6,22 @@
 # Docs
 # ----
 # 
-#     Extracts geometry measures using a label file and an optional image file
+# Extracts geometry measures using a label file and an optional image file
 # 
-#     Examples
-#     --------
-#     >>> from nipype.interfaces.ants import LabelGeometry
-#     >>> label_extract = LabelGeometry()
-#     >>> label_extract.inputs.dimension = 3
-#     >>> label_extract.inputs.label_image = 'atlas.nii.gz'
-#     >>> label_extract.cmdline
-#     'LabelGeometryMeasures 3 atlas.nii.gz [] atlas.csv'
+# Examples
+# --------
+# >>> from nipype.interfaces.ants import LabelGeometry
+# >>> label_extract = LabelGeometry()
+# >>> label_extract.inputs.dimension = 3
+# >>> label_extract.inputs.label_image = 'atlas.nii.gz'
+# >>> label_extract.cmdline
+# 'LabelGeometryMeasures 3 atlas.nii.gz [] atlas.csv'
 # 
-#     >>> label_extract.inputs.intensity_image = 'ants_Warp.nii.gz'
-#     >>> label_extract.cmdline
-#     'LabelGeometryMeasures 3 atlas.nii.gz ants_Warp.nii.gz atlas.csv'
+# >>> label_extract.inputs.intensity_image = 'ants_Warp.nii.gz'
+# >>> label_extract.cmdline
+# 'LabelGeometryMeasures 3 atlas.nii.gz ants_Warp.nii.gz atlas.csv'
 # 
-#     
+# 
 task_name: LabelGeometry
 nipype_name: LabelGeometry
 nipype_module: nipype.interfaces.ants.utils
@@ -38,7 +38,7 @@ inputs:
   # passed to the field in the automatically generated unittests.
     intensity_image: medimage/nifti-gz
     # type=file|default='[]': Intensity image to extract values from. This is an optional input
-    label_image: medimage/nifti-gz
+    label_image: generic/file
     # type=file|default=<undefined>: label image to use for extracting geometry measures
   callable_defaults:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
@@ -63,7 +63,7 @@ outputs:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
@@ -86,7 +86,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -105,10 +105,8 @@ tests:
   # (if not specified, will try to choose a sensible value)
     dimension: '3'
     # type=enum|default=3|allowed[2,3]: image dimension (2 or 3)
-    label_image:
-    # type=file|default=<undefined>: label image to use for extracting geometry measures
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -128,7 +126,7 @@ tests:
     intensity_image:
     # type=file|default='[]': Intensity image to extract values from. This is an optional input
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -143,7 +141,7 @@ tests:
   # bool - whether the unittest is expected to fail or not. Set to false
   # when you are satisfied with the edits you have made to this file
 doctests:
-- cmdline: LabelGeometryMeasures 3 atlas.nii.gz [] atlas.csv
+- cmdline:
   # str - the expected cmdline output
   inputs:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
@@ -151,10 +149,8 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     dimension: '3'
     # type=enum|default=3|allowed[2,3]: image dimension (2 or 3)
-    label_image: '"atlas.nii.gz"'
-    # type=file|default=<undefined>: label image to use for extracting geometry measures
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS
@@ -167,7 +163,7 @@ doctests:
     intensity_image: '"ants_Warp.nii.gz"'
     # type=file|default='[]': Intensity image to extract values from. This is an optional input
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

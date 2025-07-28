@@ -6,23 +6,23 @@
 # Docs
 # ----
 # 
-#     Compute surface-wise gray/white contrast
+# Compute surface-wise gray/white contrast
 # 
-#     Examples
-#     ========
-#     >>> from nipype.interfaces.freesurfer import Contrast
-#     >>> contrast = Contrast()
-#     >>> contrast.inputs.subject_id = '10335'
-#     >>> contrast.inputs.hemisphere = 'lh'
-#     >>> contrast.inputs.white = 'lh.white' # doctest: +SKIP
-#     >>> contrast.inputs.thickness = 'lh.thickness' # doctest: +SKIP
-#     >>> contrast.inputs.annotation = '../label/lh.aparc.annot' # doctest: +SKIP
-#     >>> contrast.inputs.cortex = '../label/lh.cortex.label' # doctest: +SKIP
-#     >>> contrast.inputs.rawavg = '../mri/rawavg.mgz' # doctest: +SKIP
-#     >>> contrast.inputs.orig = '../mri/orig.mgz' # doctest: +SKIP
-#     >>> contrast.cmdline # doctest: +SKIP
-#     'pctsurfcon --lh-only --s 10335'
-#     
+# Examples
+# ========
+# >>> from nipype.interfaces.freesurfer import Contrast
+# >>> contrast = Contrast()
+# >>> contrast.inputs.subject_id = '10335'
+# >>> contrast.inputs.hemisphere = 'lh'
+# >>> contrast.inputs.white = 'lh.white' # doctest: +SKIP
+# >>> contrast.inputs.thickness = 'lh.thickness' # doctest: +SKIP
+# >>> contrast.inputs.annotation = '../label/lh.aparc.annot' # doctest: +SKIP
+# >>> contrast.inputs.cortex = '../label/lh.cortex.label' # doctest: +SKIP
+# >>> contrast.inputs.rawavg = '../mri/rawavg.mgz' # doctest: +SKIP
+# >>> contrast.inputs.orig = '../mri/orig.mgz' # doctest: +SKIP
+# >>> contrast.cmdline # doctest: +SKIP
+# 'pctsurfcon --lh-only --s 10335'
+# 
 task_name: Contrast
 nipype_name: Contrast
 nipype_module: nipype.interfaces.freesurfer.utils
@@ -37,19 +37,19 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    annotation: medimage-freesurfer/annot
+    annotation: fileformats.medimage_freesurfer.Annot
     # type=file|default=<undefined>: Input annotation file must be <subject_id>/label/<hemisphere>.aparc.annot
-    cortex: medimage-freesurfer/label
+    cortex: generic/file
     # type=file|default=<undefined>: Input cortex label must be <subject_id>/label/<hemisphere>.cortex.label
-    orig: medimage/mgh-gz
+    orig: generic/file
     # type=file|default=<undefined>: Implicit input file mri/orig.mgz
     rawavg: medimage/mgh-gz
     # type=file|default=<undefined>: Implicit input file mri/rawavg.mgz
     subjects_dir: generic/directory
     # type=directory|default=<undefined>: subjects directory
-    thickness: medimage-freesurfer/thickness
+    thickness: generic/file
     # type=file|default=<undefined>: Input file must be <subject_id>/surf/?h.thickness
-    white: medimage-freesurfer/white
+    white: fileformats.medimage_freesurfer.White
     # type=file|default=<undefined>: Input file must be <subject_id>/surf/<hemisphere>.white
   callable_defaults:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
@@ -77,7 +77,7 @@ outputs:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
@@ -101,7 +101,7 @@ tests:
     rawavg:
     # type=file|default=<undefined>: Implicit input file mri/rawavg.mgz
     copy_inputs:
-    # type=bool|default=False: If running as a node, set this to True.This will copy the input files to the node directory.
+    # type=bool|default=False: If running as a node, set this to True. This will copy the input files to the node directory.
     subjects_dir:
     # type=directory|default=<undefined>: subjects directory
     args:
@@ -109,7 +109,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -128,22 +128,14 @@ tests:
   # (if not specified, will try to choose a sensible value)
     subject_id: '"10335"'
     # type=string|default='subject_id': Subject being processed
-    hemisphere: '"lh"'
-    # type=enum|default='lh'|allowed['lh','rh']: Hemisphere being processed
     white:
     # type=file|default=<undefined>: Input file must be <subject_id>/surf/<hemisphere>.white
-    thickness:
-    # type=file|default=<undefined>: Input file must be <subject_id>/surf/?h.thickness
     annotation:
     # type=file|default=<undefined>: Input annotation file must be <subject_id>/label/<hemisphere>.aparc.annot
-    cortex:
-    # type=file|default=<undefined>: Input cortex label must be <subject_id>/label/<hemisphere>.cortex.label
     rawavg:
     # type=file|default=<undefined>: Implicit input file mri/rawavg.mgz
-    orig:
-    # type=file|default=<undefined>: Implicit input file mri/orig.mgz
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -158,7 +150,7 @@ tests:
   # bool - whether the unittest is expected to fail or not. Set to false
   # when you are satisfied with the edits you have made to this file
 doctests:
-- cmdline: pctsurfcon --lh-only --s 10335
+- cmdline:
   # str - the expected cmdline output
   inputs:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
@@ -166,22 +158,14 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     subject_id: '"10335"'
     # type=string|default='subject_id': Subject being processed
-    hemisphere: '"lh"'
-    # type=enum|default='lh'|allowed['lh','rh']: Hemisphere being processed
     white: '"lh.white" # doctest: +SKIP'
     # type=file|default=<undefined>: Input file must be <subject_id>/surf/<hemisphere>.white
-    thickness: '"lh.thickness" # doctest: +SKIP'
-    # type=file|default=<undefined>: Input file must be <subject_id>/surf/?h.thickness
     annotation: '"../label/lh.aparc.annot" # doctest: +SKIP'
     # type=file|default=<undefined>: Input annotation file must be <subject_id>/label/<hemisphere>.aparc.annot
-    cortex: '"../label/lh.cortex.label" # doctest: +SKIP'
-    # type=file|default=<undefined>: Input cortex label must be <subject_id>/label/<hemisphere>.cortex.label
     rawavg: '"../mri/rawavg.mgz" # doctest: +SKIP'
     # type=file|default=<undefined>: Implicit input file mri/rawavg.mgz
-    orig: '"../mri/orig.mgz" # doctest: +SKIP'
-    # type=file|default=<undefined>: Implicit input file mri/orig.mgz
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

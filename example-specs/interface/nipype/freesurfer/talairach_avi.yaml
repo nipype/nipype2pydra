@@ -6,24 +6,24 @@
 # Docs
 # ----
 # 
-#     Front-end for Avi Snyders image registration tool. Computes the
-#     talairach transform that maps the input volume to the MNI average_305.
-#     This does not add the xfm to the header of the input file. When called
-#     by recon-all, the xfm is added to the header after the transform is
-#     computed.
+# Front-end for Avi Snyders image registration tool. Computes the
+# talairach transform that maps the input volume to the MNI average_305.
+# This does not add the xfm to the header of the input file. When called
+# by recon-all, the xfm is added to the header after the transform is
+# computed.
 # 
-#     Examples
-#     ========
+# Examples
+# ========
 # 
-#     >>> from nipype.interfaces.freesurfer import TalairachAVI
-#     >>> example = TalairachAVI()
-#     >>> example.inputs.in_file = 'norm.mgz'
-#     >>> example.inputs.out_file = 'trans.mat'
-#     >>> example.cmdline
-#     'talairach_avi --i norm.mgz --xfm trans.mat'
+# >>> from nipype.interfaces.freesurfer import TalairachAVI
+# >>> example = TalairachAVI()
+# >>> example.inputs.in_file = 'norm.mgz'
+# >>> example.inputs.out_file = 'trans.mat'
+# >>> example.cmdline
+# 'talairach_avi --i norm.mgz --xfm trans.mat'
 # 
-#     >>> example.run() # doctest: +SKIP
-#     
+# >>> example.run() # doctest: +SKIP
+# 
 task_name: TalairachAVI
 nipype_name: TalairachAVI
 nipype_module: nipype.interfaces.freesurfer.utils
@@ -40,9 +40,6 @@ inputs:
   # passed to the field in the automatically generated unittests.
     in_file: medimage/mgh-gz
     # type=file|default=<undefined>: input volume
-    out_file: Path
-    # type=file: The output transform for TalairachAVI
-    # type=file|default=<undefined>: output xfm file
     subjects_dir: generic/directory
     # type=directory|default=<undefined>: subjects directory
   callable_defaults:
@@ -61,7 +58,7 @@ outputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    out_file: datascience/text-matrix
+    out_file: generic/file
     # type=file: The output transform for TalairachAVI
     # type=file|default=<undefined>: output xfm file
     out_log: generic/file
@@ -72,7 +69,7 @@ outputs:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
@@ -93,7 +90,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -112,11 +109,8 @@ tests:
   # (if not specified, will try to choose a sensible value)
     in_file:
     # type=file|default=<undefined>: input volume
-    out_file: '"trans.mat"'
-    # type=file: The output transform for TalairachAVI
-    # type=file|default=<undefined>: output xfm file
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -139,11 +133,8 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     in_file: '"norm.mgz"'
     # type=file|default=<undefined>: input volume
-    out_file: '"trans.mat"'
-    # type=file: The output transform for TalairachAVI
-    # type=file|default=<undefined>: output xfm file
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

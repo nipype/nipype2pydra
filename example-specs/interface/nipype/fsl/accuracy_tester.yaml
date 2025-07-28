@@ -6,9 +6,9 @@
 # Docs
 # ----
 # 
-#     Test the accuracy of an existing training dataset on a set of hand-labelled subjects.
-#     Note: This may or may not be working. Couldn't presently not confirm because fix fails on this (even outside of nipype) without leaving an error msg.
-#     
+# Test the accuracy of an existing training dataset on a set of hand-labelled subjects.
+# Note: This may or may not be working. Couldn't presently not confirm because fix fails on this (even outside of nipype) without leaving an error msg.
+# 
 task_name: AccuracyTester
 nipype_name: AccuracyTester
 nipype_module: nipype.interfaces.fsl.fix
@@ -25,9 +25,6 @@ inputs:
   # passed to the field in the automatically generated unittests.
     mel_icas: generic/directory+list-of
     # type=inputmultiobject|default=[]: Melodic output directories
-    output_directory: Path
-    # type=directory: Path to folder in which to store the results of the accuracy test.
-    # type=directory|default=<undefined>: Path to folder in which to store the results of the accuracy test.
     trained_wts_file: generic/file
     # type=file|default=<undefined>: trained-weights file
   callable_defaults:
@@ -53,7 +50,7 @@ outputs:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
@@ -72,7 +69,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically

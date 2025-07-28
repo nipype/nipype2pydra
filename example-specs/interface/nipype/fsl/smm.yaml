@@ -6,11 +6,11 @@
 # Docs
 # ----
 # 
-#     Spatial Mixture Modelling. For more detail on the spatial mixture modelling
-#     see Mixture Models with Adaptive Spatial Regularisation for Segmentation
-#     with an Application to FMRI Data; Woolrich, M., Behrens, T., Beckmann, C.,
-#     and Smith, S.; IEEE Trans. Medical Imaging, 24(1):1-11, 2005.
-#     
+# Spatial Mixture Modelling. For more detail on the spatial mixture modelling
+# see Mixture Models with Adaptive Spatial Regularisation for Segmentation
+# with an Application to FMRI Data; Woolrich, M., Behrens, T., Beckmann, C.,
+# and Smith, S.; IEEE Trans. Medical Imaging, 24(1):1-11, 2005.
+# 
 task_name: SMM
 nipype_name: SMM
 nipype_module: nipype.interfaces.fsl.model
@@ -55,7 +55,7 @@ outputs:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
@@ -69,13 +69,13 @@ tests:
     no_deactivation_class:
     # type=bool|default=False: enforces no deactivation class
     output_type:
-    # type=enum|default='NIFTI'|allowed['NIFTI','NIFTI_GZ','NIFTI_PAIR','NIFTI_PAIR_GZ']: FSL output type
+    # type=enum|default='NIFTI'|allowed['GIFTI','NIFTI','NIFTI_GZ','NIFTI_PAIR','NIFTI_PAIR_GZ']: FSL output type
     args:
     # type=str|default='': Additional parameters to the command
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically

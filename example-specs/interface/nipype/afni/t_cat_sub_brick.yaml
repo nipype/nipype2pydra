@@ -6,23 +6,23 @@
 # Docs
 # ----
 # Hopefully a temporary function to allow sub-brick selection until
-#     afni file management is improved.
+# afni file management is improved.
 # 
-#     For complete details, see the `3dTcat Documentation.
-#     <https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dTcat.html>`_
+# For complete details, see the `3dTcat Documentation.
+# <https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dTcat.html>`_
 # 
-#     Examples
-#     --------
-#     >>> from nipype.interfaces import afni
-#     >>> tcsb = afni.TCatSubBrick()
-#     >>> tcsb.inputs.in_files = [('functional.nii', "'{2..$}'"), ('functional2.nii', "'{2..$}'")]
-#     >>> tcsb.inputs.out_file= 'functional_tcat.nii'
-#     >>> tcsb.inputs.rlt = '+'
-#     >>> tcsb.cmdline
-#     "3dTcat -rlt+ -prefix functional_tcat.nii functional.nii'{2..$}' functional2.nii'{2..$}' "
-#     >>> res = tcsb.run()  # doctest: +SKIP
+# Examples
+# --------
+# >>> from nipype.interfaces import afni
+# >>> tcsb = afni.TCatSubBrick()
+# >>> tcsb.inputs.in_files = [('functional.nii', "'{2..$}'"), ('functional2.nii', "'{2..$}'")]
+# >>> tcsb.inputs.out_file= 'functional_tcat.nii'
+# >>> tcsb.inputs.rlt = '+'
+# >>> tcsb.cmdline
+# "3dTcat -rlt+ -prefix functional_tcat.nii functional.nii'{2..$}' functional2.nii'{2..$}' "
+# >>> res = tcsb.run()  # doctest: +SKIP
 # 
-#     
+# 
 task_name: TCatSubBrick
 nipype_name: TCatSubBrick
 nipype_module: nipype.interfaces.afni.utils
@@ -37,9 +37,6 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    out_file: Path
-    # type=file: output file
-    # type=file|default=<undefined>: output image file name
   callable_defaults:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set as the `default` method of input fields
@@ -56,15 +53,15 @@ outputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    out_file: medimage/nifti1
+    out_file: generic/file
     # type=file: output file
     # type=file|default=<undefined>: output image file name
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
-    out_file: '"functional_tcat.nii"'
+  # dict[str, str] - `path_template` values to be provided to output fields
+    out_file: out_file
     # type=file: output file
     # type=file|default=<undefined>: output image file name
   requirements:
@@ -89,7 +86,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -108,13 +105,10 @@ tests:
   # (if not specified, will try to choose a sensible value)
     in_files: '[(''functional.nii'', "''{2..$}''"), (''functional2.nii'', "''{2..$}''")]'
     # type=list|default=[]: List of tuples of file names and subbrick selectors as strings.Don't forget to protect the single quotes in the subbrick selectorso the contents are protected from the command line interpreter.
-    out_file: '"functional_tcat.nii"'
-    # type=file: output file
-    # type=file|default=<undefined>: output image file name
     rlt: '"+"'
     # type=enum|default=''|allowed['','+','++']: Remove linear trends in each voxel time series loaded from each input dataset, SEPARATELY. Option -rlt removes the least squares fit of 'a+b*t' to each voxel time series. Option -rlt+ adds dataset mean back in. Option -rlt++ adds overall mean of all dataset timeseries back in.
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -129,7 +123,7 @@ tests:
   # bool - whether the unittest is expected to fail or not. Set to false
   # when you are satisfied with the edits you have made to this file
 doctests:
-- cmdline: '3dTcat -rlt+ -prefix functional_tcat.nii functional.nii"{2..$}" functional2.nii"{2..$}" '
+- cmdline:
   # str - the expected cmdline output
   inputs:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
@@ -137,13 +131,10 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     in_files: '[(''functional.nii'', "''{2..$}''"), (''functional2.nii'', "''{2..$}''")]'
     # type=list|default=[]: List of tuples of file names and subbrick selectors as strings.Don't forget to protect the single quotes in the subbrick selectorso the contents are protected from the command line interpreter.
-    out_file: '"functional_tcat.nii"'
-    # type=file: output file
-    # type=file|default=<undefined>: output image file name
     rlt: '"+"'
     # type=enum|default=''|allowed['','+','++']: Remove linear trends in each voxel time series loaded from each input dataset, SEPARATELY. Option -rlt removes the least squares fit of 'a+b*t' to each voxel time series. Option -rlt+ adds dataset mean back in. Option -rlt++ adds overall mean of all dataset timeseries back in.
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

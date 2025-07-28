@@ -6,27 +6,27 @@
 # Docs
 # ----
 # 
-#     This program positions the tessellation of the cortical surface at the
-#     white matter surface, then the gray matter surface and generate
-#     surface files for these surfaces as well as a 'curvature' file for the
-#     cortical thickness, and a surface file which approximates layer IV of
-#     the cortical sheet.
+# This program positions the tessellation of the cortical surface at the
+# white matter surface, then the gray matter surface and generate
+# surface files for these surfaces as well as a 'curvature' file for the
+# cortical thickness, and a surface file which approximates layer IV of
+# the cortical sheet.
 # 
-#     Examples
-#     ========
-#     >>> from nipype.interfaces.freesurfer import MakeSurfaces
-#     >>> makesurfaces = MakeSurfaces()
-#     >>> makesurfaces.inputs.hemisphere = 'lh'
-#     >>> makesurfaces.inputs.subject_id = '10335'
-#     >>> makesurfaces.inputs.in_orig = 'lh.pial'
-#     >>> makesurfaces.inputs.in_wm = 'wm.mgz'
-#     >>> makesurfaces.inputs.in_filled = 'norm.mgz'
-#     >>> makesurfaces.inputs.in_label = 'aparc+aseg.nii'
-#     >>> makesurfaces.inputs.in_T1 = 'T1.mgz'
-#     >>> makesurfaces.inputs.orig_pial = 'lh.pial'
-#     >>> makesurfaces.cmdline
-#     'mris_make_surfaces -T1 T1.mgz -orig pial -orig_pial pial 10335 lh'
-#     
+# Examples
+# ========
+# >>> from nipype.interfaces.freesurfer import MakeSurfaces
+# >>> makesurfaces = MakeSurfaces()
+# >>> makesurfaces.inputs.hemisphere = 'lh'
+# >>> makesurfaces.inputs.subject_id = '10335'
+# >>> makesurfaces.inputs.in_orig = 'lh.pial'
+# >>> makesurfaces.inputs.in_wm = 'wm.mgz'
+# >>> makesurfaces.inputs.in_filled = 'norm.mgz'
+# >>> makesurfaces.inputs.in_label = 'aparc+aseg.nii'
+# >>> makesurfaces.inputs.in_T1 = 'T1.mgz'
+# >>> makesurfaces.inputs.orig_pial = 'lh.pial'
+# >>> makesurfaces.cmdline
+# 'mris_make_surfaces -T1 T1.mgz -orig pial -orig_pial pial 10335 lh'
+# 
 task_name: MakeSurfaces
 nipype_name: MakeSurfaces
 nipype_module: nipype.interfaces.freesurfer.utils
@@ -47,15 +47,15 @@ inputs:
     # type=file|default=<undefined>: Input segmentation file
     in_filled: medimage/mgh-gz
     # type=file|default=<undefined>: Implicit input file filled.mgz
-    in_label: medimage/nifti1
+    in_label: generic/file
     # type=file|default=<undefined>: Implicit input label/<hemisphere>.aparc.annot
-    in_orig: medimage-freesurfer/pial
+    in_orig: fileformats.medimage_freesurfer.Pial
     # type=file|default=<undefined>: Implicit input file <hemisphere>.orig
     in_white: generic/file
     # type=file|default=<undefined>: Implicit input that is sometimes used
-    in_wm: medimage/mgh-gz
+    in_wm: generic/file
     # type=file|default=<undefined>: Implicit input file wm.mgz
-    orig_pial: medimage-freesurfer/pial
+    orig_pial: generic/file
     # type=file|default=<undefined>: Specify a pial surface to start with
     orig_white: generic/file
     # type=file|default=<undefined>: Specify a white surface to start with
@@ -93,7 +93,7 @@ outputs:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
@@ -139,7 +139,7 @@ tests:
     white:
     # type=string|default='': White surface name
     copy_inputs:
-    # type=bool|default=False: If running as a node, set this to True.This will copy the input files to the node directory.
+    # type=bool|default=False: If running as a node, set this to True. This will copy the input files to the node  directory.
     subjects_dir:
     # type=directory|default=<undefined>: subjects directory
     args:
@@ -147,7 +147,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -166,22 +166,14 @@ tests:
   # (if not specified, will try to choose a sensible value)
     hemisphere: '"lh"'
     # type=enum|default='lh'|allowed['lh','rh']: Hemisphere being processed
-    subject_id: '"10335"'
-    # type=string|default='subject_id': Subject being processed
     in_orig:
     # type=file|default=<undefined>: Implicit input file <hemisphere>.orig
-    in_wm:
-    # type=file|default=<undefined>: Implicit input file wm.mgz
     in_filled:
     # type=file|default=<undefined>: Implicit input file filled.mgz
-    in_label:
-    # type=file|default=<undefined>: Implicit input label/<hemisphere>.aparc.annot
     in_T1:
     # type=file|default=<undefined>: Input brain or T1 file
-    orig_pial:
-    # type=file|default=<undefined>: Specify a pial surface to start with
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -196,7 +188,7 @@ tests:
   # bool - whether the unittest is expected to fail or not. Set to false
   # when you are satisfied with the edits you have made to this file
 doctests:
-- cmdline: mris_make_surfaces -T1 T1.mgz -orig pial -orig_pial pial 10335 lh
+- cmdline:
   # str - the expected cmdline output
   inputs:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
@@ -204,22 +196,14 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     hemisphere: '"lh"'
     # type=enum|default='lh'|allowed['lh','rh']: Hemisphere being processed
-    subject_id: '"10335"'
-    # type=string|default='subject_id': Subject being processed
     in_orig: '"lh.pial"'
     # type=file|default=<undefined>: Implicit input file <hemisphere>.orig
-    in_wm: '"wm.mgz"'
-    # type=file|default=<undefined>: Implicit input file wm.mgz
     in_filled: '"norm.mgz"'
     # type=file|default=<undefined>: Implicit input file filled.mgz
-    in_label: '"aparc+aseg.nii"'
-    # type=file|default=<undefined>: Implicit input label/<hemisphere>.aparc.annot
     in_T1: '"T1.mgz"'
     # type=file|default=<undefined>: Input brain or T1 file
-    orig_pial: '"lh.pial"'
-    # type=file|default=<undefined>: Specify a pial surface to start with
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

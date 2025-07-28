@@ -6,33 +6,33 @@
 # Docs
 # ----
 # 
-#     Registration using a symmetric image normalization method (SyN).
-#     You can read more in Avants et al.; Med Image Anal., 2008
-#     (https://www.ncbi.nlm.nih.gov/pubmed/17659998).
+# Registration using a symmetric image normalization method (SyN).
+# You can read more in Avants et al.; Med Image Anal., 2008
+# (https://www.ncbi.nlm.nih.gov/pubmed/17659998).
 # 
-#     Examples
-#     --------
+# Examples
+# --------
 # 
-#     >>> from nipype.interfaces.ants import RegistrationSynQuick
-#     >>> reg = RegistrationSynQuick()
-#     >>> reg.inputs.fixed_image = 'fixed1.nii'
-#     >>> reg.inputs.moving_image = 'moving1.nii'
-#     >>> reg.inputs.num_threads = 2
-#     >>> reg.cmdline
-#     'antsRegistrationSyNQuick.sh -d 3 -f fixed1.nii -r 32 -m moving1.nii -n 2 -o transform -p d -s 26 -t s'
-#     >>> reg.run()  # doctest: +SKIP
+# >>> from nipype.interfaces.ants import RegistrationSynQuick
+# >>> reg = RegistrationSynQuick()
+# >>> reg.inputs.fixed_image = 'fixed1.nii'
+# >>> reg.inputs.moving_image = 'moving1.nii'
+# >>> reg.inputs.num_threads = 2
+# >>> reg.cmdline
+# 'antsRegistrationSyNQuick.sh -d 3 -f fixed1.nii -r 32 -m moving1.nii -n 2 -o transform -p d -s 26 -t s'
+# >>> reg.run()  # doctest: +SKIP
 # 
-#     example for multiple images
+# example for multiple images
 # 
-#     >>> from nipype.interfaces.ants import RegistrationSynQuick
-#     >>> reg = RegistrationSynQuick()
-#     >>> reg.inputs.fixed_image = ['fixed1.nii', 'fixed2.nii']
-#     >>> reg.inputs.moving_image = ['moving1.nii', 'moving2.nii']
-#     >>> reg.inputs.num_threads = 2
-#     >>> reg.cmdline
-#     'antsRegistrationSyNQuick.sh -d 3 -f fixed1.nii -f fixed2.nii -r 32 -m moving1.nii -m moving2.nii -n 2 -o transform -p d -s 26 -t s'
-#     >>> reg.run()  # doctest: +SKIP
-#     
+# >>> from nipype.interfaces.ants import RegistrationSynQuick
+# >>> reg = RegistrationSynQuick()
+# >>> reg.inputs.fixed_image = ['fixed1.nii', 'fixed2.nii']
+# >>> reg.inputs.moving_image = ['moving1.nii', 'moving2.nii']
+# >>> reg.inputs.num_threads = 2
+# >>> reg.cmdline
+# 'antsRegistrationSyNQuick.sh -d 3 -f fixed1.nii -f fixed2.nii -r 32 -m moving1.nii -m moving2.nii -n 2 -o transform -p d -s 26 -t s'
+# >>> reg.run()  # doctest: +SKIP
+# 
 task_name: RegistrationSynQuick
 nipype_name: RegistrationSynQuick
 nipype_module: nipype.interfaces.ants.registration
@@ -49,7 +49,7 @@ inputs:
   # passed to the field in the automatically generated unittests.
     fixed_image: medimage/nifti1+list-of
     # type=inputmultiobject|default=[]: Fixed image or source image or reference image
-    moving_image: medimage/nifti1+list-of
+    moving_image: generic/file+list-of
     # type=inputmultiobject|default=[]: Moving image or target image
   callable_defaults:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
@@ -81,7 +81,7 @@ outputs:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
@@ -115,7 +115,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -134,12 +134,10 @@ tests:
   # (if not specified, will try to choose a sensible value)
     fixed_image:
     # type=inputmultiobject|default=[]: Fixed image or source image or reference image
-    moving_image:
-    # type=inputmultiobject|default=[]: Moving image or target image
     num_threads: '2'
     # type=int|default=1: Number of threads (default = 1)
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -158,12 +156,10 @@ tests:
   # (if not specified, will try to choose a sensible value)
     fixed_image:
     # type=inputmultiobject|default=[]: Fixed image or source image or reference image
-    moving_image:
-    # type=inputmultiobject|default=[]: Moving image or target image
     num_threads: '2'
     # type=int|default=1: Number of threads (default = 1)
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -186,12 +182,10 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     fixed_image: '"fixed1.nii"'
     # type=inputmultiobject|default=[]: Fixed image or source image or reference image
-    moving_image: '"moving1.nii"'
-    # type=inputmultiobject|default=[]: Moving image or target image
     num_threads: '2'
     # type=int|default=1: Number of threads (default = 1)
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS
@@ -203,12 +197,10 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     fixed_image: '["fixed1.nii", "fixed2.nii"]'
     # type=inputmultiobject|default=[]: Fixed image or source image or reference image
-    moving_image: '["moving1.nii", "moving2.nii"]'
-    # type=inputmultiobject|default=[]: Moving image or target image
     num_threads: '2'
     # type=int|default=1: Number of threads (default = 1)
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

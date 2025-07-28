@@ -6,22 +6,22 @@
 # Docs
 # ----
 # Blurs a 'master' dataset until it reaches a specified FWHM smoothness
-#     (approximately).
+# (approximately).
 # 
-#     For complete details, see the `3dBlurToFWHM Documentation
-#     <https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dBlurToFWHM.html>`_
+# For complete details, see the `3dBlurToFWHM Documentation
+# <https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dBlurToFWHM.html>`_
 # 
-#     Examples
-#     --------
-#     >>> from nipype.interfaces import afni
-#     >>> blur = afni.preprocess.BlurToFWHM()
-#     >>> blur.inputs.in_file = 'epi.nii'
-#     >>> blur.inputs.fwhm = 2.5
-#     >>> blur.cmdline  # doctest: +ELLIPSIS
-#     '3dBlurToFWHM -FWHM 2.500000 -input epi.nii -prefix epi_afni'
-#     >>> res = blur.run()  # doctest: +SKIP
+# Examples
+# --------
+# >>> from nipype.interfaces import afni
+# >>> blur = afni.preprocess.BlurToFWHM()
+# >>> blur.inputs.in_file = 'epi.nii'
+# >>> blur.inputs.fwhm = 2.5
+# >>> blur.cmdline  # doctest: +ELLIPSIS
+# '3dBlurToFWHM -FWHM 2.500000 -input epi.nii -prefix epi_afni'
+# >>> res = blur.run()  # doctest: +SKIP
 # 
-#     
+# 
 task_name: BlurToFWHM
 nipype_name: BlurToFWHM
 nipype_module: nipype.interfaces.afni.preprocess
@@ -42,9 +42,6 @@ inputs:
     # type=file|default=<undefined>: The dataset that will be smoothed
     mask: generic/file
     # type=file|default=<undefined>: Mask dataset, if desired. Voxels NOT in mask will be set to zero in output.
-    out_file: Path
-    # type=file: output file
-    # type=file|default=<undefined>: output image file name
   callable_defaults:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set as the `default` method of input fields
@@ -68,7 +65,7 @@ outputs:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
@@ -99,7 +96,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -118,10 +115,8 @@ tests:
   # (if not specified, will try to choose a sensible value)
     in_file:
     # type=file|default=<undefined>: The dataset that will be smoothed
-    fwhm: '2.5'
-    # type=float|default=0.0: Blur until the 3D FWHM reaches this value (in mm)
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -136,7 +131,7 @@ tests:
   # bool - whether the unittest is expected to fail or not. Set to false
   # when you are satisfied with the edits you have made to this file
 doctests:
-- cmdline: 3dBlurToFWHM -FWHM 2.500000 -input epi.nii -prefix epi_afni
+- cmdline:
   # str - the expected cmdline output
   inputs:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
@@ -144,10 +139,8 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     in_file: '"epi.nii"'
     # type=file|default=<undefined>: The dataset that will be smoothed
-    fwhm: '2.5'
-    # type=float|default=0.0: Blur until the 3D FWHM reaches this value (in mm)
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

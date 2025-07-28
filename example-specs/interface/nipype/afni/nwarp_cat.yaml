@@ -7,54 +7,54 @@
 # ----
 # Catenates (composes) 3D warps defined on a grid, OR via a matrix.
 # 
-#     .. note::
+# .. note::
 # 
-#       * All transformations are from DICOM xyz (in mm) to DICOM xyz.
+#   * All transformations are from DICOM xyz (in mm) to DICOM xyz.
 # 
-#       * Matrix warps are in files that end in '.1D' or in '.txt'.  A matrix
-#         warp file should have 12 numbers in it, as output (for example), by
-#         '3dAllineate -1Dmatrix_save'.
+#   * Matrix warps are in files that end in '.1D' or in '.txt'.  A matrix
+#     warp file should have 12 numbers in it, as output (for example), by
+#     '3dAllineate -1Dmatrix_save'.
 # 
-#       * Nonlinear warps are in dataset files (AFNI .HEAD/.BRIK or NIfTI .nii)
-#         with 3 sub-bricks giving the DICOM order xyz grid displacements in mm.
+#   * Nonlinear warps are in dataset files (AFNI .HEAD/.BRIK or NIfTI .nii)
+#     with 3 sub-bricks giving the DICOM order xyz grid displacements in mm.
 # 
-#       * If all the input warps are matrices, then the output is a matrix
-#         and will be written to the file 'prefix.aff12.1D'.
-#         Unless the prefix already contains the string '.1D', in which case
-#         the filename is just the prefix.
+#   * If all the input warps are matrices, then the output is a matrix
+#     and will be written to the file 'prefix.aff12.1D'.
+#     Unless the prefix already contains the string '.1D', in which case
+#     the filename is just the prefix.
 # 
-#       * If 'prefix' is just 'stdout', then the output matrix is written
-#         to standard output.
-#         In any of these cases, the output format is 12 numbers in one row.
+#   * If 'prefix' is just 'stdout', then the output matrix is written
+#     to standard output.
+#     In any of these cases, the output format is 12 numbers in one row.
 # 
-#       * If any of the input warps are datasets, they must all be defined on
-#         the same 3D grid!
-#         And of course, then the output will be a dataset on the same grid.
-#         However, you can expand the grid using the '-expad' option.
+#   * If any of the input warps are datasets, they must all be defined on
+#     the same 3D grid!
+#     And of course, then the output will be a dataset on the same grid.
+#     However, you can expand the grid using the '-expad' option.
 # 
-#       * The order of operations in the final (output) warp is, for the
-#         case of 3 input warps:
+#   * The order of operations in the final (output) warp is, for the
+#     case of 3 input warps:
 # 
-#             OUTPUT(x) = warp3( warp2( warp1(x) ) )
+#         OUTPUT(x) = warp3( warp2( warp1(x) ) )
 # 
-#        That is, warp1 is applied first, then warp2, et cetera.
-#        The 3D x coordinates are taken from each grid location in the
-#        first dataset defined on a grid.
+#    That is, warp1 is applied first, then warp2, et cetera.
+#    The 3D x coordinates are taken from each grid location in the
+#    first dataset defined on a grid.
 # 
-#     For complete details, see the `3dNwarpCat Documentation.
-#     <https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dNwarpCat.html>`_
+# For complete details, see the `3dNwarpCat Documentation.
+# <https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dNwarpCat.html>`_
 # 
-#     Examples
-#     --------
-#     >>> from nipype.interfaces import afni
-#     >>> nwarpcat = afni.NwarpCat()
-#     >>> nwarpcat.inputs.in_files = ['Q25_warp+tlrc.HEAD', ('IDENT', 'structural.nii')]
-#     >>> nwarpcat.inputs.out_file = 'Fred_total_WARP'
-#     >>> nwarpcat.cmdline
-#     "3dNwarpCat -interp wsinc5 -prefix Fred_total_WARP Q25_warp+tlrc.HEAD 'IDENT(structural.nii)'"
-#     >>> res = nwarpcat.run()  # doctest: +SKIP
+# Examples
+# --------
+# >>> from nipype.interfaces import afni
+# >>> nwarpcat = afni.NwarpCat()
+# >>> nwarpcat.inputs.in_files = ['Q25_warp+tlrc.HEAD', ('IDENT', 'structural.nii')]
+# >>> nwarpcat.inputs.out_file = 'Fred_total_WARP'
+# >>> nwarpcat.cmdline
+# "3dNwarpCat -interp wsinc5 -prefix Fred_total_WARP Q25_warp+tlrc.HEAD 'IDENT(structural.nii)'"
+# >>> res = nwarpcat.run()  # doctest: +SKIP
 # 
-#     
+# 
 task_name: NwarpCat
 nipype_name: NwarpCat
 nipype_module: nipype.interfaces.afni.utils
@@ -69,9 +69,6 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    out_file: Path
-    # type=file: output file
-    # type=file|default=<undefined>: output image file name
   callable_defaults:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set as the `default` method of input fields
@@ -95,7 +92,7 @@ outputs:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
@@ -126,7 +123,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -145,11 +142,8 @@ tests:
   # (if not specified, will try to choose a sensible value)
     in_files: '["Q25_warp+tlrc.HEAD", ("IDENT", "structural.nii")]'
     # type=list|default=[]: list of tuples of 3D warps and associated functions
-    out_file: '"Fred_total_WARP"'
-    # type=file: output file
-    # type=file|default=<undefined>: output image file name
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -164,7 +158,7 @@ tests:
   # bool - whether the unittest is expected to fail or not. Set to false
   # when you are satisfied with the edits you have made to this file
 doctests:
-- cmdline: 3dNwarpCat -interp wsinc5 -prefix Fred_total_WARP Q25_warp+tlrc.HEAD "IDENT(structural.nii)"
+- cmdline:
   # str - the expected cmdline output
   inputs:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
@@ -172,11 +166,8 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     in_files: '["Q25_warp+tlrc.HEAD", ("IDENT", "structural.nii")]'
     # type=list|default=[]: list of tuples of 3D warps and associated functions
-    out_file: '"Fred_total_WARP"'
-    # type=file: output file
-    # type=file|default=<undefined>: output image file name
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

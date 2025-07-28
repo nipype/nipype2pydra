@@ -6,20 +6,20 @@
 # Docs
 # ----
 # 
-#     Edits a wm file using a segmentation
+# Edits a wm file using a segmentation
 # 
-#     Examples
-#     ========
-#     >>> from nipype.interfaces.freesurfer import EditWMwithAseg
-#     >>> editwm = EditWMwithAseg()
-#     >>> editwm.inputs.in_file = "T1.mgz"
-#     >>> editwm.inputs.brain_file = "norm.mgz"
-#     >>> editwm.inputs.seg_file = "aseg.mgz"
-#     >>> editwm.inputs.out_file = "wm.asegedit.mgz"
-#     >>> editwm.inputs.keep_in = True
-#     >>> editwm.cmdline
-#     'mri_edit_wm_with_aseg -keep-in T1.mgz norm.mgz aseg.mgz wm.asegedit.mgz'
-#     
+# Examples
+# ========
+# >>> from nipype.interfaces.freesurfer import EditWMwithAseg
+# >>> editwm = EditWMwithAseg()
+# >>> editwm.inputs.in_file = "T1.mgz"
+# >>> editwm.inputs.brain_file = "norm.mgz"
+# >>> editwm.inputs.seg_file = "aseg.mgz"
+# >>> editwm.inputs.out_file = "wm.asegedit.mgz"
+# >>> editwm.inputs.keep_in = True
+# >>> editwm.cmdline
+# 'mri_edit_wm_with_aseg -keep-in T1.mgz norm.mgz aseg.mgz wm.asegedit.mgz'
+# 
 task_name: EditWMwithAseg
 nipype_name: EditWMwithAseg
 nipype_module: nipype.interfaces.freesurfer.preprocess
@@ -34,13 +34,10 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    brain_file: medimage/mgh-gz
+    brain_file: generic/file
     # type=file|default=<undefined>: Input brain/T1 file
     in_file: medimage/mgh-gz
     # type=file|default=<undefined>: Input white matter segmentation file
-    out_file: Path
-    # type=file: Output edited WM file
-    # type=file|default=<undefined>: File to be written as output
     seg_file: medimage/mgh-gz
     # type=file|default=<undefined>: Input presurf segmentation file
     subjects_dir: generic/directory
@@ -61,14 +58,14 @@ outputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    out_file: medimage/mgh-gz
+    out_file: generic/file
     # type=file: Output edited WM file
     # type=file|default=<undefined>: File to be written as output
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
@@ -93,7 +90,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -112,17 +109,12 @@ tests:
   # (if not specified, will try to choose a sensible value)
     in_file:
     # type=file|default=<undefined>: Input white matter segmentation file
-    brain_file:
-    # type=file|default=<undefined>: Input brain/T1 file
     seg_file:
     # type=file|default=<undefined>: Input presurf segmentation file
-    out_file: '"wm.asegedit.mgz"'
-    # type=file: Output edited WM file
-    # type=file|default=<undefined>: File to be written as output
     keep_in: 'True'
     # type=bool|default=False: Keep edits as found in input volume
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -137,7 +129,7 @@ tests:
   # bool - whether the unittest is expected to fail or not. Set to false
   # when you are satisfied with the edits you have made to this file
 doctests:
-- cmdline: mri_edit_wm_with_aseg -keep-in T1.mgz norm.mgz aseg.mgz wm.asegedit.mgz
+- cmdline:
   # str - the expected cmdline output
   inputs:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
@@ -145,17 +137,12 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     in_file: '"T1.mgz"'
     # type=file|default=<undefined>: Input white matter segmentation file
-    brain_file: '"norm.mgz"'
-    # type=file|default=<undefined>: Input brain/T1 file
     seg_file: '"aseg.mgz"'
     # type=file|default=<undefined>: Input presurf segmentation file
-    out_file: '"wm.asegedit.mgz"'
-    # type=file: Output edited WM file
-    # type=file|default=<undefined>: File to be written as output
     keep_in: 'True'
     # type=bool|default=False: Keep edits as found in input volume
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

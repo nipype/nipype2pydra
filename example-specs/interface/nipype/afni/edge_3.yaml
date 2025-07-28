@@ -6,23 +6,23 @@
 # Docs
 # ----
 # Does 3D Edge detection using the library 3DEdge
-#     by Gregoire Malandain.
+# by Gregoire Malandain.
 # 
-#     For complete details, see the `3dedge3 Documentation.
-#     <https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dedge3.html>`_
+# For complete details, see the `3dedge3 Documentation.
+# <https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dedge3.html>`_
 # 
-#     Examples
-#     --------
-#     >>> from nipype.interfaces import afni
-#     >>> edge3 = afni.Edge3()
-#     >>> edge3.inputs.in_file = 'functional.nii'
-#     >>> edge3.inputs.out_file = 'edges.nii'
-#     >>> edge3.inputs.datum = 'byte'
-#     >>> edge3.cmdline
-#     '3dedge3 -input functional.nii -datum byte -prefix edges.nii'
-#     >>> res = edge3.run()  # doctest: +SKIP
+# Examples
+# --------
+# >>> from nipype.interfaces import afni
+# >>> edge3 = afni.Edge3()
+# >>> edge3.inputs.in_file = 'functional.nii'
+# >>> edge3.inputs.out_file = 'edges.nii'
+# >>> edge3.inputs.datum = 'byte'
+# >>> edge3.cmdline
+# '3dedge3 -input functional.nii -datum byte -prefix edges.nii'
+# >>> res = edge3.run()  # doctest: +SKIP
 # 
-#     
+# 
 task_name: Edge3
 nipype_name: Edge3
 nipype_module: nipype.interfaces.afni.utils
@@ -39,9 +39,6 @@ inputs:
   # passed to the field in the automatically generated unittests.
     in_file: medimage/nifti1
     # type=file|default=<undefined>: input file to 3dedge3
-    out_file: Path
-    # type=file: output file
-    # type=file|default=<undefined>: output image file name
   callable_defaults:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set as the `default` method of input fields
@@ -58,14 +55,14 @@ outputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    out_file: medimage/nifti1
+    out_file: generic/file
     # type=file: output file
     # type=file|default=<undefined>: output image file name
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
@@ -98,7 +95,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -117,13 +114,10 @@ tests:
   # (if not specified, will try to choose a sensible value)
     in_file:
     # type=file|default=<undefined>: input file to 3dedge3
-    out_file: '"edges.nii"'
-    # type=file: output file
-    # type=file|default=<undefined>: output image file name
     datum: '"byte"'
     # type=enum|default='byte'|allowed['byte','float','short']: specify data type for output. Valid types are 'byte', 'short' and 'float'.
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -138,7 +132,7 @@ tests:
   # bool - whether the unittest is expected to fail or not. Set to false
   # when you are satisfied with the edits you have made to this file
 doctests:
-- cmdline: 3dedge3 -input functional.nii -datum byte -prefix edges.nii
+- cmdline:
   # str - the expected cmdline output
   inputs:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
@@ -146,13 +140,10 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     in_file: '"functional.nii"'
     # type=file|default=<undefined>: input file to 3dedge3
-    out_file: '"edges.nii"'
-    # type=file: output file
-    # type=file|default=<undefined>: output image file name
     datum: '"byte"'
     # type=enum|default='byte'|allowed['byte','float','short']: specify data type for output. Valid types are 'byte', 'short' and 'float'.
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

@@ -6,24 +6,24 @@
 # Docs
 # ----
 # 
-#     This program computes a mapping from the unit sphere onto the surface
-#     of the cortex from a previously generated approximation of the
-#     cortical surface, thus guaranteeing a topologically correct surface.
+# This program computes a mapping from the unit sphere onto the surface
+# of the cortex from a previously generated approximation of the
+# cortical surface, thus guaranteeing a topologically correct surface.
 # 
-#     Examples
-#     ========
-#     >>> from nipype.interfaces.freesurfer import FixTopology
-#     >>> ft = FixTopology()
-#     >>> ft.inputs.in_orig = 'lh.orig' # doctest: +SKIP
-#     >>> ft.inputs.in_inflated = 'lh.inflated' # doctest: +SKIP
-#     >>> ft.inputs.sphere = 'lh.qsphere.nofix' # doctest: +SKIP
-#     >>> ft.inputs.hemisphere = 'lh'
-#     >>> ft.inputs.subject_id = '10335'
-#     >>> ft.inputs.mgz = True
-#     >>> ft.inputs.ga = True
-#     >>> ft.cmdline # doctest: +SKIP
-#     'mris_fix_topology -ga -mgz -sphere qsphere.nofix 10335 lh'
-#     
+# Examples
+# ========
+# >>> from nipype.interfaces.freesurfer import FixTopology
+# >>> ft = FixTopology()
+# >>> ft.inputs.in_orig = 'lh.orig' # doctest: +SKIP
+# >>> ft.inputs.in_inflated = 'lh.inflated' # doctest: +SKIP
+# >>> ft.inputs.sphere = 'lh.qsphere.nofix' # doctest: +SKIP
+# >>> ft.inputs.hemisphere = 'lh'
+# >>> ft.inputs.subject_id = '10335'
+# >>> ft.inputs.mgz = True
+# >>> ft.inputs.ga = True
+# >>> ft.cmdline # doctest: +SKIP
+# 'mris_fix_topology -ga -mgz -sphere qsphere.nofix 10335 lh'
+# 
 task_name: FixTopology
 nipype_name: FixTopology
 nipype_module: nipype.interfaces.freesurfer.utils
@@ -40,13 +40,13 @@ inputs:
   # passed to the field in the automatically generated unittests.
     in_brain: generic/file
     # type=file|default=<undefined>: Implicit input brain.mgz
-    in_inflated: medimage-freesurfer/inflated
+    in_inflated: generic/file
     # type=file|default=<undefined>: Undocumented input file <hemisphere>.inflated
-    in_orig: medimage-freesurfer/orig
+    in_orig: fileformats.medimage_freesurfer.Orig
     # type=file|default=<undefined>: Undocumented input file <hemisphere>.orig
     in_wm: generic/file
     # type=file|default=<undefined>: Implicit input wm.mgz
-    sphere: medimage-freesurfer/nofix
+    sphere: fileformats.medimage_freesurfer.Nofix
     # type=file|default=<undefined>: Sphere input file
     subjects_dir: generic/directory
     # type=directory|default=<undefined>: subjects directory
@@ -72,7 +72,7 @@ outputs:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
@@ -108,7 +108,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -127,20 +127,14 @@ tests:
   # (if not specified, will try to choose a sensible value)
     in_orig:
     # type=file|default=<undefined>: Undocumented input file <hemisphere>.orig
-    in_inflated:
-    # type=file|default=<undefined>: Undocumented input file <hemisphere>.inflated
     sphere:
     # type=file|default=<undefined>: Sphere input file
-    hemisphere: '"lh"'
-    # type=string|default='': Hemisphere being processed
     subject_id: '"10335"'
     # type=string|default='subject_id': Subject being processed
-    mgz: 'True'
-    # type=bool|default=False: No documentation. Direct questions to analysis-bugs@nmr.mgh.harvard.edu
     ga: 'True'
     # type=bool|default=False: No documentation. Direct questions to analysis-bugs@nmr.mgh.harvard.edu
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -155,7 +149,7 @@ tests:
   # bool - whether the unittest is expected to fail or not. Set to false
   # when you are satisfied with the edits you have made to this file
 doctests:
-- cmdline: mris_fix_topology -ga -mgz -sphere qsphere.nofix 10335 lh
+- cmdline:
   # str - the expected cmdline output
   inputs:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
@@ -163,20 +157,14 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     in_orig: '"lh.orig" # doctest: +SKIP'
     # type=file|default=<undefined>: Undocumented input file <hemisphere>.orig
-    in_inflated: '"lh.inflated" # doctest: +SKIP'
-    # type=file|default=<undefined>: Undocumented input file <hemisphere>.inflated
     sphere: '"lh.qsphere.nofix" # doctest: +SKIP'
     # type=file|default=<undefined>: Sphere input file
-    hemisphere: '"lh"'
-    # type=string|default='': Hemisphere being processed
     subject_id: '"10335"'
     # type=string|default='subject_id': Subject being processed
-    mgz: 'True'
-    # type=bool|default=False: No documentation. Direct questions to analysis-bugs@nmr.mgh.harvard.edu
     ga: 'True'
     # type=bool|default=False: No documentation. Direct questions to analysis-bugs@nmr.mgh.harvard.edu
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

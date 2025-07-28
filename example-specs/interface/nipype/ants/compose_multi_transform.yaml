@@ -6,19 +6,19 @@
 # Docs
 # ----
 # 
-#     Take a set of transformations and convert them to a single transformation matrix/warpfield.
+# Take a set of transformations and convert them to a single transformation matrix/warpfield.
 # 
-#     Examples
-#     --------
-#     >>> from nipype.interfaces.ants import ComposeMultiTransform
-#     >>> compose_transform = ComposeMultiTransform()
-#     >>> compose_transform.inputs.dimension = 3
-#     >>> compose_transform.inputs.transforms = ['struct_to_template.mat', 'func_to_struct.mat']
-#     >>> compose_transform.cmdline
-#     'ComposeMultiTransform 3 struct_to_template_composed.mat
-#     struct_to_template.mat func_to_struct.mat'
+# Examples
+# --------
+# >>> from nipype.interfaces.ants import ComposeMultiTransform
+# >>> compose_transform = ComposeMultiTransform()
+# >>> compose_transform.inputs.dimension = 3
+# >>> compose_transform.inputs.transforms = ['struct_to_template.mat', 'func_to_struct.mat']
+# >>> compose_transform.cmdline
+# 'ComposeMultiTransform 3 struct_to_template_composed.mat
+# struct_to_template.mat func_to_struct.mat'
 # 
-#     
+# 
 task_name: ComposeMultiTransform
 nipype_name: ComposeMultiTransform
 nipype_module: nipype.interfaces.ants.utils
@@ -33,12 +33,9 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    output_transform: Path
-    # type=file: Composed transform file
-    # type=file|default=<undefined>: the name of the resulting transform.
     reference_image: generic/file
     # type=file|default=<undefined>: Reference image (only necessary when output is warpfield)
-    transforms: datascience/text-matrix+list-of
+    transforms: generic/file+list-of
     # type=inputmultiobject|default=[]: transforms to average
   callable_defaults:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
@@ -63,7 +60,7 @@ outputs:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
@@ -86,7 +83,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -105,10 +102,8 @@ tests:
   # (if not specified, will try to choose a sensible value)
     dimension: '3'
     # type=enum|default=3|allowed[2,3]: image dimension (2 or 3)
-    transforms:
-    # type=inputmultiobject|default=[]: transforms to average
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -123,7 +118,7 @@ tests:
   # bool - whether the unittest is expected to fail or not. Set to false
   # when you are satisfied with the edits you have made to this file
 doctests:
-- cmdline: ComposeMultiTransform 3 struct_to_template_composed.mat struct_to_template.mat func_to_struct.mat
+- cmdline:
   # str - the expected cmdline output
   inputs:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
@@ -131,10 +126,8 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     dimension: '3'
     # type=enum|default=3|allowed[2,3]: image dimension (2 or 3)
-    transforms: '["struct_to_template.mat", "func_to_struct.mat"]'
-    # type=inputmultiobject|default=[]: transforms to average
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

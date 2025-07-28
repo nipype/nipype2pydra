@@ -6,58 +6,58 @@
 # Docs
 # ----
 # ApplyTransforms, applied to an input image, transforms it according to a
-#     reference image and a transform (or a set of transforms).
+# reference image and a transform (or a set of transforms).
 # 
-#     Examples
-#     --------
+# Examples
+# --------
 # 
-#     >>> from nipype.interfaces.ants import ApplyTransforms
-#     >>> at = ApplyTransforms()
-#     >>> at.inputs.input_image = 'moving1.nii'
-#     >>> at.inputs.reference_image = 'fixed1.nii'
-#     >>> at.inputs.transforms = 'identity'
-#     >>> at.cmdline
-#     'antsApplyTransforms --default-value 0 --float 0 --input moving1.nii --interpolation Linear --output moving1_trans.nii --reference-image fixed1.nii --transform identity'
+# >>> from nipype.interfaces.ants import ApplyTransforms
+# >>> at = ApplyTransforms()
+# >>> at.inputs.input_image = 'moving1.nii'
+# >>> at.inputs.reference_image = 'fixed1.nii'
+# >>> at.inputs.transforms = 'identity'
+# >>> at.cmdline
+# 'antsApplyTransforms --default-value 0 --float 0 --input moving1.nii --interpolation Linear --output moving1_trans.nii --reference-image fixed1.nii --transform identity'
 # 
-#     >>> at = ApplyTransforms()
-#     >>> at.inputs.dimension = 3
-#     >>> at.inputs.input_image = 'moving1.nii'
-#     >>> at.inputs.reference_image = 'fixed1.nii'
-#     >>> at.inputs.output_image = 'deformed_moving1.nii'
-#     >>> at.inputs.interpolation = 'Linear'
-#     >>> at.inputs.default_value = 0
-#     >>> at.inputs.transforms = ['ants_Warp.nii.gz', 'trans.mat']
-#     >>> at.inputs.invert_transform_flags = [False, True]
-#     >>> at.cmdline
-#     'antsApplyTransforms --default-value 0 --dimensionality 3 --float 0 --input moving1.nii --interpolation Linear --output deformed_moving1.nii --reference-image fixed1.nii --transform ants_Warp.nii.gz --transform [ trans.mat, 1 ]'
+# >>> at = ApplyTransforms()
+# >>> at.inputs.dimension = 3
+# >>> at.inputs.input_image = 'moving1.nii'
+# >>> at.inputs.reference_image = 'fixed1.nii'
+# >>> at.inputs.output_image = 'deformed_moving1.nii'
+# >>> at.inputs.interpolation = 'Linear'
+# >>> at.inputs.default_value = 0
+# >>> at.inputs.transforms = ['ants_Warp.nii.gz', 'trans.mat']
+# >>> at.inputs.invert_transform_flags = [False, True]
+# >>> at.cmdline
+# 'antsApplyTransforms --default-value 0 --dimensionality 3 --float 0 --input moving1.nii --interpolation Linear --output deformed_moving1.nii --reference-image fixed1.nii --transform ants_Warp.nii.gz --transform [ trans.mat, 1 ]'
 # 
-#     >>> at1 = ApplyTransforms()
-#     >>> at1.inputs.dimension = 3
-#     >>> at1.inputs.input_image = 'moving1.nii'
-#     >>> at1.inputs.reference_image = 'fixed1.nii'
-#     >>> at1.inputs.output_image = 'deformed_moving1.nii'
-#     >>> at1.inputs.interpolation = 'BSpline'
-#     >>> at1.inputs.interpolation_parameters = (5,)
-#     >>> at1.inputs.default_value = 0
-#     >>> at1.inputs.transforms = ['ants_Warp.nii.gz', 'trans.mat']
-#     >>> at1.inputs.invert_transform_flags = [False, False]
-#     >>> at1.cmdline
-#     'antsApplyTransforms --default-value 0 --dimensionality 3 --float 0 --input moving1.nii --interpolation BSpline[ 5 ] --output deformed_moving1.nii --reference-image fixed1.nii --transform ants_Warp.nii.gz --transform trans.mat'
+# >>> at1 = ApplyTransforms()
+# >>> at1.inputs.dimension = 3
+# >>> at1.inputs.input_image = 'moving1.nii'
+# >>> at1.inputs.reference_image = 'fixed1.nii'
+# >>> at1.inputs.output_image = 'deformed_moving1.nii'
+# >>> at1.inputs.interpolation = 'BSpline'
+# >>> at1.inputs.interpolation_parameters = (5,)
+# >>> at1.inputs.default_value = 0
+# >>> at1.inputs.transforms = ['ants_Warp.nii.gz', 'trans.mat']
+# >>> at1.inputs.invert_transform_flags = [False, False]
+# >>> at1.cmdline
+# 'antsApplyTransforms --default-value 0 --dimensionality 3 --float 0 --input moving1.nii --interpolation BSpline[ 5 ] --output deformed_moving1.nii --reference-image fixed1.nii --transform ants_Warp.nii.gz --transform trans.mat'
 # 
-#     Identity transforms may be used as part of a chain:
+# Identity transforms may be used as part of a chain:
 # 
-#     >>> at2 = ApplyTransforms()
-#     >>> at2.inputs.dimension = 3
-#     >>> at2.inputs.input_image = 'moving1.nii'
-#     >>> at2.inputs.reference_image = 'fixed1.nii'
-#     >>> at2.inputs.output_image = 'deformed_moving1.nii'
-#     >>> at2.inputs.interpolation = 'BSpline'
-#     >>> at2.inputs.interpolation_parameters = (5,)
-#     >>> at2.inputs.default_value = 0
-#     >>> at2.inputs.transforms = ['identity', 'ants_Warp.nii.gz', 'trans.mat']
-#     >>> at2.cmdline
-#     'antsApplyTransforms --default-value 0 --dimensionality 3 --float 0 --input moving1.nii --interpolation BSpline[ 5 ] --output deformed_moving1.nii --reference-image fixed1.nii --transform identity --transform ants_Warp.nii.gz --transform trans.mat'
-#     
+# >>> at2 = ApplyTransforms()
+# >>> at2.inputs.dimension = 3
+# >>> at2.inputs.input_image = 'moving1.nii'
+# >>> at2.inputs.reference_image = 'fixed1.nii'
+# >>> at2.inputs.output_image = 'deformed_moving1.nii'
+# >>> at2.inputs.interpolation = 'BSpline'
+# >>> at2.inputs.interpolation_parameters = (5,)
+# >>> at2.inputs.default_value = 0
+# >>> at2.inputs.transforms = ['identity', 'ants_Warp.nii.gz', 'trans.mat']
+# >>> at2.cmdline
+# 'antsApplyTransforms --default-value 0 --dimensionality 3 --float 0 --input moving1.nii --interpolation BSpline[ 5 ] --output deformed_moving1.nii --reference-image fixed1.nii --transform identity --transform ants_Warp.nii.gz --transform trans.mat'
+# 
 task_name: ApplyTransforms
 nipype_name: ApplyTransforms
 nipype_module: nipype.interfaces.ants.resampling
@@ -92,15 +92,15 @@ outputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    output_image: medimage/nifti1
+    output_image: generic/file
     # type=file: Warped image
     # type=str|default='': output file name
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
-    output_image: '"deformed_moving1.nii"'
+  # dict[str, str] - `path_template` values to be provided to output fields
+    output_image: output_image
     # type=file: Warped image
     # type=str|default='': output file name
   requirements:
@@ -123,7 +123,7 @@ tests:
     reference_image:
     # type=file|default=<undefined>: reference image space that you wish to warp INTO
     interpolation:
-    # type=enum|default='Linear'|allowed['BSpline','CosineWindowedSinc','Gaussian','HammingWindowedSinc','LanczosWindowedSinc','Linear','MultiLabel','NearestNeighbor','WelchWindowedSinc']: 
+    # type=enum|default='Linear'|allowed['BSpline','CosineWindowedSinc','Gaussian','GenericLabel','HammingWindowedSinc','LanczosWindowedSinc','Linear','MultiLabel','NearestNeighbor','WelchWindowedSinc']: 
     interpolation_parameters:
     # type=traitcompound|default=None: 
     transforms:
@@ -143,7 +143,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -162,12 +162,10 @@ tests:
   # (if not specified, will try to choose a sensible value)
     input_image:
     # type=file|default=<undefined>: image to apply transformation to (generally a coregistered functional)
-    reference_image:
-    # type=file|default=<undefined>: reference image space that you wish to warp INTO
     transforms: '"identity"'
     # type=inputmultiobject|default=[]: transform files: will be applied in reverse order. For example, the last specified transform will be applied first.
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -186,23 +184,14 @@ tests:
   # (if not specified, will try to choose a sensible value)
     dimension: '3'
     # type=enum|default=2|allowed[2,3,4]: This option forces the image to be treated as a specified-dimensional image. If not specified, antsWarp tries to infer the dimensionality from the input image.
-    input_image:
-    # type=file|default=<undefined>: image to apply transformation to (generally a coregistered functional)
     reference_image:
     # type=file|default=<undefined>: reference image space that you wish to warp INTO
-    output_image: '"deformed_moving1.nii"'
-    # type=file: Warped image
-    # type=str|default='': output file name
     interpolation: '"Linear"'
-    # type=enum|default='Linear'|allowed['BSpline','CosineWindowedSinc','Gaussian','HammingWindowedSinc','LanczosWindowedSinc','Linear','MultiLabel','NearestNeighbor','WelchWindowedSinc']: 
-    default_value: '0'
-    # type=float|default=0.0: 
+    # type=enum|default='Linear'|allowed['BSpline','CosineWindowedSinc','Gaussian','GenericLabel','HammingWindowedSinc','LanczosWindowedSinc','Linear','MultiLabel','NearestNeighbor','WelchWindowedSinc']: 
     transforms: '["ants_Warp.nii.gz", "trans.mat"]'
     # type=inputmultiobject|default=[]: transform files: will be applied in reverse order. For example, the last specified transform will be applied first.
-    invert_transform_flags: '[False, True]'
-    # type=inputmultiobject|default=[]: 
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -221,25 +210,16 @@ tests:
   # (if not specified, will try to choose a sensible value)
     dimension: '3'
     # type=enum|default=2|allowed[2,3,4]: This option forces the image to be treated as a specified-dimensional image. If not specified, antsWarp tries to infer the dimensionality from the input image.
-    input_image:
-    # type=file|default=<undefined>: image to apply transformation to (generally a coregistered functional)
     reference_image:
     # type=file|default=<undefined>: reference image space that you wish to warp INTO
-    output_image: '"deformed_moving1.nii"'
-    # type=file: Warped image
-    # type=str|default='': output file name
     interpolation: '"BSpline"'
-    # type=enum|default='Linear'|allowed['BSpline','CosineWindowedSinc','Gaussian','HammingWindowedSinc','LanczosWindowedSinc','Linear','MultiLabel','NearestNeighbor','WelchWindowedSinc']: 
-    interpolation_parameters: (5,)
-    # type=traitcompound|default=None: 
+    # type=enum|default='Linear'|allowed['BSpline','CosineWindowedSinc','Gaussian','GenericLabel','HammingWindowedSinc','LanczosWindowedSinc','Linear','MultiLabel','NearestNeighbor','WelchWindowedSinc']: 
     default_value: '0'
     # type=float|default=0.0: 
-    transforms: '["ants_Warp.nii.gz", "trans.mat"]'
-    # type=inputmultiobject|default=[]: transform files: will be applied in reverse order. For example, the last specified transform will be applied first.
     invert_transform_flags: '[False, False]'
     # type=inputmultiobject|default=[]: 
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -258,23 +238,14 @@ tests:
   # (if not specified, will try to choose a sensible value)
     dimension: '3'
     # type=enum|default=2|allowed[2,3,4]: This option forces the image to be treated as a specified-dimensional image. If not specified, antsWarp tries to infer the dimensionality from the input image.
-    input_image:
-    # type=file|default=<undefined>: image to apply transformation to (generally a coregistered functional)
     reference_image:
     # type=file|default=<undefined>: reference image space that you wish to warp INTO
-    output_image: '"deformed_moving1.nii"'
-    # type=file: Warped image
-    # type=str|default='': output file name
     interpolation: '"BSpline"'
-    # type=enum|default='Linear'|allowed['BSpline','CosineWindowedSinc','Gaussian','HammingWindowedSinc','LanczosWindowedSinc','Linear','MultiLabel','NearestNeighbor','WelchWindowedSinc']: 
-    interpolation_parameters: (5,)
-    # type=traitcompound|default=None: 
+    # type=enum|default='Linear'|allowed['BSpline','CosineWindowedSinc','Gaussian','GenericLabel','HammingWindowedSinc','LanczosWindowedSinc','Linear','MultiLabel','NearestNeighbor','WelchWindowedSinc']: 
     default_value: '0'
     # type=float|default=0.0: 
-    transforms: '["identity", "ants_Warp.nii.gz", "trans.mat"]'
-    # type=inputmultiobject|default=[]: transform files: will be applied in reverse order. For example, the last specified transform will be applied first.
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -297,12 +268,10 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     input_image: '"moving1.nii"'
     # type=file|default=<undefined>: image to apply transformation to (generally a coregistered functional)
-    reference_image: '"fixed1.nii"'
-    # type=file|default=<undefined>: reference image space that you wish to warp INTO
     transforms: '"identity"'
     # type=inputmultiobject|default=[]: transform files: will be applied in reverse order. For example, the last specified transform will be applied first.
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS
@@ -314,23 +283,14 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     dimension: '3'
     # type=enum|default=2|allowed[2,3,4]: This option forces the image to be treated as a specified-dimensional image. If not specified, antsWarp tries to infer the dimensionality from the input image.
-    input_image: '"moving1.nii"'
-    # type=file|default=<undefined>: image to apply transformation to (generally a coregistered functional)
     reference_image: '"fixed1.nii"'
     # type=file|default=<undefined>: reference image space that you wish to warp INTO
-    output_image: '"deformed_moving1.nii"'
-    # type=file: Warped image
-    # type=str|default='': output file name
     interpolation: '"Linear"'
-    # type=enum|default='Linear'|allowed['BSpline','CosineWindowedSinc','Gaussian','HammingWindowedSinc','LanczosWindowedSinc','Linear','MultiLabel','NearestNeighbor','WelchWindowedSinc']: 
-    default_value: '0'
-    # type=float|default=0.0: 
+    # type=enum|default='Linear'|allowed['BSpline','CosineWindowedSinc','Gaussian','GenericLabel','HammingWindowedSinc','LanczosWindowedSinc','Linear','MultiLabel','NearestNeighbor','WelchWindowedSinc']: 
     transforms: '["ants_Warp.nii.gz", "trans.mat"]'
     # type=inputmultiobject|default=[]: transform files: will be applied in reverse order. For example, the last specified transform will be applied first.
-    invert_transform_flags: '[False, True]'
-    # type=inputmultiobject|default=[]: 
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS
@@ -342,25 +302,16 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     dimension: '3'
     # type=enum|default=2|allowed[2,3,4]: This option forces the image to be treated as a specified-dimensional image. If not specified, antsWarp tries to infer the dimensionality from the input image.
-    input_image: '"moving1.nii"'
-    # type=file|default=<undefined>: image to apply transformation to (generally a coregistered functional)
     reference_image: '"fixed1.nii"'
     # type=file|default=<undefined>: reference image space that you wish to warp INTO
-    output_image: '"deformed_moving1.nii"'
-    # type=file: Warped image
-    # type=str|default='': output file name
     interpolation: '"BSpline"'
-    # type=enum|default='Linear'|allowed['BSpline','CosineWindowedSinc','Gaussian','HammingWindowedSinc','LanczosWindowedSinc','Linear','MultiLabel','NearestNeighbor','WelchWindowedSinc']: 
-    interpolation_parameters: (5,)
-    # type=traitcompound|default=None: 
+    # type=enum|default='Linear'|allowed['BSpline','CosineWindowedSinc','Gaussian','GenericLabel','HammingWindowedSinc','LanczosWindowedSinc','Linear','MultiLabel','NearestNeighbor','WelchWindowedSinc']: 
     default_value: '0'
     # type=float|default=0.0: 
-    transforms: '["ants_Warp.nii.gz", "trans.mat"]'
-    # type=inputmultiobject|default=[]: transform files: will be applied in reverse order. For example, the last specified transform will be applied first.
     invert_transform_flags: '[False, False]'
     # type=inputmultiobject|default=[]: 
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS
@@ -372,23 +323,14 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     dimension: '3'
     # type=enum|default=2|allowed[2,3,4]: This option forces the image to be treated as a specified-dimensional image. If not specified, antsWarp tries to infer the dimensionality from the input image.
-    input_image: '"moving1.nii"'
-    # type=file|default=<undefined>: image to apply transformation to (generally a coregistered functional)
     reference_image: '"fixed1.nii"'
     # type=file|default=<undefined>: reference image space that you wish to warp INTO
-    output_image: '"deformed_moving1.nii"'
-    # type=file: Warped image
-    # type=str|default='': output file name
     interpolation: '"BSpline"'
-    # type=enum|default='Linear'|allowed['BSpline','CosineWindowedSinc','Gaussian','HammingWindowedSinc','LanczosWindowedSinc','Linear','MultiLabel','NearestNeighbor','WelchWindowedSinc']: 
-    interpolation_parameters: (5,)
-    # type=traitcompound|default=None: 
+    # type=enum|default='Linear'|allowed['BSpline','CosineWindowedSinc','Gaussian','GenericLabel','HammingWindowedSinc','LanczosWindowedSinc','Linear','MultiLabel','NearestNeighbor','WelchWindowedSinc']: 
     default_value: '0'
     # type=float|default=0.0: 
-    transforms: '["identity", "ants_Warp.nii.gz", "trans.mat"]'
-    # type=inputmultiobject|default=[]: transform files: will be applied in reverse order. For example, the last specified transform will be applied first.
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

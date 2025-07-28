@@ -7,18 +7,18 @@
 # ----
 # Uses ANTS to generate matrices to warp data from one space to another.
 # 
-#     Examples
-#     --------
+# Examples
+# --------
 # 
-#     >>> from nipype.interfaces.ants.legacy import antsIntroduction
-#     >>> warp = antsIntroduction()
-#     >>> warp.inputs.reference_image = 'Template_6.nii'
-#     >>> warp.inputs.input_image = 'structural.nii'
-#     >>> warp.inputs.max_iterations = [30,90,20]
-#     >>> warp.cmdline
-#     'antsIntroduction.sh -d 3 -i structural.nii -m 30x90x20 -o ants_ -r Template_6.nii -t GR'
+# >>> from nipype.interfaces.ants.legacy import antsIntroduction
+# >>> warp = antsIntroduction()
+# >>> warp.inputs.reference_image = 'Template_6.nii'
+# >>> warp.inputs.input_image = 'structural.nii'
+# >>> warp.inputs.max_iterations = [30,90,20]
+# >>> warp.cmdline
+# 'antsIntroduction.sh -d 3 -i structural.nii -m 30x90x20 -o ants_ -r Template_6.nii -t GR'
 # 
-#     
+# 
 task_name: antsIntroduction
 nipype_name: antsIntroduction
 nipype_module: nipype.interfaces.ants.legacy
@@ -33,7 +33,7 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    input_image: medimage/nifti1
+    input_image: generic/file
     # type=file|default=<undefined>: input image to warp to template
     reference_image: medimage/nifti1
     # type=file|default=<undefined>: template file to warp to
@@ -67,7 +67,7 @@ outputs:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
@@ -103,7 +103,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -122,12 +122,10 @@ tests:
   # (if not specified, will try to choose a sensible value)
     reference_image:
     # type=file|default=<undefined>: template file to warp to
-    input_image:
-    # type=file|default=<undefined>: input image to warp to template
     max_iterations: '[30,90,20]'
     # type=list|default=[]: maximum number of iterations (must be list of integers in the form [J,K,L...]: J = coarsest resolution iterations, K = middle resolution iterations, L = fine resolution iterations
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -150,12 +148,10 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     reference_image: '"Template_6.nii"'
     # type=file|default=<undefined>: template file to warp to
-    input_image: '"structural.nii"'
-    # type=file|default=<undefined>: input image to warp to template
     max_iterations: '[30,90,20]'
     # type=list|default=[]: maximum number of iterations (must be list of integers in the form [J,K,L...]: J = coarsest resolution iterations, K = middle resolution iterations, L = fine resolution iterations
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

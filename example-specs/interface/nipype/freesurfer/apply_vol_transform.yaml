@@ -7,19 +7,19 @@
 # ----
 # Use FreeSurfer mri_vol2vol to apply a transform.
 # 
-#     Examples
-#     --------
+# Examples
+# --------
 # 
-#     >>> from nipype.interfaces.freesurfer import ApplyVolTransform
-#     >>> applyreg = ApplyVolTransform()
-#     >>> applyreg.inputs.source_file = 'structural.nii'
-#     >>> applyreg.inputs.reg_file = 'register.dat'
-#     >>> applyreg.inputs.transformed_file = 'struct_warped.nii'
-#     >>> applyreg.inputs.fs_target = True
-#     >>> applyreg.cmdline
-#     'mri_vol2vol --fstarg --reg register.dat --mov structural.nii --o struct_warped.nii'
+# >>> from nipype.interfaces.freesurfer import ApplyVolTransform
+# >>> applyreg = ApplyVolTransform()
+# >>> applyreg.inputs.source_file = 'structural.nii'
+# >>> applyreg.inputs.reg_file = 'register.dat'
+# >>> applyreg.inputs.transformed_file = 'struct_warped.nii'
+# >>> applyreg.inputs.fs_target = True
+# >>> applyreg.cmdline
+# 'mri_vol2vol --fstarg --reg register.dat --mov structural.nii --o struct_warped.nii'
 # 
-#     
+# 
 task_name: ApplyVolTransform
 nipype_name: ApplyVolTransform
 nipype_module: nipype.interfaces.freesurfer.preprocess
@@ -42,7 +42,7 @@ inputs:
     # type=file|default=<undefined>: LTA, invert
     m3z_file: generic/file
     # type=file|default=<undefined>: This is the morph to be applied to the volume. Unless the morph is in mri/transforms (eg.: for talairach.m3z computed by reconall), you will need to specify the full path to this morph and use the --noDefM3zPath flag.
-    reg_file: datascience/dat-file
+    reg_file: generic/file
     # type=file|default=<undefined>: tkRAS-to-tkRAS matrix   (tkregister2 format)
     source_file: medimage/nifti1
     # type=file|default=<undefined>: Input volume you wish to transform
@@ -50,9 +50,6 @@ inputs:
     # type=directory|default=<undefined>: subjects directory
     target_file: generic/file
     # type=file|default=<undefined>: Output template volume
-    transformed_file: Path
-    # type=file: Path to output file if used normally
-    # type=file|default=<undefined>: Output volume
     xfm_reg_file: generic/file
     # type=file|default=<undefined>: ScannerRAS-to-ScannerRAS matrix (MNI format)
   callable_defaults:
@@ -78,7 +75,7 @@ outputs:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
     transformed_file: '"struct_warped.nii"'
     # type=file: Path to output file if used normally
     # type=file|default=<undefined>: Output volume
@@ -136,7 +133,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -155,15 +152,11 @@ tests:
   # (if not specified, will try to choose a sensible value)
     source_file:
     # type=file|default=<undefined>: Input volume you wish to transform
-    reg_file:
-    # type=file|default=<undefined>: tkRAS-to-tkRAS matrix   (tkregister2 format)
     transformed_file: '"struct_warped.nii"'
     # type=file: Path to output file if used normally
     # type=file|default=<undefined>: Output volume
-    fs_target: 'True'
-    # type=bool|default=False: use orig.mgz from subject in regfile as target
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -186,15 +179,11 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     source_file: '"structural.nii"'
     # type=file|default=<undefined>: Input volume you wish to transform
-    reg_file: '"register.dat"'
-    # type=file|default=<undefined>: tkRAS-to-tkRAS matrix   (tkregister2 format)
     transformed_file: '"struct_warped.nii"'
     # type=file: Path to output file if used normally
     # type=file|default=<undefined>: Output volume
-    fs_target: 'True'
-    # type=bool|default=False: use orig.mgz from subject in regfile as target
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

@@ -13,9 +13,11 @@ from ..utils import (
     extract_args,
     find_super_method,
     cleanup_function_body,
+    type_to_str,
 )
 from fileformats.core.mixin import WithClassifiers
-from fileformats.generic import File, Directory
+from fileformats.generic import File
+from pydra.utils.typing import is_optional
 
 
 logger = logging.getLogger("nipype2pydra")
@@ -24,7 +26,7 @@ CALLABLES_ARGS = ["inputs", "stdout", "stderr", "output_dir"]
 
 
 @attrs.define(slots=False)
-class ShellCommandInterfaceConverter(BaseInterfaceConverter):
+class ShellInterfaceConverter(BaseInterfaceConverter):
 
     converter_type = "shell_command"
     _format_argstrs: ty.Dict[str, str] = attrs.field(factory=dict)
@@ -49,6 +51,16 @@ class ShellCommandInterfaceConverter(BaseInterfaceConverter):
 
     def generate_code(self, input_fields, nonstd_types, output_fields) -> str:
         """
+        Parameters
+        ----------
+        input_fields : list[tuple[str, type, dict] | tuple[str, type, object, dict]]
+            list of input fields, each field is a tuple of (name, type, metadata) or
+            (name, type, default, metadata)
+        nonstd_types : set[type]
+            set of non-standard types
+        output_fields : list[tuple[str, type, dict]]
+            list of output fields, each field is a tuple of (name, type, metadata)
+
         Returns
         -------
         converted_code : str
@@ -58,12 +70,9 @@ class ShellCommandInterfaceConverter(BaseInterfaceConverter):
         """
 
         base_imports = [
-            "from pydra.engine import specs",
             "import os",
+            "from pydra.compose import shell",
         ]
-
-        task_base = "ShellCommandTask"
-        base_imports.append("from pydra.engine import ShellCommandTask")
 
         try:
             executable = self.nipype_interface._cmd
@@ -77,56 +86,68 @@ class ShellCommandInterfaceConverter(BaseInterfaceConverter):
                     "try the FunctionInterfaceConverter class instead"
                 )
 
-        def unwrap_field_type(t):
-            if issubclass(t, WithClassifiers) and t.is_classified:
-                unwraped_classifiers = ", ".join(
-                    unwrap_field_type(c) for c in t.classifiers
-                )
-                return f"{t.unclassified.__name__}[{unwraped_classifiers}]"
-            return t.__name__
-
         nonstd_types = copy(nonstd_types)
-
-        def types_to_names(spec_fields):
-            spec_fields_str = []
-            for el in spec_fields:
-                el = list(el)
-                field_type = el[1]
-                if inspect.isclass(field_type) and issubclass(
-                    field_type, WithClassifiers
-                ):
-                    field_type_str = unwrap_field_type(field_type)
-                else:
-                    field_type_str = str(field_type)
-                    if field_type_str.startswith("<class "):
-                        field_type_str = el[1].__name__
-                    else:
-                        # Alter modules in type string to match those that will be imported
-                        field_type_str = field_type_str.replace("typing", "ty")
-                        field_type_str = re.sub(
-                            r"(\w+\.)+(?<!ty\.)(\w+)", r"\2", field_type_str
-                        )
-                if field_type_str == "File":
-                    nonstd_types.add(File)
-                elif field_type_str == "Directory":
-                    nonstd_types.add(Directory)
-                el[1] = "#" + field_type_str + "#"
-                spec_fields_str.append(tuple(el))
-            return spec_fields_str
 
         input_names = [i[0] for i in input_fields]
         output_names = [o[0] for o in output_fields]
-        input_fields_str = str(types_to_names(spec_fields=input_fields))
-        input_fields_str = re.sub(
-            r"'formatter': '(\w+)'", r"'formatter': \1", input_fields_str
-        )
-        output_fields_str = str(types_to_names(spec_fields=output_fields))
-        output_fields_str = re.sub(
-            r"'callable': '(\w+)'", r"'callable': \1", output_fields_str
-        )
-        # functions_str = self.function_callables()
-        # functions_imports, functions_str = functions_str.split("\n\n", 1)
-        # spec_str = functions_str
+
+        # Pull out xor fields into task-level xor_sets
+        xor_sets = set()
+        for inpt in input_fields:
+            if len(inpt) == 3:
+                name, _, mdata = inpt
+            else:
+                name, _, __, mdata = inpt
+            if "xor" in mdata:
+                xor_sets.add(frozenset(mdata["xor"] + [name]))
+
+        input_fields_str = ""
+        output_fields_str = ""
+
+        for inpt in input_fields:
+            if len(inpt) == 3:
+                name, type_, mdata = inpt
+                mdata = copy(mdata)  # Copy to avoid modifying the original
+            else:
+                name, type_, default, mdata = inpt
+                mdata = copy(mdata)  # Copy to avoid modifying the original
+                mdata["default"] = default
+            if (
+                any(name in x for x in xor_sets)
+                and type_ is not bool
+                and not is_optional(type_)
+                and (inspect.isclass(type_) and not issubclass(type_, ty.Sequence))
+            ):
+                type_ = type_ | None
+            type_str = type_to_str(type_, mdata.pop("mandatory", True))
+            if mdata.pop("copyfile", None):
+                nonstd_types.add(File)
+                mdata["copy_mode"] = "File.CopyMode.copy"
+            mdata.pop("xor", None)
+            args_str = ", ".join(f"{k}={v!r}" for k, v in mdata.items())
+            if "path_template" in mdata:
+                output_fields_str = (
+                    f"        {name}: {type_str} = shell.outarg({args_str})\n"
+                )
+            else:
+                input_fields_str += f"    {name}: {type_str} = shell.arg({args_str})\n"
+
+        callable_fields = set(n for n, _, __ in self.callable_output_fields)
+
+        for outpt in output_fields:
+            name, type_, mdata = outpt
+            cllble = mdata.pop(
+                "callable", f"{name}_callable" if name in callable_fields else None
+            )
+            args_str = ", ".join(f"{k}={v!r}" for k, v in mdata.items())
+            if args_str:
+                args_str += ", "
+            if cllble:
+                args_str += f"callable={cllble}"
+            output_fields_str += (
+                f"        {name}: {type_to_str(type_)} = shell.out({args_str})\n"
+            )
+
         spec_str = (
             self.init_code
             + self.format_arg_code
@@ -134,22 +155,25 @@ class ShellCommandInterfaceConverter(BaseInterfaceConverter):
             + self.callables_code
             + self.defaults_code
         )
-        spec_str += f"input_fields = {input_fields_str}\n"
-        spec_str += f"{self.task_name}_input_spec = specs.SpecInfo(name='Input', fields=input_fields, bases=(specs.ShellSpec,))\n\n"
-        spec_str += f"output_fields = {output_fields_str}\n"
-        spec_str += f"{self.task_name}_output_spec = specs.SpecInfo(name='Output', fields=output_fields, bases=(specs.ShellOutSpec,))\n\n"
-        spec_str += f"class {self.task_name}({task_base}):\n"
+
+        spec_str += "@shell.define"
+        if xor_sets:
+            spec_str += f"(xor={[list(x) for x in xor_sets]})"
+        spec_str += (
+            f"\nclass {self.task_name}(shell.Task['{self.task_name}.Outputs']):\n"
+        )
         spec_str += '    """\n'
         spec_str += self.create_doctests(
             input_fields=input_fields, nonstd_types=nonstd_types
         )
         spec_str += '    """\n'
-        spec_str += f"    input_spec = {self.task_name}_input_spec\n"
-        spec_str += f"    output_spec = {self.task_name}_output_spec\n"
-        if task_base == "ShellCommandTask":
-            spec_str += f"    executable='{executable}'\n"
+        spec_str += f"    executable='{executable}'\n"
 
-        spec_str = re.sub(r"'#([^'#]+)#'", r"\1", spec_str)
+        spec_str += input_fields_str + "\n"
+        spec_str += "    class Outputs(shell.Outputs):\n"
+        spec_str += output_fields_str
+
+        # spec_str = re.sub(r"'#([^'#]+)#'", r"\1", spec_str)
 
         for m in sorted(self.used.methods, key=attrgetter("__name__")):
             if m.__name__ in self.included_methods:
@@ -215,10 +239,7 @@ class ShellCommandInterfaceConverter(BaseInterfaceConverter):
         return [
             f
             for f in super().output_fields
-            if (
-                "output_file_template" not in f[-1]
-                and f[0] not in INBUILT_NIPYPE_TRAIT_NAMES
-            )
+            if ("path_template" not in f[-1] and f[0] not in INBUILT_NIPYPE_TRAIT_NAMES)
         ]
 
     @property
@@ -456,7 +477,7 @@ class ShellCommandInterfaceConverter(BaseInterfaceConverter):
                 )
                 lo_body = self._process_inputs(lo_body)
                 lo_body = re.sub(
-                    r"(\w+) = self\.output_spec\(\).get\(\)", r"\1 = {}", lo_body
+                    r"(\w+) = self\.output_spec\(\).(?:trait_)get\(\)", r"\1 = {}", lo_body
                 )
 
                 if not lo_body.strip():
@@ -488,7 +509,7 @@ class ShellCommandInterfaceConverter(BaseInterfaceConverter):
             code_str += (
                 f"\n\n\ndef {output_name}_callable(output_dir, inputs, stdout, stderr):\n"
                 f"    outputs = {func_name}(output_dir=output_dir, inputs=inputs, stdout=stdout, stderr=stderr)\n"
-                '    return outputs.get("' + output_name + '", attrs.NOTHING)\n\n'
+                '    return outputs.get("' + output_name + '")\n\n'
             )
         return code_str
 
@@ -533,9 +554,9 @@ class ShellCommandInterfaceConverter(BaseInterfaceConverter):
         body = inspect.getsource(method).split("\n", 1)[1]
         body = "\n" + _strip_doc_string(body)
         body = cleanup_function_body(body)
-        args = list(inspect.signature(method).parameters.keys())[1:]
+        defn_args = list(inspect.signature(method).parameters.keys())[1:]
         if arg_names:
-            for new, old in zip(args, arg_names):
+            for new, old in zip(defn_args, arg_names):
                 if new != old:
                     body = re.sub(r"\b" + old + r"\b", new, body)
         super_re = re.compile(
@@ -544,7 +565,7 @@ class ShellCommandInterfaceConverter(BaseInterfaceConverter):
         if super_re.search(body):
             super_method, base = find_super_method(base, method_name)
             super_body = self._unwrap_supers(
-                super_method, base, base_replacement, arg_names=args
+                super_method, base, base_replacement, arg_names=defn_args
             )
             return_indent = return_val = None
             if super_body:
@@ -562,7 +583,6 @@ class ShellCommandInterfaceConverter(BaseInterfaceConverter):
             for call, block in zip(splits[1::2], splits[2::2]):
                 _, args, post = extract_args(block)
                 indent = re.match(r"^(\s*)", call).group(1)
-                arg_str = ", ".join(args)
                 if "=" in call:
                     assert return_val
                     assigned_to_varname = call.split("=")[0].strip()
@@ -582,7 +602,7 @@ class ShellCommandInterfaceConverter(BaseInterfaceConverter):
                     continue
                 for o, n in zip(args, super_args):
                     replacement = re.sub(r"\b" + o + r"\b", n, replacement)
-                new_body += replacement + "(" + arg_str + post
+                new_body += replacement + post[1:]
             return new_body
         return body
 

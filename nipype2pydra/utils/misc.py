@@ -10,6 +10,7 @@ from contextlib import contextmanager
 from pathlib import Path
 from fileformats.core import FileSet, from_mime
 from fileformats.core.mixin import WithClassifiers
+from pydra.utils.typing import is_union, is_optional
 from ..exceptions import (
     UnmatchedParensException,
     UnmatchedQuoteException,
@@ -22,7 +23,7 @@ except ImportError:
 
 from importlib import import_module
 from logging import getLogger
-from pydra.engine.specs import MultiInputObj
+from pydra.utils.typing import MultiInputObj
 
 
 logger = getLogger("nipype2pydra")
@@ -582,3 +583,29 @@ def find_super_method(
 
 def strip_comments(src: str) -> str:
     return re.sub(r"^\s+#.*", "", src, flags=re.MULTILINE)
+
+
+def type_to_str(type_: type, mandatory: bool = False) -> str:
+    """Convert a type to a string representation"""
+    if hasattr(type_, "__name__"):
+        type_str = type_.__name__
+    else:
+        type_str = str(type_)
+    if is_union(type_):
+        args = [t if t is not type(None) else None for t in ty.get_args(type_)]
+        if not mandatory and not is_optional(type_):
+            args.append(None)
+        return " | ".join(
+            type_to_str(a, mandatory=True) if a is not None else "None" for a in args
+        )
+    if origin := ty.get_origin(type_):
+        args = [type_to_str(arg, mandatory=True) for arg in ty.get_args(type_)]
+        type_str = f"{origin.__name__}[{', '.join(args)}]"
+        module = origin.__module__
+    else:
+        module = type_.__module__
+    if module == "typing":
+        type_str = "ty." + type_str
+    if not mandatory:
+        type_str += " | None"
+    return type_str

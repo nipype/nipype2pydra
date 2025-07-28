@@ -7,18 +7,18 @@
 # ----
 # Use FreeSurfer mri_convert to up or down-sample image files
 # 
-#     Examples
-#     --------
+# Examples
+# --------
 # 
-#     >>> from nipype.interfaces import freesurfer
-#     >>> resampler = freesurfer.Resample()
-#     >>> resampler.inputs.in_file = 'structural.nii'
-#     >>> resampler.inputs.resampled_file = 'resampled.nii'
-#     >>> resampler.inputs.voxel_size = (2.1, 2.1, 2.1)
-#     >>> resampler.cmdline
-#     'mri_convert -vs 2.10 2.10 2.10 -i structural.nii -o resampled.nii'
+# >>> from nipype.interfaces import freesurfer
+# >>> resampler = freesurfer.Resample()
+# >>> resampler.inputs.in_file = 'structural.nii'
+# >>> resampler.inputs.resampled_file = 'resampled.nii'
+# >>> resampler.inputs.voxel_size = (2.1, 2.1, 2.1)
+# >>> resampler.cmdline
+# 'mri_convert -vs 2.10 2.10 2.10 -i structural.nii -o resampled.nii'
 # 
-#     
+# 
 task_name: Resample
 nipype_name: Resample
 nipype_module: nipype.interfaces.freesurfer.preprocess
@@ -35,9 +35,6 @@ inputs:
   # passed to the field in the automatically generated unittests.
     in_file: medimage/nifti1
     # type=file|default=<undefined>: file to resample
-    resampled_file: Path
-    # type=file: output filename
-    # type=file|default=<undefined>: output filename
     subjects_dir: generic/directory
     # type=directory|default=<undefined>: subjects directory
   callable_defaults:
@@ -56,15 +53,15 @@ outputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    resampled_file: medimage/nifti1
+    resampled_file: generic/file
     # type=file: output filename
     # type=file|default=<undefined>: output filename
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
-    resampled_file: '"resampled.nii"'
+  # dict[str, str] - `path_template` values to be provided to output fields
+    resampled_file: resampled_file
     # type=file: output filename
     # type=file|default=<undefined>: output filename
   requirements:
@@ -87,7 +84,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -106,13 +103,10 @@ tests:
   # (if not specified, will try to choose a sensible value)
     in_file:
     # type=file|default=<undefined>: file to resample
-    resampled_file: '"resampled.nii"'
-    # type=file: output filename
-    # type=file|default=<undefined>: output filename
     voxel_size: (2.1, 2.1, 2.1)
     # type=tuple|default=(0.0, 0.0, 0.0): triplet of output voxel sizes
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -135,13 +129,10 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     in_file: '"structural.nii"'
     # type=file|default=<undefined>: file to resample
-    resampled_file: '"resampled.nii"'
-    # type=file: output filename
-    # type=file|default=<undefined>: output filename
     voxel_size: (2.1, 2.1, 2.1)
     # type=tuple|default=(0.0, 0.0, 0.0): triplet of output voxel sizes
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

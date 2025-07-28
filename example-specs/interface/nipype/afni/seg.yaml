@@ -6,23 +6,23 @@
 # Docs
 # ----
 # 3dSeg segments brain volumes into tissue classes. The program allows
-#     for adding a variety of global and voxelwise priors. However for the
-#     moment, only mixing fractions and MRF are documented.
+# for adding a variety of global and voxelwise priors. However for the
+# moment, only mixing fractions and MRF are documented.
 # 
-#     For complete details, see the `3dSeg Documentation.
-#     <https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dSeg.html>`_
+# For complete details, see the `3dSeg Documentation.
+# <https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dSeg.html>`_
 # 
-#     Examples
-#     --------
-#     >>> from nipype.interfaces.afni import preprocess
-#     >>> seg = preprocess.Seg()
-#     >>> seg.inputs.in_file = 'structural.nii'
-#     >>> seg.inputs.mask = 'AUTO'
-#     >>> seg.cmdline
-#     '3dSeg -mask AUTO -anat structural.nii'
-#     >>> res = seg.run()  # doctest: +SKIP
+# Examples
+# --------
+# >>> from nipype.interfaces.afni import preprocess
+# >>> seg = preprocess.Seg()
+# >>> seg.inputs.in_file = 'structural.nii'
+# >>> seg.inputs.mask = 'AUTO'
+# >>> seg.cmdline
+# '3dSeg -mask AUTO -anat structural.nii'
+# >>> res = seg.run()  # doctest: +SKIP
 # 
-#     
+# 
 task_name: Seg
 nipype_name: Seg
 nipype_module: nipype.interfaces.afni.preprocess
@@ -61,7 +61,7 @@ outputs:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
@@ -95,7 +95,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -114,10 +114,8 @@ tests:
   # (if not specified, will try to choose a sensible value)
     in_file:
     # type=file|default=<undefined>: ANAT is the volume to segment
-    mask: '"AUTO"'
-    # type=traitcompound|default=None: only non-zero voxels in mask are analyzed. mask can either be a dataset or the string "AUTO" which would use AFNI's automask function to create the mask.
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -132,7 +130,7 @@ tests:
   # bool - whether the unittest is expected to fail or not. Set to false
   # when you are satisfied with the edits you have made to this file
 doctests:
-- cmdline: 3dSeg -mask AUTO -anat structural.nii
+- cmdline:
   # str - the expected cmdline output
   inputs:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
@@ -140,10 +138,8 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     in_file: '"structural.nii"'
     # type=file|default=<undefined>: ANAT is the volume to segment
-    mask: '"AUTO"'
-    # type=traitcompound|default=None: only non-zero voxels in mask are analyzed. mask can either be a dataset or the string "AUTO" which would use AFNI's automask function to create the mask.
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

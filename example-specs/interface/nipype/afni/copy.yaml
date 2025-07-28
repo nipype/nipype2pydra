@@ -6,40 +6,40 @@
 # Docs
 # ----
 # Copies an image of one type to an image of the same
-#     or different type using 3dcopy command
+# or different type using 3dcopy command
 # 
-#     For complete details, see the `3dcopy Documentation.
-#     <https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dcopy.html>`__
+# For complete details, see the `3dcopy Documentation.
+# <https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dcopy.html>`__
 # 
-#     Examples
-#     --------
-#     >>> from nipype.interfaces import afni
-#     >>> copy3d = afni.Copy()
-#     >>> copy3d.inputs.in_file = 'functional.nii'
-#     >>> copy3d.cmdline
-#     '3dcopy functional.nii functional_copy'
-#     >>> res = copy3d.run()  # doctest: +SKIP
+# Examples
+# --------
+# >>> from nipype.interfaces import afni
+# >>> copy3d = afni.Copy()
+# >>> copy3d.inputs.in_file = 'functional.nii'
+# >>> copy3d.cmdline
+# '3dcopy functional.nii functional_copy'
+# >>> res = copy3d.run()  # doctest: +SKIP
 # 
-#     >>> from copy import deepcopy
-#     >>> copy3d_2 = deepcopy(copy3d)
-#     >>> copy3d_2.inputs.outputtype = 'NIFTI'
-#     >>> copy3d_2.cmdline
-#     '3dcopy functional.nii functional_copy.nii'
-#     >>> res = copy3d_2.run()  # doctest: +SKIP
+# >>> from copy import deepcopy
+# >>> copy3d_2 = deepcopy(copy3d)
+# >>> copy3d_2.inputs.outputtype = 'NIFTI'
+# >>> copy3d_2.cmdline
+# '3dcopy functional.nii functional_copy.nii'
+# >>> res = copy3d_2.run()  # doctest: +SKIP
 # 
-#     >>> copy3d_3 = deepcopy(copy3d)
-#     >>> copy3d_3.inputs.outputtype = 'NIFTI_GZ'
-#     >>> copy3d_3.cmdline
-#     '3dcopy functional.nii functional_copy.nii.gz'
-#     >>> res = copy3d_3.run()  # doctest: +SKIP
+# >>> copy3d_3 = deepcopy(copy3d)
+# >>> copy3d_3.inputs.outputtype = 'NIFTI_GZ'
+# >>> copy3d_3.cmdline
+# '3dcopy functional.nii functional_copy.nii.gz'
+# >>> res = copy3d_3.run()  # doctest: +SKIP
 # 
-#     >>> copy3d_4 = deepcopy(copy3d)
-#     >>> copy3d_4.inputs.out_file = 'new_func.nii'
-#     >>> copy3d_4.cmdline
-#     '3dcopy functional.nii new_func.nii'
-#     >>> res = copy3d_4.run()  # doctest: +SKIP
+# >>> copy3d_4 = deepcopy(copy3d)
+# >>> copy3d_4.inputs.out_file = 'new_func.nii'
+# >>> copy3d_4.cmdline
+# '3dcopy functional.nii new_func.nii'
+# >>> res = copy3d_4.run()  # doctest: +SKIP
 # 
-#     
+# 
 task_name: Copy
 nipype_name: Copy
 nipype_module: nipype.interfaces.afni.utils
@@ -56,9 +56,6 @@ inputs:
   # passed to the field in the automatically generated unittests.
     in_file: medimage/nifti1
     # type=file|default=<undefined>: input file to 3dcopy
-    out_file: Path
-    # type=file: output file
-    # type=file|default=<undefined>: output image file name
   callable_defaults:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set as the `default` method of input fields
@@ -82,7 +79,7 @@ outputs:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
@@ -105,7 +102,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -125,7 +122,7 @@ tests:
     in_file:
     # type=file|default=<undefined>: input file to 3dcopy
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -145,7 +142,7 @@ tests:
     outputtype: '"NIFTI"'
     # type=enum|default='AFNI'|allowed['AFNI','NIFTI','NIFTI_GZ']: AFNI output filetype
   imports: &id001
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   - module: copy
     name: deepcopy
@@ -168,7 +165,7 @@ tests:
     outputtype: '"NIFTI_GZ"'
     # type=enum|default='AFNI'|allowed['AFNI','NIFTI','NIFTI_GZ']: AFNI output filetype
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -189,7 +186,7 @@ tests:
     # type=file: output file
     # type=file|default=<undefined>: output image file name
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -204,7 +201,7 @@ tests:
   # bool - whether the unittest is expected to fail or not. Set to false
   # when you are satisfied with the edits you have made to this file
 doctests:
-- cmdline: 3dcopy functional.nii functional_copy
+- cmdline:
   # str - the expected cmdline output
   inputs:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
@@ -213,7 +210,7 @@ doctests:
     in_file: '"functional.nii"'
     # type=file|default=<undefined>: input file to 3dcopy
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS
@@ -226,7 +223,7 @@ doctests:
     outputtype: '"NIFTI"'
     # type=enum|default='AFNI'|allowed['AFNI','NIFTI','NIFTI_GZ']: AFNI output filetype
   imports: *id001
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS
@@ -239,7 +236,7 @@ doctests:
     outputtype: '"NIFTI_GZ"'
     # type=enum|default='AFNI'|allowed['AFNI','NIFTI','NIFTI_GZ']: AFNI output filetype
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS
@@ -253,7 +250,7 @@ doctests:
     # type=file: output file
     # type=file|default=<undefined>: output image file name
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

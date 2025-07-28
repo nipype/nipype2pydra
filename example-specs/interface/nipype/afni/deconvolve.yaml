@@ -7,26 +7,26 @@
 # ----
 # Performs OLS regression given a 4D neuroimage file and stimulus timings
 # 
-#     For complete details, see the `3dDeconvolve Documentation.
-#     <https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dDeconvolve.html>`_
+# For complete details, see the `3dDeconvolve Documentation.
+# <https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dDeconvolve.html>`_
 # 
-#     Examples
-#     ========
+# Examples
+# ========
 # 
-#     >>> from nipype.interfaces import afni
-#     >>> deconvolve = afni.Deconvolve()
-#     >>> deconvolve.inputs.in_files = ['functional.nii', 'functional2.nii']
-#     >>> deconvolve.inputs.out_file = 'output.nii'
-#     >>> deconvolve.inputs.x1D = 'output.1D'
-#     >>> stim_times = [(1, 'timeseries.txt', 'SPMG1(4)')]
-#     >>> deconvolve.inputs.stim_times = stim_times
-#     >>> deconvolve.inputs.stim_label = [(1, 'Houses')]
-#     >>> deconvolve.inputs.gltsym = ['SYM: +Houses']
-#     >>> deconvolve.inputs.glt_label = [(1, 'Houses')]
-#     >>> deconvolve.cmdline
-#     "3dDeconvolve -input functional.nii functional2.nii -bucket output.nii -x1D output.1D -num_stimts 1 -stim_times 1 timeseries.txt 'SPMG1(4)' -stim_label 1 Houses -num_glt 1 -gltsym 'SYM: +Houses' -glt_label 1 Houses"
-#     >>> res = deconvolve.run()  # doctest: +SKIP
-#     
+# >>> from nipype.interfaces import afni
+# >>> deconvolve = afni.Deconvolve()
+# >>> deconvolve.inputs.in_files = ['functional.nii', 'functional2.nii']
+# >>> deconvolve.inputs.out_file = 'output.nii'
+# >>> deconvolve.inputs.x1D = 'output.1D'
+# >>> stim_times = [(1, 'timeseries.txt', 'SPMG1(4)')]
+# >>> deconvolve.inputs.stim_times = stim_times
+# >>> deconvolve.inputs.stim_label = [(1, 'Houses')]
+# >>> deconvolve.inputs.gltsym = ['SYM: +Houses']
+# >>> deconvolve.inputs.glt_label = [(1, 'Houses')]
+# >>> deconvolve.cmdline
+# "3dDeconvolve -input functional.nii functional2.nii -bucket output.nii -x1D output.1D -num_stimts 1 -stim_times 1 timeseries.txt 'SPMG1(4)' -stim_label 1 Houses -num_glt 1 -gltsym 'SYM: +Houses' -glt_label 1 Houses"
+# >>> res = deconvolve.run()  # doctest: +SKIP
+# 
 task_name: Deconvolve
 nipype_name: Deconvolve
 nipype_module: nipype.interfaces.afni.model
@@ -51,12 +51,6 @@ inputs:
     # type=file|default=<undefined>: filename of single (fMRI) .1D time series where time runs down the column.
     mask: generic/file
     # type=file|default=<undefined>: filename of 3D mask dataset; only data time series from within the mask will be analyzed; results for voxels outside the mask will be set to zero.
-    out_file: Path
-    # type=file: output statistics file
-    # type=file|default=<undefined>: output statistics file
-    x1D: Path
-    # type=file: save out X matrix
-    # type=file|default=<undefined>: specify name for saved X matrix
   callable_defaults:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set as the `default` method of input fields
@@ -76,19 +70,19 @@ outputs:
     cbucket: generic/file
     # type=file: output regression coefficients file (if generated)
     # type=str|default='': Name for dataset in which to save the regression coefficients (no statistics). This dataset will be used in a -xrestore run [not yet implemented] instead of the bucket dataset, if possible.
-    out_file: medimage/nifti1
+    out_file: generic/file
     # type=file: output statistics file
     # type=file|default=<undefined>: output statistics file
     reml_script: generic/file
     # type=file: automatically generated script to run 3dREMLfit
-    x1D: medimage-afni/one-d
+    x1D: fileformats.medimage_afni.OneD
     # type=file: save out X matrix
     # type=file|default=<undefined>: specify name for saved X matrix
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
@@ -193,7 +187,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -212,22 +206,15 @@ tests:
   # (if not specified, will try to choose a sensible value)
     in_files:
     # type=inputmultiobject|default=[]: filenames of 3D+time input datasets. More than one filename can be given and the datasets will be auto-catenated in time. You can input a 1D time series file here, but the time axis should run along the ROW direction, not the COLUMN direction as in the 'input1D' option.
-    out_file: '"output.nii"'
-    # type=file: output statistics file
-    # type=file|default=<undefined>: output statistics file
     x1D: '"output.1D"'
     # type=file: save out X matrix
     # type=file|default=<undefined>: specify name for saved X matrix
     stim_times: stim_times
     # type=list|default=[]: generate a response model from a set of stimulus times given in file.
-    stim_label: '[(1, "Houses")]'
-    # type=list|default=[]: label for kth input stimulus (e.g., Label1)
     gltsym: '["SYM: +Houses"]'
     # type=list|default=[]: general linear tests (i.e., contrasts) using symbolic conventions (e.g., '+Label1 -Label2')
-    glt_label: '[(1, "Houses")]'
-    # type=list|default=[]: general linear test (i.e., contrast) labels
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -250,22 +237,15 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     in_files: '["functional.nii", "functional2.nii"]'
     # type=inputmultiobject|default=[]: filenames of 3D+time input datasets. More than one filename can be given and the datasets will be auto-catenated in time. You can input a 1D time series file here, but the time axis should run along the ROW direction, not the COLUMN direction as in the 'input1D' option.
-    out_file: '"output.nii"'
-    # type=file: output statistics file
-    # type=file|default=<undefined>: output statistics file
     x1D: '"output.1D"'
     # type=file: save out X matrix
     # type=file|default=<undefined>: specify name for saved X matrix
     stim_times: stim_times
     # type=list|default=[]: generate a response model from a set of stimulus times given in file.
-    stim_label: '[(1, "Houses")]'
-    # type=list|default=[]: label for kth input stimulus (e.g., Label1)
     gltsym: '["SYM: +Houses"]'
     # type=list|default=[]: general linear tests (i.e., contrasts) using symbolic conventions (e.g., '+Label1 -Label2')
-    glt_label: '[(1, "Houses")]'
-    # type=list|default=[]: general linear test (i.e., contrast) labels
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

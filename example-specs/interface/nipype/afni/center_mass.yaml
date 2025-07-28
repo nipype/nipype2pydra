@@ -7,27 +7,27 @@
 # ----
 # Computes center of mass using 3dCM command
 # 
-#     .. note::
+# .. note::
 # 
-#       By default, the output is (x,y,z) values in DICOM coordinates. But
-#       as of Dec, 2016, there are now command line switches for other options.
+#   By default, the output is (x,y,z) values in DICOM coordinates. But
+#   as of Dec, 2016, there are now command line switches for other options.
 # 
 # 
-#     For complete details, see the `3dCM Documentation.
-#     <https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dCM.html>`_
+# For complete details, see the `3dCM Documentation.
+# <https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dCM.html>`_
 # 
-#     Examples
-#     --------
-#     >>> from nipype.interfaces import afni
-#     >>> cm = afni.CenterMass()
-#     >>> cm.inputs.in_file = 'structural.nii'
-#     >>> cm.inputs.cm_file = 'cm.txt'
-#     >>> cm.inputs.roi_vals = [2, 10]
-#     >>> cm.cmdline
-#     '3dCM -roi_vals 2 10 structural.nii > cm.txt'
-#     >>> res = 3dcm.run()  # doctest: +SKIP
+# Examples
+# --------
+# >>> from nipype.interfaces import afni
+# >>> cm = afni.CenterMass()
+# >>> cm.inputs.in_file = 'structural.nii'
+# >>> cm.inputs.cm_file = 'cm.txt'
+# >>> cm.inputs.roi_vals = [2, 10]
+# >>> cm.cmdline
+# '3dCM -roi_vals 2 10 structural.nii > cm.txt'
+# >>> res = 3dcm.run()  # doctest: +SKIP
 # 
-#     
+# 
 task_name: CenterMass
 nipype_name: CenterMass
 nipype_module: nipype.interfaces.afni.utils
@@ -42,9 +42,6 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    cm_file: Path
-    # type=file: file with the center of mass coordinates
-    # type=file|default=<undefined>: File to write center of mass to
     in_file: medimage/nifti1
     # type=file|default=<undefined>: input file to 3dCM
     mask_file: generic/file
@@ -65,7 +62,7 @@ outputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    cm_file: text/text-file
+    cm_file: generic/file
     # type=file: file with the center of mass coordinates
     # type=file|default=<undefined>: File to write center of mass to
     out_file: generic/file
@@ -74,7 +71,7 @@ outputs:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
@@ -103,7 +100,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -122,13 +119,10 @@ tests:
   # (if not specified, will try to choose a sensible value)
     in_file:
     # type=file|default=<undefined>: input file to 3dCM
-    cm_file: '"cm.txt"'
-    # type=file: file with the center of mass coordinates
-    # type=file|default=<undefined>: File to write center of mass to
     roi_vals: '[2, 10]'
     # type=list|default=[]: Compute center of mass for each blob with voxel value of v0, v1, v2, etc. This option is handy for getting ROI centers of mass.
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -143,7 +137,7 @@ tests:
   # bool - whether the unittest is expected to fail or not. Set to false
   # when you are satisfied with the edits you have made to this file
 doctests:
-- cmdline: 3dCM -roi_vals 2 10 structural.nii > cm.txt
+- cmdline:
   # str - the expected cmdline output
   inputs:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
@@ -151,13 +145,10 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     in_file: '"structural.nii"'
     # type=file|default=<undefined>: input file to 3dCM
-    cm_file: '"cm.txt"'
-    # type=file: file with the center of mass coordinates
-    # type=file|default=<undefined>: File to write center of mass to
     roi_vals: '[2, 10]'
     # type=list|default=[]: Compute center of mass for each blob with voxel value of v0, v1, v2, etc. This option is handy for getting ROI centers of mass.
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

@@ -6,27 +6,27 @@
 # Docs
 # ----
 # 
-#     Interface for FSL topup, a tool for estimating and correcting
-#     susceptibility induced distortions. See FSL documentation for
-#     `reference <http://fsl.fmrib.ox.ac.uk/fsl/fslwiki/TOPUP>`_,
-#     `usage examples
-#     <http://fsl.fmrib.ox.ac.uk/fsl/fslwiki/topup/ExampleTopupFollowedByApplytopup>`_,
-#     and `exemplary config files
-#     <https://github.com/ahheckel/FSL-scripts/blob/master/rsc/fsl/fsl4/topup/b02b0.cnf>`_.
+# Interface for FSL topup, a tool for estimating and correcting
+# susceptibility induced distortions. See FSL documentation for
+# `reference <http://fsl.fmrib.ox.ac.uk/fsl/fslwiki/TOPUP>`_,
+# `usage examples
+# <http://fsl.fmrib.ox.ac.uk/fsl/fslwiki/topup/ExampleTopupFollowedByApplytopup>`_,
+# and `exemplary config files
+# <https://github.com/ahheckel/FSL-scripts/blob/master/rsc/fsl/fsl4/topup/b02b0.cnf>`_.
 # 
-#     Examples
-#     --------
+# Examples
+# --------
 # 
-#     >>> from nipype.interfaces.fsl import TOPUP
-#     >>> topup = TOPUP()
-#     >>> topup.inputs.in_file = "b0_b0rev.nii"
-#     >>> topup.inputs.encoding_file = "topup_encoding.txt"
-#     >>> topup.inputs.output_type = "NIFTI_GZ"
-#     >>> topup.cmdline # doctest: +ELLIPSIS
-#     'topup --config=b02b0.cnf --datain=topup_encoding.txt --imain=b0_b0rev.nii --out=b0_b0rev_base --iout=b0_b0rev_corrected.nii.gz --fout=b0_b0rev_field.nii.gz --jacout=jac --logout=b0_b0rev_topup.log --rbmout=xfm --dfout=warpfield'
-#     >>> res = topup.run() # doctest: +SKIP
+# >>> from nipype.interfaces.fsl import TOPUP
+# >>> topup = TOPUP()
+# >>> topup.inputs.in_file = "b0_b0rev.nii"
+# >>> topup.inputs.encoding_file = "topup_encoding.txt"
+# >>> topup.inputs.output_type = "NIFTI_GZ"
+# >>> topup.cmdline # doctest: +ELLIPSIS
+# 'topup --config=b02b0.cnf --datain=topup_encoding.txt --imain=b0_b0rev.nii --out=b0_b0rev_base --iout=b0_b0rev_corrected.nii.gz --fout=b0_b0rev_field.nii.gz --jacout=jac --logout=b0_b0rev_topup.log --rbmout=xfm --dfout=warpfield'
+# >>> res = topup.run() # doctest: +SKIP
 # 
-#     
+# 
 task_name: TOPUP
 nipype_name: TOPUP
 nipype_module: nipype.interfaces.fsl.epi
@@ -41,21 +41,10 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    encoding_file: text/text-file
+    encoding_file: generic/file
     # type=file|default=<undefined>: name of text file with PE directions/times
     in_file: medimage/nifti1
     # type=file|default=<undefined>: name of 4D file with images
-    out_base: Path
-    # type=file|default=<undefined>: base-name of output files (spline coefficients (Hz) and movement parameters)
-    out_corrected: Path
-    # type=file: name of 4D image file with unwarped images
-    # type=file|default=<undefined>: name of 4D image file with unwarped images
-    out_field: Path
-    # type=file: name of image file with field (Hz)
-    # type=file|default=<undefined>: name of image file with field (Hz)
-    out_logfile: Path
-    # type=file: name of log-file
-    # type=file|default=<undefined>: name of log-file
   callable_defaults:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set as the `default` method of input fields
@@ -97,7 +86,7 @@ outputs:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
@@ -160,13 +149,13 @@ tests:
     regrid:
     # type=enum|default=1|allowed[0,1]: If set (=1), the calculations are done in a different grid
     output_type:
-    # type=enum|default='NIFTI'|allowed['NIFTI','NIFTI_GZ','NIFTI_PAIR','NIFTI_PAIR_GZ']: FSL output type
+    # type=enum|default='NIFTI'|allowed['GIFTI','NIFTI','NIFTI_GZ','NIFTI_PAIR','NIFTI_PAIR_GZ']: FSL output type
     args:
     # type=str|default='': Additional parameters to the command
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -185,12 +174,10 @@ tests:
   # (if not specified, will try to choose a sensible value)
     in_file:
     # type=file|default=<undefined>: name of 4D file with images
-    encoding_file:
-    # type=file|default=<undefined>: name of text file with PE directions/times
     output_type: '"NIFTI_GZ"'
-    # type=enum|default='NIFTI'|allowed['NIFTI','NIFTI_GZ','NIFTI_PAIR','NIFTI_PAIR_GZ']: FSL output type
+    # type=enum|default='NIFTI'|allowed['GIFTI','NIFTI','NIFTI_GZ','NIFTI_PAIR','NIFTI_PAIR_GZ']: FSL output type
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -213,12 +200,10 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     in_file: '"b0_b0rev.nii"'
     # type=file|default=<undefined>: name of 4D file with images
-    encoding_file: '"topup_encoding.txt"'
-    # type=file|default=<undefined>: name of text file with PE directions/times
     output_type: '"NIFTI_GZ"'
-    # type=enum|default='NIFTI'|allowed['NIFTI','NIFTI_GZ','NIFTI_PAIR','NIFTI_PAIR_GZ']: FSL output type
+    # type=enum|default='NIFTI'|allowed['GIFTI','NIFTI','NIFTI_GZ','NIFTI_PAIR','NIFTI_PAIR_GZ']: FSL output type
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

@@ -6,22 +6,22 @@
 # Docs
 # ----
 # Read in a dataset and write it out as a new dataset
-#          with the data brick oriented as axial slices.
+#      with the data brick oriented as axial slices.
 # 
-#     For complete details, see the `3dcopy Documentation.
-#     <https://afni.nimh.nih.gov/pub/dist/doc/program_help/3daxialize.html>`__
+# For complete details, see the `3dcopy Documentation.
+# <https://afni.nimh.nih.gov/pub/dist/doc/program_help/3daxialize.html>`__
 # 
-#     Examples
-#     --------
-#     >>> from nipype.interfaces import afni
-#     >>> axial3d = afni.Axialize()
-#     >>> axial3d.inputs.in_file = 'functional.nii'
-#     >>> axial3d.inputs.out_file = 'axialized.nii'
-#     >>> axial3d.cmdline
-#     '3daxialize -prefix axialized.nii functional.nii'
-#     >>> res = axial3d.run()  # doctest: +SKIP
+# Examples
+# --------
+# >>> from nipype.interfaces import afni
+# >>> axial3d = afni.Axialize()
+# >>> axial3d.inputs.in_file = 'functional.nii'
+# >>> axial3d.inputs.out_file = 'axialized.nii'
+# >>> axial3d.cmdline
+# '3daxialize -prefix axialized.nii functional.nii'
+# >>> res = axial3d.run()  # doctest: +SKIP
 # 
-#     
+# 
 task_name: Axialize
 nipype_name: Axialize
 nipype_module: nipype.interfaces.afni.utils
@@ -38,9 +38,6 @@ inputs:
   # passed to the field in the automatically generated unittests.
     in_file: medimage/nifti1
     # type=file|default=<undefined>: input file to 3daxialize
-    out_file: Path
-    # type=file: output file
-    # type=file|default=<undefined>: output image file name
   callable_defaults:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set as the `default` method of input fields
@@ -57,14 +54,14 @@ outputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    out_file: medimage/nifti1
+    out_file: generic/file
     # type=file: output file
     # type=file|default=<undefined>: output image file name
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
@@ -95,7 +92,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -114,11 +111,8 @@ tests:
   # (if not specified, will try to choose a sensible value)
     in_file:
     # type=file|default=<undefined>: input file to 3daxialize
-    out_file: '"axialized.nii"'
-    # type=file: output file
-    # type=file|default=<undefined>: output image file name
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -133,7 +127,7 @@ tests:
   # bool - whether the unittest is expected to fail or not. Set to false
   # when you are satisfied with the edits you have made to this file
 doctests:
-- cmdline: 3daxialize -prefix axialized.nii functional.nii
+- cmdline:
   # str - the expected cmdline output
   inputs:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
@@ -141,11 +135,8 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     in_file: '"functional.nii"'
     # type=file|default=<undefined>: input file to 3daxialize
-    out_file: '"axialized.nii"'
-    # type=file: output file
-    # type=file|default=<undefined>: output image file name
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

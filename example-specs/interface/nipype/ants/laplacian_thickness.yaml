@@ -7,21 +7,21 @@
 # ----
 # Calculates the cortical thickness from an anatomical image
 # 
-#     Examples
-#     --------
+# Examples
+# --------
 # 
-#     >>> from nipype.interfaces.ants import LaplacianThickness
-#     >>> cort_thick = LaplacianThickness()
-#     >>> cort_thick.inputs.input_wm = 'white_matter.nii.gz'
-#     >>> cort_thick.inputs.input_gm = 'gray_matter.nii.gz'
-#     >>> cort_thick.cmdline
-#     'LaplacianThickness white_matter.nii.gz gray_matter.nii.gz white_matter_thickness.nii.gz'
+# >>> from nipype.interfaces.ants import LaplacianThickness
+# >>> cort_thick = LaplacianThickness()
+# >>> cort_thick.inputs.input_wm = 'white_matter.nii.gz'
+# >>> cort_thick.inputs.input_gm = 'gray_matter.nii.gz'
+# >>> cort_thick.cmdline
+# 'LaplacianThickness white_matter.nii.gz gray_matter.nii.gz white_matter_thickness.nii.gz'
 # 
-#     >>> cort_thick.inputs.output_image = 'output_thickness.nii.gz'
-#     >>> cort_thick.cmdline
-#     'LaplacianThickness white_matter.nii.gz gray_matter.nii.gz output_thickness.nii.gz'
+# >>> cort_thick.inputs.output_image = 'output_thickness.nii.gz'
+# >>> cort_thick.cmdline
+# 'LaplacianThickness white_matter.nii.gz gray_matter.nii.gz output_thickness.nii.gz'
 # 
-#     
+# 
 task_name: LaplacianThickness
 nipype_name: LaplacianThickness
 nipype_module: nipype.interfaces.ants.segmentation
@@ -36,7 +36,7 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    input_gm: medimage/nifti-gz
+    input_gm: generic/file
     # type=file|default=<undefined>: gray matter segmentation image
     input_wm: medimage/nifti-gz
     # type=file|default=<undefined>: white matter segmentation image
@@ -63,7 +63,7 @@ outputs:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
@@ -94,7 +94,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -113,10 +113,8 @@ tests:
   # (if not specified, will try to choose a sensible value)
     input_wm:
     # type=file|default=<undefined>: white matter segmentation image
-    input_gm:
-    # type=file|default=<undefined>: gray matter segmentation image
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -137,7 +135,7 @@ tests:
     # type=file: Cortical thickness
     # type=str|default='': name of output file
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -160,10 +158,8 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     input_wm: '"white_matter.nii.gz"'
     # type=file|default=<undefined>: white matter segmentation image
-    input_gm: '"gray_matter.nii.gz"'
-    # type=file|default=<undefined>: gray matter segmentation image
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS
@@ -177,7 +173,7 @@ doctests:
     # type=file: Cortical thickness
     # type=str|default='': name of output file
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

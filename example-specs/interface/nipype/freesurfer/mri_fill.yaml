@@ -6,18 +6,18 @@
 # Docs
 # ----
 # 
-#     This program creates hemispheric cutting planes and fills white matter
-#     with specific values for subsequent surface tessellation.
+# This program creates hemispheric cutting planes and fills white matter
+# with specific values for subsequent surface tessellation.
 # 
-#     Examples
-#     ========
-#     >>> from nipype.interfaces.freesurfer import MRIFill
-#     >>> fill = MRIFill()
-#     >>> fill.inputs.in_file = 'wm.mgz' # doctest: +SKIP
-#     >>> fill.inputs.out_file = 'filled.mgz' # doctest: +SKIP
-#     >>> fill.cmdline # doctest: +SKIP
-#     'mri_fill wm.mgz filled.mgz'
-#     
+# Examples
+# ========
+# >>> from nipype.interfaces.freesurfer import MRIFill
+# >>> fill = MRIFill()
+# >>> fill.inputs.in_file = 'wm.mgz' # doctest: +SKIP
+# >>> fill.inputs.out_file = 'filled.mgz' # doctest: +SKIP
+# >>> fill.cmdline # doctest: +SKIP
+# 'mri_fill wm.mgz filled.mgz'
+# 
 task_name: MRIFill
 nipype_name: MRIFill
 nipype_module: nipype.interfaces.freesurfer.utils
@@ -34,12 +34,6 @@ inputs:
   # passed to the field in the automatically generated unittests.
     in_file: medimage/mgh-gz
     # type=file|default=<undefined>: Input white matter file
-    log_file: Path
-    # type=file: Output log file from MRIFill
-    # type=file|default=<undefined>: Output log file for MRIFill
-    out_file: Path
-    # type=file: Output file from MRIFill
-    # type=file|default=<undefined>: Output filled volume file name for MRIFill
     segmentation: generic/file
     # type=file|default=<undefined>: Input segmentation file for MRIFill
     subjects_dir: generic/directory
@@ -65,14 +59,14 @@ outputs:
     log_file: generic/file
     # type=file: Output log file from MRIFill
     # type=file|default=<undefined>: Output log file for MRIFill
-    out_file: medimage/mgh-gz
+    out_file: generic/file
     # type=file: Output file from MRIFill
     # type=file|default=<undefined>: Output filled volume file name for MRIFill
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
@@ -98,7 +92,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -117,11 +111,8 @@ tests:
   # (if not specified, will try to choose a sensible value)
     in_file:
     # type=file|default=<undefined>: Input white matter file
-    out_file: '"filled.mgz" # doctest: +SKIP'
-    # type=file: Output file from MRIFill
-    # type=file|default=<undefined>: Output filled volume file name for MRIFill
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -136,7 +127,7 @@ tests:
   # bool - whether the unittest is expected to fail or not. Set to false
   # when you are satisfied with the edits you have made to this file
 doctests:
-- cmdline: mri_fill wm.mgz filled.mgz
+- cmdline:
   # str - the expected cmdline output
   inputs:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
@@ -144,11 +135,8 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     in_file: '"wm.mgz" # doctest: +SKIP'
     # type=file|default=<undefined>: Input white matter file
-    out_file: '"filled.mgz" # doctest: +SKIP'
-    # type=file: Output file from MRIFill
-    # type=file|default=<undefined>: Output filled volume file name for MRIFill
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

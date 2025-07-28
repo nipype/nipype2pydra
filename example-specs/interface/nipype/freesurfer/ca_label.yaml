@@ -7,23 +7,23 @@
 # ----
 # Label subcortical structures based in GCA model.
 # 
-#     See Also
-#     --------
-#     For complete details, see the `FS Documentation
-#     <http://surfer.nmr.mgh.harvard.edu/fswiki/mri_ca_label>`__
+# See Also
+# --------
+# For complete details, see the `FS Documentation
+# <http://surfer.nmr.mgh.harvard.edu/fswiki/mri_ca_label>`__
 # 
-#     Examples
-#     --------
-#     >>> from nipype.interfaces import freesurfer
-#     >>> ca_label = freesurfer.CALabel()
-#     >>> ca_label.inputs.in_file = "norm.mgz"
-#     >>> ca_label.inputs.out_file = "out.mgz"
-#     >>> ca_label.inputs.transform = "trans.mat"
-#     >>> ca_label.inputs.template = "Template_6.nii" # in practice use .gcs extension
-#     >>> ca_label.cmdline
-#     'mri_ca_label norm.mgz trans.mat Template_6.nii out.mgz'
+# Examples
+# --------
+# >>> from nipype.interfaces import freesurfer
+# >>> ca_label = freesurfer.CALabel()
+# >>> ca_label.inputs.in_file = "norm.mgz"
+# >>> ca_label.inputs.out_file = "out.mgz"
+# >>> ca_label.inputs.transform = "trans.mat"
+# >>> ca_label.inputs.template = "Template_6.nii" # in practice use .gcs extension
+# >>> ca_label.cmdline
+# 'mri_ca_label norm.mgz trans.mat Template_6.nii out.mgz'
 # 
-#     
+# 
 task_name: CALabel
 nipype_name: CALabel
 nipype_module: nipype.interfaces.freesurfer.preprocess
@@ -48,12 +48,9 @@ inputs:
     # type=file|default=<undefined>: input label intensities file(used in longitudinal processing)
     label: generic/file
     # type=file|default=<undefined>: Undocumented flag. Autorecon3 uses ../label/{hemisphere}.cortex.label as input file
-    out_file: Path
-    # type=file: Output volume from CALabel
-    # type=file|default=<undefined>: Output file for CALabel
     subjects_dir: generic/directory
     # type=directory|default=<undefined>: subjects directory
-    template: medimage/nifti1
+    template: generic/file
     # type=file|default=<undefined>: Input template for CALabel
     transform: datascience/text-matrix
     # type=file|default=<undefined>: Input transform for CALabel
@@ -73,14 +70,14 @@ outputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    out_file: medimage/mgh-gz
+    out_file: generic/file
     # type=file: Output volume from CALabel
     # type=file|default=<undefined>: Output file for CALabel
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
@@ -121,7 +118,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -140,15 +137,10 @@ tests:
   # (if not specified, will try to choose a sensible value)
     in_file:
     # type=file|default=<undefined>: Input volume for CALabel
-    out_file: '"out.mgz"'
-    # type=file: Output volume from CALabel
-    # type=file|default=<undefined>: Output file for CALabel
     transform:
     # type=file|default=<undefined>: Input transform for CALabel
-    template:
-    # type=file|default=<undefined>: Input template for CALabel
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -163,7 +155,7 @@ tests:
   # bool - whether the unittest is expected to fail or not. Set to false
   # when you are satisfied with the edits you have made to this file
 doctests:
-- cmdline: mri_ca_label norm.mgz trans.mat Template_6.nii out.mgz
+- cmdline:
   # str - the expected cmdline output
   inputs:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
@@ -171,15 +163,10 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     in_file: '"norm.mgz"'
     # type=file|default=<undefined>: Input volume for CALabel
-    out_file: '"out.mgz"'
-    # type=file: Output volume from CALabel
-    # type=file|default=<undefined>: Output file for CALabel
     transform: '"trans.mat"'
     # type=file|default=<undefined>: Input transform for CALabel
-    template: '"Template_6.nii" # in practice use .gcs extension'
-    # type=file|default=<undefined>: Input template for CALabel
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

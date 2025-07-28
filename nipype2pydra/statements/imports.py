@@ -585,16 +585,14 @@ GENERIC_PYDRA_IMPORTS = parse_imports(
     [
         "import attrs",  # attrs is included in imports in case we reference attrs.NOTHING
         "from fileformats.generic import File, Directory",
-        "from pydra.engine.specs import MultiInputObj",
+        "from pydra.utils.typing import MultiInputObj",
         "from pathlib import Path",
         "import json",
         "import yaml",
         "import logging",
-        "import pydra.mark",
+        "from pydra.compose import python",
         "import typing as ty",
-        "from pydra.engine import Workflow",
-        "from pydra.engine.task import FunctionTask",
-        "from pydra.engine.specs import SpecInfo, BaseSpec",
+        "from pydra.compose import python, shell, workflow",
     ]
 )
 

@@ -6,15 +6,15 @@
 # Docs
 # ----
 # 
-#     Examples
-#     ========
+# Examples
+# ========
 # 
-#     >>> from nipype.interfaces.freesurfer import TalairachQC
-#     >>> qc = TalairachQC()
-#     >>> qc.inputs.log_file = 'dirs.txt'
-#     >>> qc.cmdline
-#     'tal_QC_AZS dirs.txt'
-#     
+# >>> from nipype.interfaces.freesurfer import TalairachQC
+# >>> qc = TalairachQC()
+# >>> qc.inputs.log_file = 'dirs.txt'
+# >>> qc.cmdline
+# 'tal_QC_AZS dirs.txt'
+# 
 task_name: TalairachQC
 nipype_name: TalairachQC
 nipype_module: nipype.interfaces.freesurfer.utils
@@ -29,9 +29,6 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    log_file: Path
-    # type=file: The output log
-    # type=file|default=<undefined>: The log file for TalairachQC
     subjects_dir: generic/directory
     # type=directory|default=<undefined>: subjects directory
   callable_defaults:
@@ -57,7 +54,7 @@ outputs:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
@@ -74,7 +71,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -95,7 +92,7 @@ tests:
     # type=file: The output log
     # type=file|default=<undefined>: The log file for TalairachQC
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -120,7 +117,7 @@ doctests:
     # type=file: The output log
     # type=file|default=<undefined>: The log file for TalairachQC
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

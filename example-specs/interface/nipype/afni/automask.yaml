@@ -7,21 +7,21 @@
 # ----
 # Create a brain-only mask of the image using AFNI 3dAutomask command
 # 
-#     For complete details, see the `3dAutomask Documentation.
-#     <https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dAutomask.html>`_
+# For complete details, see the `3dAutomask Documentation.
+# <https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dAutomask.html>`_
 # 
-#     Examples
-#     --------
-#     >>> from nipype.interfaces import afni
-#     >>> automask = afni.Automask()
-#     >>> automask.inputs.in_file = 'functional.nii'
-#     >>> automask.inputs.dilate = 1
-#     >>> automask.inputs.outputtype = 'NIFTI'
-#     >>> automask.cmdline  # doctest: +ELLIPSIS
-#     '3dAutomask -apply_prefix functional_masked.nii -dilate 1 -prefix functional_mask.nii functional.nii'
-#     >>> res = automask.run()  # doctest: +SKIP
+# Examples
+# --------
+# >>> from nipype.interfaces import afni
+# >>> automask = afni.Automask()
+# >>> automask.inputs.in_file = 'functional.nii'
+# >>> automask.inputs.dilate = 1
+# >>> automask.inputs.outputtype = 'NIFTI'
+# >>> automask.cmdline  # doctest: +ELLIPSIS
+# '3dAutomask -apply_prefix functional_masked.nii -dilate 1 -prefix functional_mask.nii functional.nii'
+# >>> res = automask.run()  # doctest: +SKIP
 # 
-#     
+# 
 task_name: Automask
 nipype_name: Automask
 nipype_module: nipype.interfaces.afni.preprocess
@@ -36,14 +36,8 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    brain_file: Path
-    # type=file: brain file (skull stripped)
-    # type=file|default=<undefined>: output file from 3dAutomask
     in_file: medimage/nifti1
     # type=file|default=<undefined>: input file to 3dAutomask
-    out_file: Path
-    # type=file: mask file
-    # type=file|default=<undefined>: output image file name
   callable_defaults:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set as the `default` method of input fields
@@ -70,7 +64,7 @@ outputs:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
@@ -100,7 +94,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -119,12 +113,10 @@ tests:
   # (if not specified, will try to choose a sensible value)
     in_file:
     # type=file|default=<undefined>: input file to 3dAutomask
-    dilate: '1'
-    # type=int|default=0: dilate the mask outwards
     outputtype: '"NIFTI"'
     # type=enum|default='AFNI'|allowed['AFNI','NIFTI','NIFTI_GZ']: AFNI output filetype
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -139,7 +131,7 @@ tests:
   # bool - whether the unittest is expected to fail or not. Set to false
   # when you are satisfied with the edits you have made to this file
 doctests:
-- cmdline: 3dAutomask -apply_prefix functional_masked.nii -dilate 1 -prefix functional_mask.nii functional.nii
+- cmdline:
   # str - the expected cmdline output
   inputs:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
@@ -147,12 +139,10 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     in_file: '"functional.nii"'
     # type=file|default=<undefined>: input file to 3dAutomask
-    dilate: '1'
-    # type=int|default=0: dilate the mask outwards
     outputtype: '"NIFTI"'
     # type=enum|default='AFNI'|allowed['AFNI','NIFTI','NIFTI_GZ']: AFNI output filetype
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

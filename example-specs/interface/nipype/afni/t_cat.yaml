@@ -7,24 +7,24 @@
 # ----
 # Concatenate sub-bricks from input datasets into one big 3D+time dataset.
 # 
-#     TODO Replace InputMultiPath in_files with Traits.List, if possible. Current
-#     version adds extra whitespace.
+# TODO Replace InputMultiPath in_files with Traits.List, if possible. Current
+# version adds extra whitespace.
 # 
-#     For complete details, see the `3dTcat Documentation.
-#     <https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dTcat.html>`_
+# For complete details, see the `3dTcat Documentation.
+# <https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dTcat.html>`_
 # 
-#     Examples
-#     --------
-#     >>> from nipype.interfaces import afni
-#     >>> tcat = afni.TCat()
-#     >>> tcat.inputs.in_files = ['functional.nii', 'functional2.nii']
-#     >>> tcat.inputs.out_file= 'functional_tcat.nii'
-#     >>> tcat.inputs.rlt = '+'
-#     >>> tcat.cmdline
-#     '3dTcat -rlt+ -prefix functional_tcat.nii functional.nii functional2.nii'
-#     >>> res = tcat.run()  # doctest: +SKIP
+# Examples
+# --------
+# >>> from nipype.interfaces import afni
+# >>> tcat = afni.TCat()
+# >>> tcat.inputs.in_files = ['functional.nii', 'functional2.nii']
+# >>> tcat.inputs.out_file= 'functional_tcat.nii'
+# >>> tcat.inputs.rlt = '+'
+# >>> tcat.cmdline
+# '3dTcat -rlt+ -prefix functional_tcat.nii functional.nii functional2.nii'
+# >>> res = tcat.run()  # doctest: +SKIP
 # 
-#     
+# 
 task_name: TCat
 nipype_name: TCat
 nipype_module: nipype.interfaces.afni.utils
@@ -41,9 +41,6 @@ inputs:
   # passed to the field in the automatically generated unittests.
     in_files: medimage/nifti1+list-of
     # type=inputmultiobject|default=[]: input file to 3dTcat
-    out_file: Path
-    # type=file: output file
-    # type=file|default=<undefined>: output image file name
   callable_defaults:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set as the `default` method of input fields
@@ -60,14 +57,14 @@ outputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    out_file: medimage/nifti1
+    out_file: generic/file
     # type=file: output file
     # type=file|default=<undefined>: output image file name
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
@@ -92,7 +89,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -111,13 +108,10 @@ tests:
   # (if not specified, will try to choose a sensible value)
     in_files:
     # type=inputmultiobject|default=[]: input file to 3dTcat
-    out_file: '"functional_tcat.nii"'
-    # type=file: output file
-    # type=file|default=<undefined>: output image file name
     rlt: '"+"'
     # type=enum|default=''|allowed['','+','++']: Remove linear trends in each voxel time series loaded from each input dataset, SEPARATELY. Option -rlt removes the least squares fit of 'a+b*t' to each voxel time series. Option -rlt+ adds dataset mean back in. Option -rlt++ adds overall mean of all dataset timeseries back in.
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -132,7 +126,7 @@ tests:
   # bool - whether the unittest is expected to fail or not. Set to false
   # when you are satisfied with the edits you have made to this file
 doctests:
-- cmdline: 3dTcat -rlt+ -prefix functional_tcat.nii functional.nii functional2.nii
+- cmdline:
   # str - the expected cmdline output
   inputs:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
@@ -140,13 +134,10 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     in_files: '["functional.nii", "functional2.nii"]'
     # type=inputmultiobject|default=[]: input file to 3dTcat
-    out_file: '"functional_tcat.nii"'
-    # type=file: output file
-    # type=file|default=<undefined>: output image file name
     rlt: '"+"'
     # type=enum|default=''|allowed['','+','++']: Remove linear trends in each voxel time series loaded from each input dataset, SEPARATELY. Option -rlt removes the least squares fit of 'a+b*t' to each voxel time series. Option -rlt+ adds dataset mean back in. Option -rlt++ adds overall mean of all dataset timeseries back in.
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

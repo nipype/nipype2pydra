@@ -386,16 +386,28 @@ class ClassConverter(BaseHelperConverter):
         used_configs = set()
 
         src = replace_undefined(self.src)[len("class ") :]
-        name, bases, class_body = extract_args(src, drop_parens=True)
-        bases = [
-            b
-            for b in bases
-            if not self.package.is_omitted(getattr(self.nipype_module, b))
-        ]
+        defn, class_body = src.split(":", 1)
+        if "(" in defn:
+            name, orig_bases, class_body = extract_args(src, drop_parens=True)
+            class_body = class_body[1:].strip()
+
+            bases = []
+            for base_name in orig_bases:
+                try:
+                    base = getattr(self.nipype_module, base_name)
+                except AttributeError:
+                    bases.append(base_name)
+                    continue
+                if not self.package.is_omitted(base):
+                    bases.append(base_name)
+        else:
+            name = defn
+            bases = []
+            class_body = class_body.strip()
 
         parts = re.split(r"\n    (?!\s|\))", class_body, flags=re.MULTILINE)
         converted_parts = []
-        for part in parts[1:]:
+        for part in parts:
             if part.startswith("def"):
                 converted_func, func_used_configs = self._convert_function(part)
                 converted_parts.append(converted_func)

@@ -6,19 +6,19 @@
 # Docs
 # ----
 # 
-#     Normalize the white-matter, optionally based on control points. The
-#     input volume is converted into a new volume where white matter image
-#     values all range around 110.
+# Normalize the white-matter, optionally based on control points. The
+# input volume is converted into a new volume where white matter image
+# values all range around 110.
 # 
-#     Examples
-#     ========
-#     >>> from nipype.interfaces import freesurfer
-#     >>> normalize = freesurfer.Normalize()
-#     >>> normalize.inputs.in_file = "T1.mgz"
-#     >>> normalize.inputs.gradient = 1
-#     >>> normalize.cmdline
-#     'mri_normalize -g 1 T1.mgz T1_norm.mgz'
-#     
+# Examples
+# ========
+# >>> from nipype.interfaces import freesurfer
+# >>> normalize = freesurfer.Normalize()
+# >>> normalize.inputs.in_file = "T1.mgz"
+# >>> normalize.inputs.gradient = 1
+# >>> normalize.cmdline
+# 'mri_normalize -g 1 T1.mgz T1_norm.mgz'
+# 
 task_name: Normalize
 nipype_name: Normalize
 nipype_module: nipype.interfaces.freesurfer.preprocess
@@ -37,9 +37,6 @@ inputs:
     # type=file|default=<undefined>: The input file for Normalize
     mask: generic/file
     # type=file|default=<undefined>: The input mask file for Normalize
-    out_file: Path
-    # type=file: The output file for Normalize
-    # type=file|default=<undefined>: The output file for Normalize
     segmentation: generic/file
     # type=file|default=<undefined>: The input segmentation for Normalize
     subjects_dir: generic/directory
@@ -69,7 +66,7 @@ outputs:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
@@ -96,7 +93,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -115,10 +112,8 @@ tests:
   # (if not specified, will try to choose a sensible value)
     in_file:
     # type=file|default=<undefined>: The input file for Normalize
-    gradient: '1'
-    # type=int|default=0: use max intensity/mm gradient g (default=1)
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -133,7 +128,7 @@ tests:
   # bool - whether the unittest is expected to fail or not. Set to false
   # when you are satisfied with the edits you have made to this file
 doctests:
-- cmdline: mri_normalize -g 1 T1.mgz T1_norm.mgz
+- cmdline:
   # str - the expected cmdline output
   inputs:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
@@ -141,10 +136,8 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     in_file: '"T1.mgz"'
     # type=file|default=<undefined>: The input file for Normalize
-    gradient: '1'
-    # type=int|default=0: use max intensity/mm gradient g (default=1)
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

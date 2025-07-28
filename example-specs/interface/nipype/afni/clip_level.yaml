@@ -6,21 +6,21 @@
 # Docs
 # ----
 # Estimates the value at which to clip the anatomical dataset so
-#        that background regions are set to zero.
+#    that background regions are set to zero.
 # 
-#     For complete details, see the `3dClipLevel Documentation.
-#     <https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dClipLevel.html>`_
+# For complete details, see the `3dClipLevel Documentation.
+# <https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dClipLevel.html>`_
 # 
-#     Examples
-#     --------
-#     >>> from nipype.interfaces.afni import preprocess
-#     >>> cliplevel = preprocess.ClipLevel()
-#     >>> cliplevel.inputs.in_file = 'anatomical.nii'
-#     >>> cliplevel.cmdline
-#     '3dClipLevel anatomical.nii'
-#     >>> res = cliplevel.run()  # doctest: +SKIP
+# Examples
+# --------
+# >>> from nipype.interfaces.afni import preprocess
+# >>> cliplevel = preprocess.ClipLevel()
+# >>> cliplevel.inputs.in_file = 'anatomical.nii'
+# >>> cliplevel.cmdline
+# '3dClipLevel anatomical.nii'
+# >>> res = cliplevel.run()  # doctest: +SKIP
 # 
-#     
+# 
 task_name: ClipLevel
 nipype_name: ClipLevel
 nipype_module: nipype.interfaces.afni.preprocess
@@ -61,7 +61,7 @@ outputs:
     clip_val: clip_val_callable
     # type=float: output
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
@@ -81,7 +81,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -101,7 +101,7 @@ tests:
     in_file:
     # type=file|default=<undefined>: input file to 3dClipLevel
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -116,7 +116,7 @@ tests:
   # bool - whether the unittest is expected to fail or not. Set to false
   # when you are satisfied with the edits you have made to this file
 doctests:
-- cmdline: 3dClipLevel anatomical.nii
+- cmdline:
   # str - the expected cmdline output
   inputs:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
@@ -125,7 +125,7 @@ doctests:
     in_file: '"anatomical.nii"'
     # type=file|default=<undefined>: input file to 3dClipLevel
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

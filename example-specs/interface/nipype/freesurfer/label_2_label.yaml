@@ -6,31 +6,31 @@
 # Docs
 # ----
 # 
-#     Converts a label in one subject's space to a label
-#     in another subject's space using either talairach or spherical
-#     as an intermediate registration space.
+# Converts a label in one subject's space to a label
+# in another subject's space using either talairach or spherical
+# as an intermediate registration space.
 # 
-#     If a source mask is used, then the input label must have been
-#     created from a surface (ie, the vertex numbers are valid). The
-#     format can be anything supported by mri_convert or curv or paint.
-#     Vertices in the source label that do not meet threshold in the
-#     mask will be removed from the label.
+# If a source mask is used, then the input label must have been
+# created from a surface (ie, the vertex numbers are valid). The
+# format can be anything supported by mri_convert or curv or paint.
+# Vertices in the source label that do not meet threshold in the
+# mask will be removed from the label.
 # 
-#     Examples
-#     --------
-#     >>> from nipype.interfaces.freesurfer import Label2Label
-#     >>> l2l = Label2Label()
-#     >>> l2l.inputs.hemisphere = 'lh'
-#     >>> l2l.inputs.subject_id = '10335'
-#     >>> l2l.inputs.sphere_reg = 'lh.pial'
-#     >>> l2l.inputs.white = 'lh.pial'
-#     >>> l2l.inputs.source_subject = 'fsaverage'
-#     >>> l2l.inputs.source_label = 'lh-pial.stl'
-#     >>> l2l.inputs.source_white = 'lh.pial'
-#     >>> l2l.inputs.source_sphere_reg = 'lh.pial'
-#     >>> l2l.cmdline
-#     'mri_label2label --hemi lh --trglabel lh-pial_converted.stl --regmethod surface --srclabel lh-pial.stl --srcsubject fsaverage --trgsubject 10335'
-#     
+# Examples
+# --------
+# >>> from nipype.interfaces.freesurfer import Label2Label
+# >>> l2l = Label2Label()
+# >>> l2l.inputs.hemisphere = 'lh'
+# >>> l2l.inputs.subject_id = '10335'
+# >>> l2l.inputs.sphere_reg = 'lh.pial'
+# >>> l2l.inputs.white = 'lh.pial'
+# >>> l2l.inputs.source_subject = 'fsaverage'
+# >>> l2l.inputs.source_label = 'lh-pial.stl'
+# >>> l2l.inputs.source_white = 'lh.pial'
+# >>> l2l.inputs.source_sphere_reg = 'lh.pial'
+# >>> l2l.cmdline
+# 'mri_label2label --hemi lh --trglabel lh-pial_converted.stl --regmethod surface --srclabel lh-pial.stl --srcsubject fsaverage --trgsubject 10335'
+# 
 task_name: Label2Label
 nipype_name: Label2Label
 nipype_module: nipype.interfaces.freesurfer.model
@@ -45,20 +45,17 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    out_file: Path
-    # type=file: Output label
-    # type=file|default=<undefined>: Target label
-    source_label: model/stl
+    source_label: generic/file
     # type=file|default=<undefined>: Source label
-    source_sphere_reg: medimage-freesurfer/pial
+    source_sphere_reg: generic/file
     # type=file|default=<undefined>: Implicit input <hemisphere>.sphere.reg
-    source_white: medimage-freesurfer/pial
+    source_white: fileformats.medimage_freesurfer.Pial
     # type=file|default=<undefined>: Implicit input <hemisphere>.white
-    sphere_reg: medimage-freesurfer/pial
+    sphere_reg: fileformats.medimage_freesurfer.Pial
     # type=file|default=<undefined>: Implicit input <hemisphere>.sphere.reg
     subjects_dir: generic/directory
     # type=directory|default=<undefined>: subjects directory
-    white: medimage-freesurfer/pial
+    white: generic/file
     # type=file|default=<undefined>: Implicit input <hemisphere>.white
   callable_defaults:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
@@ -83,7 +80,7 @@ outputs:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
@@ -112,7 +109,7 @@ tests:
     registration_method:
     # type=enum|default='surface'|allowed['surface','volume']: Registration method
     copy_inputs:
-    # type=bool|default=False: If running as a node, set this to True.This will copy the input files to the node directory.
+    # type=bool|default=False: If running as a node, set this to True. This will copy the input files to the node directory.
     subjects_dir:
     # type=directory|default=<undefined>: subjects directory
     args:
@@ -120,7 +117,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -139,22 +136,14 @@ tests:
   # (if not specified, will try to choose a sensible value)
     hemisphere: '"lh"'
     # type=enum|default='lh'|allowed['lh','rh']: Input hemisphere
-    subject_id: '"10335"'
-    # type=string|default='subject_id': Target subject
     sphere_reg:
     # type=file|default=<undefined>: Implicit input <hemisphere>.sphere.reg
-    white:
-    # type=file|default=<undefined>: Implicit input <hemisphere>.white
     source_subject: '"fsaverage"'
     # type=string|default='': Source subject name
-    source_label:
-    # type=file|default=<undefined>: Source label
     source_white:
     # type=file|default=<undefined>: Implicit input <hemisphere>.white
-    source_sphere_reg:
-    # type=file|default=<undefined>: Implicit input <hemisphere>.sphere.reg
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -169,7 +158,7 @@ tests:
   # bool - whether the unittest is expected to fail or not. Set to false
   # when you are satisfied with the edits you have made to this file
 doctests:
-- cmdline: mri_label2label --hemi lh --trglabel lh-pial_converted.stl --regmethod surface --srclabel lh-pial.stl --srcsubject fsaverage --trgsubject 10335
+- cmdline:
   # str - the expected cmdline output
   inputs:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
@@ -177,22 +166,14 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     hemisphere: '"lh"'
     # type=enum|default='lh'|allowed['lh','rh']: Input hemisphere
-    subject_id: '"10335"'
-    # type=string|default='subject_id': Target subject
     sphere_reg: '"lh.pial"'
     # type=file|default=<undefined>: Implicit input <hemisphere>.sphere.reg
-    white: '"lh.pial"'
-    # type=file|default=<undefined>: Implicit input <hemisphere>.white
     source_subject: '"fsaverage"'
     # type=string|default='': Source subject name
-    source_label: '"lh-pial.stl"'
-    # type=file|default=<undefined>: Source label
     source_white: '"lh.pial"'
     # type=file|default=<undefined>: Implicit input <hemisphere>.white
-    source_sphere_reg: '"lh.pial"'
-    # type=file|default=<undefined>: Implicit input <hemisphere>.sphere.reg
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

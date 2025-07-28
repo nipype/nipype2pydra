@@ -32,9 +32,6 @@ inputs:
     # type=file|default=<undefined>: input 4D file
     label_file: generic/file
     # type=file|default=<undefined>: use label as mask, surfaces only
-    mask_file: Path
-    # type=file: map of the mask used in the analysis
-    # type=file|default=<undefined>: binary mask
     per_voxel_reg: generic/file+list-of
     # type=inputmultiobject|default=[]: per-voxel regressors
     sim_done_file: generic/file
@@ -97,7 +94,7 @@ outputs:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
     glm_dir: glm_dir
     # type=directory: output directory
     # type=str|default='': save outputs to dir
@@ -207,6 +204,10 @@ tests:
     # type=tuple|default=(<undefined>, <undefined>, 0.0): RefTac TimeSec k2prime : perform MRTM2 kinetic modeling
     logan:
     # type=tuple|default=(<undefined>, <undefined>, 0.0): RefTac TimeSec tstar   : perform Logan kinetic modeling
+    bp_clip_neg:
+    # type=bool|default=False: set negative BP voxels to zero
+    bp_clip_max:
+    # type=float|default=0.0: set BP voxels above max to max
     force_perm:
     # type=bool|default=False: force perumtation test, even when design matrix is not orthog
     diag:
@@ -234,7 +235,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically

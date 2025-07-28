@@ -6,22 +6,22 @@
 # Docs
 # ----
 # Temporally predictive modeling with the support vector machine
-#     SVM Test Only
-#     For complete details, see the `3dsvm Documentation.
-#     <https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dsvm.html>`_
+# SVM Test Only
+# For complete details, see the `3dsvm Documentation.
+# <https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dsvm.html>`_
 # 
-#     Examples
-#     ========
+# Examples
+# ========
 # 
-#     >>> from nipype.interfaces import afni as afni
-#     >>> svmTest = afni.SVMTest()
-#     >>> svmTest.inputs.in_file= 'run2+orig'
-#     >>> svmTest.inputs.model= 'run1+orig_model'
-#     >>> svmTest.inputs.testlabels= 'run2_categories.1D'
-#     >>> svmTest.inputs.out_file= 'pred2_model1'
-#     >>> res = svmTest.run() # doctest: +SKIP
+# >>> from nipype.interfaces import afni as afni
+# >>> svmTest = afni.SVMTest()
+# >>> svmTest.inputs.in_file= 'run2+orig'
+# >>> svmTest.inputs.model= 'run1+orig_model'
+# >>> svmTest.inputs.testlabels= 'run2_categories.1D'
+# >>> svmTest.inputs.out_file= 'pred2_model1'
+# >>> res = svmTest.run() # doctest: +SKIP
 # 
-#     
+# 
 task_name: SVMTest
 nipype_name: SVMTest
 nipype_module: nipype.interfaces.afni.svm
@@ -38,9 +38,6 @@ inputs:
   # passed to the field in the automatically generated unittests.
     in_file: generic/file
     # type=file|default=<undefined>: A 3D or 3D+t AFNI brik dataset to be used for testing.
-    out_file: Path
-    # type=file: output file
-    # type=file|default=<undefined>: filename for .1D prediction file(s).
     testlabels: generic/file
     # type=file|default=<undefined>: *true* class category .1D labels for the test dataset. It is used to calculate the prediction accuracy performance
   callable_defaults:
@@ -66,7 +63,7 @@ outputs:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
@@ -101,7 +98,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically

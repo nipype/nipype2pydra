@@ -6,20 +6,20 @@
 # Docs
 # ----
 # 
-#     Converts a set of surface labels to an annotation file
+# Converts a set of surface labels to an annotation file
 # 
-#     Examples
-#     --------
-#     >>> from nipype.interfaces.freesurfer import Label2Annot
-#     >>> l2a = Label2Annot()
-#     >>> l2a.inputs.hemisphere = 'lh'
-#     >>> l2a.inputs.subject_id = '10335'
-#     >>> l2a.inputs.in_labels = ['lh.aparc.label']
-#     >>> l2a.inputs.orig = 'lh.pial'
-#     >>> l2a.inputs.out_annot = 'test'
-#     >>> l2a.cmdline
-#     'mris_label2annot --hemi lh --l lh.aparc.label --a test --s 10335'
-#     
+# Examples
+# --------
+# >>> from nipype.interfaces.freesurfer import Label2Annot
+# >>> l2a = Label2Annot()
+# >>> l2a.inputs.hemisphere = 'lh'
+# >>> l2a.inputs.subject_id = '10335'
+# >>> l2a.inputs.in_labels = ['lh.aparc.label']
+# >>> l2a.inputs.orig = 'lh.pial'
+# >>> l2a.inputs.out_annot = 'test'
+# >>> l2a.cmdline
+# 'mris_label2annot --hemi lh --l lh.aparc.label --a test --s 10335'
+# 
 task_name: Label2Annot
 nipype_name: Label2Annot
 nipype_module: nipype.interfaces.freesurfer.model
@@ -36,7 +36,7 @@ inputs:
   # passed to the field in the automatically generated unittests.
     color_table: generic/file
     # type=file|default=<undefined>: File that defines the structure names, their indices, and their color
-    orig: medimage-freesurfer/pial
+    orig: generic/file
     # type=file|default=<undefined>: implicit {hemisphere}.orig
     subjects_dir: generic/directory
     # type=directory|default=<undefined>: subjects directory
@@ -62,7 +62,7 @@ outputs:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
@@ -94,7 +94,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -113,16 +113,12 @@ tests:
   # (if not specified, will try to choose a sensible value)
     hemisphere: '"lh"'
     # type=enum|default='lh'|allowed['lh','rh']: Input hemisphere
-    subject_id: '"10335"'
-    # type=string|default='subject_id': Subject name/ID
     in_labels: '["lh.aparc.label"]'
     # type=list|default=[]: List of input label files
-    orig:
-    # type=file|default=<undefined>: implicit {hemisphere}.orig
     out_annot: '"test"'
     # type=string|default='': Name of the annotation to create
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -137,7 +133,7 @@ tests:
   # bool - whether the unittest is expected to fail or not. Set to false
   # when you are satisfied with the edits you have made to this file
 doctests:
-- cmdline: mris_label2annot --hemi lh --l lh.aparc.label --a test --s 10335
+- cmdline:
   # str - the expected cmdline output
   inputs:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
@@ -145,16 +141,12 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     hemisphere: '"lh"'
     # type=enum|default='lh'|allowed['lh','rh']: Input hemisphere
-    subject_id: '"10335"'
-    # type=string|default='subject_id': Subject name/ID
     in_labels: '["lh.aparc.label"]'
     # type=list|default=[]: List of input label files
-    orig: '"lh.pial"'
-    # type=file|default=<undefined>: implicit {hemisphere}.orig
     out_annot: '"test"'
     # type=string|default='': Name of the annotation to create
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

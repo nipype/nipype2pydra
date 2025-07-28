@@ -11,7 +11,7 @@ from importlib import import_module
 import itertools
 from functools import cached_property
 import attrs
-from nipype.interfaces.base import BaseInterface, TraitedSpec, isdefined, Undefined
+from nipype.interfaces.base import BaseInterface, BaseTraitedSpec, isdefined, Undefined
 from nipype.interfaces.base import traits_extension
 from .utils.misc import (
     split_source_into_statements,
@@ -401,7 +401,11 @@ class UsedSymbols:
                                 intra_pkg_objs[imported.object.__name__].add(obj)
                             elif inspect.isclass(obj):
                                 class_def = (obj.__name__, obj)
-                                if class_def not in self.imported_classes:
+                                if (
+                                    class_def
+                                    not in self.imported_classes
+                                    + self.package.omit_classes
+                                ):
                                     self.imported_classes.append(class_def)
                                 intra_pkg_objs[imported.object.__name__].add(obj)
                             else:
@@ -472,7 +476,7 @@ class UsedSymbols:
                     local_class.__name__ in used_symbols
                     and local_class not in self.classes
                 ):
-                    if issubclass(local_class, (BaseInterface, TraitedSpec)):
+                    if issubclass(local_class, (BaseInterface, BaseTraitedSpec)):
                         continue
                     self.classes.append(local_class)
                     class_body = inspect.getsource(local_class)

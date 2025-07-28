@@ -6,17 +6,17 @@
 # Docs
 # ----
 # 
-#     This program will inflate a cortical surface.
+# This program will inflate a cortical surface.
 # 
-#     Examples
-#     ========
-#     >>> from nipype.interfaces.freesurfer import MRIsInflate
-#     >>> inflate = MRIsInflate()
-#     >>> inflate.inputs.in_file = 'lh.pial'
-#     >>> inflate.inputs.no_save_sulc = True
-#     >>> inflate.cmdline # doctest: +SKIP
-#     'mris_inflate -no-save-sulc lh.pial lh.inflated'
-#     
+# Examples
+# ========
+# >>> from nipype.interfaces.freesurfer import MRIsInflate
+# >>> inflate = MRIsInflate()
+# >>> inflate.inputs.in_file = 'lh.pial'
+# >>> inflate.inputs.no_save_sulc = True
+# >>> inflate.cmdline # doctest: +SKIP
+# 'mris_inflate -no-save-sulc lh.pial lh.inflated'
+# 
 task_name: MRIsInflate
 nipype_name: MRIsInflate
 nipype_module: nipype.interfaces.freesurfer.utils
@@ -31,14 +31,8 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    in_file: medimage-freesurfer/pial
+    in_file: fileformats.medimage_freesurfer.Pial
     # type=file|default=<undefined>: Input file for MRIsInflate
-    out_file: Path
-    # type=file: Output file for MRIsInflate
-    # type=file|default=<undefined>: Output file for MRIsInflate
-    out_sulc: Path
-    # type=file: Output sulc file
-    # type=file|default=<undefined>: Output sulc file
     subjects_dir: generic/directory
     # type=directory|default=<undefined>: subjects directory
   callable_defaults:
@@ -67,7 +61,7 @@ outputs:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
@@ -91,7 +85,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -110,10 +104,8 @@ tests:
   # (if not specified, will try to choose a sensible value)
     in_file:
     # type=file|default=<undefined>: Input file for MRIsInflate
-    no_save_sulc: 'True'
-    # type=bool|default=False: Do not save sulc file as output
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -128,7 +120,7 @@ tests:
   # bool - whether the unittest is expected to fail or not. Set to false
   # when you are satisfied with the edits you have made to this file
 doctests:
-- cmdline: mris_inflate -no-save-sulc lh.pial lh.inflated
+- cmdline:
   # str - the expected cmdline output
   inputs:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
@@ -136,10 +128,8 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     in_file: '"lh.pial"'
     # type=file|default=<undefined>: Input file for MRIsInflate
-    no_save_sulc: 'True'
-    # type=bool|default=False: Do not save sulc file as output
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

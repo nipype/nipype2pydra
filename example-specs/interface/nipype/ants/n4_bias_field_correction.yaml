@@ -6,71 +6,71 @@
 # Docs
 # ----
 # 
-#     Bias field correction.
+# Bias field correction.
 # 
-#     N4 is a variant of the popular N3 (nonparameteric nonuniform normalization)
-#     retrospective bias correction algorithm. Based on the assumption that the
-#     corruption of the low frequency bias field can be modeled as a convolution of
-#     the intensity histogram by a Gaussian, the basic algorithmic protocol is to
-#     iterate between deconvolving the intensity histogram by a Gaussian, remapping
-#     the intensities, and then spatially smoothing this result by a B-spline modeling
-#     of the bias field itself. The modifications from and improvements obtained over
-#     the original N3 algorithm are described in [Tustison2010]_.
+# N4 is a variant of the popular N3 (nonparameteric nonuniform normalization)
+# retrospective bias correction algorithm. Based on the assumption that the
+# corruption of the low frequency bias field can be modeled as a convolution of
+# the intensity histogram by a Gaussian, the basic algorithmic protocol is to
+# iterate between deconvolving the intensity histogram by a Gaussian, remapping
+# the intensities, and then spatially smoothing this result by a B-spline modeling
+# of the bias field itself. The modifications from and improvements obtained over
+# the original N3 algorithm are described in [Tustison2010]_.
 # 
-#     .. [Tustison2010] N. Tustison et al.,
-#       N4ITK: Improved N3 Bias Correction, IEEE Transactions on Medical Imaging,
-#       29(6):1310-1320, June 2010.
+# .. [Tustison2010] N. Tustison et al.,
+#   N4ITK: Improved N3 Bias Correction, IEEE Transactions on Medical Imaging,
+#   29(6):1310-1320, June 2010.
 # 
-#     Examples
-#     --------
+# Examples
+# --------
 # 
-#     >>> import copy
-#     >>> from nipype.interfaces.ants import N4BiasFieldCorrection
-#     >>> n4 = N4BiasFieldCorrection()
-#     >>> n4.inputs.dimension = 3
-#     >>> n4.inputs.input_image = 'structural.nii'
-#     >>> n4.inputs.bspline_fitting_distance = 300
-#     >>> n4.inputs.shrink_factor = 3
-#     >>> n4.inputs.n_iterations = [50,50,30,20]
-#     >>> n4.cmdline
-#     'N4BiasFieldCorrection --bspline-fitting [ 300 ]
-#     -d 3 --input-image structural.nii
-#     --convergence [ 50x50x30x20 ] --output structural_corrected.nii
-#     --shrink-factor 3'
+# >>> import copy
+# >>> from nipype.interfaces.ants import N4BiasFieldCorrection
+# >>> n4 = N4BiasFieldCorrection()
+# >>> n4.inputs.dimension = 3
+# >>> n4.inputs.input_image = 'structural.nii'
+# >>> n4.inputs.bspline_fitting_distance = 300
+# >>> n4.inputs.shrink_factor = 3
+# >>> n4.inputs.n_iterations = [50,50,30,20]
+# >>> n4.cmdline
+# 'N4BiasFieldCorrection --bspline-fitting [ 300 ]
+# -d 3 --input-image structural.nii
+# --convergence [ 50x50x30x20 ] --output structural_corrected.nii
+# --shrink-factor 3'
 # 
-#     >>> n4_2 = copy.deepcopy(n4)
-#     >>> n4_2.inputs.convergence_threshold = 1e-6
-#     >>> n4_2.cmdline
-#     'N4BiasFieldCorrection --bspline-fitting [ 300 ]
-#     -d 3 --input-image structural.nii
-#     --convergence [ 50x50x30x20, 1e-06 ] --output structural_corrected.nii
-#     --shrink-factor 3'
+# >>> n4_2 = copy.deepcopy(n4)
+# >>> n4_2.inputs.convergence_threshold = 1e-6
+# >>> n4_2.cmdline
+# 'N4BiasFieldCorrection --bspline-fitting [ 300 ]
+# -d 3 --input-image structural.nii
+# --convergence [ 50x50x30x20, 1e-06 ] --output structural_corrected.nii
+# --shrink-factor 3'
 # 
-#     >>> n4_3 = copy.deepcopy(n4_2)
-#     >>> n4_3.inputs.bspline_order = 5
-#     >>> n4_3.cmdline
-#     'N4BiasFieldCorrection --bspline-fitting [ 300, 5 ]
-#     -d 3 --input-image structural.nii
-#     --convergence [ 50x50x30x20, 1e-06 ] --output structural_corrected.nii
-#     --shrink-factor 3'
+# >>> n4_3 = copy.deepcopy(n4_2)
+# >>> n4_3.inputs.bspline_order = 5
+# >>> n4_3.cmdline
+# 'N4BiasFieldCorrection --bspline-fitting [ 300, 5 ]
+# -d 3 --input-image structural.nii
+# --convergence [ 50x50x30x20, 1e-06 ] --output structural_corrected.nii
+# --shrink-factor 3'
 # 
-#     >>> n4_4 = N4BiasFieldCorrection()
-#     >>> n4_4.inputs.input_image = 'structural.nii'
-#     >>> n4_4.inputs.save_bias = True
-#     >>> n4_4.inputs.dimension = 3
-#     >>> n4_4.cmdline
-#     'N4BiasFieldCorrection -d 3 --input-image structural.nii
-#     --output [ structural_corrected.nii, structural_bias.nii ]'
+# >>> n4_4 = N4BiasFieldCorrection()
+# >>> n4_4.inputs.input_image = 'structural.nii'
+# >>> n4_4.inputs.save_bias = True
+# >>> n4_4.inputs.dimension = 3
+# >>> n4_4.cmdline
+# 'N4BiasFieldCorrection -d 3 --input-image structural.nii
+# --output [ structural_corrected.nii, structural_bias.nii ]'
 # 
-#     >>> n4_5 = N4BiasFieldCorrection()
-#     >>> n4_5.inputs.input_image = 'structural.nii'
-#     >>> n4_5.inputs.dimension = 3
-#     >>> n4_5.inputs.histogram_sharpening = (0.12, 0.02, 200)
-#     >>> n4_5.cmdline
-#     'N4BiasFieldCorrection -d 3  --histogram-sharpening [0.12,0.02,200]
-#     --input-image structural.nii --output structural_corrected.nii'
+# >>> n4_5 = N4BiasFieldCorrection()
+# >>> n4_5.inputs.input_image = 'structural.nii'
+# >>> n4_5.inputs.dimension = 3
+# >>> n4_5.inputs.histogram_sharpening = (0.12, 0.02, 200)
+# >>> n4_5.cmdline
+# 'N4BiasFieldCorrection -d 3  --histogram-sharpening [0.12,0.02,200]
+# --input-image structural.nii --output structural_corrected.nii'
 # 
-#     
+# 
 task_name: N4BiasFieldCorrection
 nipype_name: N4BiasFieldCorrection
 nipype_module: nipype.interfaces.ants.segmentation
@@ -85,9 +85,6 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    bias_image: Path
-    # type=file: Estimated bias
-    # type=file|default=<undefined>: Filename for the estimated bias.
     input_image: medimage/nifti1
     # type=file|default=<undefined>: input for bias correction. Negative values or values close to zero should be processed prior to correction
     mask_image: generic/file
@@ -120,7 +117,7 @@ outputs:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
@@ -166,7 +163,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -185,16 +182,12 @@ tests:
   # (if not specified, will try to choose a sensible value)
     dimension: '3'
     # type=enum|default=3|allowed[2,3,4]: image dimension (2, 3 or 4)
-    input_image:
-    # type=file|default=<undefined>: input for bias correction. Negative values or values close to zero should be processed prior to correction
     bspline_fitting_distance: '300'
     # type=float|default=0.0: 
-    shrink_factor: '3'
-    # type=int|default=0: 
     n_iterations: '[50,50,30,20]'
     # type=list|default=[]: 
   imports: &id001
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   - module: copy
   expected_outputs:
@@ -215,7 +208,7 @@ tests:
     convergence_threshold: 1e-6
     # type=float|default=0.0: 
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -235,7 +228,7 @@ tests:
     bspline_order: '5'
     # type=int|default=0: 
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -254,12 +247,10 @@ tests:
   # (if not specified, will try to choose a sensible value)
     input_image:
     # type=file|default=<undefined>: input for bias correction. Negative values or values close to zero should be processed prior to correction
-    save_bias: 'True'
-    # type=bool|default=False: True if the estimated bias should be saved to file.
     dimension: '3'
     # type=enum|default=3|allowed[2,3,4]: image dimension (2, 3 or 4)
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -278,12 +269,10 @@ tests:
   # (if not specified, will try to choose a sensible value)
     input_image:
     # type=file|default=<undefined>: input for bias correction. Negative values or values close to zero should be processed prior to correction
-    dimension: '3'
-    # type=enum|default=3|allowed[2,3,4]: image dimension (2, 3 or 4)
     histogram_sharpening: (0.12, 0.02, 200)
     # type=tuple|default=(0.15, 0.01, 200): Three-values tuple of histogram sharpening parameters (FWHM, wienerNose, numberOfHistogramBins). These options describe the histogram sharpening parameters, i.e. the deconvolution step parameters described in the original N3 algorithm. The default values have been shown to work fairly well.
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -306,16 +295,12 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     dimension: '3'
     # type=enum|default=3|allowed[2,3,4]: image dimension (2, 3 or 4)
-    input_image: '"structural.nii"'
-    # type=file|default=<undefined>: input for bias correction. Negative values or values close to zero should be processed prior to correction
     bspline_fitting_distance: '300'
     # type=float|default=0.0: 
-    shrink_factor: '3'
-    # type=int|default=0: 
     n_iterations: '[50,50,30,20]'
     # type=list|default=[]: 
   imports: *id001
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS
@@ -328,7 +313,7 @@ doctests:
     convergence_threshold: 1e-6
     # type=float|default=0.0: 
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS
@@ -341,7 +326,7 @@ doctests:
     bspline_order: '5'
     # type=int|default=0: 
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS
@@ -353,12 +338,10 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     input_image: '"structural.nii"'
     # type=file|default=<undefined>: input for bias correction. Negative values or values close to zero should be processed prior to correction
-    save_bias: 'True'
-    # type=bool|default=False: True if the estimated bias should be saved to file.
     dimension: '3'
     # type=enum|default=3|allowed[2,3,4]: image dimension (2, 3 or 4)
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS
@@ -370,12 +353,10 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     input_image: '"structural.nii"'
     # type=file|default=<undefined>: input for bias correction. Negative values or values close to zero should be processed prior to correction
-    dimension: '3'
-    # type=enum|default=3|allowed[2,3,4]: image dimension (2, 3 or 4)
     histogram_sharpening: (0.12, 0.02, 200)
     # type=tuple|default=(0.15, 0.01, 200): Three-values tuple of histogram sharpening parameters (FWHM, wienerNose, numberOfHistogramBins). These options describe the histogram sharpening parameters, i.e. the deconvolution step parameters described in the original N3 algorithm. The default values have been shown to work fairly well.
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

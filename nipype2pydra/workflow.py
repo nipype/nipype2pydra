@@ -969,7 +969,7 @@ def test_{self.name}_build():
 @pytest.mark.skip(reason="Appropriate inputs for this workflow haven't been specified yet")
 def test_{self.name}_run():
     workflow = {self.name}({args_str})
-    result = workflow(plugin='serial')
+    result = workflow(worker='debug')
     print(result.out)
 """
         return code_str
@@ -990,7 +990,7 @@ def test_{self.name}_run():
                 + parse_imports(
                     [
                         f"from {self.output_module} import {self.name}",
-                        "from pydra.engine import Workflow",
+                        "from pydra.compose import workflow",
                     ]
                 )
             ),

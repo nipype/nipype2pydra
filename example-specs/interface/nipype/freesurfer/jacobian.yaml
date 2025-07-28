@@ -6,17 +6,17 @@
 # Docs
 # ----
 # 
-#     This program computes the Jacobian of a surface mapping.
+# This program computes the Jacobian of a surface mapping.
 # 
-#     Examples
-#     ========
-#     >>> from nipype.interfaces.freesurfer import Jacobian
-#     >>> jacobian = Jacobian()
-#     >>> jacobian.inputs.in_origsurf = 'lh.pial'
-#     >>> jacobian.inputs.in_mappedsurf = 'lh.pial'
-#     >>> jacobian.cmdline
-#     'mris_jacobian lh.pial lh.pial lh.jacobian'
-#     
+# Examples
+# ========
+# >>> from nipype.interfaces.freesurfer import Jacobian
+# >>> jacobian = Jacobian()
+# >>> jacobian.inputs.in_origsurf = 'lh.pial'
+# >>> jacobian.inputs.in_mappedsurf = 'lh.pial'
+# >>> jacobian.cmdline
+# 'mris_jacobian lh.pial lh.pial lh.jacobian'
+# 
 task_name: Jacobian
 nipype_name: Jacobian
 nipype_module: nipype.interfaces.freesurfer.utils
@@ -31,13 +31,10 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    in_mappedsurf: medimage-freesurfer/pial
+    in_mappedsurf: generic/file
     # type=file|default=<undefined>: Mapped surface
-    in_origsurf: medimage-freesurfer/pial
+    in_origsurf: fileformats.medimage_freesurfer.Pial
     # type=file|default=<undefined>: Original surface
-    out_file: Path
-    # type=file: Output Jacobian of the surface mapping
-    # type=file|default=<undefined>: Output Jacobian of the surface mapping
     subjects_dir: generic/directory
     # type=directory|default=<undefined>: subjects directory
   callable_defaults:
@@ -63,7 +60,7 @@ outputs:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
@@ -84,7 +81,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -103,10 +100,8 @@ tests:
   # (if not specified, will try to choose a sensible value)
     in_origsurf:
     # type=file|default=<undefined>: Original surface
-    in_mappedsurf:
-    # type=file|default=<undefined>: Mapped surface
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -121,7 +116,7 @@ tests:
   # bool - whether the unittest is expected to fail or not. Set to false
   # when you are satisfied with the edits you have made to this file
 doctests:
-- cmdline: mris_jacobian lh.pial lh.pial lh.jacobian
+- cmdline:
   # str - the expected cmdline output
   inputs:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
@@ -129,10 +124,8 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     in_origsurf: '"lh.pial"'
     # type=file|default=<undefined>: Original surface
-    in_mappedsurf: '"lh.pial"'
-    # type=file|default=<undefined>: Mapped surface
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

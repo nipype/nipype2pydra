@@ -6,27 +6,27 @@
 # Docs
 # ----
 # Calculate correlation matrix of a set of ROIs (using mean time series of
-#     each). Several networks may be analyzed simultaneously, one per brick.
+# each). Several networks may be analyzed simultaneously, one per brick.
 # 
-#     For complete details, see the `3dNetCorr Documentation
-#     <https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dNetCorr.html>`_.
+# For complete details, see the `3dNetCorr Documentation
+# <https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dNetCorr.html>`_.
 # 
-#     Examples
-#     --------
-#     >>> from nipype.interfaces import afni
-#     >>> ncorr = afni.NetCorr()
-#     >>> ncorr.inputs.in_file = 'functional.nii'
-#     >>> ncorr.inputs.mask = 'mask.nii'
-#     >>> ncorr.inputs.in_rois = 'maps.nii'
-#     >>> ncorr.inputs.ts_wb_corr = True
-#     >>> ncorr.inputs.ts_wb_Z = True
-#     >>> ncorr.inputs.fish_z = True
-#     >>> ncorr.inputs.out_file = 'sub0.tp1.ncorr'
-#     >>> ncorr.cmdline
-#     '3dNetCorr -prefix sub0.tp1.ncorr -fish_z -inset functional.nii -in_rois maps.nii -mask mask.nii -ts_wb_Z -ts_wb_corr'
-#     >>> res = ncorr.run()  # doctest: +SKIP
+# Examples
+# --------
+# >>> from nipype.interfaces import afni
+# >>> ncorr = afni.NetCorr()
+# >>> ncorr.inputs.in_file = 'functional.nii'
+# >>> ncorr.inputs.mask = 'mask.nii'
+# >>> ncorr.inputs.in_rois = 'maps.nii'
+# >>> ncorr.inputs.ts_wb_corr = True
+# >>> ncorr.inputs.ts_wb_Z = True
+# >>> ncorr.inputs.fish_z = True
+# >>> ncorr.inputs.out_file = 'sub0.tp1.ncorr'
+# >>> ncorr.cmdline
+# '3dNetCorr -prefix sub0.tp1.ncorr -fish_z -inset functional.nii -in_rois maps.nii -mask mask.nii -ts_wb_Z -ts_wb_corr'
+# >>> res = ncorr.run()  # doctest: +SKIP
 # 
-#     
+# 
 task_name: NetCorr
 nipype_name: NetCorr
 nipype_module: nipype.interfaces.afni.preprocess
@@ -45,10 +45,8 @@ inputs:
     # type=file|default=<undefined>: input time series file (4D data set)
     in_rois: medimage/nifti1
     # type=file|default=<undefined>: input set of ROIs, each labelled with distinct integers
-    mask: medimage/nifti1
+    mask: generic/file
     # type=file|default=<undefined>: can include a whole brain mask within which to calculate correlation. Otherwise, data should be masked already
-    out_file: Path
-    # type=file|default=<undefined>: output file name part
     weight_ts: generic/file
     # type=file|default=<undefined>: input a 1D file WTS of weights that will be applied multiplicatively to each ROI's average time series. WTS can be a column- or row-file of values, but it must have the same length as the input time series volume. If the initial average time series was A[n] for n=0,..,(N-1) time points, then applying a set of weights W[n] of the same length from WTS would produce a new time series:  B[n] = A[n] * W[n]
   callable_defaults:
@@ -75,7 +73,7 @@ outputs:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
@@ -125,7 +123,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -144,20 +142,14 @@ tests:
   # (if not specified, will try to choose a sensible value)
     in_file:
     # type=file|default=<undefined>: input time series file (4D data set)
-    mask:
-    # type=file|default=<undefined>: can include a whole brain mask within which to calculate correlation. Otherwise, data should be masked already
     in_rois:
     # type=file|default=<undefined>: input set of ROIs, each labelled with distinct integers
-    ts_wb_corr: 'True'
-    # type=bool|default=False: switch to create a set of whole brain correlation maps. Performs whole brain correlation for each ROI's average time series; this will automatically create a directory for each network that contains the set of whole brain correlation maps (Pearson 'r's). The directories are labelled as above for '-ts_indiv' Within each directory, the files are labelled WB_CORR_ROI_001+orig, WB_CORR_ROI_002+orig, etc., with the numbers given by the actual ROI integer labels
     ts_wb_Z: 'True'
     # type=bool|default=False: same as above in '-ts_wb_corr', except that the maps have been Fisher transformed to Z-scores the relation: Z=atanh(r). To avoid infinities in the transform, Pearson values are effectively capped at |r| = 0.999329 (where |Z| = 4.0). Files are labelled WB_Z_ROI_001+orig, etc
-    fish_z: 'True'
-    # type=bool|default=False: switch to also output a matrix of Fisher Z-transform values for the corr coefs (r): Z = atanh(r) , (with Z=4 being output along matrix diagonals where r=1, as the r-to-Z conversion is ceilinged at Z = atanh(r=0.999329) = 4, which is still *quite* a high Pearson-r value
     out_file: '"sub0.tp1.ncorr"'
     # type=file|default=<undefined>: output file name part
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -172,7 +164,7 @@ tests:
   # bool - whether the unittest is expected to fail or not. Set to false
   # when you are satisfied with the edits you have made to this file
 doctests:
-- cmdline: 3dNetCorr -prefix sub0.tp1.ncorr -fish_z -inset functional.nii -in_rois maps.nii -mask mask.nii -ts_wb_Z -ts_wb_corr
+- cmdline:
   # str - the expected cmdline output
   inputs:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
@@ -180,20 +172,14 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     in_file: '"functional.nii"'
     # type=file|default=<undefined>: input time series file (4D data set)
-    mask: '"mask.nii"'
-    # type=file|default=<undefined>: can include a whole brain mask within which to calculate correlation. Otherwise, data should be masked already
     in_rois: '"maps.nii"'
     # type=file|default=<undefined>: input set of ROIs, each labelled with distinct integers
-    ts_wb_corr: 'True'
-    # type=bool|default=False: switch to create a set of whole brain correlation maps. Performs whole brain correlation for each ROI's average time series; this will automatically create a directory for each network that contains the set of whole brain correlation maps (Pearson 'r's). The directories are labelled as above for '-ts_indiv' Within each directory, the files are labelled WB_CORR_ROI_001+orig, WB_CORR_ROI_002+orig, etc., with the numbers given by the actual ROI integer labels
     ts_wb_Z: 'True'
     # type=bool|default=False: same as above in '-ts_wb_corr', except that the maps have been Fisher transformed to Z-scores the relation: Z=atanh(r). To avoid infinities in the transform, Pearson values are effectively capped at |r| = 0.999329 (where |Z| = 4.0). Files are labelled WB_Z_ROI_001+orig, etc
-    fish_z: 'True'
-    # type=bool|default=False: switch to also output a matrix of Fisher Z-transform values for the corr coefs (r): Z = atanh(r) , (with Z=4 being output along matrix diagonals where r=1, as the r-to-Z conversion is ceilinged at Z = atanh(r=0.999329) = 4, which is still *quite* a high Pearson-r value
     out_file: '"sub0.tp1.ncorr"'
     # type=file|default=<undefined>: output file name part
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

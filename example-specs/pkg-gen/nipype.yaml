@@ -294,9 +294,9 @@ freesurfer:
     - nipype.interfaces.freesurfer.model.SphericalAverage
     - nipype.interfaces.freesurfer.petsurfer.GTMSeg
     - nipype.interfaces.freesurfer.petsurfer.GTMPVC
-    - nipype.interfaces.freesurfer.petsurfer.MRTM
+    - nipype.interfaces.freesurfer.petsurfer.MRTM1
     - nipype.interfaces.freesurfer.petsurfer.MRTM2
-    - nipype.interfaces.freesurfer.petsurfer.LoganRef
+    - nipype.interfaces.freesurfer.petsurfer.Logan
     - nipype.interfaces.freesurfer.preprocess.ParseDICOMDir
     - nipype.interfaces.freesurfer.preprocess.UnpackSDICOMDir
     - nipype.interfaces.freesurfer.preprocess.MRIConvert

@@ -6,22 +6,22 @@
 # Docs
 # ----
 # Copies an image of one type to an image of the same
-#     or different type using 3dZcat command
+# or different type using 3dZcat command
 # 
-#     For complete details, see the `3dZcat Documentation.
-#     <https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dZcat.html>`_
+# For complete details, see the `3dZcat Documentation.
+# <https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dZcat.html>`_
 # 
-#     Examples
-#     --------
-#     >>> from nipype.interfaces import afni
-#     >>> zcat = afni.Zcat()
-#     >>> zcat.inputs.in_files = ['functional2.nii', 'functional3.nii']
-#     >>> zcat.inputs.out_file = 'cat_functional.nii'
-#     >>> zcat.cmdline
-#     '3dZcat -prefix cat_functional.nii functional2.nii functional3.nii'
-#     >>> res = zcat.run()  # doctest: +SKIP
+# Examples
+# --------
+# >>> from nipype.interfaces import afni
+# >>> zcat = afni.Zcat()
+# >>> zcat.inputs.in_files = ['functional2.nii', 'functional3.nii']
+# >>> zcat.inputs.out_file = 'cat_functional.nii'
+# >>> zcat.cmdline
+# '3dZcat -prefix cat_functional.nii functional2.nii functional3.nii'
+# >>> res = zcat.run()  # doctest: +SKIP
 # 
-#     
+# 
 task_name: Zcat
 nipype_name: Zcat
 nipype_module: nipype.interfaces.afni.utils
@@ -38,9 +38,6 @@ inputs:
   # passed to the field in the automatically generated unittests.
     in_files: medimage/nifti1+list-of
     # type=inputmultiobject|default=[]: 
-    out_file: Path
-    # type=file: output file
-    # type=file|default=<undefined>: output dataset prefix name (default 'zcat')
   callable_defaults:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set as the `default` method of input fields
@@ -57,14 +54,14 @@ outputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    out_file: medimage/nifti1
+    out_file: generic/file
     # type=file: output file
     # type=file|default=<undefined>: output dataset prefix name (default 'zcat')
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
@@ -93,7 +90,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -112,11 +109,8 @@ tests:
   # (if not specified, will try to choose a sensible value)
     in_files:
     # type=inputmultiobject|default=[]: 
-    out_file: '"cat_functional.nii"'
-    # type=file: output file
-    # type=file|default=<undefined>: output dataset prefix name (default 'zcat')
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -131,7 +125,7 @@ tests:
   # bool - whether the unittest is expected to fail or not. Set to false
   # when you are satisfied with the edits you have made to this file
 doctests:
-- cmdline: 3dZcat -prefix cat_functional.nii functional2.nii functional3.nii
+- cmdline:
   # str - the expected cmdline output
   inputs:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
@@ -139,11 +133,8 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     in_files: '["functional2.nii", "functional3.nii"]'
     # type=inputmultiobject|default=[]: 
-    out_file: '"cat_functional.nii"'
-    # type=file: output file
-    # type=file|default=<undefined>: output dataset prefix name (default 'zcat')
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

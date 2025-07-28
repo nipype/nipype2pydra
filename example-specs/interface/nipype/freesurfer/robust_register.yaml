@@ -6,25 +6,25 @@
 # Docs
 # ----
 # Perform intramodal linear registration (translation and rotation) using
-#     robust statistics.
+# robust statistics.
 # 
-#     Examples
-#     --------
-#     >>> from nipype.interfaces.freesurfer import RobustRegister
-#     >>> reg = RobustRegister()
-#     >>> reg.inputs.source_file = 'structural.nii'
-#     >>> reg.inputs.target_file = 'T1.nii'
-#     >>> reg.inputs.auto_sens = True
-#     >>> reg.inputs.init_orient = True
-#     >>> reg.cmdline # doctest: +ELLIPSIS
-#     'mri_robust_register --satit --initorient --lta .../structural_robustreg.lta --mov structural.nii --dst T1.nii'
+# Examples
+# --------
+# >>> from nipype.interfaces.freesurfer import RobustRegister
+# >>> reg = RobustRegister()
+# >>> reg.inputs.source_file = 'structural.nii'
+# >>> reg.inputs.target_file = 'T1.nii'
+# >>> reg.inputs.auto_sens = True
+# >>> reg.inputs.init_orient = True
+# >>> reg.cmdline # doctest: +ELLIPSIS
+# 'mri_robust_register --satit --initorient --lta .../structural_robustreg.lta --mov structural.nii --dst T1.nii'
 # 
-#     References
-#     ----------
-#     Reuter, M, Rosas, HD, and Fischl, B, (2010). Highly Accurate Inverse
-#         Consistent Registration: A Robust Approach.  Neuroimage 53(4) 1181-96.
+# References
+# ----------
+# Reuter, M, Rosas, HD, and Fischl, B, (2010). Highly Accurate Inverse
+#     Consistent Registration: A Robust Approach.  Neuroimage 53(4) 1181-96.
 # 
-#     
+# 
 task_name: RobustRegister
 nipype_name: RobustRegister
 nipype_module: nipype.interfaces.freesurfer.preprocess
@@ -49,7 +49,7 @@ inputs:
     # type=file|default=<undefined>: volume to be registered
     subjects_dir: generic/directory
     # type=directory|default=<undefined>: subjects directory
-    target_file: medimage/nifti1
+    target_file: generic/file
     # type=file|default=<undefined>: target volume for the registration
   callable_defaults:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
@@ -95,7 +95,7 @@ outputs:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
@@ -175,7 +175,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -194,14 +194,10 @@ tests:
   # (if not specified, will try to choose a sensible value)
     source_file:
     # type=file|default=<undefined>: volume to be registered
-    target_file:
-    # type=file|default=<undefined>: target volume for the registration
     auto_sens: 'True'
     # type=bool|default=False: auto-detect good sensitivity
-    init_orient: 'True'
-    # type=bool|default=False: use moments for initial orient (recommended for stripped brains)
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -216,7 +212,7 @@ tests:
   # bool - whether the unittest is expected to fail or not. Set to false
   # when you are satisfied with the edits you have made to this file
 doctests:
-- cmdline: mri_robust_register --satit --initorient --lta .../structural_robustreg.lta --mov structural.nii --dst T1.nii
+- cmdline:
   # str - the expected cmdline output
   inputs:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
@@ -224,14 +220,10 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     source_file: '"structural.nii"'
     # type=file|default=<undefined>: volume to be registered
-    target_file: '"T1.nii"'
-    # type=file|default=<undefined>: target volume for the registration
     auto_sens: 'True'
     # type=bool|default=False: auto-detect good sensitivity
-    init_orient: 'True'
-    # type=bool|default=False: use moments for initial orient (recommended for stripped brains)
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

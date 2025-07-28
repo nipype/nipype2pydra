@@ -6,23 +6,23 @@
 # Docs
 # ----
 # 
-#     This program is useful for extracting one of the arrays ("a variable")
-#     from a surface-registration template file. The output is a file
-#     containing a surface-worth of per-vertex values, saved in "curvature"
-#     format. Because the template data is sampled to a particular surface
-#     mesh, this conjures the idea of "painting to a surface".
+# This program is useful for extracting one of the arrays ("a variable")
+# from a surface-registration template file. The output is a file
+# containing a surface-worth of per-vertex values, saved in "curvature"
+# format. Because the template data is sampled to a particular surface
+# mesh, this conjures the idea of "painting to a surface".
 # 
-#     Examples
-#     ========
-#     >>> from nipype.interfaces.freesurfer import Paint
-#     >>> paint = Paint()
-#     >>> paint.inputs.in_surf = 'lh.pial'
-#     >>> paint.inputs.template = 'aseg.mgz'
-#     >>> paint.inputs.averages = 5
-#     >>> paint.inputs.out_file = 'lh.avg_curv'
-#     >>> paint.cmdline
-#     'mrisp_paint -a 5 aseg.mgz lh.pial lh.avg_curv'
-#     
+# Examples
+# ========
+# >>> from nipype.interfaces.freesurfer import Paint
+# >>> paint = Paint()
+# >>> paint.inputs.in_surf = 'lh.pial'
+# >>> paint.inputs.template = 'aseg.mgz'
+# >>> paint.inputs.averages = 5
+# >>> paint.inputs.out_file = 'lh.avg_curv'
+# >>> paint.cmdline
+# 'mrisp_paint -a 5 aseg.mgz lh.pial lh.avg_curv'
+# 
 task_name: Paint
 nipype_name: Paint
 nipype_module: nipype.interfaces.freesurfer.registration
@@ -37,14 +37,11 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    in_surf: medimage-freesurfer/pial
+    in_surf: fileformats.medimage_freesurfer.Pial
     # type=file|default=<undefined>: Surface file with grid (vertices) onto which the template data is to be sampled or 'painted'
-    out_file: Path
-    # type=file: File containing a surface-worth of per-vertex values, saved in 'curvature' format.
-    # type=file|default=<undefined>: File containing a surface-worth of per-vertex values, saved in 'curvature' format.
     subjects_dir: generic/directory
     # type=directory|default=<undefined>: subjects directory
-    template: medimage/mgh-gz
+    template: generic/file
     # type=file|default=<undefined>: Template file
   callable_defaults:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
@@ -69,7 +66,7 @@ outputs:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
+  # dict[str, str] - `path_template` values to be provided to output fields
   requirements:
   # dict[str, list[str]] - input fields that are required to be provided for the output field to be present
 tests:
@@ -94,7 +91,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -113,15 +110,10 @@ tests:
   # (if not specified, will try to choose a sensible value)
     in_surf:
     # type=file|default=<undefined>: Surface file with grid (vertices) onto which the template data is to be sampled or 'painted'
-    template:
-    # type=file|default=<undefined>: Template file
     averages: '5'
     # type=int|default=0: Average curvature patterns
-    out_file: '"lh.avg_curv"'
-    # type=file: File containing a surface-worth of per-vertex values, saved in 'curvature' format.
-    # type=file|default=<undefined>: File containing a surface-worth of per-vertex values, saved in 'curvature' format.
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -136,7 +128,7 @@ tests:
   # bool - whether the unittest is expected to fail or not. Set to false
   # when you are satisfied with the edits you have made to this file
 doctests:
-- cmdline: mrisp_paint -a 5 aseg.mgz lh.pial lh.avg_curv
+- cmdline:
   # str - the expected cmdline output
   inputs:
   # dict[str, str] - name-value pairs for inputs to be provided to the doctest.
@@ -144,15 +136,10 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     in_surf: '"lh.pial"'
     # type=file|default=<undefined>: Surface file with grid (vertices) onto which the template data is to be sampled or 'painted'
-    template: '"aseg.mgz"'
-    # type=file|default=<undefined>: Template file
     averages: '5'
     # type=int|default=0: Average curvature patterns
-    out_file: '"lh.avg_curv"'
-    # type=file: File containing a surface-worth of per-vertex values, saved in 'curvature' format.
-    # type=file|default=<undefined>: File containing a surface-worth of per-vertex values, saved in 'curvature' format.
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS

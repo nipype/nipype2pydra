@@ -6,20 +6,20 @@
 # Docs
 # ----
 # Use Freesurfer mri_concat to combine several input volumes
-#     into one output volume.  Can concatenate by frames, or compute
-#     a variety of statistics on the input volumes.
+# into one output volume.  Can concatenate by frames, or compute
+# a variety of statistics on the input volumes.
 # 
-#     Examples
-#     --------
-#     Combine two input volumes into one volume with two frames
+# Examples
+# --------
+# Combine two input volumes into one volume with two frames
 # 
-#     >>> concat = Concatenate()
-#     >>> concat.inputs.in_files = ['cont1.nii', 'cont2.nii']
-#     >>> concat.inputs.concatenated_file = 'bar.nii'
-#     >>> concat.cmdline
-#     'mri_concat --o bar.nii --i cont1.nii --i cont2.nii'
+# >>> concat = Concatenate()
+# >>> concat.inputs.in_files = ['cont1.nii', 'cont2.nii']
+# >>> concat.inputs.concatenated_file = 'bar.nii'
+# >>> concat.cmdline
+# 'mri_concat --o bar.nii --i cont1.nii --i cont2.nii'
 # 
-#     
+# 
 task_name: Concatenate
 nipype_name: Concatenate
 nipype_module: nipype.interfaces.freesurfer.model
@@ -34,9 +34,6 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    concatenated_file: Path
-    # type=file: Path/name of the output volume
-    # type=file|default=<undefined>: Output volume
     in_files: medimage/nifti1+list-of
     # type=inputmultiobject|default=[]: Individual volumes to be concatenated
     mask_file: generic/file
@@ -61,15 +58,15 @@ outputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    concatenated_file: medimage/nifti1
+    concatenated_file: generic/file
     # type=file: Path/name of the output volume
     # type=file|default=<undefined>: Output volume
   callables:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`
   # to set to the `callable` attribute of output fields
   templates:
-  # dict[str, str] - `output_file_template` values to be provided to output fields
-    concatenated_file: '"bar.nii"'
+  # dict[str, str] - `path_template` values to be provided to output fields
+    concatenated_file: concatenated_file
     # type=file: Path/name of the output volume
     # type=file|default=<undefined>: Output volume
   requirements:
@@ -120,7 +117,7 @@ tests:
     environ:
     # type=dict|default={}: Environment variables
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -139,11 +136,8 @@ tests:
   # (if not specified, will try to choose a sensible value)
     in_files:
     # type=inputmultiobject|default=[]: Individual volumes to be concatenated
-    concatenated_file: '"bar.nii"'
-    # type=file: Path/name of the output volume
-    # type=file|default=<undefined>: Output volume
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   expected_outputs:
   # dict[str, str] - expected values for selected outputs, noting that tests will typically
@@ -166,11 +160,8 @@ doctests:
   # '.mock()' method of the corresponding class is used instead.
     in_files: '["cont1.nii", "cont2.nii"]'
     # type=inputmultiobject|default=[]: Individual volumes to be concatenated
-    concatenated_file: '"bar.nii"'
-    # type=file: Path/name of the output volume
-    # type=file|default=<undefined>: Output volume
   imports:
-  # list[nipype2pydra.task.base.importstatement] - list import statements required by the test, with each list item
+  # list[nipype2pydra.statements.imports.explicitimport] - list import statements required by the test, with each list item
   # consisting of 'module', 'name', and optionally 'alias' keys
   directive:
   # str - any doctest directive to place on the cmdline call, e.g. # doctest: +ELLIPSIS
