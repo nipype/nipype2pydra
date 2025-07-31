@@ -507,6 +507,10 @@ class PackageConverter:
     def untranslate_submodule(self, pydra_module_name: str) -> str:
         """Translates a module name from the Nipype package to the Pydra package"""
         relpath = ImportStatement.get_relative_package(pydra_module_name, self.name)
+        if relpath.startswith(".auto"):
+            relpath = relpath[5:]
+        if relpath.startswith(".nipype_ports"):
+            return "nipype" + relpath[13:]
         if relpath == self.nipype_name:
             raise ValueError(
                 f"Module {pydra_module_name} is not in the nipype package {self.name}"
@@ -741,7 +745,9 @@ post_release = "{post_release}"
     )
 
     def add_interface_from_spec(
-        self, spec: ty.Dict[str, ty.Any], callables_file: Path
+        self,
+        spec: ty.Dict[str, ty.Any],
+        # callables_file: Path
     ) -> interface.BaseInterfaceConverter:
         output_module = self.translate_submodule(
             spec["nipype_module"], sub_pkg="auto" if self.interface_only else None
@@ -750,7 +756,7 @@ post_release = "{post_release}"
         converter = self.interfaces[f"{spec['nipype_module']}.{spec['task_name']}"] = (
             interface.get_converter(
                 output_module=output_module,
-                callables_module=callables_file,
+                # callables_module=callables_file,
                 package=self,
                 **spec,
             )

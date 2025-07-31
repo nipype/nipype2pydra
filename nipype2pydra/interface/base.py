@@ -339,10 +339,10 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
         factory=OutputsConverter,
         converter=from_dict_to_outputs,
     )
-    callables_module: ModuleType = attrs.field(
-        converter=import_module_from_path,
-        default=None,
-    )
+    # callables_module: ModuleType = attrs.field(
+    #     converter=import_module_from_path,
+    #     default=None,
+    # )
     tests: ty.List[TestGenerator] = attrs.field(  # type: ignore
         factory=list, converter=from_list_to_tests
     )
@@ -884,7 +884,7 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
                                 else:
                                     value = attrs.NOTHING
                     if value is not attrs.NOTHING:
-                        spec_str += f"    task.inputs.{nm} = {value}\n"
+                        spec_str += f"    task.{nm} = {value}\n"
             if hasattr(self.nipype_interface, "_cmd"):
                 spec_str += r'    print(f"CMDLINE: {task.cmdline}\n\n")' + "\n"
             spec_str += "    res = task(worker=PassAfterTimeoutWorker)\n"

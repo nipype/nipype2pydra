@@ -93,8 +93,10 @@ class BaseHelperConverter:
         factory=list,
         converter=from_list_to_imports,
         metadata={
-            "help": """list import statements required by the test, with each list item
-                consisting of 'module', 'name', and optionally 'alias' keys"""
+            "help": (
+                "list import statements required by the test, with each list item"
+                "consisting of 'module', 'name', and optionally 'alias' keys"
+            )
         },
     )
     package: "nipype2pydra.package.PackageConverter" = attrs.field(

@@ -199,6 +199,7 @@ class UsedSymbols:
             tuple(f.__name__ if not isinstance(f, str) else f for f in function_bodies),
             collapse_intra_pkg,
             pull_out_inline_imports,
+            tuple(package.all_import_translations),
         )
         try:
             return cls._cache[cache_key]
@@ -215,6 +216,16 @@ class UsedSymbols:
             collapse_intra_pkg,
         )
         return used
+
+    @classmethod
+    def clear_cache(cls):
+        cls._cache = {}
+        cls._cache = {}
+        cls._stmts_cache = {}
+        cls._imports_cache = {}
+        cls._funcs_cache = {}
+        cls._classes_cache = {}
+        cls._constants_cache = {}
 
     @classmethod
     def _module_statements(cls, module) -> list:
@@ -668,6 +679,12 @@ class UsedClassSymbols(UsedSymbols):
     _class_attrs_cache = {}
 
     @classmethod
+    def clear_cache(cls):
+        """Clear the cache for the class attributes"""
+        cls._class_attrs_cache = {}
+        super().clear_cache()
+
+    @classmethod
     def find(
         cls,
         klass: type,
@@ -721,6 +738,7 @@ class UsedClassSymbols(UsedSymbols):
             pull_out_inline_imports,
             absolute_imports,
             tuple(always_include),
+            tuple(package.all_import_translations),
         )
         try:
             return cls._cache[cache_key]
@@ -933,3 +951,8 @@ class UsedClassSymbols(UsedSymbols):
         class_attrs = dict(class_attrs)
         cls._constants_cache[cache_key] = class_attrs
         return class_attrs
+
+
+def clear_caches():
+    UsedSymbols.clear_cache()
+    UsedClassSymbols.clear_cache()

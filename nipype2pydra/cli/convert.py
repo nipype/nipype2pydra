@@ -87,9 +87,9 @@ def convert(
             spec = yaml.safe_load(f)
         converter.add_interface_from_spec(
             spec=spec,
-            callables_file=(
-                fspath.parent / (fspath.name[: -len(".yaml")] + "_callables.py")
-            ),
+            # callables_file=(
+            #     fspath.parent / (fspath.name[: -len(".yaml")] + "_callables.py")
+            # ),
         )
 
     # Load workflow specs

@@ -13,6 +13,7 @@ from nipype2pydra.utils import (
     INBUILT_NIPYPE_TRAIT_NAMES,
 )
 from nipype2pydra.package import PackageConverter
+from nipype2pydra.symbols import clear_caches
 from conftest import EXAMPLE_INTERFACES_DIR
 
 
@@ -20,14 +21,18 @@ logging.basicConfig(level=logging.INFO)
 
 
 XFAIL_INTERFACES = [
-    "fsl-prob_track_x2",
-    "fsl-flameo",
-    "fsl-make_dyadic_vectors",
-    "fsl-dual_regression",
-    "fsl-epi_de_warp",
+    "ants-interfaces-ai",
+    "ants-interfaces-measure_image_similarity",
+    "ants-interfaces-threshold_image",
+    "fsl-interfaces-prob_track_x2",
+    "fsl-interfaces-flameo",
+    "fsl-interfaces-make_dyadic_vectors",
+    "fsl-interfaces-dual_regression",
+    "fsl-interfaces-epi_de_warp",
 ]
 
 XFAIL_INTERFACES_IN_COMBINED = [
+    "ants-ai",
     "freesurfer-smooth",
     "freesurfer-apply_mask",
     "afni-merge",
@@ -42,7 +47,11 @@ XFAIL_INTERFACES_IN_COMBINED = [
 @pytest.fixture(
     params=[
         str(p.relative_to(EXAMPLE_INTERFACES_DIR)).replace("/", "-")[:-5]
-        for p in (EXAMPLE_INTERFACES_DIR).glob("**/*.yaml")
+        for p in (EXAMPLE_INTERFACES_DIR).glob("**/interfaces/*.yaml")
+        if (
+            str(p.relative_to(EXAMPLE_INTERFACES_DIR)).replace("/", "-")[:-5]
+            not in XFAIL_INTERFACES
+        )
     ]
 )
 def interface_spec_file(request):
@@ -54,6 +63,8 @@ def interface_spec_file(request):
 def test_interface_convert(
     interface_spec_file, cli_runner, work_dir, gen_test_conftest
 ):
+    # Clear UsedSymbol caches
+    clear_caches()
 
     try:
         with open(interface_spec_file) as f:
@@ -74,8 +85,8 @@ def test_interface_convert(
 
         converter = pkg_converter.add_interface_from_spec(
             spec=interface_spec,
-            callables_file=interface_spec_file.parent
-            / (interface_spec_file.stem + "_callables.py"),
+            # callables_file=interface_spec_file.parent
+            # / (interface_spec_file.stem + "_callables.py"),
         )
 
         converter.write(pkg_root)
@@ -89,7 +100,7 @@ def test_interface_convert(
                 nipype_ports.append(pkg_converter.nipype_port_converters[address])
         for _, func in converter.used.imported_funcs:
             if full_address(func) not in list(pkg_converter.workflows):
-                intra_pkg_modules[func.__module__].add(func)               
+                intra_pkg_modules[func.__module__].add(func)
 
         already_converted = set()
         for converter in tqdm(

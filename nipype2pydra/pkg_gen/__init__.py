@@ -446,6 +446,8 @@ class NipypeInterface:
 
         for doctest_str in doctest_blocks:
             if ">>>" in doctest_str:
+
+                doctest_str = re.sub(r"\n\.\.\.\s+", " ", doctest_str)
                 try:
                     cmdline, inpts, directive, imports = extract_doctest_inputs(
                         doctest_str, self.name
@@ -641,7 +643,7 @@ def initialise_task_repo(
     """Copy the task template to the output directory and customise it for the given
     package name and return the created package directory"""
 
-    pkg_dir = output_dir / f"pydra-{pkg}"
+    pkg_dir = output_dir / f"pydra-tasks-{pkg}"
 
     def copy_ignore(_, names):
         return [n for n in names if n in (".git", "__pycache__", ".pytest_cache")]

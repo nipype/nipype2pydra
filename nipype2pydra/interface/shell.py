@@ -22,7 +22,13 @@ from pydra.utils.typing import is_optional
 
 logger = logging.getLogger("nipype2pydra")
 
-CALLABLES_ARGS = ["inputs", "stdout", "stderr", "output_dir"]
+OUT_FUNC_ARGS = ["callable", "formatter"]  # arguments to shell.out that are functions
+CALLABLE_ARGS = [
+    "inputs",
+    "stdout",
+    "stderr",
+    "output_dir",
+]  # Arguments for callable methods
 
 
 @attrs.define(slots=False)
@@ -93,13 +99,26 @@ class ShellInterfaceConverter(BaseInterfaceConverter):
 
         # Pull out xor fields into task-level xor_sets
         xor_sets = set()
+        has_zero_pos = False
         for inpt in input_fields:
             if len(inpt) == 3:
                 name, _, mdata = inpt
             else:
                 name, _, __, mdata = inpt
             if "xor" in mdata:
-                xor_sets.add(frozenset(mdata["xor"] + [name]))
+                xor_sets.add(frozenset(list(mdata["xor"]) + [name]))
+            if mdata.get("position", None) == 0:
+                has_zero_pos = True
+
+        # Increment positions if there is a zero position
+        if has_zero_pos:
+            for inpt in input_fields:
+                if len(inpt) == 3:
+                    name, _, mdata = inpt
+                else:
+                    name, _, __, mdata = inpt
+                if "position" in mdata and mdata["position"] >= 0:
+                    mdata["position"] = mdata.pop("position") + 1
 
         input_fields_str = ""
         output_fields_str = ""
@@ -126,26 +145,24 @@ class ShellInterfaceConverter(BaseInterfaceConverter):
             mdata.pop("xor", None)
             args_str = ", ".join(f"{k}={v!r}" for k, v in mdata.items())
             if "path_template" in mdata:
-                output_fields_str = (
+                output_fields_str += (
                     f"        {name}: {type_str} = shell.outarg({args_str})\n"
                 )
             else:
                 input_fields_str += f"    {name}: {type_str} = shell.arg({args_str})\n"
 
-        callable_fields = set(n for n, _, __ in self.callable_output_fields)
+        # callable_fields = set(n for n, _, __ in self.callable_output_fields)
 
         for outpt in output_fields:
             name, type_, mdata = outpt
-            cllble = mdata.pop(
-                "callable", f"{name}_callable" if name in callable_fields else None
-            )
-            args_str = ", ".join(f"{k}={v!r}" for k, v in mdata.items())
-            if args_str:
-                args_str += ", "
-            if cllble:
-                args_str += f"callable={cllble}"
+            func_args = []
+            for func_arg in OUT_FUNC_ARGS:
+                if func_arg in mdata:
+                    func_args.append(f"{func_arg}={mdata[func_arg]}")
+                    mdata.pop(func_arg)
+            args = [f"{k}={v!r}" for k, v in mdata.items()] + func_args
             output_fields_str += (
-                f"        {name}: {type_to_str(type_)} = shell.out({args_str})\n"
+                f"        {name}: {type_to_str(type_)} = shell.out({', '.join(args)})\n"
             )
 
         spec_str = (
@@ -182,7 +199,7 @@ class ShellInterfaceConverter(BaseInterfaceConverter):
                 s[0] == self.nipype_interface._list_outputs
                 for s in self.used.method_stacks[m.__name__]
             ):
-                additional_args = CALLABLES_ARGS
+                additional_args = CALLABLE_ARGS
             else:
                 additional_args = []
             method_str = self.process_method(
@@ -418,7 +435,7 @@ class ShellInterfaceConverter(BaseInterfaceConverter):
             if not agg_body.strip():
                 return ""
             agg_body = self.unwrap_nested_methods(
-                agg_body, additional_args=CALLABLES_ARGS, inputs_as_dict=True
+                agg_body, additional_args=CALLABLE_ARGS, inputs_as_dict=True
             )
             agg_body = self.replace_supers(
                 agg_body,
@@ -477,13 +494,15 @@ class ShellInterfaceConverter(BaseInterfaceConverter):
                 )
                 lo_body = self._process_inputs(lo_body)
                 lo_body = re.sub(
-                    r"(\w+) = self\.output_spec\(\).(?:trait_)get\(\)", r"\1 = {}", lo_body
+                    r"(\w+) = self\.output_spec\(\).(?:trait_)get\(\)",
+                    r"\1 = {}",
+                    lo_body,
                 )
 
                 if not lo_body.strip():
                     return ""
                 lo_body = self.unwrap_nested_methods(
-                    lo_body, additional_args=CALLABLES_ARGS, inputs_as_dict=True
+                    lo_body, additional_args=CALLABLE_ARGS, inputs_as_dict=True
                 )
                 lo_body = self.replace_supers(
                     lo_body,

@@ -185,10 +185,10 @@ def pkg_gen(
                 with open(interfaces_spec_dir / (spec_name + ".yaml"), "w") as f:
                     f.write(yaml_spec)
 
-                callables_fspath = interfaces_spec_dir / f"{spec_name}_callables.py"
+                # callables_fspath = interfaces_spec_dir / f"{spec_name}_callables.py"
 
-                with open(callables_fspath, "w") as f:
-                    f.write(parsed.generate_callables(nipype_interface))
+                # with open(callables_fspath, "w") as f:
+                #     f.write(parsed.generate_callables(nipype_interface))
 
         if "functions" in spec:
             functions_spec_dir = spec_dir / "functions"
