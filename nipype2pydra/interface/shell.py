@@ -106,7 +106,16 @@ class ShellInterfaceConverter(BaseInterfaceConverter):
             else:
                 name, _, __, mdata = inpt
             if "xor" in mdata:
-                xor_sets.add(frozenset(list(mdata["xor"]) + [name]))
+                xor_sets.add(
+                    frozenset(
+                        list(
+                            mdata["xor"]
+                            if not isinstance(mdata["xor"], str)
+                            else [mdata["xor"]]
+                        )
+                        + [name]
+                    )
+                )
             pos = mdata.get("position", None)
             if isinstance(pos, str):
                 # convert string reprs (I think a mistake) to ints
