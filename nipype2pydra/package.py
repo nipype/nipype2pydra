@@ -732,9 +732,7 @@ post_release = "{post_release}"
                 + "."
                 + to_snake_case(task_name)
             )
-            converter = interface.get_converter(
-                output_module=output_module, callables_module=callables_file, **spec
-            )
+            converter = interface.get_converter(output_module=output_module, **spec)
             converter.package = self
             converters[converter.full_address] = converter
 

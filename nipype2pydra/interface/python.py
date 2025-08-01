@@ -18,10 +18,13 @@ def type2str(type_):
         return type_
     if type_ is ty.Any:
         return "ty.Any"
-    elif hasattr(type_, "__name__"):
-        return type_.__name__
+    if origin := ty.get_origin(type_):
+        return f"{type2str(origin)}[{', '.join(type2str(arg) for arg in ty.get_args(type_))}]"
+    module_name = "ty." if type_.__module__ == "typing" else ""
+    if hasattr(type_, "__name__"):
+        return module_name + type_.__name__
     elif hasattr(type_, "__qualname__"):
-        return type_.__qualname__
+        return module_name + type_.__qualname__
     else:
         return str(type_).replace("typing.", "ty.")
 
@@ -151,7 +154,9 @@ class PythonInterfaceConverter(BaseInterfaceConverter):
         assert method_body, "Neither `run_interface` and `list_outputs` are defined"
 
         spec_str = "@python.define\n"
-        spec_str += f"class {self.task_name}(python.Task['{self.task_name}.Outputs']):\n"
+        spec_str += (
+            f"class {self.task_name}(python.Task['{self.task_name}.Outputs']):\n"
+        )
         spec_str += '    """\n'
         spec_str += self.create_doctests(
             input_fields=input_fields, nonstd_types=nonstd_types
@@ -181,13 +186,12 @@ class PythonInterfaceConverter(BaseInterfaceConverter):
         if any(t is not ty.Any for t in output_types):
             spec_str += " -> "
             if len(output_types) > 1:
-                spec_str += "tuples[" + ", ".join(output_types) + "]"
+                spec_str += "tuple[" + ", ".join(output_types) + "]"
             else:
                 spec_str += output_types[0]
         spec_str += ":\n"
         spec_str += "    " + method_body.replace("\n", "\n    ") + "\n"
         spec_str += "\n        return {}".format(", ".join(output_names))
-
 
         for m in sorted(self.used.methods, key=attrgetter("__name__")):
             if m.__name__ not in self.included_methods:

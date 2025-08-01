@@ -107,7 +107,11 @@ class ShellInterfaceConverter(BaseInterfaceConverter):
                 name, _, __, mdata = inpt
             if "xor" in mdata:
                 xor_sets.add(frozenset(list(mdata["xor"]) + [name]))
-            if mdata.get("position", None) == 0:
+            pos = mdata.get("position", None)
+            if isinstance(pos, str):
+                # convert string reprs (I think a mistake) to ints
+                pos = mdata["position"] = int(pos)
+            if pos == 0:
                 has_zero_pos = True
 
         # Increment positions if there is a zero position
@@ -164,6 +168,8 @@ class ShellInterfaceConverter(BaseInterfaceConverter):
             output_fields_str += (
                 f"        {name}: {type_to_str(type_)} = shell.out({', '.join(args)})\n"
             )
+        if not output_fields_str:
+            output_fields_str = "        pass\n"
 
         spec_str = (
             self.init_code

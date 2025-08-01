@@ -683,23 +683,23 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
             pydra_metadata["callable"] = self.outputs.callables[name]
         return (pydra_type, pydra_metadata)
 
-    def function_callables(self):
-        if not self.outputs.callables:
-            return ""
-        if not self.callables_module:
-            raise Exception(
-                "callables module must be provided if output_callables are set in the spec file"
-            )
-        fun_str = ""
-        if list(set(self.outputs.callables.values())):
-            fun_str = inspect.getsource(self.callables_module)
-        # fun_names.sort()
-        # for fun_nm in fun_names:
-        #     fun = getattr(self.callables_module, fun_nm)
-        #     fun_str += inspect.getsource(fun) + "\n"
-        # list_outputs = getattr(self.callables_module, "_list_outputs")
-        # fun_str += inspect.getsource(list_outputs) + "\n"
-        return fun_str
+    # def function_callables(self):
+    #     if not self.outputs.callables:
+    #         return ""
+    #     if not self.callables_module:
+    #         raise Exception(
+    #             "callables module must be provided if output_callables are set in the spec file"
+    #         )
+    #     fun_str = ""
+    #     if list(set(self.outputs.callables.values())):
+    #         fun_str = inspect.getsource(self.callables_module)
+    #     # fun_names.sort()
+    #     # for fun_nm in fun_names:
+    #     #     fun = getattr(self.callables_module, fun_nm)
+    #     #     fun_str += inspect.getsource(fun) + "\n"
+    #     # list_outputs = getattr(self.callables_module, "_list_outputs")
+    #     # fun_str += inspect.getsource(list_outputs) + "\n"
+    #     return fun_str
 
     def pydra_type_converter(self, field, spec_type, name):
         """converting types to types used in pydra"""
