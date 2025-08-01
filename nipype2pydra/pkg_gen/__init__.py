@@ -638,7 +638,7 @@ def download_tasks_template(output_path: Path):
 
 
 def initialise_task_repo(
-    output_dir, task_template: Path, pkg: str, interface_only: bool
+    output_dir, task_template: Path, pkg: str, target_ver: str, interface_only: bool
 ) -> Path:
     """Copy the task template to the output directory and customise it for the given
     package name and return the created package directory"""
@@ -721,9 +721,9 @@ nipype2pydra convert $conv_dir/specs $conv_dir/.. $@
     for tool_path in (TEMPLATES_DIR / "tools").iterdir():
         shutil.copyfile(tool_path, pkg_dir / tool_path.name)
 
-    # Add "pydra.tasks.<pkg>.auto to gitignore"
+    # Add "pydra.tasks.<pkg>.<target-ver> to gitignore"
     with open(pkg_dir / ".gitignore", "a") as f:
-        f.write(f"\n/pydra/tasks/{pkg}/auto" f"\n/pydra/tasks/{pkg}/_version.py\n")
+        f.write(f"\n/pydra/tasks/{pkg}/{target_ver}\n/pydra/tasks/{pkg}/_version.py\n")
 
     python_pkg_dir = pkg_dir / "pydra" / "tasks" / pkg
 

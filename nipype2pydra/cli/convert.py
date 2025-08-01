@@ -66,7 +66,7 @@ def convert(
     # Clean previous version of output dir
     package_dir = converter.package_dir(package_root)
     if converter.interface_only:
-        auto_dir = package_dir / "auto"
+        auto_dir = package_dir / converter.target_version
         if auto_dir.exists():
             shutil.rmtree(auto_dir)
     else:

@@ -113,7 +113,11 @@ def pkg_gen(
         with_fileformats = spec.get("with_fileformats")
         interface_only_pkg = "workflows" not in spec
         pkg_dir = initialise_task_repo(
-            output_dir, task_template, pkg, interface_only=interface_only_pkg
+            output_dir,
+            task_template,
+            pkg,
+            spec["target_version"],
+            interface_only=interface_only_pkg,
         )
         pkg_formats = set()
 

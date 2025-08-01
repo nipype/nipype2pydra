@@ -372,9 +372,7 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
         if self.output_module is None:
             if self.nipype_module.__name__.startswith("nipype.interfaces."):
                 pkg_name = self.nipype_module.__name__.split(".")[2]
-                self.output_module = (
-                    f"pydra.tasks.{pkg_name}.auto.{to_snake_case(self.task_name)}"
-                )
+                self.output_module = f"pydra.tasks.{pkg_name}.{self.package.target_version}.{to_snake_case(self.task_name)}"
             else:
                 raise RuntimeError(
                     "Output-module needs to be explicitly provided to task converter "

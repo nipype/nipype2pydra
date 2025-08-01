@@ -23,13 +23,13 @@ if "post" not in __version__:
     except ImportError:
         try:
             # For interface-only packages
-            from .auto._post_release import post_release
+            from .v1_0._post_release import post_release
         except ImportError:
             pass
         warn(
             "Nipype interfaces haven't been automatically converted from their specs in "
             f"`nipype-auto-conv`. Please run `{str(pkg_path / 'nipype-auto-conv' / 'generate')}` "
-            "to generated the converted Nipype interfaces in pydra.tasks.CHANGEME.auto"
+            "to generated the converted Nipype interfaces in pydra.tasks.CHANGEME.v1_0"
         )
     else:
         __version__ += "post" + post_release

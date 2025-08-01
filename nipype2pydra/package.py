@@ -274,6 +274,11 @@ class PackageConverter:
         },
     )
 
+    target_version: str = attrs.field(
+        default="v1_0",
+        metadata={"help": "The target version of the package to generate"},
+    )
+
     def __attrs_post_init__(self):
         # Adds in some default omissions
         self.omit_constants.append("nipype.logging")
@@ -298,13 +303,19 @@ class PackageConverter:
     def all_import_translations(self) -> ty.List[ty.Tuple[str, str]]:
         all_translations = self.import_translations + [
             (r"nipype\.interfaces\.mrtrix3.\w+\b", r"pydra.tasks.mrtrix3.v3_0"),
-            (r"nipype\.interfaces\.(?!base)(\w+)\b", r"pydra.tasks.\1.auto"),
+            (
+                r"nipype\.interfaces\.(?!base)(\w+)\b",
+                r"pydra.tasks.\1." + self.target_version,
+            ),
         ]
         if self.interface_only:
             all_translations.extend(
                 [
-                    (r"nipype\.(.*)", self.name + r".auto.nipype_ports.\1"),
-                    (self.nipype_name, self.name + ".auto"),
+                    (
+                        r"nipype\.(.*)",
+                        self.name + "." + self.target_version + r".nipype_ports.\1",
+                    ),
+                    (self.nipype_name, self.name + "." + self.target_version),
                 ]
             )
         else:
@@ -471,7 +482,7 @@ class PackageConverter:
 
         post_release_dir = mod_dir
         if self.interface_only:
-            post_release_dir /= "auto"
+            post_release_dir /= self.target_version
         self.write_post_release_file(post_release_dir / "_post_release.py")
 
         if self.copy_packages:
@@ -507,8 +518,8 @@ class PackageConverter:
     def untranslate_submodule(self, pydra_module_name: str) -> str:
         """Translates a module name from the Nipype package to the Pydra package"""
         relpath = ImportStatement.get_relative_package(pydra_module_name, self.name)
-        if relpath.startswith(".auto"):
-            relpath = relpath[5:]
+        if relpath.startswith("." + self.target_version):
+            relpath = relpath[(len(self.target_version) + 1) :]
         if relpath.startswith(".nipype_ports"):
             return "nipype" + relpath[13:]
         if relpath == self.nipype_name:
@@ -611,7 +622,7 @@ class PackageConverter:
             the Pydra module path
         """
         if self.interface_only:
-            base_pkg = self.name + ".auto"
+            base_pkg = self.name + "." + self.target_version
         else:
             base_pkg = self.name
         if re.match(self.nipype_module.__name__ + r"\b", nipype_name):
@@ -719,7 +730,7 @@ post_release = "{post_release}"
                 spec = yaml.safe_load(f)
             callables_file = spec_file.parent / (spec_file.stem + "_callables.py")
             if self.interface_only:
-                mod_base = [self.name, "auto", "nipype_ports"]
+                mod_base = [self.name, self.target_version, "nipype_ports"]
             else:
                 mod_base = [self.name, "nipype_ports"]
             module_name = ".".join(mod_base + spec["nipype_module"].split(".")[1:])
@@ -727,7 +738,7 @@ post_release = "{post_release}"
             output_module = (
                 self.translate_submodule(
                     module_name,
-                    sub_pkg="auto" if self.interface_only else None,
+                    sub_pkg=self.target_version if self.interface_only else None,
                 )
                 + "."
                 + to_snake_case(task_name)
@@ -748,7 +759,8 @@ post_release = "{post_release}"
         # callables_file: Path
     ) -> interface.BaseInterfaceConverter:
         output_module = self.translate_submodule(
-            spec["nipype_module"], sub_pkg="auto" if self.interface_only else None
+            spec["nipype_module"],
+            sub_pkg=self.target_version if self.interface_only else None,
         )
         output_module += "." + to_snake_case(spec["task_name"])
         converter = self.interfaces[f"{spec['nipype_module']}.{spec['task_name']}"] = (
@@ -1160,7 +1172,7 @@ if "nipype" not in __version__:
         warn(
             "Nipype interfaces haven't been automatically converted from their specs in "
             f"`nipype-auto-conv`. Please run `{str(pkg_path / 'nipype-auto-conv' / 'generate')}` "
-            "to generated the converted Nipype interfaces in pydra.tasks.{pkg}.auto"
+            "to generated the converted Nipype interfaces in pydra.tasks.{pkg}.{target_version}"
         )
     else:
         n_ver = src_pkg_version.replace(".", "_")
