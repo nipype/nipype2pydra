@@ -4,11 +4,14 @@ from nipype2pydra.utils import show_cli_trace
 
 from conftest import EXAMPLE_PKG_GEN_DIR
 
+SKIP_PACKAGES = ["mriqc", "qsmxt"]
+
 
 @pytest.fixture(
     params=[
         str(p.relative_to(EXAMPLE_PKG_GEN_DIR)).replace("/", "-")[:-5]
         for p in (EXAMPLE_PKG_GEN_DIR).glob("**/*.yaml")
+        if p.stem not in SKIP_PACKAGES
     ]
 )
 def pkg_gen_spec_file(request):

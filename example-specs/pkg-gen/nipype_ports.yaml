@@ -1,4 +1,5 @@
 nipype_ports:
+  target_version: "v1_10"
   interfaces:
     - nipype.algorithms.confounds.TSNR
     - nipype.algorithms.confounds.ComputeDVARS

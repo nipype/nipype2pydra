@@ -1,4 +1,5 @@
 qsmxt:
+  target_version: "v8"
   interfaces:
   - qsmxt.interfaces.nipype_interface_addtojson.AddToJsonInterface
   - qsmxt.interfaces.nipype_interface_analyse.AnalyseInterface

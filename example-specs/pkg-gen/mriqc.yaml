@@ -1,4 +1,5 @@
 mriqc:
+  target_version: "v24"
   interfaces:
     - mriqc.interfaces.diffusion.DiffusionQC
     - mriqc.interfaces.diffusion.ReadDWIMetadata

@@ -1,4 +1,5 @@
 niworkflows:
+  target_version: "v1_13"
   interfaces:
     - niworkflows.data.Loader
     - niworkflows.interfaces.bids.DerivativesDataSink
