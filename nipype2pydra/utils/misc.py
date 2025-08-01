@@ -10,6 +10,7 @@ from contextlib import contextmanager
 from pathlib import Path
 from fileformats.core import FileSet, from_mime
 from fileformats.core.mixin import WithClassifiers
+from pydra.utils.typing import is_union, is_optional
 from ..exceptions import (
     UnmatchedParensException,
     UnmatchedQuoteException,
@@ -22,6 +23,7 @@ except ImportError:
 
 from importlib import import_module
 from logging import getLogger
+from pydra.utils.typing import MultiInputObj
 
 
 logger = getLogger("nipype2pydra")
@@ -156,7 +158,9 @@ def add_exc_note(e, note):
     return e
 
 
-def extract_args(snippet) -> ty.Tuple[str, ty.List[str], str]:
+def extract_args(
+    snippet, drop_parens: bool = False
+) -> ty.Tuple[str, ty.List[str], str]:
     """Splits the code snippet at the first opening brackets into a 3-tuple
     consisting of the preceding text + opening bracket, the arguments/items
     within the parenthesis/bracket pair, and the closing paren/bracket + trailing text.
@@ -255,7 +259,11 @@ def extract_args(snippet) -> ty.Tuple[str, ty.List[str], str]:
                 if matching_open == first and depth[matching_open] == 0:
                     if next_item:
                         contents.append(next_item)
-                    return pre, contents, "".join(splits[i:])
+                    post = "".join(splits[i:])
+                    if drop_parens:
+                        pre = pre[:-1]
+                        post = post[1:]
+                    return pre, contents, post
             if (
                 first
                 and depth[first] == 1
@@ -305,9 +313,7 @@ def cleanup_function_body(function_body: str) -> str:
         with_signature = True
     else:
         with_signature = False
-    # Detect the indentation of the source code in src and reduce it to 4 spaces
-    non_empty_lines = [ln for ln in function_body.splitlines() if ln]
-    indent_size = len(re.match(r"^( *)", non_empty_lines[0]).group(1))
+    indent_size = min_indentation(function_body)
     indent_reduction = indent_size - (0 if with_signature else 4)
     assert indent_reduction >= 0, (
         "Indentation reduction cannot be negative, probably didn't detect signature of "
@@ -317,9 +323,16 @@ def cleanup_function_body(function_body: str) -> str:
         function_body = re.sub(
             r"^" + " " * indent_reduction, "", function_body, flags=re.MULTILINE
         )
+
     # Other misc replacements
     # function_body = function_body.replace("LOGGER.", "logger.")
     return replace_undefined(function_body)
+
+
+def min_indentation(function_body: str) -> int:
+    # Detect the indentation of the source code in src and reduce it to 4 spaces
+    non_empty_lines = [ln for ln in function_body.splitlines() if ln]
+    return len(re.match(r"^( *)", non_empty_lines[0]).group(1))
 
 
 def replace_undefined(function_body: str) -> str:
@@ -360,7 +373,11 @@ def insert_args_in_signature(snippet: str, new_args: ty.Iterable[str]) -> str:
     pre, args, post = extract_args(snippet)
     if "runtime" in args:
         args.remove("runtime")
-    return pre + ", ".join(args + new_args) + post
+    if args and args[-1].startswith("**"):
+        kwargs = [args.pop()]
+    else:
+        kwargs = []
+    return pre + ", ".join(args + new_args + kwargs) + post
 
 
 def get_source_code(func_or_klass: ty.Union[ty.Callable, ty.Type]) -> str:
@@ -415,7 +432,7 @@ def split_source_into_statements(source_code: str) -> ty.List[str]:
             else:
                 # Handle dictionary assignments where the first open-closing bracket is
                 # before the assignment, e.g. outputs["out_file"] = [..."
-                if post and re.match(r"\s*=", post[1:]):
+                if post and re.match(r"\s*=|.*[\(\[\{\"'].*", post[1:]):
                     try:
                         extract_args(post[1:])
                     except (UnmatchedParensException, UnmatchedQuoteException):
@@ -473,12 +490,20 @@ def from_named_dicts_converter(
 def str_to_type(type_str: str) -> type:
     """Resolve a string representation of a type into a valid type"""
     if "/" in type_str:
+        if type_str.startswith("multi["):
+            assert type_str.endswith("]"), f"Invalid multi type: {type_str}"
+            type_str = type_str[6:-1]
+            multi = True
+        else:
+            multi = False
         tp = from_mime(type_str)
         try:
             # If datatype is a field, use its primitive instead
             tp = tp.primitive  # type: ignore
         except AttributeError:
             pass
+        if multi:
+            tp = MultiInputObj[tp]
     else:
 
         def resolve_type(type_str: str) -> type:
@@ -528,3 +553,59 @@ def unwrap_nested_type(t: type) -> ty.List[type]:
             unwrapped.extend(unwrap_nested_type(c))
         return unwrapped
     return [t]
+
+
+def get_return_line(func: ty.Union[str, ty.Callable]) -> str:
+    if not isinstance(func, str):
+        func = inspect.getsource(func)
+    return_line = func.strip().split("\n")[-1]
+    match = re.match(r"\s*return(.*)", return_line)
+    if not match:
+        return None
+    return match.group(1).strip()
+
+
+def find_super_method(
+    super_base: type, method_name: str, include_class: bool = False
+) -> ty.Tuple[ty.Optional[ty.Callable], ty.Optional[type]]:
+    mro = super_base.__mro__
+    if not include_class:
+        mro = mro[1:]
+    for base in mro:
+        if method_name in base.__dict__:  # Found the match
+            return getattr(base, method_name), base
+    return None, None
+    # raise RuntimeError(
+    #     f"Could not find super of '{method_name}' method in base classes of "
+    #     f"{super_base}"
+    # )
+
+
+def strip_comments(src: str) -> str:
+    return re.sub(r"^\s+#.*", "", src, flags=re.MULTILINE)
+
+
+def type_to_str(type_: type, mandatory: bool = False) -> str:
+    """Convert a type to a string representation"""
+    if hasattr(type_, "__name__"):
+        type_str = type_.__name__
+    else:
+        type_str = str(type_)
+    if is_union(type_):
+        args = [t if t is not type(None) else None for t in ty.get_args(type_)]
+        if not mandatory and not is_optional(type_):
+            args.append(None)
+        return " | ".join(
+            type_to_str(a, mandatory=True) if a is not None else "None" for a in args
+        )
+    if origin := ty.get_origin(type_):
+        args = [type_to_str(arg, mandatory=True) for arg in ty.get_args(type_)]
+        type_str = f"{origin.__name__}[{', '.join(args)}]"
+        module = origin.__module__
+    else:
+        module = type_.__module__
+    if module == "typing":
+        type_str = "ty." + type_str
+    if not mandatory:
+        type_str += " | None"
+    return type_str

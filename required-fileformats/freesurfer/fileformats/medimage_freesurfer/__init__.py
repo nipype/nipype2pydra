@@ -1,5 +1,6 @@
 from fileformats.generic import File
 
+
 class M3z(File):
     ext = ".m3z"
     binary = True
@@ -82,4 +83,14 @@ class Reg(File):
 
 class Avg_curv(File):
     ext = ".avg_curv"
+    binary = True
+
+
+class Label(File):
+    ext = ".label"
+    binary = True
+
+
+class Dat(File):
+    ext = ".dat"
     binary = True

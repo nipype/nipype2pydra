@@ -5,6 +5,7 @@ from .imports import (  # noqa: F401
     GENERIC_PYDRA_IMPORTS,
     ExplicitImport,
     from_list_to_imports,
+    make_imports_absolute,
 )
 from .workflow_build import (  # noqa: F401
     AddNestedWorkflowStatement,

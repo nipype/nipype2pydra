@@ -22,4 +22,4 @@ __pycache__
 /outputs
 /test-data
 /nipype2pydra/_version.py
-
+/required-fileformats/**/_version.py

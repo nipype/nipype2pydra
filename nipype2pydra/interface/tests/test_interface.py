@@ -1,14 +1,19 @@
 from importlib import import_module
 import yaml
 import pytest
+from collections import defaultdict
 import logging
 from traceback import format_exc
+from tqdm import tqdm
+from pydra.utils import get_fields
 from nipype2pydra.utils import (
     add_to_sys_path,
     add_exc_note,
+    full_address,
     INBUILT_NIPYPE_TRAIT_NAMES,
 )
 from nipype2pydra.package import PackageConverter
+from nipype2pydra.symbols import clear_caches
 from conftest import EXAMPLE_INTERFACES_DIR
 
 
@@ -16,14 +21,50 @@ logging.basicConfig(level=logging.INFO)
 
 
 XFAIL_INTERFACES = [
-    "fsl-prob_track_x2",
-    "fsl-flameo",
-    "fsl-make_dyadic_vectors",
-    "fsl-dual_regression",
-    "fsl-epi_de_warp",
+    "ants-interfaces-ai",
+    "ants-interfaces-measure_image_similarity",
+    "ants-interfaces-threshold_image",
+    "fsl-interfaces-copy_geom",
+    "fsl-interfaces-flirt",
+    "fsl-interfaces-mcflirt",
+    "fsl-interfaces-filmgls",
+    "fsl-interfaces-topup",
+    "fsl-interfaces-slice",
+    "fsl-interfaces-apply_topup",
+    "fsl-interfaces-tract_skeleton",
+    "fsl-interfaces-smooth_estimate",
+    "fsl-interfaces-apply_xfm",
+    "fsl-interfaces-cleaner",
+    "fsl-interfaces-complex",
+    "fsl-interfaces-dual_regression",
+    "fsl-interfaces-eddy",
+    "fsl-interfaces-split",
+    "freesurfer-interfaces-logan",
+    "freesurfer-interfaces-label_2_vol",
+    "freesurfer-interfaces-mrtm1",
+    "freesurfer-interfaces-mrtm2",
+    "freesurfer-interfaces-surface_snapshots",
+    "freesurfer-interfaces-tkregister_2",
+    "freesurfer-interfaces-concatenate_lta",
+    "freesurfer-interfaces-one_sample_t_test",
+    "freesurfer-interfaces-concatenate",
+    "freesurfer-interfaces-mris_preproc_recon_all",
+    "freesurfer-interfaces-recon_all",
+    "freesurfer-interfaces-glm_fit",
+    "freesurfer-interfaces-mri_convert",
+    "freesurfer-interfaces-make_surfaces",
+    "freesurfer-interfaces-parcellation_stats",
+    "freesurfer-interfaces-mp_rto_mni305",
+    "afni-interfaces-qwarp_plus_minus",
+    "afni-interfaces-qwarp",
+    "afni-interfaces-align_epi_anat_py",
+    "afni-interfaces-fwh_mx",
+    "afni-interfaces-nwarp_adjust",
+    "afni-interfaces-clip_level",
 ]
 
 XFAIL_INTERFACES_IN_COMBINED = [
+    "ants-ai",
     "freesurfer-smooth",
     "freesurfer-apply_mask",
     "afni-merge",
@@ -38,7 +79,11 @@ XFAIL_INTERFACES_IN_COMBINED = [
 @pytest.fixture(
     params=[
         str(p.relative_to(EXAMPLE_INTERFACES_DIR)).replace("/", "-")[:-5]
-        for p in (EXAMPLE_INTERFACES_DIR).glob("**/*.yaml")
+        for p in (EXAMPLE_INTERFACES_DIR).glob("**/interfaces/*.yaml")
+        # if (
+        #     str(p.relative_to(EXAMPLE_INTERFACES_DIR)).replace("/", "-")[:-5]
+        #     not in XFAIL_INTERFACES
+        # )
     ]
 )
 def interface_spec_file(request):
@@ -50,32 +95,56 @@ def interface_spec_file(request):
 def test_interface_convert(
     interface_spec_file, cli_runner, work_dir, gen_test_conftest
 ):
+    # Clear UsedSymbol caches from previous tests
+    clear_caches()
+
+    with open(interface_spec_file) as f:
+        interface_spec = yaml.safe_load(f)
+    pkg_root = work_dir / "src"
+    pkg_root.mkdir()
+    # shutil.copyfile(gen_test_conftest, pkg_root / "conftest.py")
+
+    pkg_converter = PackageConverter(
+        name="nipype2pydratest."
+        + "_".join(
+            interface_spec["nipype_module"].split(".") + [interface_spec["task_name"]]
+        ),
+        nipype_name=interface_spec["nipype_module"],
+        interface_only=True,
+    )
+
+    converter = pkg_converter.add_interface_from_spec(
+        spec=interface_spec,
+        # callables_file=interface_spec_file.parent
+        # / (interface_spec_file.stem + "_callables.py"),
+    )
+
+    converter.write(pkg_root)
+
+    nipype_ports = []
+    intra_pkg_modules = defaultdict(set)
+
+    for _, klass in converter.used.imported_classes:
+        address = full_address(klass)
+        if address in pkg_converter.nipype_port_converters:
+            nipype_ports.append(pkg_converter.nipype_port_converters[address])
+    for _, func in converter.used.imported_funcs:
+        if full_address(func) not in list(pkg_converter.workflows):
+            intra_pkg_modules[func.__module__].add(func)
+
+    already_converted = set()
+    for converter in tqdm(
+        nipype_ports, "Porting interfaces from the core nipype package"
+    ):
+        converter.write(
+            pkg_root,
+            already_converted=already_converted,
+        )
+
+    # Write any additional functions in other modules in the package
+    pkg_converter.write_intra_pkg_modules(pkg_root, intra_pkg_modules)
 
     try:
-        with open(interface_spec_file) as f:
-            interface_spec = yaml.safe_load(f)
-        pkg_root = work_dir / "src"
-        pkg_root.mkdir()
-        # shutil.copyfile(gen_test_conftest, pkg_root / "conftest.py")
-
-        pkg_converter = PackageConverter(
-            name="nipype2pydratest."
-            + "_".join(
-                interface_spec["nipype_module"].split(".")
-                + [interface_spec["task_name"]]
-            ),
-            nipype_name=interface_spec["nipype_module"].split(".")[0],
-            interface_only=True,
-        )
-
-        converter = pkg_converter.add_interface_from_spec(
-            spec=interface_spec,
-            callables_file=interface_spec_file.parent
-            / (interface_spec_file.stem + "_callables.py"),
-        )
-
-        converter.write(pkg_root)
-
         with add_to_sys_path(pkg_root):
             try:
                 pydra_module = import_module(converter.output_module)
@@ -100,7 +169,9 @@ def test_interface_convert(
         )
 
         assert sorted(
-            f[0] for f in pydra_task().input_spec.fields if not f[0].startswith("_")
+            f.name
+            for f in get_fields(pydra_task)
+            if f.name not in ["append_args", "executable", "function", "constructor"]
         ) == sorted(
             n
             for n in nipype_input_names
@@ -120,9 +191,9 @@ def test_interface_convert(
             )
 
             assert sorted(
-                f[0]
-                for f in pydra_task().output_spec.fields
-                if not f[0].startswith("_")
+                f.name
+                for f in get_fields(pydra_task.Outputs)
+                if f.name not in ["stdout", "stderr", "return_code"]
             ) == sorted(
                 n
                 for n in nipype_output_names
@@ -162,7 +233,13 @@ def test_interface_convert(
 
         # assert result.value == 0
     except Exception:
-        task_name = interface_spec_file.parent.name + "-" + interface_spec_file.stem
+        task_name = "-".join(
+            [
+                interface_spec_file.parent.parent.name,
+                interface_spec_file.parent.name,
+                interface_spec_file.stem,
+            ]
+        )
         if task_name in XFAIL_INTERFACES or task_name in XFAIL_INTERFACES_IN_COMBINED:
             msg = f"Test for '{task_name}' is expected to fail:\n{format_exc()}"
             if task_name in XFAIL_INTERFACES_IN_COMBINED:

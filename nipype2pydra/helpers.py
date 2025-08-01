@@ -9,8 +9,8 @@ from importlib import import_module
 from types import ModuleType
 import black.report
 import yaml
+from .symbols import UsedSymbols
 from .utils import (
-    UsedSymbols,
     extract_args,
     full_address,
     multiline_comment,
@@ -93,8 +93,10 @@ class BaseHelperConverter:
         factory=list,
         converter=from_list_to_imports,
         metadata={
-            "help": """list import statements required by the test, with each list item
-                consisting of 'module', 'name', and optionally 'alias' keys"""
+            "help": (
+                "list import statements required by the test, with each list item"
+                "consisting of 'module', 'name', and optionally 'alias' keys"
+            )
         },
     )
     package: "nipype2pydra.package.PackageConverter" = attrs.field(
@@ -121,19 +123,15 @@ class BaseHelperConverter:
         return getattr(self.nipype_module, self.nipype_name)
 
     @cached_property
-    def used_symbols(self) -> UsedSymbols:
+    def used(self) -> UsedSymbols:
         used = UsedSymbols.find(
             self.nipype_module,
             [self.src],
+            package=self.package,
             collapse_intra_pkg=False,
-            omit_classes=self.package.omit_classes,
-            omit_modules=self.package.omit_modules,
-            omit_functions=self.package.omit_functions,
-            omit_constants=self.package.omit_constants,
             always_include=self.package.all_explicit,
-            translations=self.package.all_import_translations,
         )
-        used.imports.update(i.to_statement() for i in self.imports)
+        used.import_stmts.update(i.to_statement() for i in self.imports)
         return used
 
     @cached_property
@@ -147,12 +145,10 @@ class BaseHelperConverter:
     @cached_property
     def nested_interfaces(self):
         potential_classes = {
-            full_address(c[1]): c[0]
-            for c in self.used_symbols.intra_pkg_classes
-            if c[0]
+            full_address(c[1]): c[0] for c in self.used.imported_classes if c[0]
         }
         potential_classes.update(
-            (full_address(c), c.__name__) for c in self.used_symbols.local_classes
+            (full_address(c), c.__name__) for c in self.used.classes
         )
         return {
             potential_classes[address]: workflow
@@ -350,6 +346,7 @@ class FunctionConverter(BaseHelperConverter):
             # Write to file for debugging
             debug_file = "~/unparsable-nipype2pydra-output.py"
             with open(Path(debug_file).expanduser(), "w") as f:
+                f.write(f"# Attemping to convert {self.full_name}\n")
                 f.write(code_str)
             raise RuntimeError(
                 f"Black could not parse generated code (written to {debug_file}): "
@@ -378,8 +375,7 @@ class ClassConverter(BaseHelperConverter):
 
     @cached_property
     def _converted_code(self) -> ty.Tuple[str, ty.List[str]]:
-        """Convert the Nipype workflow function to a Pydra workflow function and determine
-        the configuration parameters that are used
+        """Convert a class into Pydra-
 
         Returns
         -------
@@ -390,9 +386,28 @@ class ClassConverter(BaseHelperConverter):
         """
 
         used_configs = set()
-        parts = re.split(
-            r"\n    (?!\s|\))", replace_undefined(self.src), flags=re.MULTILINE
-        )
+
+        src = replace_undefined(self.src)[len("class ") :]
+        defn, class_body = src.split(":", 1)
+        if "(" in defn:
+            name, orig_bases, class_body = extract_args(src, drop_parens=True)
+            class_body = class_body[1:].strip()
+
+            bases = []
+            for base_name in orig_bases:
+                try:
+                    base = getattr(self.nipype_module, base_name)
+                except AttributeError:
+                    bases.append(base_name)
+                    continue
+                if not self.package.is_omitted(base):
+                    bases.append(base_name)
+        else:
+            name = defn
+            bases = []
+            class_body = class_body.strip()
+
+        parts = re.split(r"\n    (?!\s|\))", class_body, flags=re.MULTILINE)
         converted_parts = []
         for part in parts:
             if part.startswith("def"):
@@ -401,7 +416,12 @@ class ClassConverter(BaseHelperConverter):
                 used_configs.update(func_used_configs)
             else:
                 converted_parts.append(part)
-        code_str = "\n    ".join(converted_parts)
+        code_str = (
+            f"class {name}("
+            + ", ".join(bases)
+            + "):\n    "
+            + "\n    ".join(converted_parts)
+        )
         # Format the the code before the find and replace so it is more predictable
         try:
             code_str = black.format_file_contents(
@@ -413,6 +433,7 @@ class ClassConverter(BaseHelperConverter):
             # Write to file for debugging
             debug_file = "~/unparsable-nipype2pydra-output.py"
             with open(Path(debug_file).expanduser(), "w") as f:
+                f.write(f"# Attemping to convert {self.full_name}\n")
                 f.write(code_str)
             raise RuntimeError(
                 f"Black could not parse generated code (written to {debug_file}): "

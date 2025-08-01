@@ -1,4 +1,5 @@
 nireports:
+  target_version: "v25"
   interfaces:
     - nireports.interfaces.fmri.FMRISummary
     - nireports.interfaces.dmri.DWIHeatmap

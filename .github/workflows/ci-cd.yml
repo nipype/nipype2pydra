@@ -37,7 +37,7 @@ jobs:
     strategy:
       matrix:
         os: [macos-latest, ubuntu-latest]
-        python-version: ["3.8", "3.11"]
+        python-version: ["3.11", "3.13"]
       fail-fast: false
     runs-on: ${{ matrix.os }}
     defaults:
@@ -77,25 +77,35 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
-    - name: Update build tools
-      run: python3 -m pip install --break-system-packages --upgrade pip setuptools wheel
+    - name: Create virtual environment
+      run: python3 -m venv venv
+
+    - name: Activate virtual environment and update build tools
+      run: |
+        source venv/bin/activate
+        python -m pip install --upgrade pip setuptools wheel
 
     - name: Install required file-formats packages
       run: |
+        source venv/bin/activate
         pushd required-fileformats
-        python3 -m pip install --break-system-packages -r requirements.txt
+        python -m pip install -r requirements.txt
         popd
 
     - name: Install Dipy separately as it was causing trouble
-      run: python3 -m pip install --break-system-packages dipy
+      run: |
+        source venv/bin/activate
+        python -m pip install dipy
 
     - name: Install Package
-      run: python3 -m pip install --break-system-packages .[test]
+      run: |
+        source venv/bin/activate
+        python -m pip install .[test]
 
     - name: Pytest
-      run: >-
-        NIPYPE2PYDRA_PYDRA_TASK_TEMPLATE=$PWD/pydra-tasks-template
-        pytest -vvs --cov nipype2pydra --cov-config .coveragerc --cov-report xml
+      run: |
+        source venv/bin/activate
+        NIPYPE2PYDRA_PYDRA_TASK_TEMPLATE=$PWD/pydra-tasks-template pytest -vvs --cov nipype2pydra --cov-config .coveragerc --cov-report xml
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v2
@@ -123,7 +133,7 @@ jobs:
         python-version: '3.11'
 
     - name: Install build tools
-      run: python3 -m pip install --break-system-packages build twine
+      run: python3 -m pip install build twine
 
     - name: Build source and wheel distributions
       run: python3 -m build .

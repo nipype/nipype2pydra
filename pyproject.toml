@@ -11,7 +11,7 @@ dependencies = [
     "black",
     "attrs>=22.1.0",
     "nipype",
-    "pydra",
+    "pydra >=1.0a",
     "PyYAML>=6.0",
     "fileformats >=0.8",
     "fileformats-medimage >=0.4",
@@ -50,15 +50,13 @@ test = [
     "pytest-cov>=2.12.1",
     "fileformats-medimage-extras",
     "fileformats-medimage-afni",
-    "fileformats-medimage-ants",
-    "fileformats-medimage-freesurfer",
-    "fileformats-medimage-fsl",
     "niworkflows",
-    "mriqc",
+    # "mriqc",
     "nipy",
     "nireports",
     "nitime",
     "datalad",
+    # "qsmxt",
     "nirodents",
 ]
 docs = [
@@ -93,7 +91,7 @@ exclude = ["/tests"]
 
 [tool.black]
 line-length = 88
-target-version = ['py37']
+target-version = ['py311']
 exclude = "nipype2pydra/_version.py"
 
 [tool.codespell]

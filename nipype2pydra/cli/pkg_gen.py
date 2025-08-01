@@ -113,7 +113,11 @@ def pkg_gen(
         with_fileformats = spec.get("with_fileformats")
         interface_only_pkg = "workflows" not in spec
         pkg_dir = initialise_task_repo(
-            output_dir, task_template, pkg, interface_only=interface_only_pkg
+            output_dir,
+            task_template,
+            pkg,
+            spec["target_version"],
+            interface_only=interface_only_pkg,
         )
         pkg_formats = set()
 
@@ -185,10 +189,10 @@ def pkg_gen(
                 with open(interfaces_spec_dir / (spec_name + ".yaml"), "w") as f:
                     f.write(yaml_spec)
 
-                callables_fspath = interfaces_spec_dir / f"{spec_name}_callables.py"
+                # callables_fspath = interfaces_spec_dir / f"{spec_name}_callables.py"
 
-                with open(callables_fspath, "w") as f:
-                    f.write(parsed.generate_callables(nipype_interface))
+                # with open(callables_fspath, "w") as f:
+                #     f.write(parsed.generate_callables(nipype_interface))
 
         if "functions" in spec:
             functions_spec_dir = spec_dir / "functions"

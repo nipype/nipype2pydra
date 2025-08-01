@@ -15,9 +15,10 @@ import black.parsing
 import black.report
 from tqdm import tqdm
 import yaml
+import nipype.utils.logger
 from . import interface
+from .symbols import UsedSymbols
 from .utils import (
-    UsedSymbols,
     full_address,
     to_snake_case,
     cleanup_function_body,
@@ -77,9 +78,12 @@ def resolve_objects(addresses: ty.Optional[ty.List[str]]) -> list:
         return []
     objs = []
     for address in addresses:
-        parts = address.split(".")
-        mod = import_module(".".join(parts[:-1]))
-        objs.append(getattr(mod, parts[-1]))
+        if not isinstance(address, str):
+            objs.append(address)
+        else:
+            parts = address.split(".")
+            mod = import_module(".".join(parts[:-1]))
+            objs.append(getattr(mod, parts[-1]))
     return objs
 
 
@@ -270,6 +274,15 @@ class PackageConverter:
         },
     )
 
+    target_version: str = attrs.field(
+        default="v1_0",
+        metadata={"help": "The target version of the package to generate"},
+    )
+
+    def __attrs_post_init__(self):
+        # Adds in some default omissions
+        self.omit_constants.append("nipype.logging")
+
     @init_depth.default
     def _init_depth_default(self) -> int:
         if self.name.startswith("pydra.tasks."):
@@ -290,13 +303,19 @@ class PackageConverter:
     def all_import_translations(self) -> ty.List[ty.Tuple[str, str]]:
         all_translations = self.import_translations + [
             (r"nipype\.interfaces\.mrtrix3.\w+\b", r"pydra.tasks.mrtrix3.v3_0"),
-            (r"nipype\.interfaces\.(?!base)(\w+)\b", r"pydra.tasks.\1.auto"),
+            (
+                r"nipype\.interfaces\.(?!base)(\w+)\b",
+                r"pydra.tasks.\1." + self.target_version,
+            ),
         ]
         if self.interface_only:
             all_translations.extend(
                 [
-                    (r"nipype\.(.*)", self.name + r".auto.nipype_ports.\1"),
-                    (self.nipype_name, self.name + ".auto"),
+                    (
+                        r"nipype\.(.*)",
+                        self.name + "." + self.target_version + r".nipype_ports.\1",
+                    ),
+                    (self.nipype_name, self.name + "." + self.target_version),
                 ]
             )
         else:
@@ -310,7 +329,7 @@ class PackageConverter:
 
     @property
     def all_omit_modules(self) -> ty.List[str]:
-        return self.omit_modules + ["nipype.interfaces.utility"]
+        return self.omit_modules + UsedSymbols.ALWAYS_OMIT_MODULES
 
     @property
     def all_explicit(self):
@@ -343,6 +362,17 @@ class PackageConverter:
             defaults.update(config_params.defaults)
             all_defaults[name] = defaults
         return all_defaults
+
+    def is_omitted(self, obj: ty.Any) -> bool:
+        if full_address(obj) in self.omit_classes + self.omit_functions:
+            return True
+        if inspect.ismodule(obj):
+            mod_name = obj.__name__
+        else:
+            mod_name = obj.__module__
+        if any(re.match(m + r"\b", mod_name) for m in self.all_omit_modules):
+            return True
+        return False
 
     def write(self, package_root: Path, to_include: ty.List[str] = None):
         """Writes the package to the specified package root"""
@@ -389,7 +419,7 @@ class PackageConverter:
             workflow.prepare_connections()
 
         def collect_intra_pkg_objects(used: UsedSymbols, port_nipype: bool = True):
-            for _, klass in used.intra_pkg_classes:
+            for _, klass in used.imported_classes:
                 address = full_address(klass)
                 if address in self.nipype_port_converters:
                     if port_nipype:
@@ -401,24 +431,24 @@ class PackageConverter:
                         )
                 elif full_address(klass) not in self.interfaces:
                     intra_pkg_modules[klass.__module__].add(klass)
-            for _, func in used.intra_pkg_funcs:
+            for _, func in used.imported_funcs:
                 if full_address(func) not in list(self.workflows):
                     intra_pkg_modules[func.__module__].add(func)
-            for const_mod_address, _, const_name in used.intra_pkg_constants:
+            for const_mod_address, _, const_name in used.imported_constants:
                 intra_pkg_modules[const_mod_address].add(const_name)
 
         for conv in list(self.functions.values()) + list(self.classes.values()):
             intra_pkg_modules[conv.nipype_module_name].add(conv.nipype_object)
-            collect_intra_pkg_objects(conv.used_symbols)
+            collect_intra_pkg_objects(conv.used)
 
-        for converter in tqdm(
+        for workflow in tqdm(
             workflows_to_include, "converting workflows from Nipype to Pydra syntax"
         ):
-            all_used = converter.write(
+            all_used = workflow.write(
                 package_root,
                 already_converted=already_converted,
             )
-            class_addrs = [full_address(c) for _, c in all_used.intra_pkg_classes]
+            class_addrs = [full_address(c) for _, c in all_used.imported_classes]
             included_addrs = [c.full_address for c in interfaces_to_include]
             interfaces_to_include.extend(
                 self.interfaces[a]
@@ -436,7 +466,7 @@ class PackageConverter:
                 package_root,
                 already_converted=already_converted,
             )
-            collect_intra_pkg_objects(converter.used_symbols)
+            collect_intra_pkg_objects(converter.used)
 
         for converter in tqdm(
             nipype_ports, "Porting interfaces from the core nipype package"
@@ -445,14 +475,14 @@ class PackageConverter:
                 package_root,
                 already_converted=already_converted,
             )
-            collect_intra_pkg_objects(converter.used_symbols, port_nipype=False)
+            collect_intra_pkg_objects(converter.used, port_nipype=False)
 
         # Write any additional functions in other modules in the package
         self.write_intra_pkg_modules(package_root, intra_pkg_modules)
 
         post_release_dir = mod_dir
         if self.interface_only:
-            post_release_dir /= "auto"
+            post_release_dir /= self.target_version
         self.write_post_release_file(post_release_dir / "_post_release.py")
 
         if self.copy_packages:
@@ -488,6 +518,10 @@ class PackageConverter:
     def untranslate_submodule(self, pydra_module_name: str) -> str:
         """Translates a module name from the Nipype package to the Pydra package"""
         relpath = ImportStatement.get_relative_package(pydra_module_name, self.name)
+        if relpath.startswith("." + self.target_version):
+            relpath = relpath[(len(self.target_version) + 1) :]
+        if relpath.startswith(".nipype_ports"):
+            return "nipype" + relpath[13:]
         if relpath == self.nipype_name:
             raise ValueError(
                 f"Module {pydra_module_name} is not in the nipype package {self.name}"
@@ -536,22 +570,16 @@ class PackageConverter:
                 mod,
                 objs,
                 pull_out_inline_imports=False,
-                translations=self.all_import_translations,
-                omit_classes=self.omit_classes,
-                omit_modules=self.omit_modules,
-                omit_functions=self.omit_functions,
-                omit_constants=self.omit_constants,
                 always_include=self.all_explicit,
+                package=self,
             )
 
-            classes = used.local_classes + [
-                o for o in objs if inspect.isclass(o) and o not in used.local_classes
+            classes = used.classes + [
+                o for o in objs if inspect.isclass(o) and o not in used.classes
             ]
 
-            functions = list(used.local_functions) + [
-                o
-                for o in objs
-                if inspect.isfunction(o) and o not in used.local_functions
+            functions = list(used.functions) + [
+                o for o in objs if inspect.isfunction(o) and o not in used.functions
             ]
 
             self.write_to_module(
@@ -559,10 +587,10 @@ class PackageConverter:
                 module_name=out_mod_name,
                 used=UsedSymbols(
                     module_name=mod_name,
-                    imports=used.imports,
+                    import_stmts=used.import_stmts,
                     constants=used.constants,
-                    local_classes=classes,
-                    local_functions=functions,
+                    classes=classes,
+                    functions=functions,
                 ),
                 find_replace=self.find_replace,
                 inline_intra_pkg=False,
@@ -594,7 +622,7 @@ class PackageConverter:
             the Pydra module path
         """
         if self.interface_only:
-            base_pkg = self.name + ".auto"
+            base_pkg = self.name + "." + self.target_version
         else:
             base_pkg = self.name
         if re.match(self.nipype_module.__name__ + r"\b", nipype_name):
@@ -647,7 +675,9 @@ class PackageConverter:
 
     def write_post_release_file(self, fspath: Path):
 
-        if ".dev" in self.nipype_package.__version__:
+        pkg_version = getattr(self.nipype_package, "__version__", "0.1.0")
+
+        if ".dev" in pkg_version:
             logger.warning(
                 (
                     "using development version of nipype2pydra (%s), "
@@ -667,7 +697,7 @@ class PackageConverter:
                 self.name,
             )
 
-        src_pkg_version = self.nipype_package.__version__.split(".dev")[0]
+        src_pkg_version = pkg_version.split(".dev")[0]
         nipype2pydra_version = nipype2pydra.__version__.split(".dev")[0]
         post_release = (src_pkg_version + nipype2pydra_version).replace(".", "")
 
@@ -700,7 +730,7 @@ post_release = "{post_release}"
                 spec = yaml.safe_load(f)
             callables_file = spec_file.parent / (spec_file.stem + "_callables.py")
             if self.interface_only:
-                mod_base = [self.name, "auto", "nipype_ports"]
+                mod_base = [self.name, self.target_version, "nipype_ports"]
             else:
                 mod_base = [self.name, "nipype_ports"]
             module_name = ".".join(mod_base + spec["nipype_module"].split(".")[1:])
@@ -708,14 +738,12 @@ post_release = "{post_release}"
             output_module = (
                 self.translate_submodule(
                     module_name,
-                    sub_pkg="auto" if self.interface_only else None,
+                    sub_pkg=self.target_version if self.interface_only else None,
                 )
                 + "."
                 + to_snake_case(task_name)
             )
-            converter = interface.get_converter(
-                output_module=output_module, callables_module=callables_file, **spec
-            )
+            converter = interface.get_converter(output_module=output_module, **spec)
             converter.package = self
             converters[converter.full_address] = converter
 
@@ -726,16 +754,19 @@ post_release = "{post_release}"
     )
 
     def add_interface_from_spec(
-        self, spec: ty.Dict[str, ty.Any], callables_file: Path
+        self,
+        spec: ty.Dict[str, ty.Any],
+        # callables_file: Path
     ) -> interface.BaseInterfaceConverter:
         output_module = self.translate_submodule(
-            spec["nipype_module"], sub_pkg="auto" if self.interface_only else None
+            spec["nipype_module"],
+            sub_pkg=self.target_version if self.interface_only else None,
         )
         output_module += "." + to_snake_case(spec["task_name"])
         converter = self.interfaces[f"{spec['nipype_module']}.{spec['task_name']}"] = (
             interface.get_converter(
                 output_module=output_module,
-                callables_module=callables_file,
+                # callables_module=callables_file,
                 package=self,
                 **spec,
             )
@@ -826,6 +857,7 @@ post_release = "{post_release}"
         find_replace: ty.Optional[ty.List[ty.Tuple[str, str]]] = None,
         inline_intra_pkg: bool = False,
         additional_imports: ty.Optional[ty.List[ImportStatement]] = None,
+        interface_module: bool = False,
     ):
         """Writes the given imports, constants, classes, and functions to the file at the given path,
         merging with existing code if it exists"""
@@ -860,15 +892,18 @@ post_release = "{post_release}"
         existing_imports = parse_imports(existing_import_strs, relative_to=module_name)
         converter_imports = []
 
-        for const_name, const_val in sorted(used.constants):
-            if f"\n{const_name} = " not in code_str:
-                code_str += f"\n{const_name} = {const_val}\n"
+        src_module_name = self.untranslate_submodule(module_name)
+        if interface_module:
+            src_module_name = ".".join(src_module_name.split(".")[:-1])
 
-        for klass in used.local_classes:
-            if f"\nclass {klass.__name__}(" not in code_str:
+        for klass in used.classes:
+            if (
+                klass.__module__ == src_module_name
+                and f"\nclass {klass.__name__}(" not in code_str
+            ):
                 try:
                     class_converter = self.classes[full_address(klass)]
-                    converter_imports.extend(class_converter.used_symbols.imports)
+                    converter_imports.extend(class_converter.used.import_stmts)
                 except KeyError:
                     class_converter = ClassConverter.from_object(klass, self)
                 code_str += "\n" + class_converter.converted_code + "\n"
@@ -886,6 +921,7 @@ post_release = "{post_release}"
                 # Write to file for debugging
                 debug_file = "~/unparsable-nipype2pydra-output.py"
                 with open(Path(debug_file).expanduser(), "w") as f:
+                    f.write(f"# Attemping to convert {self.nipype_name}\n")
                     f.write(converted_code)
                 raise RuntimeError(
                     f"Black could not parse generated code (written to {debug_file}): "
@@ -895,11 +931,14 @@ post_release = "{post_release}"
             if converted_code.strip() not in code_str:
                 code_str += "\n" + converted_code + "\n"
 
-        for func in sorted(used.local_functions, key=attrgetter("__name__")):
-            if f"\ndef {func.__name__}(" not in code_str:
+        for func in sorted(used.functions, key=attrgetter("__name__")):
+            if (
+                func.__module__ == src_module_name
+                and f"\ndef {func.__name__}(" not in code_str
+            ):
                 if func.__name__ in self.functions:
                     function_converter = self.functions[full_address(func)]
-                    converter_imports.extend(function_converter.used_symbols.imports)
+                    converter_imports.extend(function_converter.used.import_stmts)
                 else:
                     function_converter = FunctionConverter.from_object(func, self)
                 code_str += "\n" + function_converter.converted_code + "\n"
@@ -915,7 +954,7 @@ post_release = "{post_release}"
             code_str += (
                 "\n\n# Intra-package imports that have been inlined in this module\n\n"
             )
-            for func_name, func in sorted(used.intra_pkg_funcs, key=itemgetter(0)):
+            for func_name, func in sorted(used.imported_funcs, key=itemgetter(0)):
                 func_src = get_source_code(func)
                 func_src = re.sub(
                     r"^(#[^\n]+\ndef) (\w+)(?=\()",
@@ -926,7 +965,7 @@ post_release = "{post_release}"
                 code_str += "\n\n" + cleanup_function_body(func_src)
                 inlined_symbols.append(func_name)
 
-            for klass_name, klass in sorted(used.intra_pkg_classes, key=itemgetter(0)):
+            for klass_name, klass in sorted(used.imported_classes, key=itemgetter(0)):
                 klass_src = get_source_code(klass)
                 klass_src = re.sub(
                     r"^(#[^\n]+\nclass) (\w+)(?=\()",
@@ -936,6 +975,10 @@ post_release = "{post_release}"
                 )
                 code_str += "\n\n" + cleanup_function_body(klass_src)
                 inlined_symbols.append(klass_name)
+
+        for const_name, const_val in sorted(used.constants):
+            if f"\n{const_name} = " not in code_str:
+                code_str += f"\n{const_name} = {const_val}\n"
 
         # We run the formatter before the find/replace so that the find/replace can be more
         # predictable
@@ -949,6 +992,7 @@ post_release = "{post_release}"
             # Write to file for debugging
             debug_file = "~/unparsable-nipype2pydra-output.py"
             with open(Path(debug_file).expanduser(), "w") as f:
+                f.write(f"# Attemping to convert {self.nipype_name}\n")
                 f.write(code_str)
             raise RuntimeError(
                 f"Black could not parse generated code (written to {debug_file}): {e}\n\n{code_str}"
@@ -960,7 +1004,7 @@ post_release = "{post_release}"
         imports = ImportStatement.collate(
             existing_imports
             + converter_imports
-            + [i for i in used.imports if not i.indent]
+            + [i for i in used.import_stmts if not i.indent]
             + GENERIC_PYDRA_IMPORTS
             + additional_imports
         )
@@ -1068,6 +1112,7 @@ post_release = "{post_release}"
                 # Write to file for debugging
                 debug_file = "~/unparsable-nipype2pydra-output.py"
                 with open(Path(debug_file).expanduser(), "w") as f:
+                    f.write(f"# Attemping to convert {self.nipype_name}\n")
                     f.write(code_str)
                 raise RuntimeError(
                     f"Black could not parse generated code (written to {debug_file}): "
@@ -1092,6 +1137,7 @@ post_release = "{post_release}"
                 # Write to file for debugging
                 debug_file = "~/unparsable-nipype2pydra-output.py"
                 with open(Path(debug_file).expanduser(), "w") as f:
+                    f.write(f"# Attemping to convert {self.nipype_name}\n")
                     f.write(code_str)
                 raise RuntimeError(
                     f"Black could not parse generated code (written to {debug_file}): "
@@ -1102,10 +1148,8 @@ post_release = "{post_release}"
                 f.write(code_str)
 
     BASE_INIT_TEMPLATE = """\"\"\"
-This is a basic doctest demonstrating that the package and pydra can both be successfully
-imported.
+This is a basic doctest showing the package can be imported.
 
->>> import pydra.engine
 >>> import pydra.tasks.{pkg}
 \"\"\"
 
@@ -1128,7 +1172,7 @@ if "nipype" not in __version__:
         warn(
             "Nipype interfaces haven't been automatically converted from their specs in "
             f"`nipype-auto-conv`. Please run `{str(pkg_path / 'nipype-auto-conv' / 'generate')}` "
-            "to generated the converted Nipype interfaces in pydra.tasks.{pkg}.auto"
+            "to generated the converted Nipype interfaces in pydra.tasks.{pkg}.{target_version}"
         )
     else:
         n_ver = src_pkg_version.replace(".", "_")

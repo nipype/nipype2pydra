@@ -106,7 +106,7 @@ class DynamicField(VarField):
     callable: ty.Callable = attrs.field()
 
     def __repr__(self):
-        return f"DelayedVarField({self.varname}, callable={self.callable})"
+        return f"DynamicField({self.varname}, callable={self.callable})"
 
 
 @attrs.define
@@ -233,7 +233,7 @@ class ConnectionStatement:
             base_task_name = f"{self.source_name}_{self.source_out.varname}_to_{self.target_name}_{self.target_in}"
             intf_name = f"{base_task_name}_callable"
             code_str += (
-                f"\n{self.indent}@pydra.mark.task\n"
+                f"\n{self.indent}@python.define\n"
                 f"{self.indent}def {intf_name}(in_: ty.Any) -> ty.Any:\n"
                 f"{self.indent}    return {self.source_out.callable}(in_)\n\n"
                 f"{self.indent}{self.workflow_variable}.add("
@@ -255,7 +255,7 @@ class ConnectionStatement:
                 # to add an "identity" node to pass it through
                 intf_name = f"{base_task_name}_identity"
                 code_str += (
-                    f"\n{self.indent}@pydra.mark.task\n"
+                    f"\n{self.indent}@python.define\n"
                     f"{self.indent}def {intf_name}({self.wf_in_name}: ty.Any) -> ty.Any:\n"
                     f"{self.indent}    return {self.wf_in_name}\n\n"
                     f"{self.indent}{self.workflow_variable}.add("
@@ -285,15 +285,20 @@ class ConnectionStatement:
             conns = [args]
         conn_stmts = []
         for conn in conns:
-            src, tgt, field_conns_str = extract_args(conn)[1]
-            if (
-                field_conns_str.startswith("(")
-                and len(extract_args(field_conns_str)[1]) == 1
-            ):
-                field_conns_str = extract_args(field_conns_str)[1][0]
-            field_conns = extract_args(field_conns_str)[1]
-            for field_conn in field_conns:
-                out, in_ = extract_args(field_conn)[1]
+            if isinstance(conn, str):
+                src, tgt, field_conns_str = extract_args(conn)[1]
+                if (
+                    field_conns_str.startswith("(")
+                    and len(extract_args(field_conns_str)[1]) == 1
+                ):
+                    field_conns_str = extract_args(field_conns_str)[1][0]
+                field_conns = [
+                    extract_args(c)[1] for c in extract_args(field_conns_str)[1]
+                ]
+            else:
+                src, out, tgt, in_ = conn
+                field_conns = [ (out, in_ ) ]
+            for out, in_ in field_conns:
                 pre, args, post = extract_args(out)
                 if args is not None:
                     varname, callable_str = args
@@ -525,7 +530,7 @@ class AddInterfaceStatement(AddNodeStatement):
         indent = match.group(1)
         varname = match.group(2)
         args = extract_args(statement)[1]
-        node_kwargs = match_kwargs(args, AddInterfaceStatement.SIGNATURE)
+        node_kwargs = match_kwargs([a.replace("\n", "") for a in args], AddInterfaceStatement.SIGNATURE)
         intf_name, intf_args, intf_post = extract_args(node_kwargs["interface"])
         if "iterables" in node_kwargs:
             iterables = [
@@ -539,9 +544,7 @@ class AddInterfaceStatement(AddNodeStatement):
         if intf_name.endswith("("):  # strip trailing parenthesis
             intf_name = intf_name[:-1]
         try:
-            imported_obj = workflow_converter.used_symbols.get_imported_object(
-                intf_name
-            )
+            imported_obj = workflow_converter.used.get_imported_object(intf_name)
         except ImportError:
             imported_obj = None
             is_factory = "already-initialised"
@@ -831,7 +834,7 @@ class WorkflowInitStatement:
     workflow_converter: "WorkflowConverter"
 
     match_re = re.compile(
-        r"\s+(\w+)\s*=.*\bWorkflow\(.*name\s*=\s*([^,=\)]+)",
+        r"\s+(\w+)\s*=.*\bWorkflow\((?:|.*name\s*=)\s*([^,=\)]+)",
         flags=re.MULTILINE,
     )
 
@@ -889,6 +892,9 @@ def match_kwargs(args: ty.List[str], sig: ty.List[str]) -> ty.Dict[str, str]:
             kwargs[key] = val
         else:
             if found_kw:
+                if arg.startswith("#"):
+                    # Ignore comments
+                    continue
                 raise ValueError(
                     f"Non-keyword arg '{arg}' found after keyword arg in {args}"
                 )

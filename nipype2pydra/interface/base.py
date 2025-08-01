@@ -13,26 +13,40 @@ from functools import cached_property
 import attrs
 from attrs.converters import default_if_none
 import nipype.interfaces.base
-from nipype.interfaces.base import traits_extension
-from pydra.engine import specs
-from pydra.engine.helpers import ensure_list
+from nipype.interfaces.base import (
+    traits_extension,
+    CommandLine,
+    BaseInterface,
+)
+from nipype.interfaces.base.core import SimpleInterface
+from pydra.utils.typing import MultiInputObj, MultiOutputObj, MultiOutputFile
+from fileformats.generic import File, Directory
+from pydra.utils.general import ensure_list
+from .. import symbols
 from ..utils import (
     import_module_from_path,
     is_fileset,
     to_snake_case,
-    UsedSymbols,
     types_converter,
     from_dict_converter,
     unwrap_nested_type,
+    get_return_line,
+    cleanup_function_body,
+    insert_args_in_signature,
+    extract_args,
+    strip_comments,
+    find_super_method,
+    min_indentation,
 )
 from ..statements import (
     ImportStatement,
     parse_imports,
     ExplicitImport,
     from_list_to_imports,
+    make_imports_absolute,
 )
-from fileformats.generic import File
 import nipype2pydra.package
+from nipype2pydra.exceptions import UnmatchedParensException
 
 logger = logging.getLogger("nipype2pydra")
 
@@ -117,7 +131,7 @@ class OutputsConverter(SpecConverter):
         names of methods/callable classes defined in the adjacent `*_callables.py`
         to set to the `callable` attribute of output fields
     templates : dict[str, str], optional
-        `output_file_template` values to be provided to output fields
+        `path_template` values to be provided to output fields
     requirements : dict[str, list[str]]
         input fields that are required to be provided for the output field to be present
     """
@@ -133,9 +147,7 @@ class OutputsConverter(SpecConverter):
     templates: ty.Dict[str, str] = attrs.field(
         factory=dict,
         converter=default_if_none(factory=dict),  # type: ignore
-        metadata={
-            "help": "`output_file_template` values to be provided to output fields"
-        },
+        metadata={"help": "`path_template` values to be provided to output fields"},
     )
     requirements: ty.Dict[str, ty.List[str]] = attrs.field(
         factory=dict,
@@ -270,7 +282,7 @@ def from_dict_to_outputs(obj: ty.Union[OutputsConverter, dict]) -> OutputsConver
 
 
 def from_list_to_tests(
-    obj: ty.Union[ty.List[TestGenerator], list]
+    obj: ty.Union[ty.List[TestGenerator], list],
 ) -> ty.List[TestGenerator]:
     if obj is None:
         return []
@@ -278,7 +290,7 @@ def from_list_to_tests(
 
 
 def from_list_to_doctests(
-    obj: ty.Union[ty.List[DocTestGenerator], list]
+    obj: ty.Union[ty.List[DocTestGenerator], list],
 ) -> ty.List[DocTestGenerator]:
     if obj is None:
         return []
@@ -327,10 +339,10 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
         factory=OutputsConverter,
         converter=from_dict_to_outputs,
     )
-    callables_module: ModuleType = attrs.field(
-        converter=import_module_from_path,
-        default=None,
-    )
+    # callables_module: ModuleType = attrs.field(
+    #     converter=import_module_from_path,
+    #     default=None,
+    # )
     tests: ty.List[TestGenerator] = attrs.field(  # type: ignore
         factory=list, converter=from_list_to_tests
     )
@@ -354,13 +366,13 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
         },
     )
 
+    _output_name_mappings: ty.Dict[str, str] = attrs.field(factory=dict)
+
     def __attrs_post_init__(self):
         if self.output_module is None:
             if self.nipype_module.__name__.startswith("nipype.interfaces."):
                 pkg_name = self.nipype_module.__name__.split(".")[2]
-                self.output_module = (
-                    f"pydra.tasks.{pkg_name}.auto.{to_snake_case(self.task_name)}"
-                )
+                self.output_module = f"pydra.tasks.{pkg_name}.{self.package.target_version}.{to_snake_case(self.task_name)}"
             else:
                 raise RuntimeError(
                     "Output-module needs to be explicitly provided to task converter "
@@ -397,13 +409,17 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
     def input_fields(self):
         return self._convert_input_fields[0]
 
+    @property
+    def input_names(self):
+        return [f[0] for f in self.input_fields]
+
     @cached_property
     def input_templates(self):
         return self._convert_input_fields[1]
 
     @cached_property
     def output_fields(self):
-        return self.convert_output_spec(fields_from_template=self.input_templates)
+        return self._convert_output_fields(fields_from_template=self.input_templates)
 
     @cached_property
     def nonstd_types(self):
@@ -424,21 +440,43 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
             add_nonstd_types(f[1])
         return nonstd_types
 
-    @property
-    def converted_code(self):
-        return self._converted[0]
-
-    @property
-    def used_symbols(self):
-        return self._converted[1]
-
     @cached_property
-    def _converted(self):
-        """writing pydra task to the dile based on the input and output spec"""
-
+    def converted_code(self):
         return self.generate_code(
             self.input_fields, self.nonstd_types, self.output_fields
         )
+
+    @cached_property
+    def used(self) -> "symbols.UsedClassSymbols":
+        return symbols.UsedClassSymbols.find(
+            klass=self.nipype_interface,
+            method_names=self.included_methods,
+            package=self.package,
+            collapse_intra_pkg=False,
+            pull_out_inline_imports=True,
+            absolute_imports=True,
+        )
+
+    @cached_property
+    def source_code(self):
+        with open(inspect.getsourcefile(self.nipype_interface)) as f:
+            return f.read()
+
+    @cached_property
+    def methods(self):
+        """Get the methods defined in the interface"""
+        methods = []
+        for attr_name in dir(self.nipype_interface):
+            if attr_name.startswith("__"):
+                continue
+            attr = getattr(self.nipype_interface, attr_name)
+            if inspect.isfunction(attr):
+                methods.append(attr)
+        return methods
+
+    @cached_property
+    def local_function_names(self):
+        return [f.__name__ for f in self.local_functions]
 
     def write(
         self,
@@ -460,9 +498,9 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
             package_root=package_root,
             module_name=self.output_module,
             converted_code=self.converted_code,
-            used=self.used_symbols,
-            # inline_intra_pkg=True,
+            used=self.used,
             find_replace=self.find_replace + self.package.find_replace,
+            interface_module=True,
         )
 
         self.package.write_pkg_inits(
@@ -472,8 +510,6 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
             depth=self.package.init_depth,
             auto_import_depth=self.package.auto_import_init_depth,
             import_find_replace=self.package.import_find_replace,
-            # + [f.__name__ for f in self.used_symbols.local_functions]
-            # + [c.__name__ for c in self.used_symbols.local_classes],
         )
 
         test_module_fspath = self.package.write_to_module(
@@ -482,7 +518,7 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
                 self.output_module, f".tests.test_{self.task_name.lower()}"
             ),
             converted_code=self.converted_test_code,
-            used=self.used_symbols_test,
+            used=self.used_test,
             inline_intra_pkg=False,
             find_replace=self.find_replace,
         )
@@ -505,7 +541,7 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
                 continue
             pydra_fld, pos = self.pydra_fld_input(fld, name)
             pydra_meta = pydra_fld[-1]
-            if "output_file_template" in pydra_meta:
+            if "path_template" in pydra_meta:
                 has_template.append(name)
             pydra_fields_dict[name] = (name,) + pydra_fld
             if pos is not None:
@@ -532,37 +568,43 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
         else:
             pydra_default = None
 
-        pydra_metadata = {"help_string": ""}
+        pydra_metadata = {"help": ""}
         for key in self.INPUT_KEYS:
             pydra_key_nm = self.NAME_MAPPING.get(key, key)
             val = getattr(field, key)
             if val is not None:
                 if key == "argstr" and "%" in val:
-                    val = self.string_formats(argstr=val, name=nm)
+                    val = self.string_formats(
+                        argstr=val, name=nm, type_=field.trait_type
+                    )
+                elif key == "mandatory" and pydra_default is not None:
+                    val = False  # Overwrite mandatory to False if default is provided
                 pydra_metadata[pydra_key_nm] = val
 
         if getattr(field, "name_template"):
             template = getattr(field, "name_template")
             name_source = ensure_list(getattr(field, "name_source"))
             if name_source:
-                tmpl = self.string_formats(argstr=template, name=name_source[0])
+                tmpl = self.string_formats(
+                    argstr=template, name=name_source[0], type_=field.trait_type
+                )
             else:
                 tmpl = template
             if nm in self.nipype_interface.output_spec().class_trait_names():
-                pydra_metadata["output_file_template"] = tmpl
-            if pydra_type in [specs.File, specs.Directory]:
+                pydra_metadata["path_template"] = tmpl
+            if pydra_type in [File, Directory]:
                 pydra_type = Path
         elif getattr(field, "genfile"):
             if nm in self.outputs.templates:
                 try:
-                    pydra_metadata["output_file_template"] = self.outputs.templates[nm]
+                    pydra_metadata["path_template"] = self.outputs.templates[nm]
                 except KeyError:
                     raise Exception(
-                        f"{nm} is has genfile=True and therefore needs an 'output_file_template' value"
+                        f"{nm} is has genfile=True and therefore needs an 'path_template' value"
                     )
                 if pydra_type in [
-                    specs.File,
-                    specs.Directory,
+                    File,
+                    Directory,
                 ]:  # since this is a template, the file doesn't exist
                     pydra_type = Path
             elif nm not in self.inputs.callable_defaults:
@@ -570,17 +612,18 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
                     f"the filed {nm} has genfile=True, but no template or "
                     "`callables_default` function in the callables_module provided"
                 )
+        self._output_name_mappings[getattr(field, "output_name")] = nm
 
         pydra_metadata.update(metadata_extra_spec)
 
         pos = pydra_metadata.get("position", None)
 
-        if pydra_default is not None and not pydra_metadata.get("mandatory", None):
+        if pydra_default is not None:  # and not pydra_metadata.get("mandatory", None):
             return (pydra_type, pydra_default, pydra_metadata), pos
         else:
             return (pydra_type, pydra_metadata), pos
 
-    def convert_output_spec(self, fields_from_template):
+    def _convert_output_fields(self, fields_from_template):
         """creating fields list for pydra input spec"""
         pydra_fields_l = []
         if not self.nipype_output_spec:
@@ -631,27 +674,30 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
                 pydra_metadata["requires"] = pydra_metadata["requires"][0]
 
         if name in self.outputs.templates:
-            pydra_metadata["output_file_template"] = self.interface_spec[
-                "output_templates"
-            ][name]
+            pydra_metadata["path_template"] = self.interface_spec["output_templates"][
+                name
+            ]
         elif name in self.outputs.callables:
             pydra_metadata["callable"] = self.outputs.callables[name]
         return (pydra_type, pydra_metadata)
 
-    def function_callables(self):
-        if not self.outputs.callables:
-            return ""
-        if not self.callables_module:
-            raise Exception(
-                "callables module must be provided if output_callables are set in the spec file"
-            )
-        fun_str = ""
-        fun_names = list(set(self.outputs.callables.values()))
-        fun_names.sort()
-        for fun_nm in fun_names:
-            fun = getattr(self.callables_module, fun_nm)
-            fun_str += inspect.getsource(fun) + "\n"
-        return fun_str
+    # def function_callables(self):
+    #     if not self.outputs.callables:
+    #         return ""
+    #     if not self.callables_module:
+    #         raise Exception(
+    #             "callables module must be provided if output_callables are set in the spec file"
+    #         )
+    #     fun_str = ""
+    #     if list(set(self.outputs.callables.values())):
+    #         fun_str = inspect.getsource(self.callables_module)
+    #     # fun_names.sort()
+    #     # for fun_nm in fun_names:
+    #     #     fun = getattr(self.callables_module, fun_nm)
+    #     #     fun_str += inspect.getsource(fun) + "\n"
+    #     # list_outputs = getattr(self.callables_module, "_list_outputs")
+    #     # fun_str += inspect.getsource(list_outputs) + "\n"
+    #     return fun_str
 
     def pydra_type_converter(self, field, spec_type, name):
         """converting types to types used in pydra"""
@@ -679,36 +725,44 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
             if isinstance(field.inner_traits[0].trait_type, traits_extension.File):
                 pydra_type = ty.List[File]
             else:
-                pydra_type = specs.MultiInputObj
+                pydra_type = MultiInputObj
         elif isinstance(trait_tp, traits_extension.OutputMultiObject):
             if isinstance(field.inner_traits[0].trait_type, traits_extension.File):
-                pydra_type = specs.MultiOutputFile
+                pydra_type = MultiOutputFile
             else:
-                pydra_type = specs.MultiOutputObj
-        elif isinstance(trait_tp, traits.trait_types.List):
-            if isinstance(field.inner_traits[0].trait_type, traits_extension.File):
+                pydra_type = MultiOutputObj
+        elif isinstance(trait_tp, (traits.trait_types.List, traits.trait_types.Tuple)):
+            seq_type = list if isinstance(trait_tp, traits.trait_types.List) else tuple
+            if not field.inner_traits:
+                pydra_type = seq_type[ty.Any]
+            elif isinstance(field.inner_traits[0].trait_type, traits_extension.File):
                 if spec_type == "input":
-                    pydra_type = ty.List[File]
+                    pydra_type = seq_type[File]
                 else:
-                    pydra_type = specs.MultiOutputFile
+                    pydra_type = MultiOutputFile
             else:
-                pydra_type = list
+                pydra_type = seq_type[
+                    self.pydra_type_converter(field.inner_traits[0], spec_type, name)
+                ]
         elif isinstance(trait_tp, traits_extension.File):
             if (
                 spec_type == "output" or trait_tp.exists is True
             ):  # TODO check the hash_file metadata in nipype
-                pydra_type = specs.File
+                pydra_type = File
             else:
                 pydra_type = Path
         else:
             pydra_type = ty.Any
         return pydra_type
 
-    def string_formats(self, argstr, name):
+    def string_formats(self, argstr, name, type_):
         keys = re.findall(r"(%[0-9\.]*(?:s|d|i|g|f))", argstr)
         new_argstr = argstr
         for i, key in enumerate(keys):
-            repl = f"{name}" if len(keys) == 1 else f"{name}[{i}]"
+            if isinstance(type_, traits.trait_types.Bool):
+                repl = f"{name}:d"
+            else:
+                repl = f"{name}" if len(keys) == 1 else f"{name}[{i}]"
             match = re.match(r"%([0-9\.]+)f", key)
             if match:
                 repl += ":" + match.group(1)
@@ -718,14 +772,14 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
     @abstractmethod
     def generate_code(self, input_fields, nonstd_types, output_fields) -> ty.Tuple[
         str,
-        UsedSymbols,
+        "symbols.UsedSymbols",
     ]:
         """
         Returns
         -------
         converted_code : str
             the core converted code for the task
-        used_symbols: UsedSymbols
+        used: UsedSymbols
             symbols used in the code
         """
 
@@ -769,7 +823,7 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
         return self._converted_test[0]
 
     @property
-    def used_symbols_test(self):
+    def used_test(self):
         return self._converted_test[1]
 
     @cached_property
@@ -828,10 +882,10 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
                                 else:
                                     value = attrs.NOTHING
                     if value is not attrs.NOTHING:
-                        spec_str += f"    task.inputs.{nm} = {value}\n"
+                        spec_str += f"    task.{nm} = {value}\n"
             if hasattr(self.nipype_interface, "_cmd"):
                 spec_str += r'    print(f"CMDLINE: {task.cmdline}\n\n")' + "\n"
-            spec_str += "    res = task(plugin=PassAfterTimeoutWorker)\n"
+            spec_str += "    res = task(worker=PassAfterTimeoutWorker)\n"
             spec_str += "    print('RESULT: ', res)\n"
             for name, value in test.expected_outputs.items():
                 spec_str += f"    assert res.output.{name} == {value}\n"
@@ -846,8 +900,8 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
             },
         )
 
-        return spec_str, UsedSymbols(
-            module_name=self.nipype_module.__name__, imports=imports
+        return spec_str, symbols.UsedSymbols(
+            module_name=self.nipype_module.__name__, import_stmts=imports
         )
 
     def create_doctests(self, input_fields, nonstd_types):
@@ -902,6 +956,430 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
 
         return "    Examples\n    -------\n\n" + doctest_str
 
+    def _misc_cleanups(self, body: str) -> str:
+        if hasattr(self.nipype_interface, "_cmd"):
+            body = body.replace("self.cmd", f'"{self.nipype_interface._cmd}"')
+
+        body = body.replace("self.output_spec().get()", "{}")
+        body = body.replace("self._outputs().get()", "{}")
+        # body = re.sub(
+        #     r"outputs = self\.(output_spec|_outputs)\(\).*$",
+        #     r"outputs = {}",
+        #     body,
+        #     flags=re.MULTILINE,
+        # )
+        body = re.sub(r"\bruntime\.(stdout|stderr)", r"\1", body)
+        body = re.sub(r"\boutputs\.(\w+)", r"outputs['\1']", body)
+        body = re.sub(r"getattr\(inputs, ([^)]+)\)", r"inputs[\1]", body)
+        body = re.sub(
+            r"setattr\(outputs, ([^,]+), ([^)]+)\)", r"outputs[\1] = \2", body
+        )
+        body = re.sub(r"self\._results\[(?:'|\")(\w+)(?:'|\")\]", r"\1", body)
+        body = re.sub(r"\s+runtime.returncode = (.*)", "", body)
+        new_body = re.sub(r"self\.(\w+)\b(?!\()", r"self_dict['\1']", body)
+        if new_body != body:
+            body = " " * min_indentation(body) + "self_dict = {}\n" + new_body
+        body = body.replace("return runtime", "")
+        body = body.replace("TraitError", "KeyError")
+        return body
+
+    # def _get_referenced(
+    #     self,
+    #     method: ty.Callable,
+    #     referenced_funcs: ty.Set[ty.Callable],
+    #     referenced_methods: ty.Set[ty.Callable],
+    #     referenced_supers: ty.Dict[str, ty.Tuple[ty.Callable, type]],
+    #     method_args: ty.Dict[str, ty.List[str]] = None,
+    #     method_returns: ty.Dict[str, ty.List[str]] = None,
+    #     method_stacks: ty.Dict[str, ty.Tuple[ty.Callable]] = None,
+    #     method_supers: ty.Dict[type, ty.Dict[str, str]] = None,
+    #     already_processed: ty.Set[ty.Callable] = None,
+    #     method_stack: ty.Optional[ty.Tuple[ty.Callable]] = None,
+    #     super_base: ty.Optional[type] = None,
+    # ) -> ty.Tuple[ty.Set, ty.Set]:
+    #     """Get the local functions referenced in the source code
+
+    #     Parameters
+    #     ----------
+    #     src: str
+    #         the source of the file to extract the import statements from
+    #     referenced_funcs: set[function]
+    #         the set of local functions that have been referenced so far
+    #     referenced_methods: set[function]
+    #         the set of methods that have been referenced so far
+    #     method_args: dict[str, list[str]]
+    #         a dictionary to hold additional arguments that need to be added to each method,
+    #         where the dictionary key is the names of the methods
+    #     method_returns: dict[str, list[str]]
+    #         a dictionary to hold the return values of each method,
+    #         where the dictionary key is the names of the methods
+
+    #     Returns
+    #     -------
+    #     referenced_inputs: set[str]
+    #         inputs that have been referenced
+    #     referenced_outputs: set[str]
+    #         outputs that have been referenced
+    #     """
+    #     if already_processed:
+    #         already_processed.add(method)
+    #     else:
+    #         already_processed = {method}
+    #     if method_stack is None:
+    #         method_stack = (method,)
+    #     else:
+    #         method_stack += (method,)
+    #     if super_base is None:
+    #         super_base = self.nipype_interface
+    #     method_body = inspect.getsource(method)
+    #     method_body = re.sub(r"\s*#.*", "", method_body)  # Strip out comments
+    #     return_value = get_return_line(method_body)
+    #     ref_local_func_names = re.findall(r"(?<!self\.)(\w+)\(", method_body)
+    #     ref_local_funcs = set(
+    #         f
+    #         for f in self.local_functions
+    #         if f.__name__ in ref_local_func_names and f not in referenced_funcs
+    #     )
+
+    #     ref_method_names = re.findall(r"(?<=self\.)(\w+)\(", method_body)
+    #     ref_methods = set(m for m in self.methods if m.__name__ in ref_method_names)
+    #     # Filter methods in omitted common base-classes like BaseInterface & CommandLine
+    #     ref_methods = [
+    #         m
+    #         for m in ref_methods
+    #         if not self.package.is_omitted(
+    #             find_super_method(super_base, m.__name__, include_class=True)[1]
+    #         )
+    #     ]
+    #     referenced_funcs.update(ref_local_funcs)
+    #     referenced_methods.update(ref_methods)
+
+    #     referenced_inputs = set(re.findall(r"(?<=self\.inputs\.)(\w+)", method_body))
+    #     referenced_outputs = set(re.findall(r"self\.(\w+) *=", method_body))
+    #     if return_value and return_value.startswith("self."):
+    #         referenced_outputs.update(
+    #             re.findall(return_value + r"\[(?:'|\")(\w+)(?:'|\")\] *=", method_body)
+    #         )
+    #     for match in re.findall(r"super\([^\)]*\)\.(\w+)\(", method_body):
+    #         super_method, base = find_super_method(super_base, match)
+    #         if self.package.is_omitted(base):
+    #             continue
+    #         func_name = self._common_parent_pkg_prefix(base) + match
+    #         if func_name not in referenced_supers:
+    #             referenced_supers[func_name] = (super_method, base)
+    #             method_supers[super_base][match] = func_name
+    #             method_stacks[func_name] = method_stack
+    #             rf_inputs, rf_outputs = self._get_referenced(
+    #                 super_method,
+    #                 referenced_funcs,
+    #                 referenced_methods,
+    #                 referenced_supers=referenced_supers,
+    #                 method_args=method_args,
+    #                 method_returns=method_returns,
+    #                 method_stacks=method_stacks,
+    #                 method_supers=method_supers,
+    #                 already_processed=already_processed,
+    #                 method_stack=method_stack,
+    #                 super_base=base,
+    #             )
+    #             referenced_inputs.update(rf_inputs)
+    #             referenced_outputs.update(rf_outputs)
+    #             method_args[func_name] = rf_inputs
+    #             method_returns[func_name] = rf_outputs
+    #             method_stacks[func_name] = method_stack
+    #     for func in ref_local_funcs:
+    #         if func in already_processed:
+    #             continue
+    #         rf_inputs, rf_outputs = self._get_referenced(
+    #             func,
+    #             referenced_funcs,
+    #             referenced_methods,
+    #             referenced_supers=referenced_supers,
+    #             method_stacks=method_stacks,
+    #             method_supers=method_supers,
+    #             already_processed=already_processed,
+    #             method_stack=method_stack,
+    #         )
+    #         referenced_inputs.update(rf_inputs)
+    #         referenced_outputs.update(rf_outputs)
+    #     for meth in ref_methods:
+    #         if meth in already_processed:
+    #             continue
+    #         ref_inputs, ref_outputs = self._get_referenced(
+    #             meth,
+    #             referenced_funcs,
+    #             referenced_methods,
+    #             referenced_supers=referenced_supers,
+    #             method_args=method_args,
+    #             method_returns=method_returns,
+    #             method_stacks=method_stacks,
+    #             method_supers=method_supers,
+    #             already_processed=already_processed,
+    #             method_stack=method_stack,
+    #         )
+    #         method_args[meth.__name__] = ref_inputs
+    #         method_returns[meth.__name__] = ref_outputs
+    #         method_stacks[meth.__name__] = method_stack
+    #         referenced_inputs.update(ref_inputs)
+    #         referenced_outputs.update(ref_outputs)
+    #     return referenced_inputs, sorted(referenced_outputs)
+
+    # def _common_parent_pkg_prefix(self, base: type) -> str:
+    #     """Return the common part of two package names"""
+    #     ref_parts = self.nipype_interface.__module__.split(".")
+    #     mod_parts = base.__module__.split(".")
+    #     common = []
+    #     for r_part, m_part in zip(ref_parts, mod_parts):
+    #         if r_part == m_part:
+    #             common.append(r_part)
+    #         else:
+    #             break
+    #     if not common:
+    #         return ""
+    #     return "_".join(common + [base.__name__]) + "__"
+
+    def process_method(
+        self,
+        method: str,
+        input_names: ty.List[str],
+        output_names: ty.List[str],
+        method_args: ty.Dict[str, ty.List[str]] = None,
+        method_returns: ty.Dict[str, ty.List[str]] = None,
+        additional_args: ty.Sequence[str] = (),
+        new_name: ty.Optional[str] = None,
+        super_base: ty.Optional[type] = None,
+    ):
+        if super_base is None:
+            super_base = self.nipype_interface
+        src = inspect.getsource(method)
+        pre, args, post = extract_args(src)
+        try:
+            args.remove("self")
+        except ValueError:
+            pass
+        if "runtime" in args:
+            args.remove("runtime")
+        args_to_add = list(self.used.method_args.get(method.__name__, [])) + list(
+            additional_args
+        )
+        if args_to_add:
+            kwargs = [args.pop()] if args and args[-1].startswith("**") else []
+            args += [f"{a}=None" for a in args_to_add] + kwargs
+        # Insert method args in signature if present
+        return_types, method_body = post.split(":", maxsplit=1)
+        method_body = method_body.split("\n", maxsplit=1)[1]
+        method_body = self.process_method_body(
+            method_body, input_names, output_names, super_base
+        )
+        if self.used.method_returns.get(method.__name__):
+            return_args = self.used.method_returns[method.__name__]
+            method_body = (
+                " " * min_indentation(method_body)
+                + " = ".join(return_args)
+                + " = attrs.NOTHING\n"
+                + method_body
+            )
+            method_lines = method_body.rstrip().splitlines()
+            method_body = "\n".join(method_lines[:-1])
+            last_line = method_lines[-1]
+            if "return" in last_line:
+                method_body += "\n" + last_line + "," + ",".join(return_args)
+            else:
+                method_body += (
+                    "\n" + last_line + "\n    return " + ",".join(return_args)
+                )
+        pre = re.sub(r"^\s*", "", pre, flags=re.MULTILINE)
+        pre = pre.replace("@staticmethod\n", "")
+        if new_name:
+            pre = re.sub(r"^def (\w+)\(", f"def {new_name}(", pre, flags=re.MULTILINE)
+        return f"{pre}{', '.join(args)}{return_types}:\n{method_body}"
+
+    def process_method_body(
+        self,
+        method_body: str,
+        input_names: ty.List[str],
+        output_names: ty.List[str],
+        super_base: ty.Optional[type] = None,
+        unwrap_return_dict: bool = False,
+    ) -> str:
+        if not method_body:
+            return ""
+        if super_base is None:
+            super_base = self.nipype_interface
+        method_body = method_body.replace("if self.output_spec:", "if True:")
+        # Replace self.inputs.<name> with <name> in the function body
+        input_re = re.compile(r"self\.inputs\.(\w+)\b(?!\()")
+        unrecognised_inputs = set(
+            m for m in input_re.findall(method_body) if m not in input_names
+        )
+        if unrecognised_inputs:
+            logger.warning(
+                "Found the following unrecognised (potentially dynamic) inputs %s in "
+                "'%s' task",
+                unrecognised_inputs,
+                self.task_name,
+            )
+        method_body = input_re.sub(r"\1", method_body)
+        method_body = self.replace_supers(method_body, super_base)
+
+        if unwrap_return_dict:
+            return_value = get_return_line(method_body)
+            if return_value is None:
+                return_value = "outputs"
+            output_re = re.compile(return_value + r"\[(?:'|\")(\w+)(?:'|\")\]")
+            unrecognised_outputs = set(
+                m for m in output_re.findall(method_body) if m not in output_names
+            )
+            if unrecognised_outputs:
+                logger.warning(
+                    "Found the following unrecognised (potentially dynamic) outputs %s in "
+                    "'%s' task",
+                    unrecognised_outputs,
+                    self.task_name,
+                )
+            method_body = output_re.sub(r"\1", method_body)
+        method_body = self.unwrap_nested_methods(method_body)
+        method_body = make_imports_absolute(
+            method_body,
+            super_base.__module__,
+            translations=self.package.all_import_translations,
+        )
+        # method_body = self._misc_cleanups(method_body)
+        return method_body
+
+    def replace_supers(self, method_body, super_base=None):
+        if super_base is None:
+            super_base = self.nipype_interface
+        name_map = self.used.super_func_names.get(super_base)
+        splits = re.split(r"super\([^\)]*\)\.(\w+)(?=\()", method_body)
+        new_body = splits[0]
+        for name, block in zip(splits[1::2], splits[2::2]):
+            super_method, base = find_super_method(super_base, name)
+            _, args, post = extract_args(block)
+            arg_str = ", ".join(args)
+            try:
+                new_body += self.SPECIAL_SUPER_MAPPINGS[super_method].format(
+                    args=arg_str
+                )
+            except KeyError:
+                try:
+                    new_body += name_map[name] + "(" + arg_str + ")"
+                except KeyError:
+                    if self.package.is_omitted(base):
+                        raise KeyError(
+                            f"Require special mapping for '{name}' in {base} class "
+                            "as methods in that module are being omitted from the conversion"
+                        ) from None
+                    raise
+            new_body += post[1:]
+        return new_body
+
+    def unwrap_nested_methods(
+        self, method_body, additional_args=(), inputs_as_dict: bool = False
+    ):
+        """
+        Converts nested method calls into function calls
+        """
+        method_body = self._misc_cleanups(method_body)
+        # Add args to the function signature of method calls
+        method_re = re.compile(r"self\.(\w+)(?=\()", flags=re.MULTILINE | re.DOTALL)
+        method_names = [m.__name__ for m in self.used.methods]
+        method_body = strip_comments(method_body)
+        omitted_methods = {}
+        for method_name in set(
+            m for m in method_re.findall(method_body) if m not in method_names
+        ):
+            omitted_methods[method_name] = find_super_method(
+                self.nipype_interface, method_name
+            )[0]
+        splits = method_re.split(method_body)
+        new_body = splits[0]
+        for name, args in zip(splits[1::2], splits[2::2]):
+            if name in omitted_methods:
+                args, post = extract_args(args)[1:]
+                omitted_method = omitted_methods[name]
+                try:
+                    new_body += self.SPECIAL_SUPER_MAPPINGS[omitted_method].format(
+                        args=", ".join(args)
+                    )
+                except KeyError:
+                    raise KeyError(
+                        f"Require special mapping for {omitted_methods[name]} method "
+                        "as methods in that module are being omitted from the conversion"
+                    ) from None
+                new_body += post[1:]  # drop the leading parenthesis
+                continue
+            # Assign additional return values (which were previously saved to member
+            # attributes) to new variables from the method call
+            if self.used.method_returns[name]:
+                last_line = new_body.splitlines()[-1]
+                match = re.match(r" *([a-zA-Z0-9\,\.\_ ]+ *=)? *$", last_line)
+                if match:
+                    if match.group(1):
+                        new_body_lines = new_body.splitlines()
+                        new_body = "\n".join(new_body_lines[:-1])
+                        last_line = new_body_lines[-1]
+                        new_body += "\n" + re.sub(
+                            r"^( *)([a-zA-Z0-9\,\.\_ ]+) *= *$",
+                            r"\1\2, "
+                            + ",".join(self.used.method_returns[name])
+                            + " = ",
+                            last_line,
+                            flags=re.MULTILINE,
+                        )
+                    else:
+                        new_body += ",".join(self.used.method_returns[name]) + " = "
+                else:
+                    logger.warning(
+                        "Could not augment the return value of the method converted from "
+                        f"a function '{name}' with the previously assigned attributes "
+                        f"{self.used.method_returns[name]} as the method doesn't have a "
+                        f"singular return statement at the end of the method"
+                    )
+            # Insert additional arguments to the method call (which were previously
+            # accessed via member attributes)
+            args_to_be_inserted = list(self.used.method_args[name]) + list(
+                additional_args
+            )
+            try:
+                new_body += name + insert_args_in_signature(
+                    args,
+                    [
+                        f"{a}=inputs['{a}']" if inputs_as_dict else f"{a}={a}"
+                        for a in args_to_be_inserted
+                    ],
+                )
+            except UnmatchedParensException:
+                logger.warning(
+                    f"Nested method call inside '{name}' in {self.full_address}, "
+                    "the following args will need to be manually inserted up after the "
+                    f"conversion: {args_to_be_inserted}"
+                )
+                new_body += name + args
+        method_body = new_body
+        # Convert assignment to self attributes into method-scoped variables (hopefully
+        # there aren't any name clashes)
+        method_body = re.sub(
+            r"self\.(\w+ *)(?==)", r"\1", method_body, flags=re.MULTILINE | re.DOTALL
+        )
+        return cleanup_function_body(method_body)
+
+    SPECIAL_SUPER_MAPPINGS = {
+        CommandLine._list_outputs: "{{}}",
+        CommandLine._format_arg: "argstr.format(**inputs)",
+        CommandLine._filename_from_source: "{args} + '_generated'",
+        BaseInterface._check_version_requirements: "[]",
+        CommandLine._parse_inputs: "{{}}",
+        CommandLine._gen_filename: "",
+        BaseInterface.aggregate_outputs: "{{}}",
+        BaseInterface.run: "None",
+        BaseInterface._list_outputs: "{{}}",
+        BaseInterface.__init__: "",
+        SimpleInterface.__init__: "",
+        BaseInterface._outputs: "{{}}",
+        None: "",
+    }
+
     INPUT_KEYS = [
         "allowed_values",
         "argstr",
@@ -915,7 +1393,7 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
         "xor",
     ]
     OUTPUT_KEYS = ["desc"]
-    NAME_MAPPING = {"desc": "help_string"}
+    NAME_MAPPING = {"desc": "help"}
 
     TRAITS_IRREL = [
         "output_type",

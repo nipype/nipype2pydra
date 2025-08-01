@@ -19,11 +19,10 @@ from .misc import (  # noqa: F401
     str_to_type,
     types_converter,
     unwrap_nested_type,
+    get_return_line,
+    find_super_method,
+    strip_comments,
+    min_indentation,
+    type_to_str,
     INBUILT_NIPYPE_TRAIT_NAMES,
-)
-from .symbols import (  # noqa: F401
-    UsedSymbols,
-    get_local_functions,
-    get_local_classes,
-    get_local_constants,
 )
