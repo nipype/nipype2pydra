@@ -1,4 +1,4 @@
-afni:
+nipype.interfaces.afni:
   target_version: v25_2_06
   interfaces:
     - nipype.interfaces.afni.model.Deconvolve
@@ -81,7 +81,7 @@ afni:
     - nipype.interfaces.afni.utils.Axialize
     - nipype.interfaces.afni.utils.Zcat
     - nipype.interfaces.afni.utils.Zeropad
-ants:
+nipype.interfaces.ants:
   target_version: v2
   interfaces:
     - nipype.interfaces.ants.legacy.antsIntroduction
@@ -119,7 +119,7 @@ ants:
     - nipype.interfaces.ants.visualization.CreateTiledMosaic
   classes:
     - nipype.interfaces.ants.base.Info
-brainsuite:
+nipype.interfaces.brainsuite:
   target_version: v1_0
   interfaces:
     - nipype.interfaces.brainsuite.brainsuite.Bse
@@ -137,16 +137,16 @@ brainsuite:
     - nipype.interfaces.brainsuite.brainsuite.SVReg
     - nipype.interfaces.brainsuite.brainsuite.BDP
     - nipype.interfaces.brainsuite.brainsuite.ThicknessPVC
-bru2nii:
+nipype.interfaces.bru2nii:
   target_version: v1_0
   interfaces:
     - nipype.interfaces.bru2nii.Bru2
-c3:
+nipype.interfaces.c3:
   target_version: v1_0
   interfaces:
     - nipype.interfaces.c3.C3dAffineTool
     - nipype.interfaces.c3.C3d
-camino:
+nipype.interfaces.camino:
   target_version: v1_0
   interfaces:
     - nipype.interfaces.camino.calib.SFPICOCalibData
@@ -183,19 +183,19 @@ camino:
     - nipype.interfaces.camino.odf.MESD
     - nipype.interfaces.camino.odf.SFPeaks
     - nipype.interfaces.camino.utils.ImageStats
-camino2trackvis:
+nipype.interfaces.camino2trackvis:
   target_version: v1_0
   interfaces:
     - nipype.interfaces.camino2trackvis.convert.Camino2Trackvis
     - nipype.interfaces.camino2trackvis.convert.Trackvis2Camino
-cat12:
+nipype.interfaces.cat12:
   target_version: v1_0
   interfaces:
     - nipype.interfaces.cat12.preprocess.CAT12Segment
     - nipype.interfaces.cat12.preprocess.CAT12SANLMDenoising
     - nipype.interfaces.cat12.surface.ExtractAdditionalSurfaceParameters
     - nipype.interfaces.cat12.surface.ExtractROIBasedSurfaceMeasures
-cmtk:
+nipype.interfaces.cmtk:
   target_version: v1_0
   interfaces:
     - nipype.interfaces.cmtk.cmtk.CreateMatrix
@@ -207,13 +207,13 @@ cmtk:
     - nipype.interfaces.cmtk.nx.NetworkXMetrics
     - nipype.interfaces.cmtk.nx.AverageNetworks
     - nipype.interfaces.cmtk.parcellation.Parcellate
-dcm2nii:
+nipype.interfaces.dcm2nii:
   target_version: v1_0
   interfaces:
     - nipype.interfaces.dcm2nii.Info
     - nipype.interfaces.dcm2nii.Dcm2nii
     - nipype.interfaces.dcm2nii.Dcm2niix
-dcmstack:
+nipype.interfaces.dcmstack:
   target_version: v1_0
   interfaces:
     - nipype.interfaces.dcmstack.NiftiGeneratorBase
@@ -223,7 +223,7 @@ dcmstack:
     - nipype.interfaces.dcmstack.CopyMeta
     - nipype.interfaces.dcmstack.MergeNifti
     - nipype.interfaces.dcmstack.SplitNifti
-diffusion_toolkit:
+nipype.interfaces.diffusion_toolkit:
   target_version: v1_0
   interfaces:
     - nipype.interfaces.diffusion_toolkit.dti.DTIRecon
@@ -233,7 +233,7 @@ diffusion_toolkit:
     - nipype.interfaces.diffusion_toolkit.odf.ODFTracker
     - nipype.interfaces.diffusion_toolkit.postproc.SplineFilter
     - nipype.interfaces.diffusion_toolkit.postproc.TrackMerge
-dipy:
+nipype.interfaces.dipy:
   target_version: v1_0
   interfaces:
     - nipype.interfaces.dipy.anisotropic_power.APMQball
@@ -247,7 +247,7 @@ dipy:
     - nipype.interfaces.dipy.tensors.TensorMode
     - nipype.interfaces.dipy.tracks.TrackDensityMap
     - nipype.interfaces.dipy.tracks.StreamlineTractography
-dtitk:
+nipype.interfaces.dtitk:
   target_version: v1_0
   interfaces:
     - nipype.interfaces.dtitk.registration.Rigid
@@ -279,11 +279,11 @@ dtitk:
     - nipype.interfaces.dtitk.utils.TVAdjustVoxSpTask
     - nipype.interfaces.dtitk.utils.TVResampleTask
     - nipype.interfaces.dtitk.utils.TVtoolTask
-dynamic_slicer:
+nipype.interfaces.dynamic_slicer:
   target_version: v1_0
   interfaces:
     - nipype.interfaces.dynamic_slicer.SlicerCommandLine
-elastix:
+nipype.interfaces.elastix:
   target_version: v1_0
   interfaces:
     - nipype.interfaces.elastix.registration.Registration
@@ -291,7 +291,7 @@ elastix:
     - nipype.interfaces.elastix.registration.AnalyzeWarp
     - nipype.interfaces.elastix.registration.PointsWarp
     - nipype.interfaces.elastix.utils.EditTransform
-freesurfer:
+nipype.interfaces.freesurfer:
   target_version: v8
   interfaces:
     - nipype.interfaces.freesurfer.longitudinal.RobustTemplate
@@ -383,7 +383,7 @@ freesurfer:
     - nipype.interfaces.freesurfer.utils.Apas2Aseg
     - nipype.interfaces.freesurfer.utils.MRIsExpand
     - nipype.interfaces.freesurfer.utils.LTAConvert
-fsl:
+nipype.interfaces.fsl:
   target_version: v6_0
   interfaces:
     - nipype.interfaces.fsl.aroma.ICA_AROMA
@@ -492,16 +492,16 @@ fsl:
     - nipype.interfaces.fsl.utils.MotionOutliers
     - nipype.interfaces.fsl.utils.Text2Vest
     - nipype.interfaces.fsl.utils.Vest2Text
-image:
+nipype.interfaces.image:
   target_version: v1_0
   interfaces:
     - nipype.interfaces.image.Rescale
     - nipype.interfaces.image.Reorient
-meshfix:
+nipype.interfaces.meshfix:
   target_version: v1_0
   interfaces:
     - nipype.interfaces.meshfix.MeshFix
-minc:
+nipype.interfaces.minc:
   target_version: v1_0
   interfaces:
     - nipype.interfaces.minc.minc.Extract
@@ -532,7 +532,7 @@ minc:
     - nipype.interfaces.minc.minc.BigAverage
     - nipype.interfaces.minc.minc.Reshape
     - nipype.interfaces.minc.minc.VolSymm
-mipav:
+nipype.interfaces.mipav:
   target_version: v1_0
   interfaces:
     - nipype.interfaces.mipav.developer.JistLaminarVolumetricLayering
@@ -553,14 +553,14 @@ mipav:
     - nipype.interfaces.mipav.developer.JistBrainPartialVolumeFilter
     - nipype.interfaces.mipav.developer.JistIntensityMp2rageMasking
     - nipype.interfaces.mipav.developer.MedicAlgorithmThresholdToBinaryMask
-niftyfit:
+nipype.interfaces.niftyfit:
   target_version: v1_0
   interfaces:
     - nipype.interfaces.niftyfit.asl.FitAsl
     - nipype.interfaces.niftyfit.dwi.FitDwi
     - nipype.interfaces.niftyfit.dwi.DwiTool
     - nipype.interfaces.niftyfit.qt1.FitQt1
-niftyreg:
+nipype.interfaces.niftyreg:
   target_version: v1_0
   interfaces:
     - nipype.interfaces.niftyreg.reg.RegAladin
@@ -571,7 +571,7 @@ niftyreg:
     - nipype.interfaces.niftyreg.regutils.RegAverage
     - nipype.interfaces.niftyreg.regutils.RegTransform
     - nipype.interfaces.niftyreg.regutils.RegMeasure
-niftyseg:
+nipype.interfaces.niftyseg:
   target_version: v1_0
   interfaces:
     - nipype.interfaces.niftyseg.em.EM
@@ -588,28 +588,28 @@ niftyseg:
     - nipype.interfaces.niftyseg.stats.StatsCommand
     - nipype.interfaces.niftyseg.stats.UnaryStats
     - nipype.interfaces.niftyseg.stats.BinaryStats
-nilearn:
+nipype.interfaces.nilearn:
   target_version: v1_0
   interfaces:
     - nipype.interfaces.nilearn.NilearnBaseInterface
     - nipype.interfaces.nilearn.SignalExtraction
-nitime:
+nipype.interfaces.nitime:
   target_version: v1_0
   interfaces:
     - nipype.interfaces.nitime.analysis.CoherenceAnalyzer
-petpvc:
+nipype.interfaces.petpvc:
   target_version: v1_0
   interfaces:
     - nipype.interfaces.petpvc.PETPVC
-quickshear:
+nipype.interfaces.quickshear:
   target_version: v1_0
   interfaces:
     - nipype.interfaces.quickshear.Quickshear
-robex:
+nipype.interfaces.robex:
   target_version: v1_0
   interfaces:
     - nipype.interfaces.robex.preprocess.RobexSegment
-semtools:
+nipype.interfaces.semtools:
   target_version: v1_0
   interfaces:
     - nipype.interfaces.semtools.brains.classify.BRAINSPosteriorToContinuousClass
@@ -714,7 +714,7 @@ semtools:
     - nipype.interfaces.semtools.utilities.brains.ImageRegionPlotter
     - nipype.interfaces.semtools.utilities.brains.fcsv_to_hdf5
     - nipype.interfaces.semtools.utilities.brains.FindCenterOfBrain
-slicer:
+nipype.interfaces.slicer:
   target_version: v1_0
   interfaces:
     - nipype.interfaces.slicer.converters.DicomToNrrdConverter
@@ -777,7 +777,7 @@ slicer:
     - nipype.interfaces.slicer.surface.LabelMapSmoothing
     - nipype.interfaces.slicer.surface.ModelMaker
     - nipype.interfaces.slicer.utilities.EMSegmentTransformToNewFormat
-spm:
+nipype.interfaces.spm:
   target_version: v1_0
   interfaces:
     - nipype.interfaces.spm.model.Level1Design
@@ -814,12 +814,12 @@ spm:
     - nipype.interfaces.spm.utils.ApplyInverseDeformation
     - nipype.interfaces.spm.utils.ResliceToReference
     - nipype.interfaces.spm.utils.DicomImport
-vista:
+nipype.interfaces.vista:
   target_version: v1_0
   interfaces:
     - nipype.interfaces.vista.vista.Vnifti2Image
     - nipype.interfaces.vista.vista.VtoMat
-workbench:
+nipype.interfaces.workbench:
   target_version: v1_0
   interfaces:
     - nipype.interfaces.workbench.cifti.CiftiSmooth
