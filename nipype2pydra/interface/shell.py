@@ -190,7 +190,9 @@ class ShellInterfaceConverter(BaseInterfaceConverter):
 
         spec_str += "@shell.define"
         if xor_sets:
-            spec_str += f"(xor={[list(x) for x in xor_sets]})"
+            spec_str += (
+                f"(xor={[list(x) for x in sorted(tuple(sorted(s)) for s in xor_sets)]})"
+            )
         spec_str += (
             f"\nclass {self.task_name}(shell.Task['{self.task_name}.Outputs']):\n"
         )

@@ -217,6 +217,9 @@ class ImportStatement:
         if self.from_:
             imported_str = ", ".join(str(i) for i in sorted(self.imported.values()))
             module = self.translation if self.translation else self.from_
+            # Drop trailing hidden module (e.g. '_local' from 'pathlib._local')
+            if module.split(".")[-1].startswith("_"):
+                module = ".".join(module.split(".")[:-1])
             stmt_str = f"{self.indent}from {module} import {imported_str}"
         elif self.translation:
             stmt_str = f"{self.indent}import {self.translation}"
@@ -614,7 +617,7 @@ class ExplicitImport:
 
 
 def from_list_to_imports(
-    obj: ty.Union[ty.List[ExplicitImport], list]
+    obj: ty.Union[ty.List[ExplicitImport], list],
 ) -> ty.List[ExplicitImport]:
     if obj is None:
         return []

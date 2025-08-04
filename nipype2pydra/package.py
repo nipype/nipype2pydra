@@ -708,7 +708,7 @@ class PackageConverter:
 src_pkg_version = "{src_pkg_version}"
 nipype2pydra_version = "{nipype2pydra_version}"
 post_release = "{post_release}"
-        """
+"""
             )
 
     @classmethod
