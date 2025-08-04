@@ -940,7 +940,7 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
                 if val is None and is_fileset(tp):
                     val = f"{tp.__name__}.mock()"
                 if val is not attrs.NOTHING:
-                    doctest_str += f"    >>> task.inputs.{nm} = {val}\n"
+                    doctest_str += f"    >>> task.{nm} = {val}\n"
             doctest_str += "    >>> task.cmdline\n"
             doctest_str += f"    '{doctest.cmdline}'"
             doctest_str += "\n\n\n"
