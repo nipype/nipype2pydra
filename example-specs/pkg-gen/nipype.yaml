@@ -1,5 +1,5 @@
 nipype.interfaces.afni:
-  target_version: v25_2_06
+  target_version: v25
   interfaces:
     - nipype.interfaces.afni.model.Deconvolve
     - nipype.interfaces.afni.model.Remlfit
