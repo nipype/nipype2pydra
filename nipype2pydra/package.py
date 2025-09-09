@@ -302,7 +302,7 @@ class PackageConverter:
     @property
     def all_import_translations(self) -> ty.List[ty.Tuple[str, str]]:
         all_translations = self.import_translations + [
-            (r"nipype\.interfaces\.mrtrix3.\w+\b", r"pydra.tasks.mrtrix3.v3_0"),
+            (r"nipype\.interfaces\.mrtrix3.\w+\b", r"pydra.tasks.mrtrix3.v3_1"),
             (
                 r"nipype\.interfaces\.(?!base)(\w+)\b",
                 r"pydra.tasks.\1." + self.target_version,
