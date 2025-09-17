@@ -55,7 +55,7 @@ test = [
 ]
 
 [project.urls]
-repository = "https://github.com/nipype/pydra-robex"
+repository = "https://github.com/nipype/pydra-tasks-robex"
 
 [tool.hatch.version]
 source = "vcs"

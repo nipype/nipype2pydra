@@ -55,7 +55,7 @@ test = [
 ]
 
 [project.urls]
-repository = "https://github.com/nipype/pydra-mipav"
+repository = "https://github.com/nipype/pydra-tasks-mipav"
 
 [tool.hatch.version]
 source = "vcs"

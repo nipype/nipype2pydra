@@ -55,7 +55,7 @@ test = [
 ]
 
 [project.urls]
-repository = "https://github.com/nipype/pydra-afni"
+repository = "https://github.com/nipype/pydra-tasks-afni"
 
 [tool.hatch.version]
 source = "vcs"

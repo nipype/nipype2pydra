@@ -183,7 +183,7 @@ jobs:
       if: ${{ always() }}
       with:
         files: coverage.xml
-        name: pydra-CHANGEME
+        name: pydra-tasks-CHANGEME
 
 
   deploy-fileformats:
@@ -391,7 +391,7 @@ jobs:
         if: github.event_name == 'release' || github.event_name == 'repository_dispatch'
         run: >-
           curl -XPOST -u "${{ env.POST_RELEASE_PAT }}" -H "Accept: application/vnd.github.everest-preview+json"
-          "https://api.github.com/repos/nipype/pydra-CHANGEME/dispatches"
+          "https://api.github.com/repos/nipype/pydra-tasks-CHANGEME/dispatches"
           -d '{
             "event_type": "progress-report",
             "client_payload": ${{ steps.generate-report.output.progress_report }}

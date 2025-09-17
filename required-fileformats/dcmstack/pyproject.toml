@@ -55,7 +55,7 @@ test = [
 ]
 
 [project.urls]
-repository = "https://github.com/nipype/pydra-dcmstack"
+repository = "https://github.com/nipype/pydra-tasks-dcmstack"
 
 [tool.hatch.version]
 source = "vcs"

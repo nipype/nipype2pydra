@@ -55,7 +55,7 @@ test = [
 ]
 
 [project.urls]
-repository = "https://github.com/nipype/pydra-slicer"
+repository = "https://github.com/nipype/pydra-tasks-slicer"
 
 [tool.hatch.version]
 source = "vcs"

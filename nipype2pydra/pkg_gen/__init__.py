@@ -611,7 +611,7 @@ class NipypeInterface:
 
 
 def download_tasks_template(output_path: Path):
-    """Downloads the latest pydra-template to the output path"""
+    """Downloads the latest pydra-tasks-template to the output path"""
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     release_url = (

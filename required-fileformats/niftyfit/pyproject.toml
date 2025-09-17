@@ -55,7 +55,7 @@ test = [
 ]
 
 [project.urls]
-repository = "https://github.com/nipype/pydra-niftyfit"
+repository = "https://github.com/nipype/pydra-tasks-niftyfit"
 
 [tool.hatch.version]
 source = "vcs"

@@ -58,7 +58,7 @@ converters = [
 ]
 
 [project.urls]
-repository = "https://github.com/nipype/pydra-CHANGEME"
+repository = "https://github.com/nipype/pydra-tasks-CHANGEME"
 
 [tool.hatch.version]
 source = "vcs"

@@ -55,7 +55,7 @@ test = [
 ]
 
 [project.urls]
-repository = "https://github.com/nipype/pydra-semtools"
+repository = "https://github.com/nipype/pydra-tasks-semtools"
 
 [tool.hatch.version]
 source = "vcs"

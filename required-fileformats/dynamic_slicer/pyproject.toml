@@ -55,7 +55,7 @@ test = [
 ]
 
 [project.urls]
-repository = "https://github.com/nipype/pydra-dynamic_slicer"
+repository = "https://github.com/nipype/pydra-tasks-dynamic_slicer"
 
 [tool.hatch.version]
 source = "vcs"

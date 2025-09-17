@@ -55,7 +55,7 @@ test = [
 ]
 
 [project.urls]
-repository = "https://github.com/nipype/pydra-ants"
+repository = "https://github.com/nipype/pydra-tasks-ants"
 
 [tool.hatch.version]
 source = "vcs"
