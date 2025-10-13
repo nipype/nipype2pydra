@@ -49,9 +49,9 @@ inputs:
     # type=file|default=<undefined>: Implicit aseg.mgz segmentation. Specify a different aseg by using the 'in_aseg' input.
     in_aseg: generic/file
     # type=file|default=<undefined>: Input aseg file for VolumeMask
-    lh_pial: fileformats.medimage_freesurfer.Pial
+    lh_pial: fileformats.vendor.freesurfer.medimage.Pial
     # type=file|default=<undefined>: Implicit input left pial surface
-    lh_white: fileformats.medimage_freesurfer.Pial
+    lh_white: fileformats.vendor.freesurfer.medimage.Pial
     # type=file|default=<undefined>: Implicit input left white matter surface
     rh_pial: generic/file
     # type=file|default=<undefined>: Implicit input right pial surface

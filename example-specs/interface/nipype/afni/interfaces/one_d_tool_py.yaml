@@ -31,7 +31,7 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    in_file: fileformats.medimage_afni.OneD
+    in_file: fileformats.vendor.afni.medimage.OneD
     # type=file|default=<undefined>: input file to OneDTool
     show_cormat_warnings: generic/file
     # type=file|default=<undefined>: Write cormat warnings to a file

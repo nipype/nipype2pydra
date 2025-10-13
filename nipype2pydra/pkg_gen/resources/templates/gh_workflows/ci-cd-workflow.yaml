@@ -92,13 +92,13 @@ jobs:
         pushd $HOME
         pip install ${{ matrix.pydra }}
         popd
-        python -c "import pydra as m; print(f'{m.__name__} {m.__version__} @ {m.__file__}')"
+        python -c "import pydra.medimage as m; print(f'{m.__name__} {m.__version__} @ {m.__file__}')"
 
     - name: Install task package
       run: |
         pip install ${{ matrix.pip-flags }} ".[dev]"
-        python -c "import pydra.tasks.CHANGEME as m; print(f'{m.__name__} {m.__version__} @ {m.__file__}')"
-        python -c "import pydra as m; print(f'{m.__name__} {m.__version__} @ {m.__file__}')"
+        python -c "import pydra.tasks.CHANGEME.medimage as m; print(f'{m.__name__} {m.__version__} @ {m.__file__}')"
+        python -c "import pydra.medimage as m; print(f'{m.__name__} {m.__version__} @ {m.__file__}')"
 
   test:
     needs: [nipype-conv]
@@ -159,8 +159,8 @@ jobs:
     - name: Install task package
       run: |
         pip install ".[test]"
-        python -c "import pydra.tasks.CHANGEME as m; print(f'{m.__name__} {m.__version__} @ {m.__file__}')"
-        python -c "import pydra as m; print(f'{m.__name__} {m.__version__} @ {m.__file__}')"
+        python -c "import pydra.tasks.CHANGEME.medimage as m; print(f'{m.__name__} {m.__version__} @ {m.__file__}')"
+        python -c "import pydra.medimage as m; print(f'{m.__name__} {m.__version__} @ {m.__file__}')"
 
     - name: Test with pytest
       run: >- 

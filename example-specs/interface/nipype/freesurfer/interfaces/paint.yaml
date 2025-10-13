@@ -37,7 +37,7 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    in_surf: fileformats.medimage_freesurfer.Pial
+    in_surf: fileformats.vendor.freesurfer.medimage.Pial
     # type=file|default=<undefined>: Surface file with grid (vertices) onto which the template data is to be sampled or 'painted'
     subjects_dir: generic/directory
     # type=directory|default=<undefined>: subjects directory

@@ -36,7 +36,7 @@ inputs:
     # type=file|default=<undefined>: file with each frame is nhits for a label
     map_label_stat: generic/file
     # type=file|default=<undefined>: map the label stats field into the vol
-    reg_file: fileformats.medimage_freesurfer.Dat
+    reg_file: fileformats.vendor.freesurfer.medimage.Dat
     # type=file|default=<undefined>: tkregister style matrix VolXYZ = R*LabelXYZ
     reg_header: generic/file
     # type=file|default=<undefined>: label template volume

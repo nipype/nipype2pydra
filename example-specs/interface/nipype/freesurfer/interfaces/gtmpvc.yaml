@@ -55,7 +55,7 @@ inputs:
     # type=file|default=<undefined>: input volume - source data to pvc
     mask_file: generic/file
     # type=file|default=<undefined>: ignore areas outside of the mask (in input vol space)
-    reg_file: fileformats.medimage_freesurfer.Lta
+    reg_file: fileformats.vendor.freesurfer.medimage.Lta
     # type=file|default=<undefined>: LTA registration file that maps PET to anatomical
     segmentation: generic/file
     # type=file|default=<undefined>: segfile : anatomical segmentation to define regions for GTM

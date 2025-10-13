@@ -42,11 +42,11 @@ inputs:
     # type=file|default=<undefined>: Implicit input brain.mgz
     in_inflated: generic/file
     # type=file|default=<undefined>: Undocumented input file <hemisphere>.inflated
-    in_orig: fileformats.medimage_freesurfer.Orig
+    in_orig: fileformats.vendor.freesurfer.medimage.Orig
     # type=file|default=<undefined>: Undocumented input file <hemisphere>.orig
     in_wm: generic/file
     # type=file|default=<undefined>: Implicit input wm.mgz
-    sphere: fileformats.medimage_freesurfer.Nofix
+    sphere: fileformats.vendor.freesurfer.medimage.Nofix
     # type=file|default=<undefined>: Sphere input file
     subjects_dir: generic/directory
     # type=directory|default=<undefined>: subjects directory

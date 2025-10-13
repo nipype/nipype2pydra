@@ -61,9 +61,9 @@ inputs:
     # type=file|default=<undefined>: Input file must be <subject_id>/surf/lh.pial
     lh_white: generic/file
     # type=file|default=<undefined>: Input file must be <subject_id>/surf/lh.white
-    rh_pial: fileformats.medimage_freesurfer.Pial
+    rh_pial: fileformats.vendor.freesurfer.medimage.Pial
     # type=file|default=<undefined>: Input file must be <subject_id>/surf/rh.pial
-    rh_white: fileformats.medimage_freesurfer.White
+    rh_white: fileformats.vendor.freesurfer.medimage.White
     # type=file|default=<undefined>: Input file must be <subject_id>/surf/rh.white
     ribbon: medimage/mgh-gz
     # type=file|default=<undefined>: Input file must be <subject_id>/mri/ribbon.mgz
@@ -91,7 +91,7 @@ outputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    out_color: fileformats.medimage_freesurfer.Ctab
+    out_color: fileformats.vendor.freesurfer.medimage.Ctab
     # type=file: Output annotation files's colortable to text file
     # type=file|default=<undefined>: Output annotation files's colortable to text file
     out_table: generic/file

@@ -42,7 +42,7 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    in_file1: fileformats.medimage_freesurfer.Area
+    in_file1: fileformats.vendor.freesurfer.medimage.Area
     # type=file|default=<undefined>: Input file 1
     in_file2: generic/file
     # type=file|default=<undefined>: Input file 2

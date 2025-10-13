@@ -51,7 +51,7 @@ inputs:
     # type=file|default=<undefined>: filename of 3D mask dataset; only data time series from within the mask will be analyzed; results for voxels outside the mask will be set to zero.
     matim: generic/file
     # type=file|default=<undefined>: read a standard file as the matrix. You can use only Col as a name in GLTs with these nonstandard matrix input methods, since the other names come from the 'matrix' file. These mutually exclusive options are ignored if 'matrix' is used.
-    matrix: fileformats.medimage_afni.OneD
+    matrix: fileformats.vendor.afni.medimage.OneD
     # type=file|default=<undefined>: the design matrix file, which should have been output from Deconvolve via the 'x1D' option
     slibase: generic/file+list-of
     # type=inputmultiobject|default=[]: similar to 'addbase' in concept, BUT each specified file must have an integer multiple of the number of slices in the input dataset(s); then, separate regression matrices are generated for each slice, with the first column of the file appended to the matrix for the first slice of the dataset, the second column of the file appended to the matrix for the first slice of the dataset, and so on. Intended to help model physiological noise in FMRI, or other effects you want to regress out that might change significantly in the inter-slice time intervals. This will slow the program down, and make it use a lot more memory (to hold all the matrix stuff).

@@ -59,7 +59,7 @@ outputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    out_file: fileformats.medimage_freesurfer.Lta
+    out_file: fileformats.vendor.freesurfer.medimage.Lta
     # type=file: output transform
     # type=file|default=<undefined>: output transform
   callables:

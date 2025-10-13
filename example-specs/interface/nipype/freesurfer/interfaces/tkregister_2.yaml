@@ -81,7 +81,7 @@ outputs:
     # type=file: FSL-style registration file
     lta_file: generic/file
     # type=file: LTA-style registration file
-    reg_file: fileformats.medimage_freesurfer.Dat
+    reg_file: fileformats.vendor.freesurfer.medimage.Dat
     # type=file: freesurfer-style registration file
     # type=file|default='register.dat': freesurfer-style registration file
   callables:

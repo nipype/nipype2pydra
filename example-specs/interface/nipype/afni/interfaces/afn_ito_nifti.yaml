@@ -36,7 +36,7 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    in_file: fileformats.medimage_afni.ThreeD
+    in_file: fileformats.vendor.afni.medimage.ThreeD
     # type=file|default=<undefined>: input file to 3dAFNItoNIFTI
   callable_defaults:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`

@@ -35,7 +35,7 @@ inputs:
   # passed to the field in the automatically generated unittests.
     aseg: generic/file
     # type=file|default=<undefined>: Input aseg file
-    lh_white: fileformats.medimage_freesurfer.Pial
+    lh_white: fileformats.vendor.freesurfer.medimage.Pial
     # type=file|default=<undefined>: Implicit input file must be lh.white
     rh_white: generic/file
     # type=file|default=<undefined>: Implicit input file must be rh.white
