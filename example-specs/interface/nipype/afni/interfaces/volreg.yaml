@@ -74,7 +74,7 @@ outputs:
     md1d_file: generic/file
     # type=file: max displacement info file
     # type=file|default=<undefined>: max displacement output file
-    oned_file: fileformats.medimage_afni.OneD
+    oned_file: fileformats.vendor.afni.medimage.OneD
     # type=file: movement parameters info file
     # type=file|default=<undefined>: 1D movement parameters output file
     oned_matrix_save: generic/file

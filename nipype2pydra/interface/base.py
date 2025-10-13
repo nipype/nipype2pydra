@@ -940,7 +940,7 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
                 if val is None and is_fileset(tp):
                     val = f"{tp.__name__}.mock()"
                 if val is not attrs.NOTHING:
-                    doctest_str += f"    >>> task.inputs.{nm} = {val}\n"
+                    doctest_str += f"    >>> task.{nm} = {val}\n"
             doctest_str += "    >>> task.cmdline\n"
             doctest_str += f"    '{doctest.cmdline}'"
             doctest_str += "\n\n\n"
@@ -1159,7 +1159,7 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
             pass
         if "runtime" in args:
             args.remove("runtime")
-        args_to_add = list(self.used.method_args.get(method.__name__, [])) + list(
+        args_to_add = sorted(self.used.method_args.get(method.__name__, [])) + sorted(
             additional_args
         )
         if args_to_add:
@@ -1338,7 +1338,7 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
                     )
             # Insert additional arguments to the method call (which were previously
             # accessed via member attributes)
-            args_to_be_inserted = list(self.used.method_args[name]) + list(
+            args_to_be_inserted = sorted(self.used.method_args[name]) + sorted(
                 additional_args
             )
             try:
@@ -1405,8 +1405,7 @@ class BaseInterfaceConverter(metaclass=ABCMeta):
         "trait_modified",
     ]
 
-    CONFTEST = """
-# For debugging in IDE's don't catch raised exceptions and let the IDE
+    CONFTEST = """# For debugging in IDE's don't catch raised exceptions and let the IDE
 # break at it
 import os
 import pytest
@@ -1423,7 +1422,7 @@ if os.getenv("_PYTEST_RAISE", "0") != "0":
         raise excinfo.value  # raise internal errors instead of capturing them
 
     def pytest_configure(config):
-        config.option.capture = 'no'  # allow print statements to show up in the console
+        config.option.capture = "no"  # allow print statements to show up in the console
         config.option.log_cli = True  # show log messages in the console
         config.option.log_level = "INFO"  # set the log level to INFO
 

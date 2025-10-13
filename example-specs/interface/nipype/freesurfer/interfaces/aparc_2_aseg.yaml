@@ -63,13 +63,13 @@ inputs:
     # type=file|default=<undefined>: Implicit input filled file. Only required with FS v5.3.
     lh_annotation: generic/file
     # type=file|default=<undefined>: Input file must be <subject_id>/label/lh.aparc.annot
-    lh_pial: fileformats.medimage_freesurfer.Pial
+    lh_pial: fileformats.vendor.freesurfer.medimage.Pial
     # type=file|default=<undefined>: Input file must be <subject_id>/surf/lh.pial
     lh_ribbon: medimage/mgh-gz
     # type=file|default=<undefined>: Input file must be <subject_id>/mri/lh.ribbon.mgz
-    lh_white: fileformats.medimage_freesurfer.Pial
+    lh_white: fileformats.vendor.freesurfer.medimage.Pial
     # type=file|default=<undefined>: Input file must be <subject_id>/surf/lh.white
-    rh_annotation: fileformats.medimage_freesurfer.Pial
+    rh_annotation: fileformats.vendor.freesurfer.medimage.Pial
     # type=file|default=<undefined>: Input file must be <subject_id>/label/rh.aparc.annot
     rh_pial: generic/file
     # type=file|default=<undefined>: Input file must be <subject_id>/surf/rh.pial

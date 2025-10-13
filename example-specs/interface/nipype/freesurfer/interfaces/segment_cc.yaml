@@ -65,7 +65,7 @@ outputs:
     out_file: generic/file
     # type=file: Output segmentation including corpus collosum
     # type=file|default=<undefined>: Filename to write aseg including CC
-    out_rotation: fileformats.medimage_freesurfer.Lta
+    out_rotation: fileformats.vendor.freesurfer.medimage.Lta
     # type=file: Output lta rotation file
     # type=file|default=<undefined>: Global filepath for writing rotation lta
   callables:

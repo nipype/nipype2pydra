@@ -308,7 +308,7 @@ def pkg_gen(
             for example_pkg_name in example_pkg_names:
                 specs_dir = (
                     output_dir
-                    / ("pydra-" + example_pkg_name)
+                    / ("pydra-tasks-" + example_pkg_name)
                     / "nipype-auto-conv"
                     / "specs"
                 )

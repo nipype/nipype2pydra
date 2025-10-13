@@ -58,7 +58,7 @@ inputs:
   # passed to the field in the automatically generated unittests.
     curvfile1: generic/file
     # type=file|default=<undefined>: Input file for CurvatureStats
-    curvfile2: fileformats.medimage_freesurfer.Pial
+    curvfile2: fileformats.vendor.freesurfer.medimage.Pial
     # type=file|default=<undefined>: Input file for CurvatureStats
     subjects_dir: generic/directory
     # type=directory|default=<undefined>: subjects directory
@@ -80,7 +80,7 @@ outputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    out_file: fileformats.medimage_freesurfer.Stats
+    out_file: fileformats.vendor.freesurfer.medimage.Stats
     # type=file: Output curvature stats file
     # type=file|default=<undefined>: Output curvature stats file
   callables:

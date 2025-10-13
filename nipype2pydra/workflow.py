@@ -44,7 +44,7 @@ logger = logging.getLogger(__name__)
 
 
 def convert_node_prefixes(
-    nodes: ty.Union[ty.Dict[str, str], ty.Sequence[ty.Union[ty.Tuple[str, str], str]]]
+    nodes: ty.Union[ty.Dict[str, str], ty.Sequence[ty.Union[ty.Tuple[str, str], str]]],
 ) -> ty.Dict[str, str]:
     if isinstance(nodes, dict):
         nodes_it = nodes.items()
@@ -1310,8 +1310,7 @@ def test_{self.name}_run():
                 )
         return yaml_str
 
-    CONFTEST = """
-# For debugging in IDE's don't catch raised exceptions and let the IDE
+    CONFTEST = """# For debugging in IDE's don't catch raised exceptions and let the IDE
 # break at it
 import os
 import pytest
@@ -1328,7 +1327,7 @@ if os.getenv("_PYTEST_RAISE", "0") != "0":
         raise excinfo.value  # raise internal errors instead of capturing them
 
     def pytest_configure(config):
-        config.option.capture = 'no'  # allow print statements to show up in the console
+        config.option.capture = "no"  # allow print statements to show up in the console
         config.option.log_cli = True  # show log messages in the console
         config.option.log_level = "INFO"  # set the log level to INFO
 

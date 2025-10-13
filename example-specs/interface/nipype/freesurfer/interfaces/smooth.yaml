@@ -41,7 +41,7 @@ inputs:
   # passed to the field in the automatically generated unittests.
     in_file: medimage/nifti1
     # type=file|default=<undefined>: source volume
-    reg_file: fileformats.medimage_freesurfer.Dat
+    reg_file: fileformats.vendor.freesurfer.medimage.Dat
     # type=file|default=<undefined>: registers volume to surface anatomical 
     subjects_dir: generic/directory
     # type=directory|default=<undefined>: subjects directory

@@ -37,7 +37,7 @@ inputs:
   # from the nipype interface, but you may want to be more specific, particularly
   # for file types, where specifying the format also specifies the file that will be
   # passed to the field in the automatically generated unittests.
-    annotation: fileformats.medimage_freesurfer.Annot
+    annotation: fileformats.vendor.freesurfer.medimage.Annot
     # type=file|default=<undefined>: Input annotation file must be <subject_id>/label/<hemisphere>.aparc.annot
     cortex: generic/file
     # type=file|default=<undefined>: Input cortex label must be <subject_id>/label/<hemisphere>.cortex.label
@@ -49,7 +49,7 @@ inputs:
     # type=directory|default=<undefined>: subjects directory
     thickness: generic/file
     # type=file|default=<undefined>: Input file must be <subject_id>/surf/?h.thickness
-    white: fileformats.medimage_freesurfer.White
+    white: fileformats.vendor.freesurfer.medimage.White
     # type=file|default=<undefined>: Input file must be <subject_id>/surf/<hemisphere>.white
   callable_defaults:
   # dict[str, str] - names of methods/callable classes defined in the adjacent `*_callables.py`

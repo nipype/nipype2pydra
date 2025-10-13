@@ -49,9 +49,9 @@ inputs:
     # type=file|default=<undefined>: Source label
     source_sphere_reg: generic/file
     # type=file|default=<undefined>: Implicit input <hemisphere>.sphere.reg
-    source_white: fileformats.medimage_freesurfer.Pial
+    source_white: fileformats.vendor.freesurfer.medimage.Pial
     # type=file|default=<undefined>: Implicit input <hemisphere>.white
-    sphere_reg: fileformats.medimage_freesurfer.Pial
+    sphere_reg: fileformats.vendor.freesurfer.medimage.Pial
     # type=file|default=<undefined>: Implicit input <hemisphere>.sphere.reg
     subjects_dir: generic/directory
     # type=directory|default=<undefined>: subjects directory

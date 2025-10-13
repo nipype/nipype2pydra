@@ -77,7 +77,7 @@ outputs:
     sf_avg_file: generic/file
     # type=file: Text file with func statistics averaged over segs and framss
     # type=traitcompound|default=None: Save mean across space and time
-    summary_file: fileformats.medimage_freesurfer.Stats
+    summary_file: fileformats.vendor.freesurfer.medimage.Stats
     # type=file: Segmentation summary statistics table
     # type=file|default=<undefined>: Segmentation stats summary table file
   callables:

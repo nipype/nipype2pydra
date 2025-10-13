@@ -12,23 +12,23 @@ ADDITIONAL_PACKAGES = {
     "niworkflows": [
         "bids",
         "templateflow",
-        "pydra-ants",
-        "pydra-afni",
+        "pydra-tasks-ants",
+        "pydra-tasks-afni",
     ],
     "mriqc": [
         "nipype2pydra",
-        "pydra-ants",
-        "pydra-afni",
-        "pydra-fsl",
-        "pydra-mrtrix3 >=3.0.3a0",
-        "fileformats-medimage-afni-extras",
-        "fileformats-medimage-mrtrix3-extras",
-        "fileformats-medimage-fsl-extras",
+        "pydra-tasks-ants",
+        "pydra-tasks-afni",
+        "pydra-tasks-fsl",
+        "pydra-tasks-mrtrix3 >=3.1.0a1",
+        "fileformats-vendor-afni-extras",
+        "fileformats-vendor-mrtrix3-extras",
+        "fileformats-vendor-fsl-extras",
         "statsmodels",
         "dipy",
         "bids",
-        "pydra-niworkflows",
-        "pydra-nireports",
+        "pydra-tasks-niworkflows",
+        "pydra-tasks-nireports",
         "matplotlib",
         "seaborn",
         "templateflow",
@@ -67,7 +67,7 @@ def test_package_complete(package_spec, cli_runner, tmp_path, tasks_template_arg
         + tasks_template_args,
     )
     assert result.exit_code == 0, show_cli_trace(result)
-    pkg_root = repo_output / f"pydra-{pkg_name}"
+    pkg_root = repo_output / f"pydra-tasks-{pkg_name}"
     assert pkg_root.exists()
 
     pyproject_fspath = pkg_root / "pyproject.toml"
@@ -104,10 +104,10 @@ def test_package_complete(package_spec, cli_runner, tmp_path, tasks_template_arg
     pip_output = pip_output.decode("utf-8")
     assert (
         not p.returncode
-    ), f"Failed to install package pydra-{pkg_name} with command:\n{' '.join(pip_cmd)}:\n\n{pip_output}"
+    ), f"Failed to install package pydra-tasks-{pkg_name} with command:\n{' '.join(pip_cmd)}:\n\n{pip_output}"
     p = sp.Popen([venv_pytest, str(pkg_root)], stderr=sp.PIPE, stdout=sp.STDOUT)
     pytest_output, _ = p.communicate()
     pytest_output = pytest_output.decode("utf-8")
     assert (
         p.returncode
-    ), f"Tests for pydra-{pkg_name} package (\n{' '.join(pip_cmd)}) failed:\n\n{pytest_output}"
+    ), f"Tests for pydra-tasks-{pkg_name} package (\n{' '.join(pip_cmd)}) failed:\n\n{pytest_output}"

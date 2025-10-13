@@ -33,7 +33,7 @@ inputs:
   # passed to the field in the automatically generated unittests.
     in_mappedsurf: generic/file
     # type=file|default=<undefined>: Mapped surface
-    in_origsurf: fileformats.medimage_freesurfer.Pial
+    in_origsurf: fileformats.vendor.freesurfer.medimage.Pial
     # type=file|default=<undefined>: Original surface
     subjects_dir: generic/directory
     # type=directory|default=<undefined>: subjects directory

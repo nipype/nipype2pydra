@@ -75,7 +75,7 @@ outputs:
     # type=file|default=<undefined>: output statistics file
     reml_script: generic/file
     # type=file: automatically generated script to run 3dREMLfit
-    x1D: fileformats.medimage_afni.OneD
+    x1D: fileformats.vendor.afni.medimage.OneD
     # type=file: save out X matrix
     # type=file|default=<undefined>: specify name for saved X matrix
   callables:

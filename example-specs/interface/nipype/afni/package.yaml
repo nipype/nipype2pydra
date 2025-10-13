@@ -31,4 +31,4 @@ init_depth: 3
 auto_import_init_depth: 4
 # Packages that should be copied directly into the new package without modification
 copy_packages: null
-target_version: v25_2_06
+target_version: v25

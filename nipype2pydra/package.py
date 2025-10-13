@@ -302,7 +302,7 @@ class PackageConverter:
     @property
     def all_import_translations(self) -> ty.List[ty.Tuple[str, str]]:
         all_translations = self.import_translations + [
-            (r"nipype\.interfaces\.mrtrix3.\w+\b", r"pydra.tasks.mrtrix3.v3_0"),
+            (r"nipype\.interfaces\.mrtrix3.\w+\b", r"pydra.tasks.mrtrix3.v3_1"),
             (
                 r"nipype\.interfaces\.(?!base)(\w+)\b",
                 r"pydra.tasks.\1." + self.target_version,
@@ -708,7 +708,7 @@ class PackageConverter:
 src_pkg_version = "{src_pkg_version}"
 nipype2pydra_version = "{nipype2pydra_version}"
 post_release = "{post_release}"
-        """
+"""
             )
 
     @classmethod
@@ -1162,7 +1162,7 @@ try:
     from ._version import __version__
 except ImportError:
     raise RuntimeError(
-        "pydra-{pkg} has not been properly installed, please run "
+        "pydra-tasks-{pkg} has not been properly installed, please run "
         f"`pip install -e {str(pkg_path)}` to install a development version"
     )
 if "nipype" not in __version__:
